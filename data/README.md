@@ -18,8 +18,9 @@ checksums.sha256
 release manifest
 ```
 
-官方 binary 不在每次更新時重複進 Git history。release asset 的檔名與 SHA-256
-必須和 Git-tracked manifest 相符。
+官方 binary 不在每次更新時重複進 Git history。`filename` 保留官方原名；
+`release_asset_name` 記錄 GitHub 實際採用的安全檔名。release asset 的
+byte length 與 SHA-256 必須和 Git-tracked manifest 相符。
 
 ## Current size
 

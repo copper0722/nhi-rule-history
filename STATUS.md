@@ -10,6 +10,8 @@
 - 14 份 ODT、213,512 個結構區塊、9,303 個候選的封存 run。
 - PostgreSQL／SQLite 的可攜 logical schema 初版。
 - ATC linkage 資料模型，以及 ICD-11 授權 fail-closed 邊界。
+- `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、
+  size 與 SHA-256 已和 manifest 對照通過。
 
 ## 尚未完成
 
@@ -23,8 +25,8 @@
 
 ## 現在的下一步
 
-WP01：把每個官方來源枚舉、下載、hash、寫入 manifest，並發布第一個 raw
-source GitHub Release。已封存的 14-ODT run 不修改；新增來源建立新的
-manifest 與 fingerprint。
+WP01：把 14 ODT 以外的每個官方來源枚舉、下載、hash、寫入 manifest。
+已封存的 14-ODT run 與 `raw-odt-v1` 不修改；新增來源建立新的 manifest、
+fingerprint 與 release。
 
 逐項關閉證據見 [docs/gap-register.md](docs/gap-register.md)。

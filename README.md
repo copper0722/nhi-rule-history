@@ -49,6 +49,8 @@ JSONL 與 SQLite 可攜資料。
    每個 release asset 可到 2 GiB，且不會讓每次 clone 背負全部 binary history。
 
 條文全文可以進 Git；官方二進位原檔則用 Release assets 比較耐久。
+首批 14 份原檔已發布於
+[raw-odt-v1](https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1)。
 
 ## 資料授權
 

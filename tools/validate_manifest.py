@@ -17,6 +17,7 @@ REQUIRED_KEYS = {
     "source_page_url",
     "official_url",
     "filename",
+    "release_asset_name",
     "media_type",
     "byte_length",
     "sha256",

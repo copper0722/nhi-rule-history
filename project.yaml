@@ -12,7 +12,7 @@ public_outputs:
   source_manifests: tracked_in_git
   normalized_jsonl: planned
   sqlite_snapshot: planned_release_asset
-  official_binary_archive: github_release_assets
+  official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
@@ -44,7 +44,10 @@ gates:
   source_occurrence_stage:
     status: passed_bounded
   raw_odt_release_assets:
-    status: pending
+    status: passed
+    release: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
+    asset_count: 14
+    checksum_parity: passed
   official_source_universe:
     status: open
   reproducible_update_runner:

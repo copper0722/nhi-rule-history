@@ -28,3 +28,6 @@
 - 公開 repo 驗證通過：70 項 tests（1 項環境性 skip）、14 個 raw checksum、
   SQLite schema/builder integrity，以及 PostgreSQL logical schema 的
   transaction apply/rollback。
+- 發布 `raw-odt-v1`：14 個 ODT 與 manifest。GitHub 將中文檔名正規化，
+  因此 manifest 同時保存官方 `filename` 與實際 `release_asset_name`；
+  14/14 的下載檔名、byte length 與 SHA-256 parity 通過。

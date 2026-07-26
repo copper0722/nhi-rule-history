@@ -17,7 +17,7 @@
 | G-DATA-01 | normalized clause JSONL 未發布 | blocked | complete rule/version outputs |
 | G-SQLITE-01 | SQLite schema 有、資料 snapshot 無 | open | row parity、integrity、checksum |
 | G-API-01 | reader API 未建立 | blocked | accepted read contract 與 canary |
-| G-RAW-01 | 14 ODT Release assets 尚未發布 | open | GitHub Release URLs 與 checksum parity |
+| G-RAW-01 | 14 ODT Release assets | passed | `raw-odt-v1`：14/14 name、size、SHA-256 parity |
 | G-COMPLETE-01 | 完整歷史聲明未達 gate | blocked | completion contract 全部通過 |
 
 ## 已通過的有限項目

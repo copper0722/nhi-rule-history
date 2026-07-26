@@ -13,6 +13,7 @@
 - Official listing:
   https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html
 
-這些檔案按官方 bytes 原樣保存；檔名、byte length、SHA-256 與原始 URL 以
-tracked manifest 為準。它們是 bounded historical source bundle，不代表本
-專案已完成健保藥品給付條文的完整法律歷史。
+這些檔案按官方 bytes 原樣保存；`filename` 保存官方原名，
+`release_asset_name` 保存 GitHub 正規化後的下載檔名。byte length、
+SHA-256 與原始 URL 以 tracked manifest 為準。它們是 bounded historical
+source bundle，不代表本專案已完成健保藥品給付條文的完整法律歷史。
