@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.DS_Store
+.env
+.venv/
+venv/
+
+# Generated builds and locally hydrated third-party terminology.
+build/
+dist/
+generated/
+licensed/
+*.sqlite
+*.sqlite3
+*.db
+
+# Official binaries are published as release assets, not Git history.
+data/raw/files/

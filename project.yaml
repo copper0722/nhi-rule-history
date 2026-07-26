@@ -1,0 +1,92 @@
+schema_version: 1
+project_id: nhi_rule_history
+title_zh: 健保藥品給付條文完整歷史
+title_en: Taiwan NHI Drug Reimbursement Rule History
+status: in_progress
+risk_class: R3
+privacy: public
+last_verified_date: "2026-07-27"
+
+public_outputs:
+  code_repo: https://github.com/copper0722/nhi-rule-history
+  source_manifests: tracked_in_git
+  normalized_jsonl: planned
+  sqlite_snapshot: planned_release_asset
+  official_binary_archive: github_release_assets
+
+repository_code:
+  loader_version: nhi-rule-history-stage-loader/1.0.4
+  parser_version: nhi-rule-history-occurrence-extract/1.1.0
+
+accepted_stage:
+  disposition: accepted_stage_only
+  scope: bounded_14_historical_odt
+  run_id: 33ce4d34-ab19-40be-bbe6-f7838a97ead5
+  fingerprint: 23d45033ec3601d9b7762b433580c5a6fa62445043eaddfed28f55b7983484ef
+  loader_version: nhi-rule-history-stage-loader/1.0.3
+  parser_version: nhi-rule-history-occurrence-extract/1.1.0
+  counts:
+    source_releases: 14
+    source_artifacts: 14
+    source_artifact_bytes: 49709507
+    structural_blocks: 213512
+    structural_text_bytes: 5902629
+    empty_table_cell_blocks: 79195
+    occurrence_candidates: 9303
+    nonblocking_stage_issues: 1667
+    blocking_stage_issues: 0
+
+gates:
+  public_repository:
+    status: passed
+  source_manifest_for_14_odt:
+    status: passed
+  source_occurrence_stage:
+    status: passed_bounded
+  raw_odt_release_assets:
+    status: pending
+  official_source_universe:
+    status: open
+  reproducible_update_runner:
+    status: open
+  current_whole_chapter_parity:
+    status: open
+  official_event_effect_ledger:
+    status: blocked
+  evidence_backed_legal_dates:
+    status: blocked
+  stable_rule_identity:
+    status: blocked
+  deterministic_event_replay:
+    status: blocked
+  adjacent_source_mapped_diffs:
+    status: blocked
+  atc_linkage:
+    status: design_ready_data_pending
+  icd11_linkage:
+    status: blocked_pending_who_mapping_agreement
+  postgresql_canonical_schema:
+    status: design_ready_not_applied
+  sqlite_portable_projection:
+    status: schema_ready_data_pending
+  normalized_public_dataset:
+    status: blocked
+  real_data_reader_api:
+    status: blocked
+  canonical_cutover:
+    status: blocked
+  complete_history_claim:
+    status: blocked
+
+claims:
+  allowed_now: 14 份官方歷史 ODT 的受限來源 staging 已驗收
+  reader_safe_before_completion: 官方年度版本與已核實公告異動
+  forbidden_now: 完整健保給付條文歷史已入庫
+
+current_work_package:
+  id: WP01
+  title: Close and publish the official source universe
+  next_action: >
+    Enumerate, fetch, hash, and manifest all historical and current whole or
+    chapter releases, NHI listing/detail/attachment sources, official history
+    search, and parent-regulation cross-checks as immutable inputs.

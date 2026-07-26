@@ -1,0 +1,48 @@
+schema_version: 1
+sources:
+  - source_id: nhi_historical_full_releases
+    authority: 衛生福利部中央健康保險署
+    url: https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html
+    role: cumulative_historical_anchor
+    cadence: irregular
+    acquisition: enumerate_all_formats
+    licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
+    status: bounded_14_odt_manifested
+
+  - source_id: nhi_regulatory_announcements
+    authority: 衛生福利部中央健康保險署
+    url: https://www.nhi.gov.tw/ch/lp-3258-1.html
+    role: official_event_listing
+    cadence: continuous
+    acquisition: archive_all_pages_then_details_and_attachments
+    licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
+    status: source_universe_open
+
+  - source_id: nhi_drug_items
+    authority: 衛生福利部中央健康保險署
+    url: https://data.gov.tw/dataset/23715
+    role: product_drug_code_atc_and_rule_chapter_linkage
+    cadence: monthly
+    acquisition: download_resource_and_metadata
+    licence_url: https://data.gov.tw/license
+    status: linkage_input_not_admitted
+
+  - source_id: moj_parent_regulation
+    authority: 法務部全國法規資料庫
+    url: https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0060035
+    role: parent_regulation_and_attachment_six_crosscheck
+    cadence: irregular
+    acquisition: identify_only_entries_that_modify_attachment_six
+    licence_url: https://data.gov.tw/license
+    status: not_admitted
+
+external_terminologies:
+  - source_id: who_atc_ddd
+    url: https://atcddd.fhi.no/atc_ddd_index/
+    publication_policy: codes_and_provenance_only_no_bulk_index_redistribution
+    status: external_link_only
+
+  - source_id: who_icd11
+    url: https://icd.who.int/
+    publication_policy: no_populated_crosswalk_without_separate_written_agreement
+    status: schema_only
