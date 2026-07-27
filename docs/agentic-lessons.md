@@ -229,8 +229,58 @@ unapplied event、`SET UNLOGGED`、owner membership、future publication date
   archive verifier、簽署 receipt 與獨立 replay contract 完成。
 - 同一原則適用 PDF：magic 不是 structural validity。第七次 review 用只有
   `%PDF-` 前綴、沒有版本、xref、trailer、catalog、page tree 或 EOF 的
-  51-byte 假檔；兩個 SQL classifier 一致判 PDF 並 promotion。修補不應把
-  更多 PDF parser 細節手寫進 PG；沒有 bounded full-document parser 與真正
-  獨立 oracle 時，合法 PDF 與假 PDF 都只能 observation-only。Skill 的
-  成功測試必須包含 valid、truncated、bad-xref、missing-trailer／catalog
-  與 decoy cases，且在 verifier 尚未完成時全部 canonical receipt=0。
+51-byte 假檔；兩個 SQL classifier 一致判 PDF 並 promotion。修補不應把
+更多 PDF parser 細節手寫進 PG；沒有 bounded full-document parser 與真正
+獨立 oracle 時，合法 PDF 與假 PDF 都只能 observation-only。Skill 的
+成功測試必須包含 valid、truncated、bad-xref、missing-trailer／catalog
+與 decoy cases，且在 verifier 尚未完成時全部 canonical receipt=0。
+
+## 2026-07-27 missing-號 live incident 與 gap queue
+
+真實 recurring lane 又提供一個 synthetic fixture 沒有的 metadata 反例：
+官方公告 `cp-20264-0cbbf-3258-1` 的 `發文字號` 是
+`健保審字第1150671800`，沒有一般常見的末尾 `號`。原 strict parser 正確
+fail closed，但同一筆 `acquired` work item 會一直被排在最前面，使後面五筆
+selected items 飢餓。修補必須同時處理 provenance 與 queue liveness：
+
+- exact `reference_number_raw` 永遠保留；
+- normalized identifier 只允許移除 whitespace 與補一個末尾 `號`；
+- normalization reason 與 versioned rule 另存，source UID 只取 normalized
+  form；
+- 其他 prefix、compound number、尾註或多值仍拒絕；
+- raw／normalized collision 不能靠相同 UID 靜默合併，仍須比對 URL、
+  subject、dates 與 artifact hashes。
+
+Grok 4.5 與 Gemini 3.1 Pro 都支持這個狹窄 contract，也都同意把 3,080 個
+clause-date pairs 做成候選工作佇列，而非宣稱已解析法律沿革。可接受的共同
+分層是 490 個 unique-document hints、419 個 ambiguous-document hints、
+1,125 個 native-date/no-joint candidates，以及 1,046 個 marker-only
+candidates。這些層級只決定閱讀順序，不改變所有 work units 的
+`official_event_unresolved`、`direct_predecessor_unresolved` 與
+`canonical_write_authorized=false`。
+
+這次也再次顯示外部模型的能力邊界：
+
+- Grok 的 direct fetch 被 Cloudflare 擋住，只能用搜尋索引重建頁面觀察；
+  controller 手上的 sealed exact HTML 才是較強證據。
+- Gemini 的說明混用了近似 OCR／unmapped 數量；接受前仍須用 3,080、
+  2,034、909 三個正式分母重算，不能把模型的 approximate partition 寫進
+  manifest。
+- Grok 建議 weighted priority score，但 categorical evidence lanes 更容易
+  重播與稽核；沒有驗證過的權重不應製造看似精密的 ranking。
+- 兩個模型都可發現 normalization、collision 與 LLM authority 風險，但
+  parser、queue counts、hash binding、PG transition 仍由確定性程式驗收。
+
+後續 model-harness packet 應直接附 sealed source hash、exact value 與正式
+count equations；output contract 要求逐項算術 reconciliation，近似值只能
+進 uncertainties。模型結果若要長期保存，dispatcher 還應有原生 output-file
+參數，避免只留在 terminal capture。
+
+第一批五個 Grok 實檔 pilot 又找到一個 schema 命名陷阱：模型能正確讀出
+1996–1997 日期存在於 2004–2020 的後來對照表，也能正確判斷 `(略)` 無法
+支持改前／改後全文；但若輸出只有 `official_event_identity`，它仍可能把
+「承載這個日期註記的後來公文」填進去，語義上像已找到「造成該版本的
+event」。歷史重建 contract 必須拆成 `owning_document_identity` 與
+`marker_event_identity`：前者可 supported、後者仍 unresolved。此 pilot
+5/5 都是這種情況，故 0/5 能關閉 pre/post text、direct adjacency 或 anchor
+replay。Grok 的可接受角色是 hash-bound source triage，不是逐條完整性認證。

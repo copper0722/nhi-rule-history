@@ -32,6 +32,17 @@ identity, current status, predecessor edge, or diff. Their migrations and
 rollbacks are under [../pg/migrations](../pg/migrations); loaders are under
 [../src/nhi_rule_history/pg](../src/nhi_rule_history/pg).
 
+Continuous-update migrations are applied in filename order. The additive
+`2026-07-27_nhi_rule_history_update_ops_observation_lease_fix.sql` migration
+must follow `2026-07-27_nhi_rule_history_update_ops.sql`: it keeps immutable
+historical URL observation time separate from the later bounded worker lease,
+rejects observations that postdate the worker, and exposes chronological URL
+predecessors through `v_url_response_chronology`. Append-time predecessor
+columns are compatibility evidence only; consumers must use the view.
+Likewise, `content_artifact.first_observed_at` is first row-insertion evidence,
+not necessarily the minimum source observation after delayed backfill; derive
+the latter from `url_observation`.
+
 The v1 eight-table public exporter has already generated a 1,102,200,832-byte
 SQLite snapshot and proved storage-independent JSONL↔SQLite typed-row parity.
 The v2 raw/structural release is presently JSONL.zst plus checksummed raw

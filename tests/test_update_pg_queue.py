@@ -42,6 +42,14 @@ OPS_FORWARD = MIGRATIONS / "2026-07-27_nhi_rule_history_update_ops.sql"
 OPS_ROLLBACK = (
     MIGRATIONS / "2026-07-27_nhi_rule_history_update_ops.rollback.sql"
 )
+OPS_OBSERVATION_LEASE_FIX = (
+    MIGRATIONS
+    / "2026-07-27_nhi_rule_history_update_ops_observation_lease_fix.sql"
+)
+OPS_OBSERVATION_LEASE_FIX_ROLLBACK = (
+    MIGRATIONS
+    / "2026-07-27_nhi_rule_history_update_ops_observation_lease_fix.rollback.sql"
+)
 CANDIDATE_FORWARD = (
     MIGRATIONS / "2026-07-27_nhi_rule_history_candidate_stage.sql"
 )
@@ -436,10 +444,12 @@ class UpdatePgQueueLiveTests(unittest.TestCase):
         self.assertEqual(
             presence, "0", "test DSN must be an unused scratch database"
         )
-        applied_ops = applied_candidate = applied_queue = False
+        applied_ops = applied_fix = applied_candidate = applied_queue = False
         try:
             self.run_psql(file=OPS_FORWARD)
             applied_ops = True
+            self.run_psql(file=OPS_OBSERVATION_LEASE_FIX)
+            applied_fix = True
             self.run_psql(file=CANDIDATE_FORWARD)
             applied_candidate = True
             self.run_psql(file=QUEUE_FORWARD)
@@ -463,6 +473,29 @@ class UpdatePgQueueLiveTests(unittest.TestCase):
                 self.assertEqual(first["created_work_item_count"], 2)
                 self.assertEqual(first["selected_work_item_count"], 1)
                 self.assertEqual(first["ignored_work_item_count"], 1)
+                with self.assertRaisesRegex(
+                    AssertionError,
+                    "non-worker URL observation is outside its owned lease",
+                ):
+                    self.run_psql(
+                        command=f"""
+INSERT INTO nhi_rule_history_update_ops.url_observation (
+  url_observation_id, job_id, lease_id, owner_key, requested_url,
+  final_url, observed_at, outcome, http_status, response_headers,
+  response_headers_sha256, artifact_sha256,
+  previous_artifact_sha256, relation_to_previous, error_code
+)
+SELECT
+  '00000000-0000-0000-0000-000000000123'::uuid,
+  job_id, lease_id, owner_key, requested_url || '?late',
+  final_url, observed_at + interval '2 seconds', outcome,
+  http_status, response_headers, response_headers_sha256,
+  artifact_sha256, NULL, 'not_comparable', NULL
+FROM nhi_rule_history_update_ops.url_observation
+WHERE job_id = '{first["job_id"]}'::uuid
+LIMIT 1;
+"""
+                    )
 
                 replay = load_poll_package(
                     self.dsn,
@@ -631,5 +664,7 @@ ORDER BY guid_raw;
                 self.run_psql(file=QUEUE_ROLLBACK)
             if applied_candidate:
                 self.run_psql(file=CANDIDATE_ROLLBACK)
+            if applied_fix:
+                self.run_psql(file=OPS_OBSERVATION_LEASE_FIX_ROLLBACK)
             if applied_ops:
                 self.run_psql(file=OPS_ROLLBACK)

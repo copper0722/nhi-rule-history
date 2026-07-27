@@ -61,6 +61,9 @@ PDF、OLE 與 ODS 的原生文字後，兩個數字分別增為 2,034（+137）�
 909 組 joint candidates 再沿 immutable artifact→resource→正式文號鏈回溯，
 全部都有公文候選：490 組只對到一個文號，419 組對到 2–11 個文號，共涉及
 282 個文號。唯一文號仍只是下一輪閱讀佇列，不是已證明的 amendment effect。
+完整 3,080 組現已各有一筆可續跑工作單，見
+[history gap work queue manifest](docs/audits/2026-07-27-history-gap-work-queue-manifest.json)；
+四條優先 lane 僅用於安排來源閱讀，不是法律判定或完整性證書。
 
 NHI 公告與 FINT 也已先按正規化文號對帳，但不能據此宣稱來源宇宙完整：
 NHI 858 筆形成 847 個文號鍵，FINT exact-phrase 366 筆形成 365 個文號鍵；

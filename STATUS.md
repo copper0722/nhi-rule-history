@@ -94,6 +94,13 @@
   sealed acquisition 鏈回溯；0 unmapped，490 組只有一個正式文號候選，
   419 組有 2–11 個候選，共 282 個不同文號。此步只形成 bounded review
   queue，沒有把 unique candidate 自動升格為 amendment effect。
+- 3,080 個條文×日期已全數程式化成一對一、可續跑的 source-review
+  work units，並綁定兩份輸入 ledger 的 SHA-256。優先序為 490
+  `unique_document_candidate`、419 `ambiguous_document_candidates`、
+  1,125 `native_date_without_joint_document_candidate`、1,046
+  `marker_without_native_document_date_match`；合計精確為 3,080。每列仍須
+  回填 official event、日期角色、stable identity、前後 exact text、
+  direct adjacency 與 anchor replay，`canonical_write_authorized=false`。
 - stage-only continuous updater 已在真實 PostgreSQL 排程通過 scheduled
   poll 與 proposal fires。來源 bundle／corpus bundle 會保留公告明列的
   全部附件，包括多 PDF、ODS 與 ODT；兩則真實工作均驗到 cm1 Claude
@@ -200,9 +207,10 @@ before/after snapshot、相鄰 edge 齊全，且 cumulative anchor replay 與來
 因此可對外說「0/1,548 尚未通過完整性認證」，不可改寫成「已證明 1,548
 條都有缺版」。日期讓缺口 audit 變容易，不代表重建工作已完成。
 
-WP03 下一步：全量建立日期註記 ledger；以 NHI 最新整份／分章為 cumulative
-anchors，對公告 detail 與附件建立 evidence-backed event/effect candidates，
-補齊每條相鄰快照並做 whole↔chapter／anchor parity。
+WP03 下一步：依 3,080-row work queue 逐筆閱讀正式公告與附件，先處理
+490 個 unique-document candidates，再裁決 419 個 ambiguous candidates；
+所有結果仍須通過 event/effect、stable identity、直接相鄰快照及
+whole↔chapter／anchor replay，才可關閉單條歷史。
 
 注意：第一次 acquisition run `43ecabc6-64c6-4f30-80ec-ecebe25ea361`
 在雙輪驗證時發現 RowNo-based resource identity 缺陷。該 immutable run 留在

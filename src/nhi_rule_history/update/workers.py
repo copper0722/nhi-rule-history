@@ -13,6 +13,7 @@ from nhi_rule_history.contracts import (
     ContractError,
     append_jsonl,
     canonical_json_bytes,
+    file_sha256,
     sha256_bytes,
     stable_id,
     utc_now,
@@ -28,13 +29,32 @@ from nhi_rule_history.update.proposal import (
 )
 
 
-WORKER_PROMPT_VERSION = "nhi-rule-history-source-proposal/1.0.0"
+WORKER_PROMPT_VERSION = "nhi-rule-history-source-proposal/1.1.0"
 WORKER_ATTEMPT_SCHEMA = "nhi-rule-history/worker-attempt/v1"
-WORKER_RUN_SCHEMA = "nhi-rule-history/worker-run/v1"
+WORKER_RUN_SCHEMA = "nhi-rule-history/worker-run/v2"
+WORKER_JOB_FINGERPRINT_DOMAIN = "nhi-rule-history/worker-job-fingerprint/v2"
 
 
 class WorkerFailure(RuntimeError):
     """Both bounded worker attempts failed or violated the proposal contract."""
+
+
+def worker_job_fingerprint(
+    *,
+    manifest_sha256: str,
+    prompt_sha256: str,
+) -> str:
+    """Bind an immutable worker job to every persisted worker contract."""
+
+    return stable_id(
+        WORKER_JOB_FINGERPRINT_DOMAIN,
+        manifest_sha256,
+        WORKER_PROMPT_VERSION,
+        prompt_sha256,
+        WORKER_ATTEMPT_SCHEMA,
+        WORKER_RUN_SCHEMA,
+        PROPOSAL_SCHEMA,
+    )
 
 
 @dataclass(frozen=True)
@@ -102,9 +122,10 @@ def source_packet(bundle_path: Path) -> dict[str, Any]:
     if len({row["block_id"] for row in blocks}) != len(blocks):
         raise ContractError("source packet contains duplicate block identities")
     return {
-        "schema": "nhi-rule-history/worker-source-packet/v1",
+        "schema": "nhi-rule-history/worker-source-packet/v2",
         "bundle_id": verification["bundle_id"],
         "bundle_fingerprint": verification["bundle_fingerprint"],
+        "manifest_sha256": verification["manifest_sha256"],
         "rss_item": manifest["rss_item"],
         "notice_metadata": notice_metadata,
         "attachment_inventory": inventory,
@@ -432,22 +453,28 @@ class WorkerOrchestrator:
         packet = source_packet(bundle_path)
         prompt = build_worker_prompt(packet)
         prompt_sha = sha256_bytes(prompt.encode("utf-8"))
-        job_fingerprint = stable_id(
-            "nhi-worker-job",
-            packet["bundle_id"],
-            packet["bundle_fingerprint"],
-            WORKER_PROMPT_VERSION,
-            prompt_sha,
+        job_fingerprint = worker_job_fingerprint(
+            manifest_sha256=packet["manifest_sha256"],
+            prompt_sha256=prompt_sha,
         )
         run_dir = candidate_root / job_fingerprint
         receipt_path = run_dir / "candidate-receipt.json"
         failure_path = run_dir / "failure-receipt.json"
+        prompt_path = run_dir / "prompt.json"
         if receipt_path.is_file():
             existing = json.loads(receipt_path.read_text(encoding="utf-8"))
+            attempts_path = run_dir / "attempts.jsonl"
             if (
                 existing.get("schema") != WORKER_RUN_SCHEMA
                 or existing.get("job_fingerprint") != job_fingerprint
                 or existing.get("bundle_id") != packet["bundle_id"]
+                or existing.get("manifest_sha256")
+                != packet["manifest_sha256"]
+                or not attempts_path.is_file()
+                or existing.get("attempts_sha256")
+                != file_sha256(attempts_path)
+                or not prompt_path.is_file()
+                or prompt_path.read_text(encoding="utf-8") != prompt
             ):
                 raise WorkerFailure("worker replay receipt is inconsistent")
             return {**existing, "replayed": True}
@@ -465,6 +492,13 @@ class WorkerOrchestrator:
                 existing_failure.get("schema") != WORKER_RUN_SCHEMA
                 or existing_failure.get("job_fingerprint") != job_fingerprint
                 or existing_failure.get("bundle_id") != packet["bundle_id"]
+                or existing_failure.get("manifest_sha256")
+                != packet["manifest_sha256"]
+                or not attempts_path.is_file()
+                or existing_failure.get("attempts_sha256")
+                != file_sha256(attempts_path)
+                or not prompt_path.is_file()
+                or prompt_path.read_text(encoding="utf-8") != prompt
                 or existing_failure.get("status") != "failed"
                 or existing_failure.get("attempt_count") != 2
                 or existing_failure.get("selected_attempt_id") is not None
@@ -527,6 +561,8 @@ class WorkerOrchestrator:
                 "job_fingerprint": job_fingerprint,
                 "bundle_id": packet["bundle_id"],
                 "bundle_fingerprint": packet["bundle_fingerprint"],
+                "manifest_sha256": packet["manifest_sha256"],
+                "attempts_sha256": file_sha256(run_dir / "attempts.jsonl"),
                 "prompt_sha256": prompt_sha,
                 "status": "failed",
                 "attempt_count": 2,
@@ -540,6 +576,8 @@ class WorkerOrchestrator:
             "job_fingerprint": job_fingerprint,
             "bundle_id": packet["bundle_id"],
             "bundle_fingerprint": packet["bundle_fingerprint"],
+            "manifest_sha256": packet["manifest_sha256"],
+            "attempts_sha256": file_sha256(run_dir / "attempts.jsonl"),
             "prompt_sha256": prompt_sha,
             "status": "staged",
             "attempt_count": 1 if primary_record["status"] == "validated" else 2,

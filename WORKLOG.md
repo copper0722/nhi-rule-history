@@ -339,3 +339,21 @@
   未開啟 promotion、未改 source counts、未寫 live PG。
 - Post-audit Low remediation 後重跑完整 suite：70 項 legacy tests 通過
   （1 skip），271 項 public tests 通過（6 skip）。
+- 將 3,080 個條文×日期 pair 全數程式化為一對一、可續跑、hash-bound
+  source-review work units。四條 priority lanes 為 490 unique-document、
+  419 ambiguous-document、1,125 native-date/no-joint-document、1,046
+  marker/no-native-date-match，合計精確為 3,080。Queue 9,547,157 bytes，
+  SHA-256
+  `947dfd5a8ddbf29633ee9b7b0d945bd17b23f06c90f6a1e60c1af3a9ae606c57`；
+  每列明列 event、date role、stable identity、前後 exact text、direct
+  adjacency 與 anchor replay 必要回傳，且禁止模型直接 canonical write。
+- 修正 continuous updater 兩個真實邊界案例：NHI 文號缺尾端「號」時保存
+  raw value 並依版本化規則補成 normalized value；延遲 backlog 的 source
+  observation 不再被硬塞進六小時 worker lease。Worker source packet／run
+  receipt 現在綁定 exact manifest 與 attempts ledger SHA-256；resource
+  observation ≤ manifest seal ≤ earliest worker start，exact 六小時可接受。
+  URL predecessor 改由 PG chronological view 依
+  `(observed_at,url_observation_id)` 重算，append-time 欄位不再宣稱前後關係。
+  隔離 PostgreSQL 已通過 base→patch→idempotent patch、live load/replay、
+  delayed t2→t1 chronology、post-worker rejection 與 rollback；完整 suite
+  為 70 legacy（1 skip）及 283 public（6 skip）。尚未套用 live migration。

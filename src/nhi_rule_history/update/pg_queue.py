@@ -781,32 +781,14 @@ def _apply_poll(material: PreparedPollLoad, conninfo: str) -> AppliedPollLoad:
                 )
                 url_row = dict(material.rows["url_observation"][0])
                 cursor.execute(
-                    f"""
-                    SELECT artifact_sha256, final_url
-                    FROM {OPS_SCHEMA}.url_observation
-                    WHERE requested_url = %s
-                      AND outcome = 'response'
-                      AND artifact_sha256 IS NOT NULL
-                      AND observed_at <= %s
-                    ORDER BY observed_at DESC, url_observation_id DESC
-                    LIMIT 1
-                    """,
-                    (url_row["requested_url"], url_row["observed_at"]),
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                    (
+                        "nhi-rule-history-url:"
+                        f"{url_row['requested_url']}",
+                    ),
                 )
-                prior = cursor.fetchone()
-                if prior is None:
-                    url_row["relation_to_previous"] = "first_observation"
-                    url_row["previous_artifact_sha256"] = None
-                else:
-                    url_row["previous_artifact_sha256"] = str(prior[0])
-                    if str(prior[0]) == url_row["artifact_sha256"]:
-                        url_row["relation_to_previous"] = "same_bytes"
-                    elif str(prior[1]) != url_row["final_url"]:
-                        url_row["relation_to_previous"] = "redirect_changed"
-                    else:
-                        url_row["relation_to_previous"] = (
-                            "same_url_new_bytes"
-                        )
+                url_row["relation_to_previous"] = "not_comparable"
+                url_row["previous_artifact_sha256"] = None
                 cursor.execute(
                     f"""
                     INSERT INTO {OPS_SCHEMA}.url_observation (

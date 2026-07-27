@@ -338,6 +338,7 @@ def verify_bundle(bundle_path: Path) -> dict[str, Any]:
         "status": "passed",
         "bundle_id": expected_id,
         "bundle_fingerprint": expected_fingerprint,
+        "manifest_sha256": file_sha256(manifest_path),
         "resource_count": len(resources),
         "attachment_count": declared,
     }

@@ -31,7 +31,9 @@ from nhi_rule_history.update.rss import HTTP_PROFILE_ID, parse_rss
 from nhi_rule_history.update.workers import (
     WORKER_PROMPT_VERSION,
     WORKER_RUN_SCHEMA,
+    build_worker_prompt,
     source_packet,
+    worker_job_fingerprint,
 )
 
 
@@ -172,6 +174,23 @@ def _validate_attempts(
         for row in attempts
     ):
         raise UpdateStageLoadError("worker attempt prompt version differs")
+    intervals: list[tuple[datetime, datetime]] = []
+    for index, row in enumerate(attempts):
+        started = _timestamp(
+            row.get("started_at"), f"attempts[{index}].started_at"
+        )
+        completed = _timestamp(
+            row.get("completed_at"), f"attempts[{index}].completed_at"
+        )
+        if completed < started:
+            raise UpdateStageLoadError(
+                "worker attempt completion predates its start"
+            )
+        intervals.append((started, completed))
+    if len(intervals) == 2 and intervals[1][0] < intervals[0][1]:
+        raise UpdateStageLoadError(
+            "fallback worker attempt overlaps the primary attempt"
+        )
     for row in attempts:
         role = str(row["role"])
         for field, stream_name in (
@@ -471,11 +490,16 @@ def _tokens(
             "runner_version",
             "feed_url",
             "request_profile_sha256",
+            "notification_window_start",
+            "notification_window_end",
             "activation_cut",
+            "scheduled_at",
         ),
         "job_lease": (
             "lease_id",
             "owner_key",
+            "acquired_at",
+            "expires_at",
             "max_runtime_seconds",
         ),
         "worker_attempt": (
@@ -488,6 +512,8 @@ def _tokens(
             "model",
             "prompt_sha256",
             "output_sha256",
+            "started_at",
+            "completed_at",
             "status",
             "failure_code",
             "fallback_reason",
@@ -505,6 +531,9 @@ def _tokens(
             "http_status",
             "response_headers_sha256",
             "artifact_sha256",
+            "observed_at",
+            "previous_artifact_sha256",
+            "relation_to_previous",
             "error_code",
         ),
         "feed_observation": (
@@ -514,6 +543,7 @@ def _tokens(
             "parse_status",
             "item_count",
             "item_sequence_sha256",
+            "parsed_at",
             "parse_error_code",
         ),
         "feed_item_observation": (
@@ -533,6 +563,8 @@ def _tokens(
             "bundle_relative_path",
             "artifact_count",
             "total_bytes",
+            "prepared_at",
+            "atomically_published_at",
             "fsync_verified",
             "receipt_status",
             "rejection_code",
@@ -570,6 +602,7 @@ def _tokens(
             "char_end",
             "raw_text_sha256",
             "raw_text_char_length",
+            "observed_at",
             "statement",
         ),
         "candidate_evidence": (
@@ -579,12 +612,15 @@ def _tokens(
             "outcome",
             "assertion_text",
             "validator_version",
+            "recorded_at",
         ),
         "candidate_state_transition": (
+            "transition_seq",
             "transition_id",
             "state",
             "actor_kind",
             "decision_basis_sha256",
+            "recorded_at",
         ),
     }
     result: dict[str, tuple[str, ...]] = {}
@@ -649,9 +685,17 @@ def _prepare_update_load(
         or receipt.get("bundle_id") != verification["bundle_id"]
         or receipt.get("bundle_fingerprint")
         != verification["bundle_fingerprint"]
+        or receipt.get("manifest_sha256")
+        != verification["manifest_sha256"]
     ):
         raise UpdateStageLoadError("worker receipt does not match the source bundle")
     attempts = _read_attempts(candidate_receipt_path.parent / "attempts.jsonl")
+    if receipt.get("attempts_sha256") != file_sha256(
+        candidate_receipt_path.parent / "attempts.jsonl"
+    ):
+        raise UpdateStageLoadError(
+            "worker receipt does not bind the exact attempt ledger"
+        )
     selected_attempt = _validate_attempts(
         receipt, attempts, candidate_receipt_path.parent
     )
@@ -659,6 +703,17 @@ def _prepare_update_load(
         packet = source_packet(bundle_path)
     except ContractError as exc:
         raise UpdateStageLoadError("source packet verification failed") from exc
+    expected_prompt_bytes = build_worker_prompt(packet).encode("utf-8")
+    expected_prompt_sha = sha256_bytes(expected_prompt_bytes)
+    if receipt.get("prompt_sha256") != expected_prompt_sha:
+        raise UpdateStageLoadError(
+            "worker receipt prompt hash does not match the source packet"
+        )
+    prompt_path = candidate_receipt_path.parent / "prompt.json"
+    if not prompt_path.is_file() or prompt_path.read_bytes() != expected_prompt_bytes:
+        raise UpdateStageLoadError(
+            "worker prompt bytes are missing or differ from the source packet"
+        )
     required_flags = (
         {"odt_pdf_parity_unverified"}
         if packet["controller_facts"]["contains_pdf"]
@@ -701,12 +756,9 @@ def _prepare_update_load(
         character not in "0123456789abcdef" for character in job_fingerprint
     ):
         raise UpdateStageLoadError("job fingerprint is invalid")
-    expected_job_fingerprint = stable_id(
-        "nhi-worker-job",
-        verification["bundle_id"],
-        verification["bundle_fingerprint"],
-        WORKER_PROMPT_VERSION,
-        str(receipt["prompt_sha256"]),
+    expected_job_fingerprint = worker_job_fingerprint(
+        manifest_sha256=verification["manifest_sha256"],
+        prompt_sha256=str(receipt["prompt_sha256"]),
     )
     if job_fingerprint != expected_job_fingerprint:
         raise UpdateStageLoadError("job fingerprint does not match worker inputs")
@@ -736,7 +788,18 @@ def _prepare_update_load(
     artifact_observed: dict[str, str] = {}
     url_rows: list[dict[str, Any]] = []
     feed_resource: Mapping[str, Any] | None = None
+    resource_observed_times: list[datetime] = []
     for index, resource in enumerate(resources):
+        observed_at = _timestamp(
+            resource.get("observed_at"),
+            f"manifest.resources[{index}].observed_at",
+        )
+        if observed_at > sealed_at:
+            raise UpdateStageLoadError(
+                "resource observation postdates manifest seal"
+            )
+        observed_at_iso = _iso(observed_at)
+        resource_observed_times.append(observed_at)
         content_path = _relative_path(
             str(resource["content_path"]), "resource.content_path"
         )
@@ -746,7 +809,7 @@ def _prepare_update_load(
             "byte_size": resource["byte_size"],
             "media_type": resource["media_type"],
             "bundle_relative_path": f"{bundle_relative_path}/{content_path}",
-            "first_observed_at": resource["observed_at"],
+            "first_observed_at": observed_at_iso,
         }
         prior_artifact = artifact_rows.get(digest)
         if prior_artifact is not None and (
@@ -755,7 +818,7 @@ def _prepare_update_load(
         ):
             raise UpdateStageLoadError("one artifact hash has conflicting metadata")
         artifact_rows.setdefault(digest, row)
-        artifact_observed.setdefault(digest, resource["observed_at"])
+        artifact_observed.setdefault(digest, observed_at_iso)
         url_rows.append(
             {
                 "url_observation_id": _deterministic_uuid(
@@ -770,7 +833,7 @@ def _prepare_update_load(
                 "owner_key": owner_key,
                 "requested_url": resource["request_url"],
                 "final_url": resource["final_url"],
-                "observed_at": resource["observed_at"],
+                "observed_at": observed_at_iso,
                 "outcome": "response",
                 "http_status": resource["http_status"],
                 "response_headers": resource["response_headers"],
@@ -837,7 +900,7 @@ def _prepare_update_load(
             "item_sequence_sha256": sha256_bytes(
                 canonical_json_bytes([item.as_dict() for item in feed_items])
             ),
-            "parsed_at": feed_resource["observed_at"],
+            "parsed_at": feed_url_row["observed_at"],
             "parse_error_code": None,
         },
     )
@@ -848,7 +911,7 @@ def _prepare_update_load(
         for attempt in attempts
     }
     attempt_rows: list[dict[str, Any]] = []
-    lease_points = [window_start, window_end]
+    lease_points: list[datetime] = []
     for number, attempt in enumerate(attempts, 1):
         started = _timestamp(attempt["started_at"], "attempt.started_at")
         completed = _timestamp(attempt["completed_at"], "attempt.completed_at")
@@ -884,13 +947,27 @@ def _prepare_update_load(
                 "fallback_reason": attempt.get("fallback_reason"),
             }
         )
-    for resource in resources:
-        lease_points.append(
-            _timestamp(resource["observed_at"], "resource.observed_at")
-        )
+    if not lease_points:
+        raise UpdateStageLoadError("worker receipt contains no attempt interval")
     lease_start = min(lease_points)
-    lease_end = max(lease_points) + timedelta(seconds=1)
-    runtime_seconds = math.ceil((lease_end - lease_start).total_seconds())
+    earliest_attempt_start = min(
+        _timestamp(row["started_at"], "attempt.started_at")
+        for row in attempt_rows
+    )
+    if sealed_at > earliest_attempt_start:
+        raise UpdateStageLoadError(
+            "manifest seal postdates the earliest worker attempt"
+        )
+    if any(value > earliest_attempt_start for value in resource_observed_times):
+        raise UpdateStageLoadError(
+            "resource observation postdates the earliest worker attempt"
+        )
+    lease_end = max(lease_points)
+    if lease_end == lease_start:
+        lease_end = lease_start + timedelta(microseconds=1)
+    runtime_seconds = max(
+        1, math.ceil((lease_end - lease_start).total_seconds())
+    )
     if runtime_seconds > _MAX_LEASE_SECONDS:
         raise UpdateStageLoadError("material exceeds the six-hour lease bound")
     block_map = {
@@ -1137,31 +1214,15 @@ def _insert_new_material(cursor: Any, material: PreparedUpdateLoad) -> None:
         _insert_artifact(cursor, row)
     for source in material.rows["url_observation"]:
         cursor.execute(
-            f"""
-            SELECT artifact_sha256, final_url
-            FROM {OPS_SCHEMA}.url_observation
-            WHERE requested_url = %s
-              AND outcome = 'response'
-              AND artifact_sha256 IS NOT NULL
-            ORDER BY observed_at DESC, url_observation_id DESC
-            LIMIT 1
-            """,
-            (source["requested_url"],),
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+            (f"nhi-rule-history-url:{source['requested_url']}",),
         )
-        prior = cursor.fetchone()
         row = dict(source)
-        if prior is None:
-            relation, previous_sha = "first_observation", None
-        else:
-            previous_sha = str(prior[0])
-            if previous_sha == row["artifact_sha256"]:
-                relation = "same_bytes"
-            elif str(prior[1]) != row["final_url"]:
-                relation = "redirect_changed"
-            else:
-                relation = "same_url_new_bytes"
-        row["previous_artifact_sha256"] = previous_sha
-        row["relation_to_previous"] = relation
+        # The append-only row records the exact observation, not a mutable
+        # predecessor assertion.  Chronological relations are derived by the
+        # managed view so delayed loads cannot point backwards from t1 to t2.
+        row["previous_artifact_sha256"] = None
+        row["relation_to_previous"] = "not_comparable"
         cursor.execute(
             f"""
             INSERT INTO {OPS_SCHEMA}.url_observation (
@@ -1306,18 +1367,25 @@ _VERIFY_SQL = {
     "update_job": f"""
         SELECT job_id::text, job_fingerprint, contract_version,
                runner_version, feed_url, request_profile_sha256,
-               activation_cut::text
+               to_jsonb(notification_window_start) #>> '{{}}',
+               to_jsonb(notification_window_end) #>> '{{}}',
+               activation_cut::text,
+               to_jsonb(scheduled_at) #>> '{{}}'
         FROM {OPS_SCHEMA}.update_job WHERE job_id = %s
     """,
     "job_lease": f"""
-        SELECT lease_id::text, owner_key, max_runtime_seconds
+        SELECT lease_id::text, owner_key,
+               to_jsonb(acquired_at) #>> '{{}}',
+               to_jsonb(expires_at) #>> '{{}}', max_runtime_seconds
         FROM {OPS_SCHEMA}.job_lease WHERE job_id = %s
     """,
     "worker_attempt": f"""
         SELECT attempt_id::text, attempt_no, lane,
                primary_attempt_id::text, provider, runtime, model,
-               prompt_sha256, output_sha256, status, failure_code,
-               fallback_reason
+               prompt_sha256, output_sha256,
+               to_jsonb(started_at) #>> '{{}}',
+               to_jsonb(completed_at) #>> '{{}}',
+               status, failure_code, fallback_reason
         FROM {OPS_SCHEMA}.worker_attempt WHERE job_id = %s
     """,
     "content_artifact": f"""
@@ -1336,13 +1404,16 @@ _VERIFY_SQL = {
     "url_observation": f"""
         SELECT url_observation_id::text, requested_url, final_url, outcome,
                http_status, response_headers_sha256, artifact_sha256,
-               error_code
+               to_jsonb(observed_at) #>> '{{}}',
+               previous_artifact_sha256,
+               relation_to_previous, error_code
         FROM {OPS_SCHEMA}.url_observation WHERE job_id = %s
     """,
     "feed_observation": f"""
         SELECT feed_observation_id::text, response_artifact_sha256,
                parser_version, parse_status, item_count,
-               item_sequence_sha256, parse_error_code
+               item_sequence_sha256,
+               to_jsonb(parsed_at) #>> '{{}}', parse_error_code
         FROM {OPS_SCHEMA}.feed_observation WHERE job_id = %s
     """,
     "feed_item_observation": f"""
@@ -1357,6 +1428,8 @@ _VERIFY_SQL = {
     "bundle_receipt": f"""
         SELECT receipt_id::text, bundle_uid, manifest_sha256,
                bundle_relative_path, artifact_count, total_bytes,
+               to_jsonb(prepared_at) #>> '{{}}',
+               to_jsonb(atomically_published_at) #>> '{{}}',
                fsync_verified, receipt_status, rejection_code
         FROM {OPS_SCHEMA}.bundle_receipt WHERE job_id = %s
     """,
@@ -1375,7 +1448,8 @@ _VERIFY_SQL = {
     "candidate_source_span": f"""
         SELECT span.span_id, span.artifact_sha256, span.source_role,
                span.locator_key, span.char_start, span.char_end,
-               span.raw_text_sha256, span.raw_text_char_length, span.statement
+               span.raw_text_sha256, span.raw_text_char_length,
+               to_jsonb(span.observed_at) #>> '{{}}', span.statement
         FROM {CANDIDATE_SCHEMA}.candidate_source_span span
         JOIN {CANDIDATE_SCHEMA}.candidate_proposal proposal
           ON proposal.proposal_id = span.proposal_id
@@ -1384,15 +1458,18 @@ _VERIFY_SQL = {
     "candidate_evidence": f"""
         SELECT evidence.evidence_id, evidence.span_id,
                evidence.evidence_code, evidence.outcome,
-               evidence.assertion_text, evidence.validator_version
+               evidence.assertion_text, evidence.validator_version,
+               to_jsonb(evidence.recorded_at) #>> '{{}}'
         FROM {CANDIDATE_SCHEMA}.candidate_evidence evidence
         JOIN {CANDIDATE_SCHEMA}.candidate_proposal proposal
           ON proposal.proposal_id = evidence.proposal_id
         WHERE proposal.job_id = %s
     """,
     "candidate_state_transition": f"""
-        SELECT transition.transition_id::text, transition.state,
+        SELECT transition.transition_seq, transition.transition_id::text,
+               transition.state,
                transition.actor_kind, transition.decision_basis_sha256
+               , to_jsonb(transition.recorded_at) #>> '{{}}'
         FROM {CANDIDATE_SCHEMA}.candidate_state_transition transition
         JOIN {CANDIDATE_SCHEMA}.candidate_proposal proposal
           ON proposal.proposal_id = transition.proposal_id
@@ -1410,6 +1487,7 @@ def _verify_loaded(
             cursor.execute(
                 "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
             )
+            cursor.execute("SET LOCAL TIME ZONE 'UTC'")
             for table, sql in _VERIFY_SQL.items():
                 count = 2 if table == "content_artifact" else 1
                 cursor.execute(sql, (material.job_id,) * count)

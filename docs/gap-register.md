@@ -13,7 +13,8 @@
 | G-SCHEDULE-01 | recurring RSS/update lane | passed_stage_only | 真實 scheduled poll 與 proposal fires、durable result log、primary timeout／fallback success、`AUTO_PROMOTION_ENABLED=false` |
 | G-EVENT-01 | event/effect ledger 未建立 | blocked | 公告、附件新舊欄、correction/supersession |
 | G-DATE-01 | 生效日未證據化 | blocked | 每個 accepted date 的 official locator |
-| G-ANNOTATION-01 | source-local 日期註記尚未完成 event resolution | raw_6366_adjudicated_909_joint_pairs_document_mapped_resolution_0_of_6360 | 6,366 個 exact slash-triplet candidates 已入 append-only stage；6 筆已確認是 Trelegy 劑量而非日期，有效日期分母 6,360。native cross-format preflight 為 2,034/3,080 同日期、909/3,010 同檔日期＋正式條號候選；909 組皆已追到 owning 文號（490 unique、419 ambiguous），但首輪法律 resolution 仍為 6,360 no-match／6 terminal non-date／0 resolved |
+| G-ANNOTATION-01 | source-local 日期註記尚未完成 event resolution | raw_6366_adjudicated_3080_pair_queue_prepared_resolution_0_of_6360 | 6,366 個 exact slash-triplet candidates 已入 append-only stage；6 筆已確認是 Trelegy 劑量而非日期，有效日期分母 6,360。3,080 個條文×日期已各形成一個 hash-bound 工作單：490 unique-document、419 ambiguous-document、1,125 有原生日期但無 joint 文號、1,046 無原生同日期文件候選。佇列只排來源閱讀優先序；法律 resolution 仍為 6,360 no-match／6 terminal non-date／0 resolved |
+| G-WORK-01 | 3,080 個條文×日期缺口尚待逐筆來源閱讀 | queue_prepared_0_legally_resolved | `2026-07-27-history-gap-work-queue.jsonl` 共 3,080 列／9,547,157 bytes，SHA-256 `947dfd5a8ddbf29633ee9b7b0d945bd17b23f06c90f6a1e60c1af3a9ae606c57`；每列要求 official event、日期角色、stable identity、前後 exact text、direct adjacency 與 anchor replay，模型只能產生 candidate，不能寫 canonical |
 | G-COVERAGE-01 | 尚無逐條完整性 closure | schema_ready_all_blocked | annotation/event/snapshot/adjacency/source-universe/anchor 六項全通過 |
 | G-ID-01 | stable identity 未建立 | blocked | UUID、designation、curation、無 cycle |
 | G-REPLAY-01 | event replay 未對 anchors | blocked | rule set/text hash parity |
@@ -41,9 +42,12 @@
   verify 與 byte-identical replay。1996–1998 exact phrase 為 0，不代表
   來源不存在。
 - 1,719/1,719 raw linkage；31,377 blocks／1,228 occurrences structural stage。
-- 91 項 public tests（5 項環境性 skip），另有 private registrar/migration
+- 283 項 public tests（6 項環境性 skip），另有 private registrar/migration
   contract tests、sealed DML guard、bounded rollback與 idempotent replay。
 - legacy 日期註記稽核已完成；它證明缺口存在，不是完成證據。
+- 3,080 個條文×日期已全部轉成一對一、可續跑、來源 hash-bound 的 review
+  work units；四條 priority lanes 的合計精確等於 3,080，尚無任一列完成
+  legal event/effect resolution。
 - PostgreSQL／SQLite 已能 fail-closed 表達 navigation-code provenance、
   source date annotations 與 per-rule history coverage。
 - 連續更新已在真實排程完成完整附件 corpus registration；PDF、ODS、PDF、

@@ -391,6 +391,19 @@ gates:
       distinct_official_document_candidates: 282
       receipt: docs/audits/2026-07-27-history-marker-document-candidate-preflight.json
       locator_ledger: docs/audits/2026-07-27-history-marker-document-candidate-evidence.jsonl
+    gap_work_queue:
+      status: prepared_pending_source_review
+      row_count: 3080
+      declared_cut: "2026-07-27"
+      canonical_write_authorized: false
+      priority_lanes:
+        unique_document_candidate: 490
+        ambiguous_document_candidates: 419
+        native_date_without_joint_document_candidate: 1125
+        marker_without_native_document_date_match: 1046
+      queue_sha256: 947dfd5a8ddbf29633ee9b7b0d945bd17b23f06c90f6a1e60c1af3a9ae606c57
+      queue: docs/audits/2026-07-27-history-gap-work-queue.jsonl
+      manifest: docs/audits/2026-07-27-history-gap-work-queue-manifest.json
     project_navigation_pairs_not_evaluable_as_official_designations: 70
     official_event_effect_resolved: 0
     valid_event_resolution_denominator: 6360
@@ -488,6 +501,7 @@ current_work_package:
   id: WP03
   title: Build the official event/effect evidence layer
   next_action: >
-    Resolve every source-local date marker to an older official event/effect or
-    explicit gap, complete same-cut NHI whole/chapter clause parity, and
-    materialize complete adjacent snapshots before any complete-history claim.
+    Process the 3,080 hash-bound clause-date work units into official
+    event/effect evidence or explicit gaps, beginning with the 490
+    unique-document candidates; complete same-cut NHI whole/chapter parity and
+    adjacent snapshots before any complete-history claim.

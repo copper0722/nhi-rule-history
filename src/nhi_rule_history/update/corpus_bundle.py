@@ -23,12 +23,15 @@ from nhi_rule_history.contracts import (
     sha256_bytes,
 )
 from nhi_rule_history.update.bundle import verify_bundle
-from nhi_rule_history.update.notice import extract_notice_metadata
+from nhi_rule_history.update.notice import (
+    extract_notice_metadata,
+    normalize_reference_number,
+)
 from nhi_rule_history.update.odt import extract_odt_blocks
 
 
 CORPUS_BUNDLE_SCHEMA = "nhi-rule-history/corpus-source-bundle/v1"
-CORPUS_BUNDLE_SCHEMA_VERSION = "1.1"
+CORPUS_BUNDLE_SCHEMA_VERSION = "1.2"
 _REFERENCE_RE = re.compile(r"^健保審字第(\d+)號$")
 _ATTACHMENT_EXTENSION = {
     "application/pdf": ".pdf",
@@ -48,7 +51,9 @@ def _roc_date(raw: str) -> date:
 
 
 def source_uid_from_reference(reference_number_raw: str) -> str:
-    normalized = "".join(reference_number_raw.split())
+    normalized, _normalization = normalize_reference_number(
+        reference_number_raw
+    )
     if not _REFERENCE_RE.fullmatch(normalized):
         raise ContractError("official reference number cannot form a source uid")
     return f"gov_{normalized}"
@@ -80,16 +85,24 @@ def _raw_markdown(
         "---",
         f"source_uid: {json.dumps(source_uid, ensure_ascii=False)}",
         f"title: {json.dumps(metadata['subject_raw'], ensure_ascii=False)}",
-        f"reference_number: {json.dumps(metadata['reference_number_raw'], ensure_ascii=False)}",
+        "reference_number: "
+        f"{json.dumps(metadata['reference_number_normalized'], ensure_ascii=False)}",
+        "reference_number_raw: "
+        f"{json.dumps(metadata['reference_number_raw'], ensure_ascii=False)}",
+        "reference_number_normalization: "
+        f"{metadata['reference_number_normalization']}",
+        "reference_number_normalization_rule: "
+        f"{metadata['reference_number_normalization_rule']}",
         f"canonical_url: {canonical_url}",
         f"document_date_roc: {metadata['document_date_roc_raw']}",
         f"publication_date_roc: {metadata['publication_date_roc_raw']}",
-        "extraction: nhi-rule-history-corpus-bundle/1.1.0",
+        "extraction: nhi-rule-history-corpus-bundle/1.2.0",
         "---",
         "",
         f"# {metadata['subject_raw']}",
         "",
-        f"- 發文字號：{metadata['reference_number_raw']}",
+        f"- 發文字號（來源原文）：{metadata['reference_number_raw']}",
+        f"- 發文字號（正規化）：{metadata['reference_number_normalized']}",
         f"- 發文日期：{metadata['document_date_roc_raw']}",
         f"- 發布日期：{metadata['publication_date_roc_raw']}",
         "",
@@ -280,7 +293,14 @@ def prepare_corpus_bundle(
         "type": "regulation",
         "source_lang": "zh-TW",
         "title_zh": metadata["subject_raw"],
-        "ref_number": metadata["reference_number_raw"],
+        "ref_number": metadata["reference_number_normalized"],
+        "ref_number_raw": metadata["reference_number_raw"],
+        "ref_number_normalization": metadata[
+            "reference_number_normalization"
+        ],
+        "ref_number_normalization_rule": metadata[
+            "reference_number_normalization_rule"
+        ],
         "canonical_url": source_manifest["rss_item"]["link"],
         "source_url": source_manifest["rss_item"]["link"],
         "publish_date": publication_date.isoformat(),

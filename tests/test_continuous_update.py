@@ -8,8 +8,10 @@ import unittest
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
-from nhi_rule_history.contracts import ContractError, sha256_bytes
+import nhi_rule_history.update.workers as worker_contract
+from nhi_rule_history.contracts import ContractError, sha256_bytes, stable_id
 from nhi_rule_history.update.bundle import BundleBuilder, verify_bundle
 from nhi_rule_history.update.corpus_bundle import prepare_corpus_bundle
 from nhi_rule_history.update.proposal import (
@@ -26,9 +28,12 @@ from nhi_rule_history.update.rss import (
     parse_rss,
 )
 from nhi_rule_history.update.workers import (
+    WORKER_PROMPT_VERSION,
     WorkerOrchestrator,
     WorkerSpec,
+    build_worker_prompt,
     source_packet,
+    worker_job_fingerprint,
 )
 
 
@@ -171,7 +176,12 @@ def valid_proposal(
 
 
 class ContinuousUpdateTests(unittest.TestCase):
-    def _bundle(self, root: Path):
+    def _bundle(
+        self,
+        root: Path,
+        *,
+        reference_number: str = "健保審字第1150000000號",
+    ):
         item = parse_rss(fixture_feed())[0]
         detail_url = item.link
         detail = response(
@@ -179,7 +189,7 @@ class ContinuousUpdateTests(unittest.TestCase):
             (
                 "<html><table>"
                 "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
-                "<tr><th>發文字號</th><td>健保審字第1150000000號</td></tr>"
+                f"<tr><th>發文字號</th><td>{reference_number}</td></tr>"
                 "<tr><th>公告事項</th><td>修訂第9節9.4規定</td></tr>"
                 "<tr><th>發文日期</th><td>115-07-15</td></tr>"
                 "</table><dl>"
@@ -307,15 +317,88 @@ class ContinuousUpdateTests(unittest.TestCase):
             manifest = json.loads(
                 (target / "manifest.json").read_text(encoding="utf-8")
             )
-            self.assertEqual(manifest["schema_version"], "1.1")
+            self.assertEqual(manifest["schema_version"], "1.2")
             self.assertEqual(manifest["declared_attachment_count"], 2)
             self.assertEqual(
                 manifest["source_uid"], "gov_健保審字第1150000000號"
+            )
+            self.assertEqual(
+                manifest["ref_number"], "健保審字第1150000000號"
+            )
+            self.assertEqual(
+                manifest["ref_number_raw"], "健保審字第1150000000號"
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization"], "exact"
             )
             second = prepare_corpus_bundle(
                 sealed.path, corpus_root=root / "corpus"
             )
             self.assertTrue(second["replayed"])
+
+    def test_missing_terminal_hao_is_normalized_without_losing_source_text(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sealed = self._bundle(
+                root / "source",
+                reference_number="健保審字第1150671800",
+            )
+            result = prepare_corpus_bundle(
+                sealed.path, corpus_root=root / "corpus"
+            )
+            target = Path(result["bundle_path"])
+            manifest = json.loads(
+                (target / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                manifest["source_uid"], "gov_健保審字第1150671800號"
+            )
+            self.assertEqual(
+                manifest["ref_number"], "健保審字第1150671800號"
+            )
+            self.assertEqual(
+                manifest["ref_number_raw"], "健保審字第1150671800"
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization"],
+                "terminal_hao_appended",
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization_rule"],
+                "nhi-reference-number-normalization/1.0.0",
+            )
+            raw = (target / "raw.md").read_text(encoding="utf-8")
+            self.assertIn(
+                'reference_number_raw: "健保審字第1150671800"',
+                raw,
+            )
+            packet = source_packet(sealed.path)
+            self.assertEqual(
+                packet["notice_metadata"]["reference_number_raw"],
+                "健保審字第1150671800",
+            )
+            self.assertEqual(
+                packet["notice_metadata"]["reference_number_normalized"],
+                "健保審字第1150671800號",
+            )
+
+    def test_reference_normalization_rejects_other_missing_content(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            sealed = self._bundle(
+                Path(temporary) / "source",
+                reference_number="1150671800",
+            )
+            with self.assertRaisesRegex(
+                ContractError, "missing or ambiguous"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=Path(temporary) / "corpus",
+                )
 
     def test_corpus_bundle_preserves_all_declared_attachments_in_sequence(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -451,6 +534,130 @@ class ContinuousUpdateTests(unittest.TestCase):
                     source_blocks=packet["source_blocks"],
                     bundle_id=sealed.bundle_id,
                     bundle_fingerprint=sealed.bundle_fingerprint,
+                )
+
+    def test_legacy_worker_directory_does_not_collide_and_new_run_replays(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sealed = self._bundle(root / "bundles")
+            packet = source_packet(sealed.path)
+            prompt_sha = sha256_bytes(
+                build_worker_prompt(packet).encode("utf-8")
+            )
+            legacy_fingerprint = stable_id(
+                "nhi-worker-job",
+                packet["bundle_id"],
+                packet["bundle_fingerprint"],
+                WORKER_PROMPT_VERSION,
+                prompt_sha,
+            )
+            current_fingerprint = worker_job_fingerprint(
+                manifest_sha256=packet["manifest_sha256"],
+                prompt_sha256=prompt_sha,
+            )
+            self.assertNotEqual(legacy_fingerprint, current_fingerprint)
+            candidate_root = root / "candidates"
+            legacy_dir = candidate_root / legacy_fingerprint
+            legacy_dir.mkdir(parents=True)
+            legacy_receipt = legacy_dir / "candidate-receipt.json"
+            legacy_receipt.write_text(
+                '{"schema":"nhi-rule-history/worker-run/v1"}',
+                encoding="utf-8",
+            )
+
+            payload = json.dumps(
+                valid_proposal(
+                    packet["source_blocks"],
+                    parity_unverified=True,
+                    identity_uncertainty=True,
+                ),
+                ensure_ascii=False,
+            )
+            calls: list[list[str]] = []
+
+            def runner(argv, **_kwargs):
+                calls.append(argv)
+                return SimpleNamespace(
+                    stdout=payload,
+                    stderr="",
+                    returncode=0,
+                )
+
+            orchestrator = WorkerOrchestrator(
+                primary=WorkerSpec(
+                    "primary-worker",
+                    "primary-runtime",
+                    "test-provider-a",
+                    "test-model-a",
+                    ("primary",),
+                ),
+                fallback=WorkerSpec(
+                    "fallback-worker",
+                    "fallback-runtime",
+                    "test-provider-b",
+                    "test-model-b",
+                    ("fallback",),
+                ),
+                runner=runner,
+            )
+            receipt = orchestrator.run(
+                bundle_path=sealed.path,
+                candidate_root=candidate_root,
+            )
+            self.assertEqual(
+                receipt["job_fingerprint"], current_fingerprint
+            )
+            self.assertEqual(
+                legacy_receipt.read_text(encoding="utf-8"),
+                '{"schema":"nhi-rule-history/worker-run/v1"}',
+            )
+            replay = orchestrator.run(
+                bundle_path=sealed.path,
+                candidate_root=candidate_root,
+            )
+            self.assertTrue(replay["replayed"])
+            self.assertEqual(len(calls), 1)
+
+    def test_worker_fingerprint_binds_every_persisted_contract(self) -> None:
+        manifest_sha = "a" * 64
+        prompt_sha = "b" * 64
+        baseline = worker_job_fingerprint(
+            manifest_sha256=manifest_sha,
+            prompt_sha256=prompt_sha,
+        )
+        self.assertNotEqual(
+            baseline,
+            worker_job_fingerprint(
+                manifest_sha256="c" * 64,
+                prompt_sha256=prompt_sha,
+            ),
+        )
+        self.assertNotEqual(
+            baseline,
+            worker_job_fingerprint(
+                manifest_sha256=manifest_sha,
+                prompt_sha256="d" * 64,
+            ),
+        )
+        for contract_name in (
+            "WORKER_PROMPT_VERSION",
+            "WORKER_ATTEMPT_SCHEMA",
+            "WORKER_RUN_SCHEMA",
+            "PROPOSAL_SCHEMA",
+        ):
+            with self.subTest(contract=contract_name), mock.patch.object(
+                worker_contract,
+                contract_name,
+                getattr(worker_contract, contract_name) + "-next",
+            ):
+                self.assertNotEqual(
+                    baseline,
+                    worker_contract.worker_job_fingerprint(
+                        manifest_sha256=manifest_sha,
+                        prompt_sha256=prompt_sha,
+                    ),
                 )
 
     def test_worker_primary_contract_failure_then_linked_fallback(self) -> None:
