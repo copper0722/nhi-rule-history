@@ -15,17 +15,20 @@ Required attribution:
 This is compatible with the attribution requirement in Taiwan's Government
 Open Data Licence, Version 1.0.
 
-## Official NHI source material
+## Official NHI and MOHW source material
 
 Official source files remain attributable to the National Health Insurance
-Administration. The NHI website's open-data declaration permits reproduction,
-adaptation, public transmission, and sublicensing with attribution. Official
+Administration or the Ministry of Health and Welfare. Their website open-data
+declarations permit reproduction, adaptation, public transmission, and
+sublicensing with attribution within the copyright-protected scope. Official
 logos, trademarks, third-party material, and any specially restricted item are
-not relicensed by this repository.
+not relicensed by this repository; an artifact carrying a special restriction
+is excluded from a public binary release until separately adjudicated.
 
 References:
 
 - [NHI open-data declaration](https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html)
+- [MOHW open-data declaration](https://www.mohw.gov.tw/cp-81-155-1.html)
 - [Taiwan Government Open Data Licence, Version 1.0](https://data.gov.tw/license)
 
 The project preserves official bytes unchanged, stores checksums and source

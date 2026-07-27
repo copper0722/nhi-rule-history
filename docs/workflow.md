@@ -141,21 +141,45 @@ SQLite 由同一批 JSONL 建立，不是另一份手工維護資料。
 
 ## 更新操作
 
-現階段：
+目前每一層都有獨立、fail-closed 的 CLI；尚未把它們包成一個會自動跨 gate
+的 `update --all`：
 
 ```bash
 make test
-make validate-manifest
-make sqlite-smoke
+
+PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
+  --plan sources/source-plan-v2.json --run-dir build/pass-a \
+  --allow-insecure-tls
+PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
+  --plan sources/source-plan-v2.json --run-dir build/pass-b \
+  --allow-insecure-tls
+PYTHONPATH=src python3 -m nhi_rule_history.cli compare-discovery \
+  --pass-a build/pass-a --pass-b build/pass-b \
+  --output build/pass-a/discovery-parity.json
+PYTHONPATH=src python3 -m nhi_rule_history.cli fetch \
+  --plan sources/source-plan-v2.json --run-dir build/pass-a \
+  --allow-insecure-tls
+PYTHONPATH=src python3 -m nhi_rule_history.cli verify-raw \
+  --run-dir build/pass-a
+PYTHONPATH=src python3 -m nhi_rule_history.cli parse-odt \
+  --run-dir build/pass-a --stage-dir build/structural-RUN-UUID \
+  --parse-run-id RUN-UUID
+PYTHONPATH=src python3 -m nhi_rule_history.cli release-v2 \
+  --run-dir build/pass-a --stage-dir build/structural-RUN-UUID \
+  --source-plan sources/source-plan-v2.json \
+  --eligibility-receipt \
+    data/manifests/mohw-fint-2021-2026-v2/release-eligibility.json \
+  --output-dir build/v2-evidence-release
 ```
 
-尚待實作的單一入口：
+上述 TLS 例外必須由 operator 明示；它只重現 2026-07-27 FINT endpoint 在
+本機 Python trust store 的相容需求。預設仍 fail closed；有可驗證 CA bundle
+時改用 `--ca-file`。
 
-```bash
-python -m nhi_rule_history update --source all --out build/run-YYYYMMDD
-python -m nhi_rule_history verify --run build/run-YYYYMMDD
-python -m nhi_rule_history release --run build/run-YYYYMMDD
-```
+套用 repo migration 後，`load-acquisition` 與 `load-structural` 各自會先完整
+validate、在單一 transaction 寫入並 seal，再用新連線重算 count 與 row-set
+fingerprint。`release-v2` 只在本地準備 raw tar.zst 與 structural JSONL.zst，
+沒有發布網路路徑。
 
 入口完成前，不建立假裝自動化的 schedule。每一個未實作步驟留在
 [gap-register](gap-register.md)。

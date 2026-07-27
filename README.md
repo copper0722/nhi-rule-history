@@ -11,20 +11,23 @@ JSONL 與 SQLite 可攜資料。
 
 **尚未完成完整歷史庫。**
 
-現有成果是 14 份歷史 ODT 的受限 staging：
+現有成果分成兩個互不冒充的受限 staging：
 
-| 項目 | 數量／狀態 |
-|---|---:|
-| 官方歷史 ODT | 14 份，約 47 MB |
-| 結構區塊 | 213,512 |
-| 條文編號出現候選 | 9,303 |
-| 純文字量 | 約 5.6 MB |
-| staging 阻斷錯誤 | 0 |
-| 正式法律歷史 | 尚未建立 |
-| SQLite release | 尚未產出 |
+| 項目 | v1 年度整份檔 | v2 後續公告／附件 |
+|---|---:|---:|
+| 來源範圍 | 14 份歷史 ODT（96.7–109） | 2021-01-01–2026-07-27 MOHW FINT bounded query |
+| 官方 detail／附件 | — | 366 detail、1,353 附件 |
+| 唯一 raw artifacts | 14 | 1,712（85,642,128 bytes） |
+| ODT 資源／唯一 bytes | 14／14 | 360／358 |
+| 結構區塊 | 213,512 | 31,377 |
+| 條文編號出現候選 | 9,303 | 1,228 |
+| staging 阻斷錯誤 | 0 | 0 |
+| 正式法律歷史 | 尚未建立 | 尚未建立 |
 
-`9,303` 不是唯一條文數或版本數；目前尚未完成法律生效日、穩定條文身分、
-公告事件重播與相鄰版本 diff。
+`9,303` 與 `1,228` 都不是唯一條文數或版本數。v2 ODT 多為「修訂後／原
+給付規定」對照表；兩欄的文字已 lossless 入 stage，但尚未把欄位提升成法律
+事件、穩定條文身分或版本先後。目前仍未完成法律生效日、公告事件重播與
+相鄰版本 diff。
 
 ## Repo 的重點
 
@@ -39,16 +42,19 @@ JSONL 與 SQLite 可攜資料。
 
 ## 原始資料會不會超過 GitHub 容量？
 
-現在不會。14 份 ODT 合計約 47 MB，最大單檔約 8 MB；解析出的文字約
-5.6 MB。GitHub 一般 Git 單檔上限為 100 MiB，建議 repo 低於 1 GB。
+現在不會。v1 14 份 ODT 約 47 MB；v2 經 byte-level 去重的 raw artifacts
+約 82 MiB。單檔沒有超過 GitHub 的 100 MiB Git 上限，但反覆把二進位歷史
+塞進 Git 會拖累每次 clone。
 
 本專案採兩層策略：
 
 1. Git 追蹤 source manifest、normalized JSONL、schema、程式與小型樣本。
-2. 不變的官方 DOC／ODT／PDF／ZIP 與 SQLite snapshot 放 GitHub Releases；
+2. 不變的官方 DOC／ODT／PDF／ODS 與 SQLite snapshot 放 GitHub Releases；
    每個 release asset 可到 2 GiB，且不會讓每次 clone 背負全部 binary history。
 
-條文全文可以進 Git；官方二進位原檔則用 Release assets 比較耐久。
+條文全文可以公開；大型結構 JSONL、SQLite 與官方二進位原檔則用 Release
+assets 比較耐久。v2 的公開 source manifest 已放在
+[data/manifests/mohw-fint-2021-2026-v2](data/manifests/mohw-fint-2021-2026-v2/)。
 首批 14 份原檔已發布於
 [raw-odt-v1](https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1)。
 
@@ -63,14 +69,27 @@ JSONL 與 SQLite 可攜資料。
 ## 快速驗證
 
 ```bash
-python3 -m unittest discover -s .script/nhi-rule-history/tests -p 'test_*.py'
+make test
 sqlite3 /tmp/nhi-rule-history.db < database/sqlite-schema.sql
+
+PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
+  --plan sources/source-plan-v2.json --run-dir build/pass-a \
+  --allow-insecure-tls
+PYTHONPATH=src python3 -m nhi_rule_history.cli fetch \
+  --plan sources/source-plan-v2.json --run-dir build/pass-a \
+  --allow-insecure-tls
+PYTHONPATH=src python3 -m nhi_rule_history.cli verify-raw \
+  --run-dir build/pass-a
 ```
+
+`--allow-insecure-tls` 是 2026-07-27 對 MOHW FINT 實跑所需、必須明示的相容
+模式；預設仍驗證 TLS。能提供正確 CA bundle 時應改用 `--ca-file`。
 
 ## 官方來源
 
 - [全民健康保險藥品給付規定歷史檔](https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html)
 - [健保署法規公告](https://www.nhi.gov.tw/ch/lp-3258-1.html)
+- [衛福部法規函釋查詢](https://mohwlaw.mohw.gov.tw/FINT/FINTQRY01-1.aspx)
 - [健保用藥品項查詢項目檔](https://data.gov.tw/dataset/23715)
 
 本專案與衛生福利部中央健康保險署、WHO 或 WHO Collaborating Centre 無隸屬、

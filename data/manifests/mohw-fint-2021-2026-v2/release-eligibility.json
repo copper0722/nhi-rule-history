@@ -1,0 +1,63 @@
+{
+  "schema": "nhi-rule-history/release-eligibility-receipt/v1",
+  "status": "reviewed_bounded_evidence_only",
+  "source_plan_contract_version": "nhi-rule-history/source-plan/v2",
+  "source_plan_sha256": "92fbe30822de67535c5ad91285bbd8f68fd78a63e9156f279f83685c673a42d3",
+  "query_normalization_version": "nhi-rule-history-mohw-fint-resource-identity/v2",
+  "date_window": {
+    "start": "2021-01-01",
+    "end": "2026-07-27",
+    "calendar": "Gregorian",
+    "start_inclusive": true,
+    "end_inclusive": true
+  },
+  "capture_window": {
+    "started_at": "2026-07-27T02:41:43+00:00",
+    "ended_at": "2026-07-27T02:45:24+00:00",
+    "declared_timezone": "Asia/Taipei",
+    "local_started_at": "2026-07-27T10:41:43+08:00",
+    "local_ended_at": "2026-07-27T10:45:24+08:00"
+  },
+  "corrected_discovery_passes": {
+    "pass_a_run_id": "51189ce2-ce51-461c-bd96-c59a526f6065",
+    "pass_b_run_id": "935a6721-d38b-4bed-be05-c985afe46389",
+    "resource_key_set_sha256": "a9cef7abddcc7c2301363957bbc054259a0cb7f6dac6d8d52c5c4064b54496a7"
+  },
+  "corrected_acquisition": {
+    "run_id": "51189ce2-ce51-461c-bd96-c59a526f6065",
+    "raw_manifest_sha256": "4000c186385760d879fd77c04c08f39523243bfc43396cec474471650efa96b2",
+    "sealed_fingerprint": "49d42031a5402ebd11efece60196804a654fc1d218ce41f82d2000de0702ed2e",
+    "release_eligible": true,
+    "default_selector_eligible": true
+  },
+  "corrected_structural": {
+    "parse_run_id": "d60dcfb2-2bd1-4c3e-8baf-5ad998b01f54",
+    "input_fingerprint": "f5bc309653355feca32ec8db40ecbf1d4c8c95f5f1116b848763ebcb1640c6b3",
+    "output_fingerprint": "a0b5849b81f225562b671bff6f5befb67ba9a892a34cbdbf545ebab50ade708a",
+    "sealed_fingerprint": "6ff571a5551753dbb94483675b43c6d89bf6e6baadc7a3deaa4d3109414cc2d2"
+  },
+  "superseded_runs": [
+    {
+      "run_id": "43ecabc6-64c6-4f30-80ec-ecebe25ea361",
+      "immutable": true,
+      "release_eligible": false,
+      "default_selector_eligible": false,
+      "superseded_by": "51189ce2-ce51-461c-bd96-c59a526f6065",
+      "supersession_reason_code": "RESOURCE_IDENTITY_INCLUDED_QUERY_LOCATOR"
+    }
+  ],
+  "resource_identity_receipt": {
+    "detail_rows": 366,
+    "distinct_detail_resource_keys": 366,
+    "distinct_normalized_formal_document_numbers": 366,
+    "detail_normalization_collisions": 0,
+    "attachment_rows": 1353,
+    "distinct_attachment_resource_keys": 1353,
+    "distinct_canonical_attachment_urls": 1353,
+    "ambiguous_attachment_identity_collisions": 0
+  },
+  "legal_history_claim": false,
+  "source_universe_closed": false,
+  "portable_dataset_release_ready": false,
+  "publication_authorized": false
+}

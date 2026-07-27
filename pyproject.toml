@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nhi-rule-history"
+version = "0.2.0"
+description = "Reproducible acquisition tools for Taiwan NHI drug reimbursement-rule sources"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "nhi-rule-history contributors" }]
+dependencies = []
+
+[project.scripts]
+nhi-rule-history = "nhi_rule_history.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.unittest]
+start-directory = "tests"

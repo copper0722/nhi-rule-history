@@ -23,3 +23,5 @@ jobs:
         run: make validate-manifest
       - name: Validate SQLite schema
         run: make sqlite-smoke
+      - name: Reject generated release assets from Git
+        run: make public-tree-check

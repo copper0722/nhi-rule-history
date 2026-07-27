@@ -9,6 +9,24 @@ sources:
     licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
     status: bounded_14_odt_manifested
 
+  - source_id: nhi_current_whole
+    authority: 衛生福利部中央健康保險署
+    url: https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html
+    role: terminal_cumulative_anchor
+    cadence: continuous
+    acquisition: enumerate_landing_and_all_formats_each_refresh_run
+    licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
+    status: adapter_pending
+
+  - source_id: nhi_current_chapters
+    authority: 衛生福利部中央健康保險署
+    url: https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html
+    role: terminal_chapter_anchors
+    cadence: continuous
+    acquisition: enumerate_all_chapter_items_and_formats
+    licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
+    status: adapter_pending
+
   - source_id: nhi_regulatory_announcements
     authority: 衛生福利部中央健康保險署
     url: https://www.nhi.gov.tw/ch/lp-3258-1.html
@@ -17,6 +35,29 @@ sources:
     acquisition: archive_all_pages_then_details_and_attachments
     licence_url: https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html
     status: source_universe_open
+
+  - source_id: mohw_interpretation_history
+    authority: 衛生福利部
+    url: https://mohwlaw.mohw.gov.tw/FINT/FINTQRY01-1.aspx
+    role: official_announcement_detail_and_attachment_candidates
+    cadence: monthly_database_refresh
+    acquisition: deterministic_date_partitions_then_detail_and_all_attachments
+    licence_url: https://www.mohw.gov.tw/cp-81-155-1.html
+    status: bounded_post_109_acquisition_passed
+    bounded_query:
+      temporal_query_start: "2021-01-01"
+      keyword_exact: 藥品給付規定
+      event_type: administrative_interpretation
+      include_current_and_repealed: true
+      note: >
+        A reproducible discovery lane, not proof that every relevant official
+        item contains this exact phrase. Query-context RowNo is not a stable
+        source or legal identity.
+      verified_capture_cut: "2026-07-27"
+      discovery_passes: 2
+      formal_documents: 366
+      attachment_resources: 1353
+      resource_key_set_sha256: a9cef7abddcc7c2301363957bbc054259a0cb7f6dac6d8d52c5c4064b54496a7
 
   - source_id: nhi_drug_items
     authority: 衛生福利部中央健康保險署

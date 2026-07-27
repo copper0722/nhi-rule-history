@@ -16,6 +16,27 @@ normalized JSONL  <->  PostgreSQL build model
 No SQLite-only edit is accepted upstream. A correction changes source evidence
 or normalized JSONL, then rebuilds both databases.
 
+## Staging schemas now in use
+
+The future legal-history model below is **not** populated yet. Current PG has
+three isolated evidence stages:
+
+| PG schema | Purpose | Current sealed scope |
+|---|---|---|
+| `tw_drug_history_stage` | v1 annual ODT source occurrences | 14 releases, 213,512 blocks |
+| `tw_drug_history_acq_stage` | v2 discovery/fetch/raw evidence | 1,719 resources, 1,712 artifacts |
+| `tw_drug_history_structural_stage` | v2 ODT blocks/occurrences/issues | 31,377 / 1,228 / 547 |
+
+None of these schemas contains a promoted legal effective date, stable rule
+identity, current status, predecessor edge, or diff. Their migrations and
+rollbacks are under [../pg/migrations](../pg/migrations); loaders are under
+[../src/nhi_rule_history/pg](../src/nhi_rule_history/pg).
+
+The v1 eight-table public exporter has already generated a 1,102,200,832-byte
+SQLite snapshot and proved storage-independent JSONL↔SQLite typed-row parity.
+The v2 raw/structural release is presently JSONL.zst plus checksummed raw
+tar.zst; its equivalent SQLite exporter remains an explicit gap.
+
 ## Core groups
 
 | Group | Tables |

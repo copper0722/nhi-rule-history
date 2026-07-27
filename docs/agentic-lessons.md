@@ -45,6 +45,24 @@
 - code/schema fingerprint、composite artifact/block FK、共同 advisory lock 與
   bounded rollback 納入 migration/loader 契約。
 
+## 2026-07-27 v2 live run 的新反例
+
+後續公告的真實資料又補了三個 synthetic fixture 沒抓到的問題：
+
+- MOHW attachment 常以 `Content-Type: text/html` 回傳真正的 PDF／ODT；
+  detector 必須 magic-first，header 只保留為 observation。
+- 一份 2023 ODT 使用 `text:list-header`；v1 annual corpus 沒出現這種
+  LibreOffice 結構。generic v2 walker 補上後，358/358 unique ODT artifacts
+  才達到全 `p/h` coverage。
+- FINT `RowNo` 在兩次相同 query 間會重排。第一版把 RowNo／parent ordinal
+  放入 resource ID，造成同為 1,719 個資源卻有 344 個 key 不一致。detail
+  改用 formal document number、attachment 改用 canonical PFID URL 後，
+  兩次獨立 enumeration 才達成 key-set parity。
+
+這三項都來自真實 endpoint／真實檔案，而不是 agent 自評。第一個已成 MIME
+regression test，第二個由 production corpus coverage gate 驗證，第三個由
+`compare-discovery` 雙輪測試與 live parity receipt 固化。
+
 ## 可重用的指揮原則
 
 1. 給 agent 一個狹窄、可列舉、可 checksum 的工作包。
@@ -57,6 +75,8 @@
    deterministic replay 才能升格為公開資料。
 6. 每次更新保留輸入、程式、schema、輸出四層 fingerprint，避免「同數量」
    被誤認為「同內容」。
+7. 動態 listing 的 row number、頁碼與排序只能當 locator；resource identity
+   要用 authority-native key（文號、PFID）並由第二次獨立 enumeration 反證。
 
 這套分工讓 Grok 這類 agent 的速度用在 groundwork，同時把法律歷史的最終
 聲明鎖在可驗證 evidence，而不是鎖在模型自信。

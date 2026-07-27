@@ -10,13 +10,24 @@ last_verified_date: "2026-07-27"
 public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
   source_manifests: tracked_in_git
-  normalized_jsonl: planned
-  sqlite_snapshot: planned_release_asset
+  bounded_acquisition_manifest: data/manifests/mohw-fint-2021-2026-v2
+  normalized_jsonl: legal_history_planned
+  stage_v1_release: prepared_not_published
+  stage_v2_release: prepared_partial_evidence_bundle_not_published
+  sqlite_snapshot: v1_prepared_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
   parser_version: nhi-rule-history-occurrence-extract/1.1.0
+  acquisition_version: nhi-rule-history/0.2.0
+  structural_parser_version: nhi-rule-history-generic-odt/2.0.0
+
+methodology_audit:
+  architecture: C_PLUS_BOUNDED_DUAL_TRACK
+  post_implementation_disposition: ACCEPT_COMMIT_PUSH
+  final_pro_response_sha256: 350f4ded0e53b550f4689acc1d3051deffa9ada999f5e70a724bb32d48ddb42c
+  public_release_authorized: false
 
 accepted_stage:
   disposition: accepted_stage_only
@@ -36,6 +47,58 @@ accepted_stage:
     nonblocking_stage_issues: 1667
     blocking_stage_issues: 0
 
+accepted_acquisition_v2:
+  disposition: accepted_bounded_acquisition_only
+  scope: mohw_fint_exact_phrase_2021-01-01_to_2026-07-27
+  run_id: 51189ce2-ce51-461c-bd96-c59a526f6065
+  discovery_pass_b_run_id: 935a6721-d38b-4bed-be05-c985afe46389
+  resource_key_set_sha256: a9cef7abddcc7c2301363957bbc054259a0cb7f6dac6d8d52c5c4064b54496a7
+  raw_manifest_sha256: 4000c186385760d879fd77c04c08f39523243bfc43396cec474471650efa96b2
+  sealed_fingerprint: 49d42031a5402ebd11efece60196804a654fc1d218ce41f82d2000de0702ed2e
+  counts:
+    detail_pages: 366
+    attachments: 1353
+    resources: 1719
+    unique_artifacts: 1712
+    artifact_bytes: 85642128
+    acquisition_issues: 0
+
+accepted_structural_v2:
+  disposition: accepted_source_occurrence_stage_only
+  parse_run_id: d60dcfb2-2bd1-4c3e-8baf-5ad998b01f54
+  acquisition_run_id: 51189ce2-ce51-461c-bd96-c59a526f6065
+  input_fingerprint: f5bc309653355feca32ec8db40ecbf1d4c8c95f5f1116b848763ebcb1640c6b3
+  sealed_fingerprint: 6ff571a5551753dbb94483675b43c6d89bf6e6baadc7a3deaa4d3109414cc2d2
+  counts:
+    odt_resources: 360
+    unique_odt_artifacts: 358
+    structural_blocks: 31377
+    occurrence_candidates: 1228
+    nonblocking_parse_issues: 547
+    blocking_parse_issues: 0
+
+superseded_audit_runs:
+  - run_id: 43ecabc6-64c6-4f30-80ec-ecebe25ea361
+    immutable: true
+    release_eligible: false
+    default_selector_eligible: false
+    superseded_by: 51189ce2-ce51-461c-bd96-c59a526f6065
+    supersession_reason_code: RESOURCE_IDENTITY_INCLUDED_QUERY_LOCATOR
+    reason: >
+      pass-B audit proved RowNo and parent attachment ordinal were unstable
+      acquisition identifiers; retained immutable as audit evidence only
+
+machine_status:
+  branch_gate: ACCEPTED_FOR_COMMIT_PUSH_AND_DRAFT_PR
+  nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
+  v2_acquisition_stage: VERIFIED_BOUNDED
+  v2_structural_stage: VERIFIED_SOURCE_LOCAL
+  v2_public_jsonl: PREPARED_PARTIAL
+  v2_public_sqlite: OPEN
+  v2_portable_dataset_release: BLOCKED
+  source_universe_closed: false
+  legal_history_complete: false
+
 gates:
   public_repository:
     status: passed
@@ -51,7 +114,11 @@ gates:
   official_source_universe:
     status: open
   reproducible_update_runner:
-    status: open
+    status: partial_individual_steps_implemented
+  mohw_fint_bounded_acquisition:
+    status: passed
+  post_109_structural_stage:
+    status: passed_bounded
   current_whole_chapter_parity:
     status: open
   official_event_effect_ledger:
@@ -71,7 +138,9 @@ gates:
   postgresql_canonical_schema:
     status: design_ready_not_applied
   sqlite_portable_projection:
-    status: schema_ready_data_pending
+    status: v1_prepared_v2_pending
+  v2_portable_dataset_release:
+    status: blocked
   normalized_public_dataset:
     status: blocked
   real_data_reader_api:
@@ -82,14 +151,17 @@ gates:
     status: blocked
 
 claims:
-  allowed_now: 14 份官方歷史 ODT 的受限來源 staging 已驗收
+  allowed_now: >
+    14 份年度 ODT stage 與一個 MOHW FINT exact-query/date-window 的
+    bounded acquisition/source-local ODT stage 已驗收；均非完整法律歷史
   reader_safe_before_completion: 官方年度版本與已核實公告異動
   forbidden_now: 完整健保給付條文歷史已入庫
 
 current_work_package:
-  id: WP01
-  title: Close and publish the official source universe
+  id: WP03
+  title: Build the official event/effect evidence layer
   next_action: >
-    Enumerate, fetch, hash, and manifest all historical and current whole or
-    chapter releases, NHI listing/detail/attachment sources, official history
-    search, and parent-regulation cross-checks as immutable inputs.
+    Acquire one same-cut NHI current whole/chapter anchor set, prove parity,
+    reconcile it to the bounded MOHW detail/attachment set, then build
+    evidence-backed event/effect candidates without promoting legal dates or
+    stable rule identities.
