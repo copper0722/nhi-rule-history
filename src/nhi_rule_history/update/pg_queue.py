@@ -2227,7 +2227,12 @@ def advance_work_recovery(
         raise UpdateQueueError(
             "fresh-connection recovery transition verification failed"
         )
-    normalized = _normalize(list(current))
+    normalized = [
+        work_item_id,
+        generation,
+        transition_id,
+        *_normalize(list(current)),
+    ]
     return {
         "schema": RECOVERY_TRANSITION_RECEIPT_SCHEMA,
         "transition_id": transition_id,

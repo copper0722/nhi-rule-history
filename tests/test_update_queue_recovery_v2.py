@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from nhi_rule_history.contracts import canonical_json_bytes, sha256_bytes
 from nhi_rule_history.update.pg_queue import (
     UpdateQueueError,
     advance_work_recovery,
@@ -786,6 +787,24 @@ WHERE work_item_id = '{WORK_ITEM_ID}';
         )
         self.assertTrue(partitioned["is_terminal"])
         self.assertEqual(partitioned["to_state"], "partition_required")
+        self.assertEqual(
+            partitioned["fingerprint"],
+            sha256_bytes(
+                canonical_json_bytes(
+                    [
+                        WORK_ITEM_ID,
+                        3,
+                        partitioned["transition_id"],
+                        2,
+                        "partition_required",
+                        True,
+                        None,
+                        None,
+                        None,
+                    ]
+                )
+            ),
+        )
 
         generic = self.pg.psql(
             command=f"""

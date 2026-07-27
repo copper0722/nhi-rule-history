@@ -138,9 +138,13 @@
   分別為 2 `selected`、9 `staged_needs_review`、2 `failed_terminal`、
   8 `ignored_non_rule`；`corpus_registered` 為 0。
   9/9 candidate proposals 均需人工複核。兩個 terminal works 各自保有
-  primary→fallback 的 immutable failure receipt；舊 evidence 尚未冒充成
-  PostgreSQL worker-attempt rows，recovery-v2 migration 也尚未套入 live。
-  canonical history schema 仍不存在。
+  primary→fallback 的 immutable failure receipt；recovery-v2 additive
+  migration 已套入 live，舊 queue／transition／attempt rows 與 fingerprints
+  均未改動。兩筆 legacy receipts 已 hash-bound admission 為 2 列 failure
+  evidence／4 列 attempt evidence，未偽造 PostgreSQL worker-attempt rows；
+  兩筆 generation 2 都以零 model calls、零 execution jobs、零 candidate
+  或 bundle claims 結束為 terminal `partition_required`。canonical history
+  schema 仍不存在。
 - GPT Pro post-audit v2 以 `C/H/M/L=0/0/1/2` 接受 R2 stage-only
   worker/runtime/recovery repair。依其條件，legacy admission 現在明列
   `sha256_hex_v1` attempt identity、immutable JSONL origin、verifier
@@ -223,6 +227,10 @@
   linkage release 尚未產生；legacy formulary 比同日官方 CSV 多 148 列，
   508 個品項→條文 edges 未解析，rule→ATC 仍只允許標示為
   product-evidence-derived，不可宣稱整個 ATC class 受該條文規範。
+  INAE3000 current API 是既有 runtime 的 ATC／給付 reference direct
+  evidence 與每週 freshness lane；IODE 月檔才是 clean-room immutable
+  rebuild baseline。兩者必須保存各自 snapshot／row provenance，不可互相
+  覆寫成一張無版本 current table。
 - anchor-gated canonical promotion；需讓 future-effective snapshot 先排程，
   到生效日且 replay 通過後才成 current，前一版才轉為 history。
   多輪獨立 disposable-PG review 已依序找出來源綁定、時間鏈、MIME

@@ -11,7 +11,17 @@
   receipt、attempt JSONL、stdout/stderr、64-hex attempt identity、
   primary→fallback lineage、terminal transition／evidence，先收入 append-only
   legacy evidence tables，再允許 generation 2；不偽造 UUID worker-attempt
-  rows，也不改寫舊 terminal evidence。migration 尚未套用 live。
+  rows，也不改寫舊 terminal evidence。
+- additive recovery-v2 migration 已套入 live PostgreSQL；套用前後舊 queue
+  21 列、transition 88 列、work-item attempts 61 列與 operational worker
+  attempts 13 列的 row counts／fingerprints 均不變，canonical history schema
+  仍不存在。兩筆 legacy receipts 已各自通過 idempotent admission，共形成
+  2 列 legacy failure evidence 與 4 列 attempt evidence。
+- 兩筆 generation 2 均由 deterministic preflight 判定
+  `partition_required`，worker/model calls、execution jobs、candidate rows、
+  source-bundle claims 與 recovery-route attempts 全為 0；沒有自動重試。
+  同時修正 transition receipt fingerprint，使其綁定 work item、
+  generation 與 transition ID，不再讓不同工作的同型結果碰撞。
 - 新增 ODT nested-table document-order regression；修正外層段落在 nested
   table 之後卻被提前輸出的 XML traversal 錯誤。最新驗證為 70 項 legacy
   tests（1 skip）與 335 項 public tests（7 skip），另 private worker
@@ -31,6 +41,9 @@
   14,066 筆現行品項，回應 schema 仍含品項代碼、ATC、
   `PAY_CODE_LIST`、`pdfList` 與價格有效起迄。新增 hash-bound observation
   receipt，並明確區分每週 INAE freshness 與每月 IODE immutable baseline。
+  這也確認既有 ATC linkage 的官方 direct evidence 是
+  `品項→ATC` 與 `品項→給付規定 reference`；`條文→ATC` 只能由已解析到
+  stable rule 的 supporting product rows 推導並揭露 support count。
 - 重審最早五個 history closure canary。四份官方 ODT 對五個條文均明載
   `自…生效`，舊／新 comparison cells 完整，且五個新文字 hash 均等於
   2026 whole/chapter endpoint。故 source-local date role 已定位 5/5；

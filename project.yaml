@@ -339,13 +339,28 @@ machine_status:
     canonical_history_schema_exists: false
     receipt: docs/audits/2026-07-28-live-stage-status-observation.json
     worker_recovery_v2:
-      migration_live_applied: false
+      migration_live_applied: true
+      migration_receipt: docs/audits/2026-07-28-update-queue-recovery-v2-live-migration.json
       legacy_terminal_receipts: 2
+      legacy_failure_evidence_rows: 2
+      legacy_failure_attempt_evidence_rows: 4
       fabricated_legacy_worker_attempt_rows: 0
       method: append_only_hash_bound_legacy_admission_before_generation_2
       legacy_attempt_id_scheme: sha256_hex_v1
       legacy_attempt_id_origin: immutable_worker_attempt_jsonl
       admission_verifier_identity_bound: true
+      authorized_generation_2_rows: 2
+      partition_required_generation_2_rows: 2
+      model_calls: 0
+      execution_jobs_created: 0
+      candidate_rows_created: 0
+      source_bundle_claims_created: 0
+      recovery_route_attempt_rows: 0
+      terminal_receipt_identity:
+        binds_work_item: true
+        binds_generation: true
+        binds_transition_id: true
+      recovery_receipt: docs/audits/2026-07-28-update-queue-legacy-recovery-g2.json
 
 gates:
   public_repository:
@@ -470,9 +485,17 @@ gates:
     status: official_raw_fetch_and_portable_source_schema_ready_mapping_resolution_open
     source_family:
       interactive_search: NHI_INAE3000
+      interactive_reconciliation_frequency: weekly
       public_rebuild_dataset: A21030000I-E41001
       public_rebuild_resource: A21030000I-E41001-001
       declared_update_frequency: monthly
+      direct_assertions:
+        - product_observation_to_atc_code
+        - product_observation_to_rule_reference
+      derived_assertion:
+        relation: resolved_rule_to_atc_code
+        requires_supporting_product_rows: true
+        publish_support_count: true
     observed_snapshot:
       observed_at: "2026-07-27T15:26:34Z"
       byte_length: 96799113

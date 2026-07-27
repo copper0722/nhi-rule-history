@@ -1,0 +1,63 @@
+{
+  "claims": {
+    "canonical_history_mutated": false,
+    "legacy_queue_rows_mutated": false,
+    "migration_applied_once": true,
+    "recovery_ledger_initially_empty": true,
+    "stage_only": true
+  },
+  "code_identity": {
+    "public_commit": "63ed8543b59042852ea7e4839c5880bbd89af5ea",
+    "worker_schema_sha256": "e87e344bdf558e7ad038a9a26602928ff966b5208a2af72ba0337683b9c8ebd5"
+  },
+  "migration": {
+    "contract_marker": "managed=nhi_rule_history_update_queue/recovery-v2",
+    "id": "2026-07-28_nhi_rule_history_update_queue_recovery_v2",
+    "path": "pg/migrations/2026-07-28_nhi_rule_history_update_queue_recovery_v2.sql",
+    "sha256": "c4f9b26828649095acba8b8d95f969e168ca8b63ff3796d287c06693330586dd"
+  },
+  "post_apply": {
+    "canonical_history_schema_exists": false,
+    "observed_at": "2026-07-27T17:46:00.819558Z",
+    "recovery_function_rows": 5,
+    "recovery_ledger_counts": {
+      "legacy_failure_attempt_evidence": 0,
+      "legacy_failure_evidence": 0,
+      "recovery_route_attempt": 0,
+      "work_generation": 0,
+      "work_generation_transition": 0,
+      "work_recovery_authorization": 0
+    },
+    "recovery_object_rows": 11,
+    "recovery_schema_fingerprint": "f04fa7b5d0ada445b1af58eb79ba992e6836c51f4bbc59cb6d005c87ba063b24",
+    "recovery_trigger_rows": 19,
+    "runtime_can_execute_admission": true,
+    "public_can_execute_admission": false
+  },
+  "pre_and_post_legacy_state": {
+    "ops_worker_attempt_rows": 13,
+    "queue_fingerprint": "dd8c3f0ebdd6983cac5bedc679b9b480b30c222c15109fb68dbc1a1e0ed11073",
+    "queue_rows": 21,
+    "transition_fingerprint": "e5ffa80327c6bfb27662dc3cec955694f2b0a907678a4a5a2701a3eb9741b63f",
+    "transition_rows": 88,
+    "work_item_attempt_fingerprint": "568f3f1e3b2bd043cf5fadfb440a3b4c6779065edd657fe990d87ffb5e0740fa",
+    "work_item_attempt_rows": 61
+  },
+  "pre_apply": {
+    "canonical_history_schema_exists": false,
+    "observed_at": "2026-07-27T17:44:49.323864Z",
+    "recovery_migration_exists": false
+  },
+  "rollback": {
+    "empty_only": true,
+    "path": "pg/migrations/2026-07-28_nhi_rule_history_update_queue_recovery_v2.rollback.sql",
+    "sha256": "000b7da602cd74cf7830cfb7fe382a3f7932d5694b883ceaaff17301db0e55e8"
+  },
+  "runtime_boundary": {
+    "auto_promotion_enabled": false,
+    "assertion": "Controller exits unless AUTO_PROMOTION_ENABLED is exactly false.",
+    "canonical_writer_capability_present": false
+  },
+  "schema": "nhi-rule-history/update-queue-recovery-v2-live-migration-receipt/v1",
+  "statement": "Additive recovery-v2 schema only. No legacy queue, transition, work-attempt, operational worker-attempt, or canonical-history rows changed during migration."
+}
