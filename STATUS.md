@@ -11,6 +11,23 @@
 - v1 八表 deterministic JSONL／SQLite exporter；完整 empirical export
   通過 typed-row parity，release assets 已準備但尚未發布。
 - ATC linkage 資料模型，以及 ICD-11 授權 fail-closed 邊界。
+- 重新確認 ATC 的官方來源鏈：INAE3000 是既有高頻 current lookup，
+  IODE `A21030000I-E41001-001` 是可整批重建的每月 CSV。2026-07-27
+  exact raw fetch 為 96,799,113 bytes、224,455 列、45,124 個藥品代號、
+  2,244 個 ATC codes、95,520 個給付文件連結；SHA-256
+  `5abfec9bd0afb74f13cabca3402c2d6a0329b3436dd206f9dea83288a8b1d4a2`。
+- 新增 NHI drug-linkage content-addressed fetcher、欄名漂移／零列
+  fail-closed 驗證，以及 PostgreSQL／SQLite 對稱的
+  `linkage_import_run`、`nhi_drug_item_observation`、
+  `nhi_drug_rule_reference` logical schema。
+- 稽核 legacy runtime：45,129 個 current drug rows 均有 ATC；7,498 個
+  品項→給付條文 links 中 6,990 列解析到 498 條文章、508 列尚未解析。
+  另 2,025 條 article↔ATC mappings 中 1,708 為自動、317 為 curated；
+  不能把三類證據混稱官方 direct linkage。
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 313 項 public tests
+  （307 passed、6 skip；含真實 PostgreSQL linkage transaction test）；
+  public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
+  均通過。
 - `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、
   size 與 SHA-256 已和 manifest 對照通過。
 - v2 程式化 update pipeline：source plan、independent discover A/B、
@@ -171,6 +188,10 @@
 - 穩定條文身分、條號重用、split／merge／move／restore／correction。
 - cumulative anchor event replay。
 - 直接相鄰版本 diff。
+- ATC raw acquisition 與 portable schema 已可重跑，但 public normalized
+  linkage release 尚未產生；legacy formulary 比同日官方 CSV 多 148 列，
+  508 個品項→條文 edges 未解析，rule→ATC 仍只允許標示為
+  product-evidence-derived，不可宣稱整個 ATC class 受該條文規範。
 - anchor-gated canonical promotion；需讓 future-effective snapshot 先排程，
   到生效日且 replay 通過後才成 current，前一版才轉為 history。
   多輪獨立 disposable-PG review 已依序找出來源綁定、時間鏈、MIME

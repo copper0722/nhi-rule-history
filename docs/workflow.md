@@ -156,7 +156,26 @@ history。
 - 日期／條號同檔 preflight 只建立 evidence candidate；不得據此自動建立
   `official_event_effect`、選 canonical side 或把前一版移入 history。
 
-## WP05：重播與 diff
+## WP05：藥品／ATC linkage
+
+1. 從 NHI IODE `A21030000I-E41001-001` 取得整批 CSV；保存 exact bytes、
+   retrieval time、HTTP metadata、SHA-256 與 source manifest。
+2. 將每列載入 `nhi_drug_item_observation`；原始健保代碼、價格有效期間、
+   ATC、給付章節與 exact URL 一律保留，不能只做 current-state upsert。
+3. 品項到 ATC 是官方來源 assertion；品項到給付章節／URL 也是官方來源
+   assertion。章節到 canonical `rule_identity`／`rule_snapshot` 仍須獨立
+   resolution。
+4. 條文到 ATC 只由已解析產品列推導，保存 support count 與 source release；
+   不把它宣稱成整個 ATC class 的適用範圍。
+5. 每月 IODE snapshot 是可重建基線；INAE3000 current API 作每週 freshness
+   reconciliation，不覆寫或刪除舊 snapshot。
+6. PostgreSQL 與 SQLite 使用相同
+   `linkage_import_run`／`nhi_drug_item_observation`／
+   `nhi_drug_rule_reference` logical contract。
+
+實作與 live audit 見 [ATC 與 ICD-11 linkage](linkage.md)。
+
+## WP06：重播與 diff
 
 1. 從 verified cumulative full release 建 baseline。
 2. 依官方 effective date 重播 event effects。
@@ -165,7 +184,7 @@ history。
 5. 每個版本只和直接前版比較。
 6. 同一 edge 在新版顯示「本版新增」，在舊版顯示「下一版刪除」。
 
-## WP06：公開 release
+## WP07：公開 release
 
 每個資料 release 至少包含：
 
@@ -182,6 +201,9 @@ snapshot_evidence.jsonl
 comparison_edge.jsonl
 diff_hunk.jsonl
 drug_concept.jsonl
+linkage_import_run.jsonl
+nhi_drug_item_observation.jsonl
+nhi_drug_rule_reference.jsonl
 drug_atc_link.jsonl
 indication.jsonl
 rule_indication_link.jsonl
@@ -224,9 +246,24 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli release-v2 \
   --output-dir build/v2-evidence-release
 ```
 
-上述 TLS 例外必須由 operator 明示；它只重現 2026-07-27 FINT endpoint 在
-本機 Python trust store 的相容需求。預設仍 fail closed；有可驗證 CA bundle
-時改用 `--ca-file`。
+取得 NHI 藥品／ATC／給付章節 raw snapshot：
+
+```bash
+PYTHONPATH=src python3 tools/fetch_nhi_drug_linkage.py \
+  --output-dir build/nhi-drug-linkage
+```
+
+NHI IODE fetcher 預設且實跑皆使用 TLS 驗證；2026-07-27 live smoke 不需要
+任何 insecure 例外。若 operator 因可重現的相容性需求明示
+`--allow-insecure-tls`，工具會在 manifest 記錄該 transport；目前工具本身
+不強制隔離，因此 operator 必須指定獨立的 `--output-dir`，且在以正常 TLS
+或可驗證 CA bundle 重新取得並核對前，不得交給下游 loader 或 release。
+工具不寫 PG，先產生 content-addressed raw 與 manifest，再由受控 loader
+進 staging。
+
+上方 FINT `discover`／`fetch` 命令中的 TLS 例外則只重現 2026-07-27 FINT
+endpoint 與本機 Python trust store 的相容需求，必須由 operator 明示。
+預設仍 fail closed；有可驗證 CA bundle 時改用 `--ca-file`。
 
 套用 repo migration 後，`load-acquisition` 與 `load-structural` 各自會先完整
 validate、在單一 transaction 寫入並 seal，再用新連線重算 count 與 row-set

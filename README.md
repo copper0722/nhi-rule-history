@@ -65,6 +65,16 @@ PDF、OLE 與 ODS 的原生文字後，兩個數字分別增為 2,034（+137）�
 [history gap work queue manifest](docs/audits/2026-07-27-history-gap-work-queue-manifest.json)；
 四條優先 lane 僅用於安排來源閱讀，不是法律判定或完整性證書。
 
+ATC linkage 的原始來源也已重新釐清。既有 runtime 的確使用
+[`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1)
+建立品項連結；可公開重建的主來源則是 IODE resource
+`A21030000I-E41001-001`。2026-07-27 實抓為 224,455 列、45,124 個健保
+藥品代號、2,244 個 ATC codes，95,520 列帶給付規定文件 URL。repo 現已
+提供 content-addressed raw fetcher 與 PostgreSQL／SQLite 對稱的 row-level
+source schema。這關閉的是 acquisition／schema 方法缺口；條文到 ATC 的
+public mapping 仍須把 508 筆 legacy 未解析條文 link 與 snapshot parity
+處理完，不能宣稱 linkage 已完整。
+
 NHI 公告與 FINT 也已先按正規化文號對帳，但不能據此宣稱來源宇宙完整：
 NHI 858 筆形成 847 個文號鍵，FINT exact-phrase 366 筆形成 365 個文號鍵；
 交集只有 217，NHI-only 630、FINT-only 148，且有 7 個文號碰撞，不能做
@@ -146,7 +156,8 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli verify-raw \
 - [全民健康保險藥品給付規定歷史檔](https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html)
 - [健保署法規公告](https://www.nhi.gov.tw/ch/lp-3258-1.html)
 - [衛福部法規函釋查詢](https://mohwlaw.mohw.gov.tw/FINT/FINTQRY01-1.aspx)
-- [健保用藥品項查詢項目檔](https://data.gov.tw/dataset/23715)
+- [健保用藥品項網路查詢（INAE3000）](https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1)
+- [健保用藥品項查詢項目檔（IODE）](https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=111)
 
 本專案與衛生福利部中央健康保險署、WHO 或 WHO Collaborating Centre 無隸屬、
 代理或認可關係。

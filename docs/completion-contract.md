@@ -50,6 +50,11 @@
 ## Linkage and portability
 
 - 每個 drug／ATC link 有 source、version、relation、confidence 與 review state。
+- 每個 NHI 品項 mapping 可回到 immutable IODE/INAE snapshot、source row、
+  raw value、有效期間與 exact rule URL；當月 source row count/hash 與
+  normalized projection 相符。
+- rule→ATC 是經 resolved product evidence 推導，公開輸出帶 support count；
+  不把它誤寫成整個 ATC class 的適用範圍。
 - ICD-11 populated crosswalk 只有在 WHO agreement 存在時可發布。
 - JSONL、PostgreSQL 與 SQLite row counts、primary keys、foreign keys 相符。
 - SQLite 通過 `integrity_check` 與 `foreign_key_check`。

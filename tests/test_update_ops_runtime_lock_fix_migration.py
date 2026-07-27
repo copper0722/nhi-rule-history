@@ -195,6 +195,46 @@ COMMENT ON VIEW
             failed.stderr,
         )
 
+    def test_function_acl_requires_complete_owner_default_without_grant_option(
+        self,
+    ) -> None:
+        self.apply_base()
+        self.execute(
+            """
+REVOKE ALL PRIVILEGES ON FUNCTION
+  nhi_rule_history_update_ops.guard_owned_observation_insert()
+FROM CURRENT_USER;
+"""
+        )
+        empty_owner_acl = self.apply(LOCK_FIX, check=False)
+        self.assertNotEqual(empty_owner_acl.returncode, 0)
+        self.assertIn(
+            "runtime-lock fix refuses chronology function attribute or ACL drift",
+            empty_owner_acl.stderr,
+        )
+
+        self.pg.drop_database(self.database)
+        self.database = "runtime_lock_" + uuid.uuid4().hex[:12]
+        self.pg.create_database(self.database)
+        self.apply_base()
+        self.apply(LOCK_FIX)
+        self.execute(
+            """
+REVOKE ALL PRIVILEGES ON FUNCTION
+  nhi_rule_history_update_ops.guard_worker_attempt_insert()
+FROM CURRENT_USER;
+GRANT EXECUTE ON FUNCTION
+  nhi_rule_history_update_ops.guard_worker_attempt_insert()
+TO CURRENT_USER WITH GRANT OPTION;
+"""
+        )
+        owner_grant_option = self.apply(LOCK_FIX_ROLLBACK, check=False)
+        self.assertNotEqual(owner_grant_option.returncode, 0)
+        self.assertIn(
+            "runtime-lock rollback refuses owner, function, or ACL drift",
+            owner_grant_option.stderr,
+        )
+
     def test_advisory_lock_serializes_observation_and_worker(self) -> None:
         self.apply_base()
         self.apply(LOCK_FIX)

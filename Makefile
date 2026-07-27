@@ -1,7 +1,7 @@
 PYTHON ?= python3
 MANIFEST := data/manifests/nhi-history-odt-v1.jsonl
 
-.PHONY: test validate-manifest sqlite-smoke public-tree-check gap-queue
+.PHONY: test validate-manifest sqlite-smoke public-tree-check gap-queue nhi-drug-linkage-snapshot
 
 test:
 	$(PYTHON) -m unittest discover -s .script/nhi-rule-history/tests -p 'test_*.py'
@@ -28,3 +28,7 @@ gap-queue:
 	  --manifest docs/audits/2026-07-27-history-gap-work-queue-manifest.json \
 	  --declared-cut 2026-07-27 \
 	  --expected-row-count 3080
+
+nhi-drug-linkage-snapshot:
+	PYTHONPATH=src $(PYTHON) tools/fetch_nhi_drug_linkage.py \
+	  --output-dir build/nhi-drug-linkage

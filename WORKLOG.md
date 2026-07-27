@@ -9,6 +9,27 @@
 
 ## 2026-07-27
 
+- Copper 補充既有 ATC linkage 原始入口是健保署 INAE3000。重新核對官方
+  current lookup、IODE catalog/resource、既有 PostgreSQL 與 Copper Panel
+  查詢路徑，確認品項→ATC 與品項→給付章節是官方 direct assertions；
+  條文→ATC 則只能是有 supporting product rows 的 derived projection。
+- 實抓 IODE `A21030000I-E41001-001`：96,799,113 bytes、224,455 data
+  rows、45,124 distinct drug codes、2,244 ATC codes、95,703 rows with
+  rule section、95,520 rows with exact rule URL；raw SHA-256
+  `5abfec9bd0afb74f13cabca3402c2d6a0329b3436dd206f9dea83288a8b1d4a2`。
+- legacy runtime PostgreSQL 稽核為 45,129 `nhi_drugs`、7,498
+  INAE item-rule links（508 未解析 article）、2,025 article-ATC mappings
+  （1,708 automatic、317 curated）。IODE normalized formulary 比同日官方
+  CSV 多 148 列，證明 current upsert 表不能替代 immutable snapshot。
+- 新增 content-addressed NHI drug-linkage fetcher與 exact-header／zero-row
+  fail-closed tests；PostgreSQL／SQLite logical schema 同步加入
+  `linkage_import_run`、`nhi_drug_item_observation`、
+  `nhi_drug_rule_reference`，SQLite schema version 升至 3。實跑 fetcher
+  重現同一 raw SHA 與全部 aggregate counts。
+- 本輪全套驗證：70 legacy tests（1 skip）、313 public tests
+  （307 passed、6 skip；含真實 PostgreSQL linkage transaction test）、
+  public-tree、compileall、SQLite integrity／foreign-key 與 whitespace
+  gates 均通過。
 - 完成 14 份歷史 ODT 的結構解析與 source-occurrence extraction。
 - 獨立驗證 69 項測試、9,303／9,303 artifact/block round trip、封存後 DML
   guard、bounded rollback 與 idempotent replay。

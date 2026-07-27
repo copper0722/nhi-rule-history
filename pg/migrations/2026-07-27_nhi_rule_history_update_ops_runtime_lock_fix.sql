@@ -439,16 +439,42 @@ BEGIN
         OR language.lanname <> 'plpgsql'
         OR function.prorettype <> 'trigger'::regtype
         OR function.pronargs <> 0
-        OR EXISTS (
-          SELECT 1
-          FROM aclexplode(
-            coalesce(
-              function.proacl,
-              acldefault('f', function.proowner)
+        OR (
+          WITH actual_acl AS (
+            SELECT
+              acl.grantor,
+              acl.grantee,
+              acl.privilege_type,
+              acl.is_grantable
+            FROM aclexplode(
+              coalesce(
+                function.proacl,
+                acldefault('f', function.proowner)
+              )
+            ) acl
+          ),
+          expected_acl AS (
+            SELECT
+              acl.grantor,
+              acl.grantee,
+              acl.privilege_type,
+              acl.is_grantable
+            FROM aclexplode(acldefault('f', schema_owner)) acl
+            WHERE acl.grantee = schema_owner
+          )
+          SELECT EXISTS (
+            (
+              SELECT * FROM actual_acl
+              EXCEPT ALL
+              SELECT * FROM expected_acl
             )
-          ) acl
-          WHERE acl.grantee <> function.proowner
-             OR acl.grantor <> function.proowner
+            UNION ALL
+            (
+              SELECT * FROM expected_acl
+              EXCEPT ALL
+              SELECT * FROM actual_acl
+            )
+          )
         )
       )
   ) THEN

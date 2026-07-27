@@ -4,7 +4,8 @@ SET search_path TO nhi_rule_history, public;
 CREATE TABLE dataset_release (
     release_id text PRIMARY KEY,
     release_kind text NOT NULL CHECK (release_kind IN (
-        'annual_full', 'current_full', 'current_chapter', 'event_attachment'
+        'annual_full', 'current_full', 'current_chapter', 'event_attachment',
+        'nhi_drug_item_snapshot', 'tfda_drug_snapshot'
     )),
     official_label text NOT NULL,
     jurisdiction text NOT NULL DEFAULT 'TW',
@@ -119,6 +120,7 @@ CREATE TABLE rule_snapshot (
     publication_status text NOT NULL CHECK (publication_status IN (
         'blocked', 'canary', 'publishable'
     )),
+    UNIQUE (snapshot_id, rule_id),
     UNIQUE (rule_id, release_id, raw_sha256)
 );
 
@@ -305,6 +307,85 @@ CREATE TABLE drug_identifier (
     UNIQUE (identifier_system, identifier_value)
 );
 
+CREATE TABLE linkage_import_run (
+    linkage_import_run_id text PRIMARY KEY,
+    release_id text NOT NULL REFERENCES dataset_release(release_id),
+    artifact_id text NOT NULL REFERENCES source_artifact(artifact_id),
+    source_system text NOT NULL CHECK (source_system IN (
+        'NHI_IODE_DRUG_ITEMS', 'NHI_INAE3000', 'TFDA_DRUG_PERMIT'
+    )),
+    dataset_identifier text,
+    resource_id text,
+    source_modified_at timestamptz,
+    parser_version text NOT NULL,
+    raw_row_count bigint NOT NULL CHECK (raw_row_count >= 0),
+    distinct_product_count bigint NOT NULL CHECK (distinct_product_count >= 0),
+    state text NOT NULL CHECK (state IN (
+        'staged', 'validated', 'quarantined'
+    )),
+    counts_json jsonb NOT NULL,
+    started_at timestamptz NOT NULL,
+    completed_at timestamptz,
+    UNIQUE (release_id, artifact_id, parser_version)
+);
+
+CREATE TABLE nhi_drug_item_observation (
+    observation_id text PRIMARY KEY,
+    linkage_import_run_id text NOT NULL
+        REFERENCES linkage_import_run(linkage_import_run_id),
+    source_row_number bigint NOT NULL CHECK (source_row_number >= 2),
+    source_record_sha256 char(64) NOT NULL CHECK (
+        source_record_sha256 ~ '^[0-9a-f]{64}$'
+    ),
+    drug_concept_id text REFERENCES drug_concept(drug_concept_id),
+    product_resolution_status text NOT NULL CHECK (
+        product_resolution_status IN ('unresolved', 'resolved', 'rejected')
+    ),
+    nhi_drug_code_raw text NOT NULL CHECK (btrim(nhi_drug_code_raw) <> ''),
+    valid_from date,
+    valid_to date,
+    atc_code_raw text,
+    atc_code_normalized text,
+    drug_source_url text,
+    raw_record_json jsonb NOT NULL,
+    CHECK (
+        (product_resolution_status = 'resolved' AND drug_concept_id IS NOT NULL)
+        OR (product_resolution_status IN ('unresolved', 'rejected')
+            AND drug_concept_id IS NULL)
+    ),
+    CHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from),
+    UNIQUE (linkage_import_run_id, source_row_number)
+);
+
+CREATE TABLE nhi_drug_rule_reference (
+    rule_reference_id text PRIMARY KEY,
+    observation_id text NOT NULL
+        REFERENCES nhi_drug_item_observation(observation_id),
+    reference_order integer NOT NULL CHECK (reference_order >= 1),
+    rule_section_raw text,
+    rule_source_url text,
+    rule_id text REFERENCES rule_identity(rule_id),
+    snapshot_id text,
+    resolution_status text NOT NULL CHECK (resolution_status IN (
+        'unresolved_designation', 'rule_resolved', 'snapshot_resolved',
+        'rejected'
+    )),
+    resolution_evidence_json jsonb NOT NULL,
+    CHECK (
+        (resolution_status = 'unresolved_designation'
+            AND rule_id IS NULL AND snapshot_id IS NULL)
+        OR (resolution_status = 'rule_resolved'
+            AND rule_id IS NOT NULL AND snapshot_id IS NULL)
+        OR (resolution_status = 'snapshot_resolved'
+            AND rule_id IS NOT NULL AND snapshot_id IS NOT NULL)
+        OR (resolution_status = 'rejected'
+            AND rule_id IS NULL AND snapshot_id IS NULL)
+    ),
+    FOREIGN KEY (snapshot_id, rule_id)
+        REFERENCES rule_snapshot(snapshot_id, rule_id),
+    UNIQUE (observation_id, reference_order)
+);
+
 CREATE TABLE rule_drug_link (
     rule_drug_link_id text PRIMARY KEY,
     snapshot_id text NOT NULL REFERENCES rule_snapshot(snapshot_id),
@@ -424,6 +505,16 @@ CREATE INDEX idx_annotation_iso_date ON source_date_annotation(iso_date_candidat
 CREATE INDEX idx_coverage_status ON rule_history_coverage(completion_status);
 CREATE INDEX idx_rule_drug_snapshot ON rule_drug_link(snapshot_id);
 CREATE INDEX idx_drug_atc_code ON drug_atc_link(atc_code);
+CREATE INDEX idx_linkage_import_source ON linkage_import_run(
+    source_system, dataset_identifier, resource_id
+);
+CREATE INDEX idx_nhi_drug_item_code ON nhi_drug_item_observation(
+    nhi_drug_code_raw
+);
+CREATE INDEX idx_nhi_drug_item_atc ON nhi_drug_item_observation(
+    atc_code_normalized
+);
+CREATE INDEX idx_nhi_rule_reference_rule ON nhi_drug_rule_reference(rule_id);
 CREATE INDEX idx_indication_normalized ON indication(normalized_text);
 CREATE INDEX idx_external_concept_code ON external_concept_link(system, external_code);
 CREATE INDEX idx_build_issue_run_severity ON build_issue(build_run_id, severity);

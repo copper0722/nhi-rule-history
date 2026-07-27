@@ -57,6 +57,7 @@ tar.zst; its equivalent SQLite exporter remains an explicit gap.
 | Identity | `rule_identity`, `rule_designation`, `rule_lineage_edge` |
 | Text | `rule_snapshot`, `snapshot_evidence`, `rule_block` |
 | Diff | `comparison_edge`, `diff_hunk` |
+| Drug source | `linkage_import_run`, `nhi_drug_item_observation`, `nhi_drug_rule_reference` |
 | Drugs | `drug_concept`, `drug_identifier`, `rule_drug_link`, `drug_atc_link` |
 | Indications | `indication`, `rule_indication_link`, `external_concept_link` |
 | Audit | `build_run`, `build_issue` |
@@ -92,3 +93,6 @@ dependency order, and runs `foreign_key_check` plus `integrity_check`.
 - Every data release includes schema version, row counts, SQLite version, and
   SHA-256 checksums.
 - FTS is a derived index and may be rebuilt; it is never evidence authority.
+- NHI IODE/INAE product rows are source observations. A rule-to-ATC search facet
+  is derived through resolved product evidence and never asserts that the rule
+  covers the whole ATC class.

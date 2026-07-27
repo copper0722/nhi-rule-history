@@ -19,7 +19,7 @@
 | G-ID-01 | stable identity 未建立 | blocked | UUID、designation、curation、無 cycle |
 | G-REPLAY-01 | event replay 未對 anchors | blocked | rule set/text hash parity |
 | G-DIFF-01 | adjacent diff 未建立 | blocked | direct edge、100% source mapping |
-| G-ATC-01 | ATC linkage 尚未重建 | open | NHI/TFDA source-backed mappings 與 review |
+| G-ATC-01 | ATC linkage 尚未完成 public rebuild | raw_fetch_schema_passed_mapping_resolution_open | NHI IODE `A21030000I-E41001-001` exact raw fetch／manifest、PostgreSQL↔SQLite row-level source schema 與 2026-07-27 live audit 已通過；尚缺每月 snapshot loader/parity、508 個 legacy 未解析品項→條文 edges、rule snapshot resolution、TFDA second-source reconcile 與 normalized release |
 | G-ICD-01 | ICD-11 crosswalk 未獲 WHO agreement | blocked | 書面 agreement 與 release citation |
 | G-DATA-01 | normalized clause JSONL 未發布 | blocked | complete rule/version outputs |
 | G-SQLITE-01 | v1 SQLite snapshot 已準備；v2 尚缺 | partial | v1 typed parity passed；v2 row parity、integrity、checksum |
@@ -42,7 +42,7 @@
   verify 與 byte-identical replay。1996–1998 exact phrase 為 0，不代表
   來源不存在。
 - 1,719/1,719 raw linkage；31,377 blocks／1,228 occurrences structural stage。
-- 283 項 public tests（6 項環境性 skip），另有 private registrar/migration
+- 313 項 public tests（307 passed、6 項環境性 skip），另有 private registrar/migration
   contract tests、sealed DML guard、bounded rollback與 idempotent replay。
 - legacy 日期註記稽核已完成；它證明缺口存在，不是完成證據。
 - 3,080 個條文×日期已全部轉成一對一、可續跑、來源 hash-bound 的 review

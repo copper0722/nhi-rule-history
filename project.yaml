@@ -7,6 +7,15 @@ risk_class: R3
 privacy: public
 last_verified_date: "2026-07-27"
 
+latest_verification:
+  legacy_tests_passed: 70
+  legacy_tests_skipped: 1
+  public_tests_passed: 307
+  public_tests_skipped: 6
+  public_tree_gate: passed
+  sqlite_integrity_check: passed
+  live_nhi_drug_linkage_fetch: passed
+
 public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
   source_manifests: tracked_in_git
@@ -424,7 +433,30 @@ gates:
   adjacent_source_mapped_diffs:
     status: blocked
   atc_linkage:
-    status: design_ready_data_pending
+    status: official_raw_fetch_and_portable_source_schema_ready_mapping_resolution_open
+    source_family:
+      interactive_search: NHI_INAE3000
+      public_rebuild_dataset: A21030000I-E41001
+      public_rebuild_resource: A21030000I-E41001-001
+      declared_update_frequency: monthly
+    observed_snapshot:
+      observed_at: "2026-07-27T15:26:34Z"
+      byte_length: 96799113
+      sha256: 5abfec9bd0afb74f13cabca3402c2d6a0329b3436dd206f9dea83288a8b1d4a2
+      rows: 224455
+      distinct_nhi_drug_codes: 45124
+      distinct_atc_codes: 2244
+      rows_with_rule_url: 95520
+    legacy_runtime_audit:
+      item_rule_links: 7498
+      resolved_article_rows: 6990
+      unresolved_article_rows: 508
+      rule_article_atc_rows: 2025
+      automatic_rows: 1708
+      curated_rows: 317
+      legacy_formulary_minus_live_snapshot_rows: 148
+    canonical_rule_atc_publication_authorized: false
+    receipt: docs/audits/2026-07-27-inae3000-atc-linkage-audit.json
   icd11_linkage:
     status: blocked_pending_who_mapping_agreement
   postgresql_canonical_schema:
