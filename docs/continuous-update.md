@@ -218,6 +218,15 @@ replayable reason and **zero model calls**. This is a terminal operator-review
 outcome, not a failed model attempt. General multi-rule partitioning remains a
 separate open implementation item.
 
+The 2026-07-28 cefiderocol canary exposed a narrower hierarchy case before any
+worker call. The suitability scanner observed both the section designation
+`10.3` and its leaf `10.3.8`, classified them as multiple rules, and returned
+`partition_required` with zero attempts. This was a safe terminal outcome, but
+it did not prove that the notice contains multiple independent rule effects.
+Hierarchy-aware designation classification remains open. Because no worker ran,
+this canary provides no evidence about Claude, Codex, Grok, or any other model's
+document-understanding ability.
+
 Before contract validation, the runner preserves exact stdout and stderr bytes
 for every attempted worker. It also preserves the exact prompt, append-only
 attempt JSONL, stream hashes, provider/runtime/model labels, timing, exit or

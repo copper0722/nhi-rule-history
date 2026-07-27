@@ -302,6 +302,12 @@ hash／size 一起被改寫，self-consistency 仍可能成立；真正的可重
 並拒絕 target、manifest 或 payload symlink。這是「內容來源綁定」與
 「檔案自洽」的差別。
 
+同樣地，保守分流不能把「父節＋子條」直接當成多條規則。cefiderocol
+canary 同時出現 `10.3` 與 `10.3.8`，現行 suitability gate 因而在
+0 model calls 時回傳 `MULTI_RULE_DOCUMENT`。這證明 fail-closed 有效，
+但沒有證明文件真是 multi-rule，更不能拿來評價模型能力。下一版
+partitioner 必須先辨識 designation hierarchy，再決定是否需要分件。
+
 後續 model-harness packet 應直接附 sealed source hash、exact value 與正式
 count equations；output contract 要求逐項算術 reconciliation，近似值只能
 進 uncertainties。模型結果若要長期保存，dispatcher 還應有原生 output-file

@@ -180,8 +180,15 @@
   全形句號並只保留第一段。work item 安全停在 `acquired`，model calls
   為 0。Additive manifest v1.3／normalization rule 1.1.0 已完成真實
   bundle replay，精確保存 raw 文號、兩段公告與四附件；修補經獨立
-  re-review 判定 `SHIP`、C/H/M/L=`0/0/0/0`。live registrar
-  migration 尚未套用，repair hold 與 canonical mutation 仍未解除。
+  re-review 判定 `SHIP`、C/H/M/L=`0/0/0/0`。live registrar 已升至
+  manifest v1.3，corpus filesystem、PG progress 與 active audit 均驗證。
+  proposal suitability gate 因同時看見父層 `10.3` 與 leaf `10.3.8`
+  而安全停在 `partition_required`，reason=`MULTI_RULE_DOCUMENT`，
+  worker calls／attempts 都是 0，沒有 candidate 或 canonical write。
+  post-canary audit 為 C/H/M/L=`0/0/1/0`：窄義 parser/runtime repair
+  hold 已解除；唯一 Medium 是 hierarchy-aware partitioner 尚未完成。
+  這次沒有評估 Claude／Grok 能力，source-universe 與 legal-history
+  completeness hold 仍維持。
 - 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；

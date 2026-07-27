@@ -504,5 +504,14 @@
   public-tree 與 SQLite smoke 通過；私有 v1.2/v1.3 registrar、forward/
   rollback migration 與 worker runtime 專項測試亦通過。獨立最終
   re-review 為 `SHIP`、C/H/M/L=`0/0/0/0`。live v1.3
-  migration、corpus registration、primary Claude proposal 與 post-canary
-  audit 尚未執行；repair hold 及 canonical mutation 仍未授權。
+  migration 已套用，function hash 為
+  `bfaebc312527a2fea2dfe50ceb4698b733fed9d2eb493c6d38302d602a0f9057`；
+  live corpus registration 建立
+  `gov_健保審字第1150055418號` 的 PG progress 與一筆 active audit。
+  proposal suitability gate 觀察到 `10.3`、`10.3.8` 兩個候選而以
+  `MULTI_RULE_DOCUMENT` 安全停在 `partition_required`，worker calls、
+  worker attempts、candidate 與 canonical writes 全為 0。獨立
+  post-canary audit C/H/M/L=`0/0/1/0`，准予解除窄義 parser/runtime
+  repair hold；Medium hierarchy-aware partitioner gap、source-universe
+  hold 與 legal-history completeness hold 均保留。此次未執行模型，
+  不評價 Claude 或 Grok 能力。
