@@ -124,10 +124,17 @@
   failure／timeout 後只啟動一次 hm4 Codex fallback，並安全停在
   `staged_needs_review`。`AUTO_PROMOTION_ENABLED=false`，尚未寫 canonical
   history。
+- 2026-07-27T16:09:28Z 最新 live observation：21 個 update work items
+  分別為 3 `selected`、1 `corpus_registered`、8
+  `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；
+  8/8 candidate proposals 均需人工複核。該 terminal item 的 primary 與
+  fallback 都 timeout，failure receipt 已持久化，沒有自動重試成 canonical
+  寫入。Corpus registrar 的 manifest v1.2 與完整函式簽章 hardening 已套用
+  並核對 live attributes／ACL。
 - 2026-07-27T13:01:41Z 再以 fresh read-only query 核對 live stage：
   immutable raw annotation stage 的 6,366/6,366 rows 仍為
   `unresolved_event`；resolution outcomes 為 6,360 `no_match`、6
-  `invalid`、0 `resolved_candidate`。7/7 proposals 均為 `needs_review`，
+  `invalid`、0 `resolved_candidate`。當時 7/7 proposals 均為 `needs_review`，
   canonical history schema 不存在。機器可讀 observation 已封存，避免
   文件進度與實庫狀態互相推論。
 - NHI 現行整份／分章 anchor 已由正式 CLI 獨立列舉兩次，均得到 268 個

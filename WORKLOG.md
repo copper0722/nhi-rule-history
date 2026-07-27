@@ -30,6 +30,19 @@
   （307 passed、6 skip；含真實 PostgreSQL linkage transaction test）、
   public-tree、compileall、SQLite integrity／foreign-key 與 whitespace
   gates 均通過。
+- Corpus registrar manifest v1.2 套用後，再加一層完整 `pg_proc`
+  signature hardening；凍結的 v1.2 forward SHA-256 維持
+  `68ce1c7177ccaa5dd21c468bf2f6781bdcabdf8205843cb9312edc3dbf9157cd`，
+  additive hardening forward 為
+  `998e0c6e24ead4caeb41bf6889567860c9f57c9d683ace87b007767b8d44fbc5`。
+  獨立 disposable PostgreSQL 審查通過後才套用，live 再核對 body、
+  `p_payload`、defaults／SETOF／variadic／modes、SECURITY DEFINER、
+  search path、owner 與 exact capability ACL。
+- 最新 stage-only update item 已完成官方附件取得與 corpus registration，
+  但 primary／fallback 都在來源候選解析 timeout，故以 durable failure
+  receipt 結束為 `failed_terminal`，沒有 canonical promotion。Fresh
+  read-only check 為 21 work items、8/8 proposals `needs_review`、6,366
+  annotations 仍全數 unresolved、canonical history schema 仍不存在。
 - 完成 14 份歷史 ODT 的結構解析與 source-occurrence extraction。
 - 獨立驗證 69 項測試、9,303／9,303 artifact/block round trip、封存後 DML
   guard、bounded rollback 與 idempotent replay。

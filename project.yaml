@@ -312,15 +312,22 @@ machine_status:
   source_universe_closed: false
   legal_history_complete: false
   live_stage_observation:
-    observed_at: "2026-07-27T13:01:41Z"
+    observed_at: "2026-07-27T16:09:28Z"
     source_date_annotations: 6366
     unresolved_source_date_annotations: 6366
     resolved_event_candidates: 0
     valid_date_resolution_denominator: 6360
     terminal_non_date_candidates: 6
-    candidate_proposals_needs_review: 7
+    candidate_proposals_needs_review: 8
+    update_queue:
+      total: 21
+      selected: 3
+      corpus_registered: 1
+      staged_needs_review: 8
+      failed_terminal: 1
+      ignored_non_rule: 8
     canonical_history_schema_exists: false
-    receipt: docs/audits/2026-07-27-live-stage-status-observation-3.json
+    receipt: docs/audits/2026-07-27-live-stage-status-observation-4.json
 
 gates:
   public_repository:
