@@ -40,9 +40,9 @@ from nhi_rule_history.update.proposal import (
 WORKER_PROMPT_VERSION = "nhi-rule-history-source-proposal/2.0.0"
 WORKER_ATTEMPT_SCHEMA = "nhi-rule-history/worker-attempt/v1"
 WORKER_RUN_SCHEMA = "nhi-rule-history/worker-run/v3"
-WORKER_JOB_FINGERPRINT_DOMAIN = "nhi-rule-history/worker-job-fingerprint/v3"
+WORKER_JOB_FINGERPRINT_DOMAIN = "nhi-rule-history/worker-job-fingerprint/v4"
 WORKER_SOURCE_PACKET_SCHEMA = "nhi-rule-history/worker-source-packet/v3"
-WORKER_SUITABILITY_SCHEMA = "nhi-rule-history/worker-suitability/v1"
+WORKER_SUITABILITY_SCHEMA = "nhi-rule-history/worker-suitability/v2"
 WORKER_EXTRACTION_VERSION = ODT_STRUCTURAL_FACTS_SCHEMA
 WORKER_BLOCK_DIGEST_VERSION = "nhi-rule-history/source-block-digest/v1"
 WORKER_RUNTIME_CONTRACT_VERSION = (
@@ -94,6 +94,7 @@ def worker_job_fingerprint(
         WORKER_PROMPT_VERSION,
         prompt_sha256,
         WORKER_RUNTIME_CONTRACT_VERSION,
+        WORKER_SUITABILITY_SCHEMA,
         WORKER_BUDGET_VERSION,
         canonical_json_bytes(WORKER_BUDGET).decode("utf-8"),
         WORKER_ATTEMPT_SCHEMA,
@@ -491,9 +492,44 @@ def assess_worker_suitability(
                 )
             else:
                 designation_rows.setdefault(match.group(1), set())
+    effective_designations = set(designation_rows)
+    collapsed_parent_designations: list[str] = []
     if len(designation_rows) > 1:
+        maximal_designations = [
+            designation
+            for designation in designation_rows
+            if not any(
+                other.startswith(designation + ".")
+                for other in designation_rows
+                if other != designation
+            )
+        ]
+        if len(maximal_designations) == 1:
+            leaf = maximal_designations[0]
+            leaf_rows = designation_rows[leaf]
+            parent_designations = [
+                designation
+                for designation in designation_rows
+                if designation != leaf
+                and leaf.startswith(designation + ".")
+            ]
+            if (
+                leaf_rows
+                and len(parent_designations)
+                == len(designation_rows) - 1
+                and all(
+                    not designation_rows[parent]
+                    or designation_rows[parent].issubset(leaf_rows)
+                    for parent in parent_designations
+                )
+            ):
+                effective_designations = {leaf}
+                collapsed_parent_designations = sorted(
+                    parent_designations
+                )
+    if len(effective_designations) > 1:
         reasons.add("MULTI_RULE_DOCUMENT")
-    elif len(designation_rows) != 1:
+    elif len(effective_designations) != 1:
         reasons.add("SINGLE_TARGET_UNRESOLVED")
     if _OMISSION_RE.search("\n".join(all_text)):
         reasons.add("OMITTED_TEXT_PRESENT")
@@ -563,6 +599,12 @@ def assess_worker_suitability(
             "max_single_block_bytes": max(block_byte_lengths, default=0),
             "odt_documents": len(structural),
             "designation_candidates": sorted(designation_rows),
+            "effective_designation_candidates": sorted(
+                effective_designations
+            ),
+            "collapsed_parent_designations": (
+                collapsed_parent_designations
+            ),
         },
         "budget": dict(WORKER_BUDGET),
     }

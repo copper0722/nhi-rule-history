@@ -10,8 +10,8 @@ last_verified_date: "2026-07-28"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 348
-  public_tests_passed: 341
+  public_tests_run: 350
+  public_tests_passed: 343
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -314,7 +314,7 @@ machine_status:
     official_source_canary_authorized: true
     repair_hold_removal_authorized: true
     repair_hold_scope: parser_runtime_only
-    blocking_evidence: hierarchy_aware_partitioner_gap_open
+    blocking_evidence: terminal_recovery_and_general_multi_rule_partition_open
     nonsource_isolation_canary:
       status: routing_observation_incomplete
       observed_on: "2026-07-28"
@@ -371,7 +371,23 @@ machine_status:
       live_registrar_migration_applied: true
       post_canary_audit: docs/audits/2026-07-28-cefiderocol-official-source-canary-post-audit.json
       parser_runtime_repair_hold_removed: true
-      partitioner_gap_open: true
+      hierarchy_preflight_v2:
+        status: verified_recovery_not_started
+        schema: nhi-rule-history/worker-suitability/v2
+        fingerprint_domain: nhi-rule-history/worker-job-fingerprint/v4
+        raw_designations:
+          - "10.3"
+          - "10.3.8"
+        effective_designation: "10.3.8"
+        collapsed_parent_designations:
+          - "10.3"
+        decision: suitable
+        worker_calls: 0
+        independent_review: ship_c_h_m_l_0_0_0_2_lows_remediated
+        receipt: docs/audits/2026-07-28-cefiderocol-hierarchy-preflight-v2.json
+      old_terminal_receipt_mutated: false
+      recovery_generation_created: false
+      general_multi_rule_partitioner_gap_open: true
       source_universe_hold_open: true
       legal_history_completeness_hold_open: true
   nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
@@ -382,6 +398,18 @@ machine_status:
   v2_portable_dataset_release: BLOCKED
   source_universe_closed: false
   legal_history_complete: false
+  live_update_queue_observation:
+    observed_at: "2026-07-28T04:36:17+08:00"
+    total_work_items: 21
+    state_counts:
+      failed_terminal: 2
+      ignored_non_rule: 8
+      partition_required: 2
+      staged_needs_review: 9
+    candidate_state_counts:
+      needs_review: 9
+    cefiderocol_work_generation_rows: 0
+    canonical_legal_history_schema_exists: false
   live_stage_observation:
     observed_at: "2026-07-28"
     source_date_annotations: 6366

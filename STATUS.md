@@ -29,8 +29,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 348 項 public tests
-  （341 passed、7 skip；含真實 PostgreSQL linkage transaction test）；
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 350 項 public tests
+  （343 passed、7 skip；含真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
 - `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、
@@ -186,9 +186,20 @@
   而安全停在 `partition_required`，reason=`MULTI_RULE_DOCUMENT`，
   worker calls／attempts 都是 0，沒有 candidate 或 canonical write。
   post-canary audit 為 C/H/M/L=`0/0/1/0`：窄義 parser/runtime repair
-  hold 已解除；唯一 Medium 是 hierarchy-aware partitioner 尚未完成。
-  這次沒有評估 Claude／Grok 能力，source-universe 與 legal-history
-  completeness hold 仍維持。
+  hold 已解除。其後新增 hierarchy-aware suitability v2：只有唯一 leaf、
+  其餘候選全為 dot-boundary 祖先，且祖先沒有獨立 comparison row 時才
+  collapse；平行 leaves 或祖先獨立成列仍 fail closed。原封存
+  cefiderocol packet 的唯讀重算已由 `10.3`＋`10.3.8` 收斂為 leaf
+  `10.3.8`，decision=`suitable`；獨立 review 為 `SHIP`、
+  C/H/M/L=`0/0/0/2`，兩個 Low 測試缺口均已補強。這只解除狹義父節／子條
+  誤判；舊 terminal row／receipt 未改寫，新 recovery generation 尚未建立，
+  worker calls 仍為 0，所以仍沒有評估 Claude／Grok 能力。一般多條文
+  partition、source-universe 與 legal-history completeness hold 均維持。
+- 2026-07-28T04:36:17+08:00 fresh live read-only observation：21 個 work
+  items 為 2 `failed_terminal`、8 `ignored_non_rule`、2
+  `partition_required`、9 `staged_needs_review`；9/9 candidate proposals
+  都是 `needs_review`。cefiderocol 的 `work_generation` 仍為 0 rows，
+  canonical legal-history schema 仍不存在。
 - 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；

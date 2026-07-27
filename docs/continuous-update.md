@@ -219,13 +219,22 @@ outcome, not a failed model attempt. General multi-rule partitioning remains a
 separate open implementation item.
 
 The 2026-07-28 cefiderocol canary exposed a narrower hierarchy case before any
-worker call. The suitability scanner observed both the section designation
-`10.3` and its leaf `10.3.8`, classified them as multiple rules, and returned
+worker call. Suitability v1 observed both section designation `10.3` and leaf
+`10.3.8`, classified them as multiple rules, and returned
 `partition_required` with zero attempts. This was a safe terminal outcome, but
 it did not prove that the notice contains multiple independent rule effects.
-Hierarchy-aware designation classification remains open. Because no worker ran,
-this canary provides no evidence about Claude, Codex, Grok, or any other model's
-document-understanding ability.
+
+Suitability v2 may collapse such candidates only when there is exactly one
+maximal dotted-numeric leaf, all other candidates are its dot-boundary
+ancestors, the leaf occurs in a top-level comparison row, and no ancestor has
+an independent comparison row. Parallel leaves and independent ancestor rows
+still require partitioning. The worker-job fingerprint binds the suitability
+schema, so a v2 decision cannot replay the immutable v1 terminal receipt.
+Replaying the sealed cefiderocol packet under v2 yields effective designation
+`10.3.8` and `suitable`, but the old terminal row remains unchanged and no new
+recovery generation or worker attempt has been made. General multi-rule
+partitioning remains open. Consequently, this canary still provides no evidence
+about Claude, Codex, Grok, or any other model's document-understanding ability.
 
 Before contract validation, the runner preserves exact stdout and stderr bytes
 for every attempted worker. It also preserves the exact prompt, append-only

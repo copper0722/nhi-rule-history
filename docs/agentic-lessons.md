@@ -303,10 +303,17 @@ hash／size 一起被改寫，self-consistency 仍可能成立；真正的可重
 「檔案自洽」的差別。
 
 同樣地，保守分流不能把「父節＋子條」直接當成多條規則。cefiderocol
-canary 同時出現 `10.3` 與 `10.3.8`，現行 suitability gate 因而在
+canary 同時出現 `10.3` 與 `10.3.8`，suitability v1 因而在
 0 model calls 時回傳 `MULTI_RULE_DOCUMENT`。這證明 fail-closed 有效，
-但沒有證明文件真是 multi-rule，更不能拿來評價模型能力。下一版
-partitioner 必須先辨識 designation hierarchy，再決定是否需要分件。
+但沒有證明文件真是 multi-rule，更不能拿來評價模型能力。
+
+修正時也不能只用字串前綴把父節吃掉。suitability v2 只在「唯一 maximal
+leaf、其餘全是 dot-boundary 祖先、leaf 位於 top-level comparison row、
+祖先沒有獨立 comparison row」四個條件同時成立時 collapse。`10.3` 與
+`10.30.8` 不構成祖先；平行 leaves、跨附件／跨表、祖先獨立成列都維持
+`partition_required`。而且 suitability schema 必須進 worker job
+fingerprint：否則同一份 immutable v1 terminal receipt 可能被新語意錯誤
+重播。這是「允許模型讀檔」的安全 gate，不是法律 effect 或逐條歷史認證。
 
 後續 model-harness packet 應直接附 sealed source hash、exact value 與正式
 count equations；output contract 要求逐項算術 reconciliation，近似值只能

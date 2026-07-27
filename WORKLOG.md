@@ -515,3 +515,23 @@
   repair hold；Medium hierarchy-aware partitioner gap、source-universe
   hold 與 legal-history completeness hold 均保留。此次未執行模型，
   不評價 Claude 或 Grok 能力。
+- 新增 hierarchy-aware suitability v2，並把 suitability schema 納入
+  worker job fingerprint（domain v4）。只有唯一 maximal leaf、所有其他
+  designation 都是 dot-boundary 祖先、leaf 位於 top-level comparison
+  row，且祖先沒有獨立 comparison row 時才 collapse；平行 leaves 或
+  祖先獨立成列仍回到 `partition_required`。原封存 cefiderocol packet
+  的唯讀 preflight 現得到 effective designation `10.3.8`、
+  decision=`suitable`、reason codes 空；新 fingerprint
+  `5cece6ef62529dac09e3aab23747de035daab185512e58e0aac6f9fdb090b2ea`
+  與舊 terminal receipt 不同。獨立 review `SHIP`、
+  C/H/M/L=`0/0/0/2`，兩個 Low 測試保護缺口已修補；10/10 focused tests
+  與完整 350 public（343 passed、7 skip）、70 legacy（1 skip）、
+  public-tree、SQLite 均通過。舊 terminal row／receipt 未改寫，尚未建立
+  recovery generation 或呼叫 worker，因此模型能力仍未評估；一般
+  multi-rule partition、source-universe 與 legal-history completeness
+  仍是 open holds。
+- 2026-07-28T04:36:17+08:00 以 fresh read-only PG query 核對：21 個
+  update work items 為 2 `failed_terminal`、8 `ignored_non_rule`、2
+  `partition_required`、9 `staged_needs_review`；9/9 proposals 均為
+  `needs_review`。cefiderocol 尚無 `work_generation` row，canonical
+  legal-history schema 仍不存在。

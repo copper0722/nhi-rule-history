@@ -409,6 +409,79 @@ class WorkerContractV2Tests(unittest.TestCase):
                 self.assertEqual(result["worker_calls"], 0)
                 self.assertIn(reason, result["reason_codes"])
 
+    def test_preflight_collapses_parent_designation_in_same_leaf_row(
+        self,
+    ) -> None:
+        source_packet = packet()
+        source_packet["source_blocks"][3]["raw_text"] = (
+            "10.3 頭孢子菌素\n10.3.8 Cefiderocol 新條文完整文字"
+        )
+        source_packet["source_blocks"][4]["raw_text"] = (
+            "10.3 頭孢子菌素\n10.3.8 Cefiderocol 舊條文完整文字"
+        )
+        for block in source_packet["source_blocks"][3:5]:
+            block["raw_text_sha256"] = sha256_bytes(
+                block["raw_text"].encode()
+            )
+        source_packet["source_blocks_sha256"] = source_blocks_digest(
+            source_packet["source_blocks"]
+        )
+        result = assess_worker_suitability(source_packet)
+        self.assertEqual(result["decision"], "suitable")
+        self.assertNotIn("MULTI_RULE_DOCUMENT", result["reason_codes"])
+        self.assertEqual(
+            result["observed"]["designation_candidates"],
+            ["10.3", "10.3.8"],
+        )
+        self.assertEqual(
+            result["observed"]["effective_designation_candidates"],
+            ["10.3.8"],
+        )
+        self.assertEqual(
+            result["observed"]["collapsed_parent_designations"],
+            ["10.3"],
+        )
+
+    def test_preflight_does_not_collapse_parent_with_independent_row(
+        self,
+    ) -> None:
+        source_packet = packet()
+        source_packet["source_blocks"][3]["raw_text"] = (
+            "10.3.8 Cefiderocol 新條文完整文字"
+        )
+        source_packet["source_blocks"][3]["raw_text_sha256"] = sha256_bytes(
+            source_packet["source_blocks"][3]["raw_text"].encode()
+        )
+        source_packet["source_blocks"][4]["raw_text"] = (
+            "10.3.8 Cefiderocol 舊條文完整文字"
+        )
+        source_packet["source_blocks"][4]["raw_text_sha256"] = sha256_bytes(
+            source_packet["source_blocks"][4]["raw_text"].encode()
+        )
+        parent_row = _block(
+            5,
+            "10.3 頭孢子菌素獨立修訂",
+            table_index=0,
+            row_index=2,
+            cell_index=0,
+        )
+        source_packet["source_blocks"].append(parent_row)
+        source_packet["source_blocks_sha256"] = source_blocks_digest(
+            source_packet["source_blocks"]
+        )
+        result = assess_worker_suitability(source_packet)
+        self.assertEqual(result["decision"], "partition_required")
+        self.assertIn("MULTI_RULE_DOCUMENT", result["reason_codes"])
+        self.assertIn("CROSS_ROW_DEPENDENCY", result["reason_codes"])
+        self.assertEqual(
+            result["observed"]["designation_candidates"],
+            ["10.3", "10.3.8"],
+        )
+        self.assertEqual(
+            result["observed"]["collapsed_parent_designations"],
+            [],
+        )
+
     def test_partition_receipt_is_replayed_without_worker_calls(self) -> None:
         source_packet = packet()
         source_packet["structural_facts"][0]["covered_cell_count"] = 1
@@ -531,6 +604,7 @@ class WorkerContractV2Tests(unittest.TestCase):
             "WORKER_BLOCK_DIGEST_VERSION",
             "WORKER_PROMPT_VERSION",
             "WORKER_RUNTIME_CONTRACT_VERSION",
+            "WORKER_SUITABILITY_SCHEMA",
             "WORKER_BUDGET_VERSION",
             "PROPOSAL_SCHEMA",
         ):
