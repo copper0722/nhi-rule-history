@@ -85,12 +85,15 @@ def build_bundle(root: Path) -> Path:
     detail = response(
         item.link,
         (
-            "<html><div>主旨</div><div>修訂藥品給付規定</div>"
-            "<div>發文字號</div><div>健保審字第1150000000號</div>"
-            "<div>發文日期</div><div>115-07-20</div>"
-            "<div>發布日期</div><div>115-07-20</div>"
-            "<div>更新日期</div><div>115-07-20</div>"
-            "<div>公告事項</div><div>修訂對照表如附件。</div>"
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            "<tr><th>發文字號</th><td>健保審字第1150000000號</td></tr>"
+            "<tr><th>發文日期</th><td>115-07-20</td></tr>"
+            "<tr><th>公告事項</th><td>修訂對照表如附件。</td></tr>"
+            "</table><dl>"
+            "<dt>發布日期</dt><dd>115-07-20</dd>"
+            "<dt>更新日期</dt><dd>115-07-20</dd>"
+            "</dl>"
             '<a href="/ch/dl-test-1.odt">修訂對照表.ODT</a>'
             '<a href="/ch/dl-test-2.pdf">修訂對照表.PDF</a></html>'
         ).encode(),

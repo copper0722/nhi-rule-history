@@ -145,16 +145,40 @@ and table-cell blocks retain document order, table/row/cell/paragraph locators,
 original text, text hash, artifact hash, attachment identity, and deterministic
 block identity. These blocks are source locators, not canonical clauses.
 
-Legacy single-ODT/single-PDF corpus bundles remain replay-compatible. New
-bundles use manifest version 1.1 so a registrar can verify the complete
-attachment inventory and distinguish files registered in the government
-document catalogue from verified corpus metadata files such as RSS and
-`raw.md`.
+Legacy single-ODT/single-PDF corpus bundles remain replay-compatible. Manifest
+v1.2 introduced provenance-preserving normalization for official reference
+numbers that omit the terminal `號`; its rule remains frozen at
+`nhi-reference-number-normalization/1.0.0`. Manifest v1.3 adds a separate
+`1.1.0` rule for official table cells that append exactly one U+3002 `。`:
+the parser removes whitespace from a fixed ASCII/NBSP/ideographic-space set,
+removes at most one terminal full stop, then appends one missing `號`. It
+re-full-matches the result after each bounded operation. Other punctuation,
+two full stops, embedded notes, and multiple values fail closed.
+
+Both versions preserve the exact `ref_number_raw`, canonical value,
+normalization reason, and rule version. V1.3 repeats those fields in `raw.md`
+frontmatter, and the registrar recomputes and cross-checks them. The v1.2
+parser never gains v1.3 normalization behavior, so existing manifests retain
+their original normalization semantics and hashes. The current adapter may
+invoke that frozen parser only to locate and verify an already existing
+v1.0–v1.2 target. If no such target exists, the original v1.3 parse error is
+returned; legacy parsing can never create a new bundle. Metadata extraction reads
+only structurally paired cells: `th`/`td` for the notice table and sequential
+`dt`/`dd` cells within the same `dl` for publication metadata. `公告事項`
+therefore preserves ordered paragraphs, list items, `div` blocks, line breaks,
+and intervening bare text from its own value cell without consuming a later row
+or treating label-like text inside the announcement as a boundary. Every
+non-ignored text node is admitted exactly once. Unknown layouts fail closed.
 
 The corpus bundle is written to a temporary sibling directory, fsynced, and
-atomically renamed. An existing identity is accepted only when its source UID
-and origin bundle fingerprint agree. Corpus registration must follow that
-filesystem publication. Separately, the update candidate loader records a
+atomically renamed. An existing identity is accepted only after its source UID,
+origin bundle fingerprint, complete source bindings, on-disk inventory, and
+top-level metadata agree. `raw.md` is regenerated from the sealed source with
+the frozen renderer for that manifest version and must be byte-identical;
+changing the prose and its declared hashes together is therefore rejected.
+The target, manifest, and payload files must be real in-tree files rather than
+symlinks. Corpus registration must follow that filesystem publication.
+Separately, the update candidate loader records a
 durable, fsync-verified receipt for the immutable notice source bundle; the two
 receipts must not be conflated.
 

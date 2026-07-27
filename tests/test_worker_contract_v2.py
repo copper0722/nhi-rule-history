@@ -39,7 +39,7 @@ NOTICE_METADATA = {
     "reference_number_normalized": "健保審字第1150000000號",
     "reference_number_normalization": "exact",
     "reference_number_normalization_rule": (
-        "nhi-reference-number-normalization/1.0.0"
+        "nhi-reference-number-normalization/1.1.0"
     ),
     "document_date_roc_raw": "115-07-20",
     "publication_date_roc_raw": "115-07-20",

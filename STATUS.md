@@ -29,8 +29,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 335 項 public tests
-  （328 passed、7 skip；含真實 PostgreSQL linkage transaction test）；
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 348 項 public tests
+  （341 passed、7 skip；含真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
 - `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、
@@ -168,6 +168,20 @@
   44 項 hostile process／overflow／drift tests 通過，結束後 isolated
   process 與 runtime dir 都是 0。這只解除一次 stage-only official-source
   canary 的 block；repair hold 與 canonical mutation 仍未授權。
+- 第一筆指定 work item 的 official-source canary 已開始：
+  `cf546edf-7979-5ef8-8dec-7c80e538cd59`（cefiderocol/Fetroja）。6 個
+  resources／4 個正式附件已形成 content-addressed source bundle，
+  bundle ID
+  `4664185ecf5a642776ebe7985f18be516b5910b0d9a71f1a3717c352ae669a44`、
+  fingerprint
+  `fa5a2c9410735374947a50c56afd992ff9fb5641a03eb8a6611ca633f1fc55ae`。
+  流程在模型呼叫前 fail closed：正式頁的發文字號是
+  `健保審字第1150055418號。`，且公告事項有兩段；舊 parser 不接受末尾
+  全形句號並只保留第一段。work item 安全停在 `acquired`，model calls
+  為 0。Additive manifest v1.3／normalization rule 1.1.0 已完成真實
+  bundle replay，精確保存 raw 文號、兩段公告與四附件；修補經獨立
+  re-review 判定 `SHIP`、C/H/M/L=`0/0/0/0`。live registrar
+  migration 尚未套用，repair hold 與 canonical mutation 仍未解除。
 - 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；

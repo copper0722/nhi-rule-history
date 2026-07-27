@@ -11,9 +11,22 @@ from types import SimpleNamespace
 from unittest import mock
 
 import nhi_rule_history.update.workers as worker_contract
-from nhi_rule_history.contracts import ContractError, sha256_bytes, stable_id
+from nhi_rule_history.contracts import (
+    ContractError,
+    canonical_json_bytes,
+    sha256_bytes,
+    stable_id,
+)
 from nhi_rule_history.update.bundle import BundleBuilder, verify_bundle
-from nhi_rule_history.update.corpus_bundle import prepare_corpus_bundle
+from nhi_rule_history.update.corpus_bundle import (
+    _expected_replay_raw,
+    prepare_corpus_bundle,
+)
+from nhi_rule_history.update.notice import (
+    extract_notice_metadata,
+    extract_notice_metadata_v12,
+    normalize_reference_number,
+)
 from nhi_rule_history.update.proposal import (
     PROPOSAL_SCHEMA,
     ProposalError,
@@ -287,6 +300,7 @@ class ContinuousUpdateTests(unittest.TestCase):
         root: Path,
         *,
         reference_number: str = "健保審字第1150000000號",
+        announcement_html: str = "修訂第9節9.4規定",
     ):
         item = parse_rss(fixture_feed())[0]
         detail_url = item.link
@@ -296,7 +310,7 @@ class ContinuousUpdateTests(unittest.TestCase):
                 "<html><table>"
                 "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
                 f"<tr><th>發文字號</th><td>{reference_number}</td></tr>"
-                "<tr><th>公告事項</th><td>修訂第9節9.4規定</td></tr>"
+                f"<tr><th>公告事項</th><td>{announcement_html}</td></tr>"
                 "<tr><th>發文日期</th><td>115-07-15</td></tr>"
                 "</table><dl>"
                 "<dt>發布日期</dt><dd>115-07-15</dd>"
@@ -527,7 +541,7 @@ class ContinuousUpdateTests(unittest.TestCase):
             manifest = json.loads(
                 (target / "manifest.json").read_text(encoding="utf-8")
             )
-            self.assertEqual(manifest["schema_version"], "1.2")
+            self.assertEqual(manifest["schema_version"], "1.3")
             self.assertEqual(manifest["declared_attachment_count"], 2)
             self.assertEqual(
                 manifest["source_uid"], "gov_健保審字第1150000000號"
@@ -545,6 +559,45 @@ class ContinuousUpdateTests(unittest.TestCase):
                 sealed.path, corpus_root=root / "corpus"
             )
             self.assertTrue(second["replayed"])
+            original_raw = (target / "raw.md").read_bytes()
+            original_manifest = (target / "manifest.json").read_bytes()
+            altered_raw = original_raw + b"\ncoordinated tamper\n"
+            (target / "raw.md").write_bytes(altered_raw)
+            altered_manifest = json.loads(
+                original_manifest.decode("utf-8")
+            )
+            altered_manifest["raw_md_sha256"] = sha256_bytes(altered_raw)
+            altered_manifest["raw_md_bytes"] = len(altered_raw)
+            raw_row = next(
+                row
+                for row in altered_manifest["files"]
+                if row["file_name"] == "raw.md"
+            )
+            raw_row["sha256"] = sha256_bytes(altered_raw)
+            raw_row["byte_size"] = len(altered_raw)
+            (target / "manifest.json").write_bytes(
+                canonical_json_bytes(altered_manifest)
+            )
+            with self.assertRaisesRegex(
+                ContractError, "raw markdown does not verify"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+            (target / "raw.md").write_bytes(original_raw)
+            (target / "manifest.json").write_bytes(original_manifest)
+            outside_manifest = root / "outside-manifest.json"
+            outside_manifest.write_bytes(original_manifest)
+            (target / "manifest.json").unlink()
+            (target / "manifest.json").symlink_to(outside_manifest)
+            with self.assertRaisesRegex(
+                ContractError, "lacks manifest"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
 
     def test_missing_terminal_hao_is_normalized_without_losing_source_text(
         self,
@@ -577,7 +630,7 @@ class ContinuousUpdateTests(unittest.TestCase):
             )
             self.assertEqual(
                 manifest["ref_number_normalization_rule"],
-                "nhi-reference-number-normalization/1.0.0",
+                "nhi-reference-number-normalization/1.1.0",
             )
             raw = (target / "raw.md").read_text(encoding="utf-8")
             self.assertIn(
@@ -593,6 +646,637 @@ class ContinuousUpdateTests(unittest.TestCase):
                 packet["notice_metadata"]["reference_number_normalized"],
                 "健保審字第1150671800號",
             )
+
+    def test_terminal_full_stop_is_removed_without_losing_source_text(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sealed = self._bundle(
+                root / "source",
+                reference_number="健保審字第1150055418號。",
+                announcement_html=(
+                    "<p>一、收載新藥品項目。</p>"
+                    "<p>二、修訂 cefiderocol 給付規定。</p>"
+                ),
+            )
+            result = prepare_corpus_bundle(
+                sealed.path, corpus_root=root / "corpus"
+            )
+            target = Path(result["bundle_path"])
+            manifest = json.loads(
+                (target / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["schema_version"], "1.3")
+            self.assertEqual(
+                manifest["source_uid"], "gov_健保審字第1150055418號"
+            )
+            self.assertEqual(
+                manifest["ref_number"], "健保審字第1150055418號"
+            )
+            self.assertEqual(
+                manifest["ref_number_raw"], "健保審字第1150055418號。"
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization"],
+                "terminal_full_stop_removed",
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization_rule"],
+                "nhi-reference-number-normalization/1.1.0",
+            )
+            raw = (target / "raw.md").read_text(encoding="utf-8")
+            self.assertIn(
+                'reference_number_raw: "健保審字第1150055418號。"',
+                raw,
+            )
+            frontmatter = raw.split("---", 2)[1]
+            self.assertIn(
+                'reference_number: "健保審字第1150055418號"',
+                frontmatter,
+            )
+            self.assertIn(
+                (
+                    "reference_number_normalization: "
+                    "terminal_full_stop_removed"
+                ),
+                frontmatter,
+            )
+            self.assertIn(
+                (
+                    "reference_number_normalization_rule: "
+                    "nhi-reference-number-normalization/1.1.0"
+                ),
+                frontmatter,
+            )
+            self.assertIn(
+                "extraction: nhi-rule-history-corpus-bundle/1.3.0",
+                frontmatter,
+            )
+            self.assertEqual(
+                manifest["raw_md_sha256"],
+                sha256_bytes(raw.encode("utf-8")),
+            )
+            self.assertEqual(
+                manifest["raw_md_bytes"],
+                len(raw.encode("utf-8")),
+            )
+            packet = source_packet(sealed.path)
+            self.assertEqual(
+                packet["notice_metadata"]["reference_number_raw"],
+                "健保審字第1150055418號。",
+            )
+            self.assertEqual(
+                packet["notice_metadata"]["reference_number_normalized"],
+                "健保審字第1150055418號",
+            )
+            self.assertEqual(
+                packet["notice_metadata"]["announcement_text_raw"],
+                (
+                    "一、收載新藥品項目。\n\n"
+                    "二、修訂 cefiderocol 給付規定。"
+                ),
+            )
+            self.assertIn("一、收載新藥品項目。", raw)
+            self.assertIn("二、修訂 cefiderocol 給付規定。", raw)
+
+    def test_terminal_full_stop_and_missing_hao_are_independent(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sealed = self._bundle(
+                root / "source",
+                reference_number="健保審字第1150055418。",
+            )
+            result = prepare_corpus_bundle(
+                sealed.path, corpus_root=root / "corpus"
+            )
+            manifest = json.loads(
+                (
+                    Path(result["bundle_path"]) / "manifest.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                manifest["ref_number"], "健保審字第1150055418號"
+            )
+            self.assertEqual(
+                manifest["ref_number_normalization"],
+                (
+                    "terminal_full_stop_removed_and_"
+                    "terminal_hao_appended"
+                ),
+            )
+
+    def test_v13_whitespace_set_includes_nbsp_and_ideographic_space(
+        self,
+    ) -> None:
+        normalized, reason = normalize_reference_number(
+            "\u3000健保審字第1150055418。\u00a0"
+        )
+        self.assertEqual(normalized, "健保審字第1150055418號")
+        self.assertEqual(
+            reason,
+            (
+                "whitespace_removed_and_"
+                "terminal_full_stop_removed_and_"
+                "terminal_hao_appended"
+            ),
+        )
+
+    def test_existing_v12_target_replays_without_byte_changes(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            template_sealed = self._bundle(root / "template-source")
+            generated = prepare_corpus_bundle(
+                template_sealed.path,
+                corpus_root=root / "generated",
+            )
+            source_reference = "\u2003健保審字第1150000000號\u2003"
+            sealed = self._bundle(
+                root / "source",
+                reference_number=source_reference,
+            )
+            generated_target = Path(generated["bundle_path"])
+            target = (
+                root
+                / "corpus"
+                / "2026"
+                / "gov_健保審字第1150000000號"
+            )
+            target.mkdir(parents=True)
+            for path in generated_target.iterdir():
+                if path.is_file():
+                    (target / path.name).write_bytes(path.read_bytes())
+            legacy_manifest = json.loads(
+                (target / "manifest.json").read_text(encoding="utf-8")
+            )
+            legacy_manifest["schema_version"] = "1.2"
+            legacy_manifest["origin_update_bundle_id"] = sealed.bundle_id
+            legacy_manifest["origin_update_bundle_fingerprint"] = (
+                sealed.bundle_fingerprint
+            )
+            legacy_manifest["ref_number_raw"] = (
+                "健保審字第1150000000號"
+            )
+            legacy_manifest["ref_number_normalization"] = "exact"
+            legacy_manifest["ref_number_normalization_rule"] = (
+                "nhi-reference-number-normalization/1.0.0"
+            )
+            raw_path = target / "raw.md"
+            raw = raw_path.read_bytes().replace(
+                b"nhi-rule-history-corpus-bundle/1.3.0",
+                b"nhi-rule-history-corpus-bundle/1.2.0",
+            )
+            raw = raw.replace(
+                b"nhi-reference-number-normalization/1.1.0",
+                b"nhi-reference-number-normalization/1.0.0",
+            )
+            raw = raw.replace(
+                json.dumps(
+                    source_reference,
+                    ensure_ascii=False,
+                ).encode("utf-8"),
+                json.dumps(
+                    "健保審字第1150000000號",
+                    ensure_ascii=False,
+                ).encode("utf-8"),
+            )
+            raw = raw.replace(
+                source_reference.encode("utf-8"),
+                "健保審字第1150000000號".encode("utf-8"),
+            )
+            raw_path.write_bytes(raw)
+            legacy_manifest["raw_md_sha256"] = sha256_bytes(raw)
+            legacy_manifest["raw_md_bytes"] = len(raw)
+            for row in legacy_manifest["files"]:
+                if row["file_name"] == "raw.md":
+                    row["sha256"] = sha256_bytes(raw)
+                    row["byte_size"] = len(raw)
+            source_manifest = json.loads(
+                (sealed.path / "manifest.json").read_text(encoding="utf-8")
+            )
+            source_name_by_relation = {
+                "detail_page": "source.html",
+                "rss_feed": "source-rss.xml",
+            }
+            for source_row in source_manifest["resources"]:
+                relation = source_row["relation"]
+                if relation in source_name_by_relation:
+                    name = source_name_by_relation[relation]
+                elif relation == "declared_attachment":
+                    name = (
+                        f"attachment-"
+                        f"{source_row['declared_sequence']:03d}"
+                        f"{Path(source_row['content_path']).suffix}"
+                    )
+                else:
+                    continue
+                payload = (
+                    sealed.path / source_row["content_path"]
+                ).read_bytes()
+                (target / name).write_bytes(payload)
+                manifest_row = next(
+                    row
+                    for row in legacy_manifest["files"]
+                    if row["file_name"] == name
+                )
+                manifest_row["sha256"] = sha256_bytes(payload)
+                manifest_row["byte_size"] = len(payload)
+                if relation == "declared_attachment":
+                    manifest_row["declared_label"] = source_row[
+                        "declared_label"
+                    ]
+                    manifest_row["media_type"] = source_row["media_type"]
+                    manifest_row["origin_artifact_sha256"] = source_row[
+                        "artifact_sha256"
+                    ]
+            (target / "manifest.json").write_bytes(
+                canonical_json_bytes(legacy_manifest)
+            )
+            self.assertEqual(
+                legacy_manifest["declared_attachment_count"],
+                len(
+                    [
+                        row
+                        for row in legacy_manifest["files"]
+                        if row["role"] == "declared_attachment"
+                    ]
+                ),
+            )
+            for row in legacy_manifest["files"]:
+                path = target / row["file_name"]
+                self.assertTrue(path.is_file())
+                self.assertEqual(path.stat().st_size, row["byte_size"])
+                self.assertEqual(
+                    sha256_bytes(path.read_bytes()),
+                    row["sha256"],
+                )
+            before = {
+                path.name: path.read_bytes()
+                for path in target.iterdir()
+                if path.is_file()
+            }
+            result = prepare_corpus_bundle(
+                sealed.path,
+                corpus_root=root / "corpus",
+            )
+            after = {
+                path.name: path.read_bytes()
+                for path in target.iterdir()
+                if path.is_file()
+            }
+            self.assertTrue(result["replayed"])
+            self.assertEqual(after, before)
+            (target / "raw.md").write_bytes(b"corrupt")
+            with self.assertRaisesRegex(
+                ContractError, "does not verify"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+            (target / "raw.md").write_bytes(before["raw.md"])
+            (target / "unlisted.txt").write_text(
+                "not in manifest",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                ContractError, "does not match its manifest"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+            (target / "unlisted.txt").unlink()
+            altered_manifest = json.loads(
+                before["manifest.json"].decode("utf-8")
+            )
+            next(
+                row
+                for row in altered_manifest["files"]
+                if row["role"] == "declared_attachment"
+            )["declared_label"] = "不同標籤"
+            (target / "manifest.json").write_bytes(
+                canonical_json_bytes(altered_manifest)
+            )
+            with self.assertRaisesRegex(
+                ContractError, "source binding does not verify"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+            (target / "manifest.json").write_bytes(
+                before["manifest.json"]
+            )
+            altered_manifest = json.loads(
+                before["manifest.json"].decode("utf-8")
+            )
+            altered_manifest["title_zh"] = "遭竄改標題"
+            (target / "manifest.json").write_bytes(
+                canonical_json_bytes(altered_manifest)
+            )
+            with self.assertRaisesRegex(
+                ContractError, "metadata does not match source"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+            (target / "manifest.json").write_bytes(
+                before["manifest.json"]
+            )
+            source_html = target / "source.html"
+            source_html_payload = source_html.read_bytes()
+            outside = root / "outside-source.html"
+            outside.write_bytes(source_html_payload)
+            source_html.unlink()
+            source_html.symlink_to(outside)
+            with self.assertRaisesRegex(
+                ContractError, "does not verify"
+            ):
+                prepare_corpus_bundle(
+                    sealed.path,
+                    corpus_root=root / "corpus",
+                )
+
+    def test_existing_v11_replay_preserves_raw_reference_semantics(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference = "健保審字第 1150000000 號"
+            sealed = self._bundle(
+                root / "source",
+                reference_number=reference,
+            )
+            created = prepare_corpus_bundle(
+                sealed.path,
+                corpus_root=root / "corpus",
+            )
+            target = Path(created["bundle_path"])
+            manifest_path = target / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["schema_version"] = "1.1"
+            manifest["ref_number"] = reference
+            manifest.pop("ref_number_raw")
+            manifest.pop("ref_number_normalization")
+            manifest.pop("ref_number_normalization_rule")
+            source_manifest = json.loads(
+                (sealed.path / "manifest.json").read_text(encoding="utf-8")
+            )
+            detail = next(
+                row
+                for row in source_manifest["resources"]
+                if row["relation"] == "detail_page"
+            )
+            detail_payload = (
+                sealed.path / detail["content_path"]
+            ).read_bytes()
+            metadata = extract_notice_metadata_v12(
+                detail_payload,
+                detail["artifact_sha256"],
+            )
+            raw = _expected_replay_raw(
+                source_bundle_path=sealed.path,
+                source_manifest=source_manifest,
+                existing_manifest=manifest,
+                source_uid=manifest["source_uid"],
+                metadata=metadata,
+            )
+            self.assertIn(
+                f"reference_number: {json.dumps(reference, ensure_ascii=False)}",
+                raw.decode("utf-8"),
+            )
+            self.assertNotIn(
+                "reference_number_raw:",
+                raw.decode("utf-8"),
+            )
+            (target / "raw.md").write_bytes(raw)
+            manifest["raw_md_sha256"] = sha256_bytes(raw)
+            manifest["raw_md_bytes"] = len(raw)
+            raw_row = next(
+                row
+                for row in manifest["files"]
+                if row["file_name"] == "raw.md"
+            )
+            raw_row["sha256"] = sha256_bytes(raw)
+            raw_row["byte_size"] = len(raw)
+            manifest_path.write_bytes(canonical_json_bytes(manifest))
+            replay = prepare_corpus_bundle(
+                sealed.path,
+                corpus_root=root / "corpus",
+            )
+            self.assertTrue(replay["replayed"])
+
+    def test_html_metadata_rejects_whitespace_outside_fixed_set(
+        self,
+    ) -> None:
+        payload = (
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            "<tr><th>發文字號</th>"
+            "<td>\u2003健保審字第1150055418號。</td></tr>"
+            "<tr><th>公告事項</th><td>修訂規定。</td></tr>"
+            "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+            "</table><dl>"
+            "<dt>發布日期</dt><dd>115-07-15</dd>"
+            "<dt>更新日期</dt><dd>115-07-16</dd>"
+            "</dl></html>"
+        ).encode()
+        with self.assertRaisesRegex(
+            ContractError, "missing or ambiguous"
+        ):
+            extract_notice_metadata(payload, sha256_bytes(payload))
+
+    def test_html_metadata_preserves_allowed_whitespace_exactly(
+        self,
+    ) -> None:
+        reference = "\u3000健保審字第\u00a01150055418號。\t"
+        payload = (
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            f"<tr><th>發文字號</th><td>{reference}</td></tr>"
+            "<tr><th>公告事項</th><td>修訂規定。</td></tr>"
+            "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+            "</table><dl>"
+            "<dt>發布日期</dt><dd>115-07-15</dd>"
+            "<dt>更新日期</dt><dd>115-07-16</dd>"
+            "</dl></html>"
+        ).encode()
+        metadata = extract_notice_metadata(payload, sha256_bytes(payload))
+        self.assertEqual(metadata["reference_number_raw"], reference)
+        self.assertEqual(
+            metadata["reference_number_normalized"],
+            "健保審字第1150055418號",
+        )
+        self.assertEqual(
+            metadata["reference_number_normalization"],
+            "whitespace_removed_and_terminal_full_stop_removed",
+        )
+
+    def test_announcement_uses_same_row_and_is_order_independent(
+        self,
+    ) -> None:
+        payload = (
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            "<tr><th>發文字號</th>"
+            "<td>健保審字第1150055418號。</td></tr>"
+            "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+            "<tr><th>公告事項</th><td>"
+            "<p>一、第一段。</p><p>發文日期</p><p>二、第二段。</p>"
+            "</td></tr>"
+            "<tr><th>備註</th><td>不得併入公告事項。</td></tr>"
+            "</table><dl>"
+            "<dt>發布日期</dt><dd>115-07-15</dd>"
+            "<dt>更新日期</dt><dd>115-07-16</dd>"
+            "</dl></html>"
+        ).encode()
+        metadata = extract_notice_metadata(payload, sha256_bytes(payload))
+        self.assertEqual(
+            metadata["announcement_text_raw"],
+            "一、第一段。\n\n發文日期\n\n二、第二段。",
+        )
+        self.assertNotIn(
+            "不得併入公告事項",
+            metadata["announcement_text_raw"],
+        )
+
+    def test_nested_metadata_table_fails_closed(self) -> None:
+        payload = (
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            "<tr><th>發文字號</th><td>"
+            "<table><tr><td>健保審字第1150055418號。</td></tr></table>"
+            "</td></tr>"
+            "<tr><th>公告事項</th><td>修訂規定。</td></tr>"
+            "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+            "</table><dl>"
+            "<dt>發布日期</dt><dd>115-07-15</dd>"
+            "<dt>更新日期</dt><dd>115-07-16</dd>"
+            "</dl></html>"
+        ).encode()
+        with self.assertRaisesRegex(
+            ContractError, "missing or ambiguous"
+        ):
+            extract_notice_metadata(payload, sha256_bytes(payload))
+
+    def test_announcement_preserves_mixed_blocks_breaks_and_bare_text(
+        self,
+    ) -> None:
+        payload = (
+            "<html><table>"
+            "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+            "<tr><th>發文字號</th>"
+            "<td>健保審字第1150055418號。</td></tr>"
+            "<tr><th>公告事項</th><td>"
+            "<p>一<br>續</p>裸文字<div>二</div>"
+            "</td></tr>"
+            "<tr><th>發文日期</th><td>\n 115-07-15 \n</td></tr>"
+            "</table><dl>"
+            "<div><dt>發布日期</dt><dd>\n115-07-15\n</dd></div>"
+            "<div><dt>更新日期</dt><dd> 115-07-16 </dd></div>"
+            "</dl></html>"
+        ).encode()
+        metadata = extract_notice_metadata(payload, sha256_bytes(payload))
+        self.assertEqual(
+            metadata["announcement_text_raw"],
+            "一\n續\n\n裸文字\n\n二",
+        )
+        self.assertEqual(metadata["document_date_roc_raw"], "115-07-15")
+        self.assertEqual(metadata["publication_date_roc_raw"], "115-07-15")
+        self.assertEqual(metadata["update_date_roc_raw"], "115-07-16")
+
+    def test_definition_pairs_cannot_cross_dl_or_exist_outside_dl(
+        self,
+    ) -> None:
+        variants = (
+            (
+                "<dl><dt>發布日期</dt></dl>"
+                "<dl><dd>115-07-15</dd>"
+                "<dt>更新日期</dt><dd>115-07-16</dd></dl>"
+            ),
+            (
+                "<dt>發布日期</dt><dd>115-07-15</dd>"
+                "<dl><dt>更新日期</dt><dd>115-07-16</dd></dl>"
+            ),
+            (
+                "<dl><dt>發布日期</dt>"
+                "<dd>115-07-15</dl></dd>"
+                "<dl><dt>更新日期</dt><dd>115-07-16</dd></dl>"
+            ),
+        )
+        for definition_html in variants:
+            with self.subTest(definition_html=definition_html):
+                payload = (
+                    "<html><table>"
+                    "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+                    "<tr><th>發文字號</th>"
+                    "<td>健保審字第1150055418號。</td></tr>"
+                    "<tr><th>公告事項</th><td>修訂規定。</td></tr>"
+                    "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+                    "</table>"
+                    f"{definition_html}</html>"
+                ).encode()
+                with self.assertRaisesRegex(
+                    ContractError, "missing or ambiguous"
+                ):
+                    extract_notice_metadata(payload, sha256_bytes(payload))
+
+    def test_ignored_void_content_does_not_pollute_cell_text(
+        self,
+    ) -> None:
+        for void_html in ("<br/>", "<br>"):
+            with self.subTest(void_html=void_html):
+                payload = (
+                    "<html><table>"
+                    "<tr><th>主旨</th><td>修訂藥品給付規定</td></tr>"
+                    "<tr><th>發文字號</th>"
+                    "<td>健保審字第1150055418號。</td></tr>"
+                    "<tr><th>公告事項</th><td>"
+                    f"a<svg>{void_html}</svg>b"
+                    "</td></tr>"
+                    "<tr><th>發文日期</th><td>115-07-15</td></tr>"
+                    "</table><dl>"
+                    "<dt>發布日期</dt><dd>115-07-15</dd>"
+                    "<dt>更新日期</dt><dd>115-07-16</dd>"
+                    "</dl></html>"
+                ).encode()
+                metadata = extract_notice_metadata(
+                    payload, sha256_bytes(payload)
+                )
+                self.assertEqual(metadata["announcement_text_raw"], "ab")
+
+    def test_reference_normalization_rejects_unsupported_punctuation(
+        self,
+    ) -> None:
+        invalid = (
+            "健保審字第1150055418號。。",
+            "健保審字第1150055418號.",
+            "健保審字第1150055418。號",
+            "健保審字第1150055418號。附註",
+            "。健保審字第1150055418號",
+            "健保審字第１１５００５５４１８號。",
+            "健保審字第١١٥٠٠٥٥٤١٨號。",
+        )
+        for reference_number in invalid:
+            with self.subTest(reference_number=reference_number):
+                with tempfile.TemporaryDirectory() as temporary:
+                    sealed = self._bundle(
+                        Path(temporary) / "source",
+                        reference_number=reference_number,
+                    )
+                    with self.assertRaisesRegex(
+                        ContractError, "missing or ambiguous"
+                    ):
+                        prepare_corpus_bundle(
+                            sealed.path,
+                            corpus_root=Path(temporary) / "corpus",
+                        )
 
     def test_reference_normalization_rejects_other_missing_content(
         self,
@@ -672,11 +1356,21 @@ class ContinuousUpdateTests(unittest.TestCase):
             manifest = json.loads(
                 (target / "manifest.json").read_text(encoding="utf-8")
             )
+            source_manifest = json.loads(
+                (sealed.path / "manifest.json").read_text(encoding="utf-8")
+            )
+            source_attachment_rows = [
+                row
+                for row in source_manifest["resources"]
+                if row["relation"] == "declared_attachment"
+            ]
             attachment_rows = [
                 row
                 for row in manifest["files"]
                 if row["role"] == "declared_attachment"
             ]
+            self.assertEqual(manifest["declared_attachment_count"], 5)
+            self.assertEqual(len(attachment_rows), 5)
             self.assertEqual(
                 [row["file_name"] for row in attachment_rows],
                 [
@@ -710,6 +1404,17 @@ class ContinuousUpdateTests(unittest.TestCase):
                     "application/vnd.oasis.opendocument.text",
                     "application/vnd.oasis.opendocument.text",
                 ],
+            )
+            self.assertEqual(
+                [row["origin_artifact_sha256"] for row in attachment_rows],
+                [
+                    row["artifact_sha256"]
+                    for row in source_attachment_rows
+                ],
+            )
+            self.assertEqual(
+                [row["byte_size"] for row in attachment_rows],
+                [row["byte_size"] for row in source_attachment_rows],
             )
             raw = (target / "raw.md").read_text(encoding="utf-8")
             self.assertIn('"declared_sequence":3', raw)

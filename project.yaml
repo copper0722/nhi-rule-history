@@ -5,13 +5,14 @@ title_en: Taiwan NHI Drug Reimbursement Rule History
 status: in_progress
 risk_class: R3
 privacy: public
-last_verified_date: "2026-07-27"
+last_verified_date: "2026-07-28"
 
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_passed: 307
-  public_tests_skipped: 6
+  public_tests_run: 348
+  public_tests_passed: 341
+  public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
   live_nhi_drug_linkage_fetch: passed
@@ -342,6 +343,25 @@ machine_status:
       official_source_canary_authorized: true
       repair_hold_removal_authorized: false
       receipt: docs/audits/2026-07-28-primary-claude-nonsource-isolation-canary-success.json
+    official_source_canary:
+      status: acquired_parser_contract_failed_repair_prepared
+      work_item_id: cf546edf-7979-5ef8-8dec-7c80e538cd59
+      subject: cefiderocol_Fetroja
+      current_queue_state: acquired
+      update_bundle_id: 4664185ecf5a642776ebe7985f18be516b5910b0d9a71f1a3717c352ae669a44
+      update_bundle_fingerprint: fa5a2c9410735374947a50c56afd992ff9fb5641a03eb8a6611ca633f1fc55ae
+      resources: 6
+      declared_attachments: 4
+      model_calls: 0
+      failure_boundary: before_corpus_registration_and_model_dispatch
+      observed_reference_number_raw: 健保審字第1150055418號。
+      observed_announcement_paragraphs: 2
+      repair_manifest_version: "1.3"
+      repair_normalization_rule: nhi-reference-number-normalization/1.1.0
+      actual_bundle_replay: passed
+      independent_repair_review: ship_c_h_m_l_0_0_0_0
+      live_registrar_migration_applied: false
+      repair_hold_removal_authorized: false
   nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
   v2_acquisition_stage: VERIFIED_BOUNDED
   v2_structural_stage: VERIFIED_SOURCE_LOCAL
@@ -360,7 +380,8 @@ machine_status:
     candidate_proposals_needs_review: 9
     update_queue:
       total: 21
-      selected: 2
+      selected: 1
+      acquired: 1
       corpus_registered: 0
       staged_needs_review: 9
       failed_terminal: 2

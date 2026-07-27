@@ -471,3 +471,38 @@
   隔離 PostgreSQL 已通過 base→patch→idempotent patch、live load/replay、
   delayed t2→t1 chronology、post-worker rejection 與 rollback；完整 suite
   為 70 legacy（1 skip）及 283 public（6 skip）。尚未套用 live migration。
+- 2026-07-28 執行第一筆 exact-target official-source canary，work item
+  `cf546edf-7979-5ef8-8dec-7c80e538cd59`（cefiderocol/Fetroja）。來源取得
+  成功並封存 6 resources／4 attachments；source bundle ID 為
+  `4664185ecf5a642776ebe7985f18be516b5910b0d9a71f1a3717c352ae669a44`，
+  fingerprint 為
+  `fa5a2c9410735374947a50c56afd992ff9fb5641a03eb8a6611ca633f1fc55ae`。
+  queue 由 `selected` 進到 `acquired` 後，在 corpus metadata parsing
+  fail closed，沒有呼叫 Claude 或 fallback，也沒有寫 proposal／canonical
+  history。根因有二：正式文號 cell 是 `健保審字第1150055418號。`；
+  `公告事項` 有兩段，第二段才是 cefiderocol 給付規定修訂，但舊 extractor
+  只讀第一段。
+- 對上述正式 bundle 建立 additive corpus manifest v1.3：v1.2 與
+  normalization rule 1.0.0 保持凍結，v1.3 才使用 rule 1.1.0，依固定
+  whitespace → 恰一個末尾 U+3002 → 缺 `號` 的順序正規化，同時保存
+  exact raw value、reason 與兩段公告。真實 bundle replay 產生
+  `gov_健保審字第1150055418號`、8 files、4 attachments，raw hash
+  與 manifest 相符。負例涵蓋雙句號、ASCII dot、內嵌／前綴句號與尾註。
+  v1.3 parser 失敗時只允許凍結的 v1.2 extractor 定位並驗證既有
+  v1.0–v1.2 bundle；沒有既有 target 時仍回傳原始 v1.3 錯誤，不能以
+  legacy 語意建立新資料。真實 U+2003 boundary fixture 已驗證舊 bundle
+  byte-identical replay，ignored HTML region 內 self-closing 與一般 void
+  tag 亦不再破壞 parser depth。獨立 review 再發現 raw 與 manifest hashes
+  可協同竄改、manifest symlink 仍會被跟隨；replay 現改由 sealed source
+  依 v1.0–v1.3 各自凍結的 renderer 重建 raw 並要求 byte-identical，
+  v1.0 ODT／PDF 也綁回 source artifact，target／manifest／payload symlink
+  全部拒絕。
+  v1.0／v1.1 manifest 與 raw 的 `reference_number` 維持 raw source
+  semantics，只有 v1.2／v1.3 才使用 normalized value；合法內部空白的
+  v1.1 regression replay 已通過。
+  公開完整 suite 為 70 legacy（1 skip）、348 public（7 skip），
+  public-tree 與 SQLite smoke 通過；私有 v1.2/v1.3 registrar、forward/
+  rollback migration 與 worker runtime 專項測試亦通過。獨立最終
+  re-review 為 `SHIP`、C/H/M/L=`0/0/0/0`。live v1.3
+  migration、corpus registration、primary Claude proposal 與 post-canary
+  audit 尚未執行；repair hold 及 canonical mutation 仍未授權。

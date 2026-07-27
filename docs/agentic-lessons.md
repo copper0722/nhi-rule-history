@@ -271,6 +271,37 @@ candidates。這些層級只決定閱讀順序，不改變所有 work units 的
 - 兩個模型都可發現 normalization、collision 與 LLM authority 風險，但
   parser、queue counts、hash binding、PG transition 仍由確定性程式驗收。
 
+## 2026-07-28 terminal-句號 canary 與版本分流
+
+第一筆正式來源 canary 的公告欄位寫成
+`健保審字第1150055418號。`。來源 bundle 與四份附件均已完整封存，但
+v1.2 metadata parser 因尾端全形句號而 fail closed；同一頁也揭露舊 parser
+只取 `公告事項` 第一段，會漏掉第二段真正的 cefiderocol 給付規定修訂。
+
+修補不改寫 v1.2 語意，而新增 corpus manifest v1.3：
+
+- raw 發文字號完整保留；
+- 正規化只容許固定 whitespace 集合、恰一個末尾 U+3002 `。`，以及既有
+  缺 `號` 補字；每一步都有固定順序與 reason；
+- v1.2 固定 rule 1.0.0，v1.3 固定 rule 1.1.0，兩者不可互換；
+- `raw.md`、manifest、Python registrar 與 PG registrar 必須重算一致；
+- `公告事項` 只從同一 `th`／`td` row 取值並保留所有段落；不把全頁文字
+  順序當成欄位邊界；
+- cell 內的 `p`／`li`／`div`、`br` 與裸文字依原順序各保留一次；
+  `dt`／`dd` 必須屬於同一個 `dl`，避免跨區塊誤配；
+- `號。。`、ASCII full stop、內嵌句號、尾註與前綴句號都成為負例。
+
+這次 canary 的價值不是「模型看懂了 cefiderocol」，而是正式來源在任何
+模型呼叫前，先找出 metadata 與段落邊界的合成 fixture 缺口。正確的修補
+單位因此是版本化 parser、registrar、migration、rollback 與真實 bundle
+replay，而不是針對單一公告硬編字串替換。
+
+Replay 也不能只驗 manifest 自己宣告的 hashes。若 `raw.md` 與其兩組
+hash／size 一起被改寫，self-consistency 仍可能成立；真正的可重播性必須
+從 sealed source 依原 manifest 版本的凍結 renderer 重建，要求逐位元相同，
+並拒絕 target、manifest 或 payload symlink。這是「內容來源綁定」與
+「檔案自洽」的差別。
+
 後續 model-harness packet 應直接附 sealed source hash、exact value 與正式
 count equations；output contract 要求逐項算術 reconciliation，近似值只能
 進 uncertainties。模型結果若要長期保存，dispatcher 還應有原生 output-file
