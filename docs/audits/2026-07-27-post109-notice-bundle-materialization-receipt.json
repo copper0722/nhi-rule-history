@@ -1,0 +1,50 @@
+{
+  "schema": "nhi-rule-history/post109-notice-bundle-materialization-public-receipt/v1",
+  "declared_cut": "2026-07-27",
+  "input": {
+    "source_scope": "FINT 2021-01-01..2026-07-27 exact phrase 藥品給付規定",
+    "source_plan": "sources/source-plan-post109-exact-phrase.json",
+    "source_plan_sha256": "92fbe30822de67535c5ad91285bbd8f68fd78a63e9156f279f83685c673a42d3",
+    "accepted_acquisition_run_id": "51189ce2-ce51-461c-bd96-c59a526f6065",
+    "raw_manifest_sha256": "4000c186385760d879fd77c04c08f39523243bfc43396cec474471650efa96b2"
+  },
+  "materialization": {
+    "status": "passed",
+    "batch_id": "2d55d7e1af6732dc2461e0e30bd949361444855508a942e20104f16444b8a7f0",
+    "batch_fingerprint": "a8160ba80e40815ddfd4a971b5e4a9bebd99d61df680c8faafbb5a154dd3a37e",
+    "batch_index_sha256": "634958e5819376a1f6926780acbfbc25d22a770d30f1249549ecb75b0092e312",
+    "official_documents": 366,
+    "detail_resources": 366,
+    "declared_attachments": 1353,
+    "materialized_bundles": 366,
+    "materialized_resources": 1719,
+    "materialized_artifact_bytes_in_source_local_bundles": 86038585,
+    "unique_raw_artifact_bytes": 85642128,
+    "terminal_status_counts": {
+      "materialized_verified": 366
+    }
+  },
+  "verification": {
+    "every_bundle_verified_offline": true,
+    "every_declared_resource_present": true,
+    "unmanifested_files": 0,
+    "byte_identical_replay": true,
+    "replay_returned_existing_batch": true
+  },
+  "format_policy": {
+    "odt_required": false,
+    "pdf_only_supported": true,
+    "ole_supported_as_preserved_source_bytes": true,
+    "ods_supported_as_preserved_source_bytes": true,
+    "multi_attachment_notice_supported": true,
+    "unparsed_format_means_no_change": false
+  },
+  "claims": {
+    "source_local_bundles_complete_for_this_bounded_input": true,
+    "official_source_universe_closed": false,
+    "legal_effective_dates_resolved": false,
+    "stable_clause_identity_resolved": false,
+    "canonical_history_written": false,
+    "per_clause_history_complete": false
+  }
+}

@@ -28,6 +28,7 @@ ARTIFACT_URL_OBSERVATION_SCHEMA = "nhi-rule-history/artifact-url-observation/v2"
 ISSUE_SCHEMA = "nhi-rule-history/acquisition-issue/v2"
 DISCOVERY_MANIFEST_SCHEMA = "nhi-rule-history/discovery-manifest/v2"
 RAW_MANIFEST_SCHEMA = "nhi-rule-history/raw-manifest/v2"
+WORKER_ATTEMPT_SCHEMA = "nhi-rule-history/worker-attempt/v1"
 
 JSONL_FILES = (
     "discovery-observations.jsonl",
@@ -146,6 +147,29 @@ ROW_ALLOWED_FIELDS: dict[str, frozenset[str]] = {
             "recorded_at",
         }
     ),
+    WORKER_ATTEMPT_SCHEMA: frozenset(
+        {
+            "schema",
+            "attempt_id",
+            "role",
+            "worker_id",
+            "runtime_id",
+            "provider",
+            "model",
+            "prompt_version",
+            "prompt_sha256",
+            "started_at",
+            "completed_at",
+            "status",
+            "primary_attempt_id",
+            "fallback_reason",
+            "exit_code",
+            "output_sha256",
+            "stderr_sha256",
+            "validation_error_code",
+            "candidate_id",
+        }
+    ),
 }
 
 ROW_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
@@ -225,6 +249,28 @@ ROW_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
             "source_url",
             "code",
             "recorded_at",
+        }
+    ),
+    WORKER_ATTEMPT_SCHEMA: frozenset(
+        {
+            "schema",
+            "attempt_id",
+            "role",
+            "worker_id",
+            "runtime_id",
+            "provider",
+            "model",
+            "prompt_version",
+            "prompt_sha256",
+            "started_at",
+            "completed_at",
+            "status",
+            "primary_attempt_id",
+            "fallback_reason",
+            "exit_code",
+            "output_sha256",
+            "stderr_sha256",
+            "validation_error_code",
         }
     ),
 }
@@ -354,6 +400,28 @@ def validate_jsonl_row(row: Mapping[str, Any]) -> None:
             raise ContractError("fetch attempt status is invalid")
         if not expected <= set(row):
             raise ContractError("fetch attempt status fields are incomplete")
+    if schema == WORKER_ATTEMPT_SCHEMA:
+        if row["role"] not in {"primary", "fallback"}:
+            raise ContractError("worker attempt role is invalid")
+        if row["status"] not in {
+            "validated",
+            "execution_failed",
+            "contract_failed",
+            "timeout",
+            "transport_failed",
+        }:
+            raise ContractError("worker attempt status is invalid")
+        if row["role"] == "primary" and (
+            row["primary_attempt_id"] is not None
+            or row["fallback_reason"] is not None
+        ):
+            raise ContractError("primary attempt cannot reference fallback fields")
+        if row["role"] == "fallback" and (
+            not row["primary_attempt_id"] or not row["fallback_reason"]
+        ):
+            raise ContractError("fallback attempt must reference primary failure")
+        if row["status"] == "validated" and not row.get("candidate_id"):
+            raise ContractError("validated worker attempt requires candidate_id")
 
 
 def relative_blob_path(digest: str) -> str:

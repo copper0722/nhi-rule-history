@@ -82,6 +82,23 @@ CREATE TABLE rule_designation (
     UNIQUE (rule_id, designation_type, designation_value, valid_from)
 );
 
+CREATE TABLE rule_navigation_assignment (
+    navigation_assignment_id text PRIMARY KEY,
+    rule_id text NOT NULL REFERENCES rule_identity(rule_id),
+    source_designation_raw text NOT NULL,
+    navigation_code text NOT NULL,
+    code_origin text NOT NULL CHECK (code_origin IN (
+        'official_source', 'project_assigned'
+    )),
+    display_label text NOT NULL,
+    sort_order integer NOT NULL,
+    valid_from date,
+    valid_to date,
+    evidence_locator jsonb NOT NULL,
+    CHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to > valid_from),
+    UNIQUE (rule_id, navigation_code, valid_from)
+);
+
 CREATE TABLE rule_snapshot (
     snapshot_id text PRIMARY KEY,
     rule_id text NOT NULL REFERENCES rule_identity(rule_id),
@@ -105,6 +122,32 @@ CREATE TABLE rule_snapshot (
     UNIQUE (rule_id, release_id, raw_sha256)
 );
 
+CREATE TABLE source_date_annotation (
+    annotation_id text PRIMARY KEY,
+    snapshot_id text NOT NULL REFERENCES rule_snapshot(snapshot_id),
+    artifact_id text NOT NULL REFERENCES source_artifact(artifact_id),
+    source_locator_sha256 char(64) NOT NULL,
+    source_locator_json jsonb NOT NULL,
+    raw_date_text text NOT NULL,
+    calendar_system text NOT NULL CHECK (calendar_system IN (
+        'ROC', 'Gregorian', 'mixed', 'unknown'
+    )),
+    iso_date_candidate date,
+    annotation_scope text NOT NULL CHECK (annotation_scope IN (
+        'rule', 'subitem', 'sentence', 'marginal_note', 'unknown'
+    )),
+    resolution_status text NOT NULL CHECK (resolution_status IN (
+        'unresolved_event', 'event_resolved', 'transition_verified',
+        'rejected_non_amendment'
+    )),
+    unresolved_reason text,
+    CHECK (
+        resolution_status <> 'unresolved_event'
+        OR unresolved_reason IS NOT NULL
+    ),
+    UNIQUE (snapshot_id, artifact_id, source_locator_sha256, raw_date_text)
+);
+
 CREATE TABLE official_event_effect (
     event_effect_id text PRIMARY KEY,
     event_id text NOT NULL REFERENCES official_event(event_id),
@@ -120,6 +163,16 @@ CREATE TABLE official_event_effect (
     old_snapshot_id text REFERENCES rule_snapshot(snapshot_id),
     new_snapshot_id text REFERENCES rule_snapshot(snapshot_id),
     resolution_status text NOT NULL
+);
+
+CREATE TABLE source_date_annotation_effect (
+    annotation_id text NOT NULL REFERENCES source_date_annotation(annotation_id),
+    event_effect_id text NOT NULL REFERENCES official_event_effect(event_effect_id),
+    relation_type text NOT NULL CHECK (relation_type IN (
+        'supports', 'contradicts', 'superseded_by'
+    )),
+    decision_evidence_json jsonb NOT NULL,
+    PRIMARY KEY (annotation_id, event_effect_id, relation_type)
 );
 
 CREATE TABLE rule_lineage_edge (
@@ -172,6 +225,43 @@ CREATE TABLE comparison_edge (
     crosses_known_gap boolean NOT NULL,
     status text NOT NULL CHECK (status IN ('verified', 'ambiguous', 'blocked')),
     CHECK (older_snapshot_id <> newer_snapshot_id)
+);
+
+CREATE TABLE rule_history_coverage (
+    coverage_id text PRIMARY KEY,
+    rule_id text NOT NULL REFERENCES rule_identity(rule_id),
+    declared_cut_release_id text NOT NULL REFERENCES dataset_release(release_id),
+    annotation_count integer NOT NULL CHECK (annotation_count >= 0),
+    resolved_annotation_count integer NOT NULL CHECK (
+        resolved_annotation_count >= 0
+        AND resolved_annotation_count <= annotation_count
+    ),
+    verified_transition_count integer NOT NULL CHECK (
+        verified_transition_count >= 0
+        AND verified_transition_count <= resolved_annotation_count
+    ),
+    snapshot_count integer NOT NULL CHECK (snapshot_count >= 0),
+    direct_edge_count integer NOT NULL CHECK (direct_edge_count >= 0),
+    unresolved_gap_count integer NOT NULL CHECK (unresolved_gap_count >= 0),
+    source_universe_closed boolean NOT NULL,
+    cumulative_anchor_parity boolean NOT NULL,
+    completion_status text NOT NULL CHECK (completion_status IN (
+        'blocked', 'complete_to_declared_cut'
+    )),
+    gap_reasons_json jsonb NOT NULL,
+    assessed_at timestamptz NOT NULL,
+    CHECK (
+        completion_status <> 'complete_to_declared_cut'
+        OR (
+            resolved_annotation_count = annotation_count
+            AND verified_transition_count = resolved_annotation_count
+            AND direct_edge_count = GREATEST(snapshot_count - 1, 0)
+            AND unresolved_gap_count = 0
+            AND source_universe_closed
+            AND cumulative_anchor_parity
+        )
+    ),
+    UNIQUE (rule_id, declared_cut_release_id)
 );
 
 CREATE TABLE diff_hunk (
@@ -328,8 +418,18 @@ CREATE INDEX idx_release_artifact_artifact ON release_artifact(artifact_id);
 CREATE INDEX idx_event_reference ON official_event(reference_number);
 CREATE INDEX idx_snapshot_rule_date ON rule_snapshot(rule_id, effective_from);
 CREATE INDEX idx_designation_value ON rule_designation(designation_value);
+CREATE INDEX idx_navigation_code ON rule_navigation_assignment(navigation_code);
+CREATE INDEX idx_annotation_snapshot ON source_date_annotation(snapshot_id);
+CREATE INDEX idx_annotation_iso_date ON source_date_annotation(iso_date_candidate);
+CREATE INDEX idx_coverage_status ON rule_history_coverage(completion_status);
 CREATE INDEX idx_rule_drug_snapshot ON rule_drug_link(snapshot_id);
 CREATE INDEX idx_drug_atc_code ON drug_atc_link(atc_code);
 CREATE INDEX idx_indication_normalized ON indication(normalized_text);
 CREATE INDEX idx_external_concept_code ON external_concept_link(system, external_code);
 CREATE INDEX idx_build_issue_run_severity ON build_issue(build_run_id, severity);
+
+-- Operational continuous-update state is deliberately outside this canonical
+-- legal-history build schema. Its stage-only PostgreSQL structure, including
+-- the append-only `nhi_rule_history_update_queue.work_item_attempt` ledger for
+-- successful and transiently failed acquisition/corpus/proposal attempts, is
+-- defined by pg/migrations/2026-07-27_nhi_rule_history_update_queue.sql.

@@ -41,6 +41,18 @@ class FintTests(unittest.TestCase):
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments[0].text, "附件修訂對照表.ODT")
 
+    def test_empty_result_table_has_zero_rows(self) -> None:
+        parsed = parse_fint(
+            b"""<!doctype html><html><body>
+            <table id="dat04">
+            </table>
+            </body></html>""",
+            "text/html; charset=utf-8",
+        )
+        self.assertTrue(parsed.has_record_table)
+        self.assertEqual(parsed.last_row_number(), 0)
+        self.assertEqual(parsed.attachment_anchors(), [])
+
     def test_resource_identity_excludes_query_locators_and_separates_sources(
         self,
     ) -> None:

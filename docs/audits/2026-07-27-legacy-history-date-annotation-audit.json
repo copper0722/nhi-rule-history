@@ -1,0 +1,55 @@
+{
+  "audit_date": "2026-07-27",
+  "audit_scope": "legacy tw_drug.rule_* discovery input",
+  "canonical_history_claim": false,
+  "chapter_zero": {
+    "code_origin": "project_assigned",
+    "legacy_chapter_id": 0,
+    "reader_display_label": "通則",
+    "source_designation_raw": "通則"
+  },
+  "counts": {
+    "articles_total": 1548,
+    "articles_with_date_annotations": 980,
+    "articles_with_identical_text_on_multiple_dates": 1332,
+    "articles_with_version_rows": 1548,
+    "annotation_vs_legacy_version_date_set_mismatch": 980,
+    "duplicate_article_effective_date_groups": 84,
+    "legacy_version_rows": 3691,
+    "version_rows_missing_effective_date": 78,
+    "version_rows_missing_source_publication": 3112
+  },
+  "gilteritinib_case": {
+    "article_num": "9.99",
+    "current_text_annotation_dates": [
+      "2023-06-01",
+      "2024-06-01"
+    ],
+    "legacy_version_dates": [
+      "2023-06-01",
+      "2026-05-18",
+      "2026-05-21"
+    ],
+    "missing_full_snapshot_dates": [
+      "2024-06-01"
+    ],
+    "new_notice_candidate_effective_from": "2026-08-01",
+    "new_notice_state": "staged_needs_review",
+    "same_text_legacy_load_dates": [
+      "2026-05-18",
+      "2026-05-21"
+    ]
+  },
+  "method": {
+    "annotation_pattern": "ROC date tokens in current article full_text",
+    "comparison": "per-article distinct annotation date set versus legacy version effective-date set",
+    "identical_text_test": "same article and full-text digest across more than one distinct stored effective date",
+    "limitations": [
+      "Legacy tables are non-authoritative discovery inputs.",
+      "Counts do not establish source-universe closure.",
+      "Date markers do not recover deleted or omitted historical text."
+    ]
+  },
+  "result": "LEGACY_HISTORY_NOT_COMPLETE",
+  "required_next_gate": "Resolve every source date annotation to an official event or explicit gap, materialize complete adjacent snapshots, and pass cumulative-anchor replay."
+}

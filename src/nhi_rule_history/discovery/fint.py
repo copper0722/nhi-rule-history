@@ -63,6 +63,8 @@ class FintParser(HTMLParser):
         self._anchor_text: list[str] = []
         self._pre_depth = 0
         self._pre_text: list[str] = []
+        self._record_table_depth = 0
+        self._record_table_text: list[str] = []
         self.has_record_table = False
         self.body_text: list[str] = []
 
@@ -70,6 +72,9 @@ class FintParser(HTMLParser):
         attributes = dict(attrs)
         if tag == "table" and attributes.get("id") == "dat04":
             self.has_record_table = True
+            self._record_table_depth = 1
+        elif tag == "table" and self._record_table_depth:
+            self._record_table_depth += 1
         if tag == "a":
             self._anchor_id = attributes.get("id")
             self._href = attributes.get("href")
@@ -86,9 +91,13 @@ class FintParser(HTMLParser):
             self._anchor_text = []
         if tag == "pre" and self._pre_depth:
             self._pre_depth -= 1
+        if tag == "table" and self._record_table_depth:
+            self._record_table_depth -= 1
 
     def handle_data(self, data: str) -> None:
         self.body_text.append(data)
+        if self._record_table_depth:
+            self._record_table_text.append(data)
         if self._href is not None:
             self._anchor_text.append(data)
         if self._pre_depth:
@@ -108,8 +117,12 @@ class FintParser(HTMLParser):
                 match = ROW_NUMBER_RE.search(anchor.href)
                 if match:
                     return int(match.group(1))
-        if self.has_record_table:
+        if self.has_record_table and " ".join(
+            "".join(self._record_table_text).split()
+        ):
             return 1
+        if self.has_record_table:
+            return 0
         return None
 
     def attachment_anchors(self) -> list[Anchor]:

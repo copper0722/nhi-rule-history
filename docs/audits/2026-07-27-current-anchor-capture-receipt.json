@@ -1,0 +1,54 @@
+{
+  "schema": "nhi-rule-history/current-anchor-capture-public-receipt/v1",
+  "capture_cut": "2026-07-27",
+  "source_plan": {
+    "path": "sources/source-plan-current-anchors.json",
+    "sha256": "3c72a14fb02c1cd82cd222092eddd14e2cd92d67dfdb763e8f6442e6b0e551fa"
+  },
+  "discovery": {
+    "independent_passes": 2,
+    "whole_groups": 1,
+    "whole_attachments": 3,
+    "chapter_groups": 93,
+    "chapter_attachments": 263,
+    "resources_including_pages": 268,
+    "resource_key_set_equal": true,
+    "resource_key_set_sha256": "ce67b046d91e82bd4248522f4c50fec675c08c43334843b1226592d481b51d05",
+    "blocking_issues": 0
+  },
+  "raw_acquisition": {
+    "pg_run_id": "06fbf976-fa8c-4f7a-b682-c3e94f9bf23e",
+    "state": "sealed",
+    "resources": 268,
+    "unique_artifacts": 267,
+    "artifact_bytes": 57999120,
+    "same_url_different_bytes": 0,
+    "sealed_fingerprint": "fef17d808245d739c81774e0dfbd428e53b23eb92cb247280c2a82b2cc8c3451",
+    "fresh_connection_verified": true
+  },
+  "odt_structural_stage": {
+    "pg_parse_run_id": "baae912e-8d5f-46b0-9efd-77cf4d567428",
+    "state": "sealed",
+    "declared_odt_artifacts": 92,
+    "parsed_odt_artifacts": 92,
+    "structural_blocks": 44504,
+    "occurrence_candidates": 1322,
+    "nonblocking_parse_issues": 32,
+    "blocking_parse_issues": 0,
+    "sealed_fingerprint": "9e868c7d2e8a7acf5440571a833365ae669bf79ce947cfbba25ac0da669065a3",
+    "fresh_connection_verified": true
+  },
+  "transport": {
+    "profile": "ephemeral-cookie HTTP redirect prime followed by exact HTTPS GET",
+    "prime_redirect_must_equal_requested_https_url": true,
+    "cookies": "mode-0600 temporary jar; values never logged",
+    "tls_verification": "system trust store"
+  },
+  "claims": {
+    "current_anchor_source_universe_captured": true,
+    "whole_chapter_text_parity_complete": false,
+    "legal_effective_date_inferred_from_update_label": false,
+    "canonical_history_written": false,
+    "complete_to_declared_cut": false
+  }
+}

@@ -53,6 +53,14 @@ def media_type(headers: Mapping[str, str], payload: bytes) -> str:
         return "application/zip"
     if payload.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
         return "application/x-ole-storage"
+    if payload.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if payload.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if payload.startswith((b"II*\x00", b"MM\x00*")):
+        return "image/tiff"
+    if payload.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
     prefix = payload[:512].lstrip().lower()
     if prefix.startswith((b"<!doctype html", b"<html")):
         return "text/html"

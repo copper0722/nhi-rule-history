@@ -1,0 +1,215 @@
+{
+  "schema": "nhi-rule-history/pdf-source-extraction-public-receipt/v1",
+  "scope": "deterministic source-local PDF text and geometry extraction only",
+  "implementation": {
+    "parser_version": "nhi-rule-history-poppler-pdf/1.0.0",
+    "parser_bundle_sha256": "3252d7fe1a4fbbf69b757db8a2dc976be98f7ad98bae86da2c02497f88857229",
+    "poppler": {
+      "pdfinfo": {
+        "version": "pdfinfo version 26.03.0",
+        "executable_sha256": "aca7c31b014695b109454d0f2f917105d8d2fb65984c4a123b8c5fb7792eb887"
+      },
+      "pdftotext": {
+        "version": "pdftotext version 26.03.0",
+        "executable_sha256": "15789c23a95c36f75fe8bbb77ab9834eb03665a4a4eb1fdc5d5922dc9853e498"
+      }
+    },
+    "execution_boundary": "local subprocess argument arrays with shell=false; no network"
+  },
+  "runs": [
+    {
+      "scope": "FINT exact-phrase historical acquisition through 2020",
+      "acquisition_run_id": "c94220d4-3d06-4b05-8047-f833e41eebc1",
+      "raw_manifest_sha256": "f3b573fa73bcaa85c2c5eb9c08bebffb565ca4c5d29d610b4b80b605b1c1cd25",
+      "parse_run_id": "aedae374-9ba7-4960-9bf3-d76d72c6d1a7",
+      "input_fingerprint": "80b61be386d0a818aa8f8a8bc351e7d23a252df25431fa411c4275c103e3c0a7",
+      "output_fingerprint": "5ca57e19348fec5ccdb237307fd53ceb21ad4eb935b289f46e8f5f97c06a8502",
+      "pdf_manifest_sha256": "6bc441d4fee3a5e4d8c935dac2eb9140839ec9a3a9ec811679ec0a4ef6984081",
+      "counts": {
+        "declared_pdf_resources": 431,
+        "declared_pdf_artifacts": 431,
+        "text_extracted_artifacts": 431,
+        "image_only_needs_ocr_artifacts": 0,
+        "blocking_parse_failure_artifacts": 0,
+        "pages": 845,
+        "pages_without_words": 7,
+        "flows": 17925,
+        "blocks": 26490,
+        "lines": 34657,
+        "words": 58981,
+        "blocking_issues": 0
+      },
+      "zero_word_page_reviews": [
+        {
+          "artifact_sha256": "392c5a325891f02457010c3910d70dacf82ebeec2adeed16d2b5b97047f6bb89",
+          "page_number": 3,
+          "resource_id": "d2559e13a463e137adc99cef4028db23dc91119344f21a8557fbf5cc433ee061",
+          "source_label": "附表十八之二：全民健康保險血友病患者使用「繞徑治療藥物」在家治療紀錄表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "95c9702d8131784bf7c6d90d1b82dd453087e076ddfab5e29400e3d519e26738",
+          "page_number": 4,
+          "resource_id": "5d8ff37b1401670736360a97cfa7d1449808c27231e42c38525a05114645a16a",
+          "source_label": "附件2：給付規定修正對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "95c9702d8131784bf7c6d90d1b82dd453087e076ddfab5e29400e3d519e26738",
+          "page_number": 5,
+          "resource_id": "5d8ff37b1401670736360a97cfa7d1449808c27231e42c38525a05114645a16a",
+          "source_label": "附件2：給付規定修正對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "abbd697af990f2bf22afecc23708352eaf237573f2c577090012f738b54920e7",
+          "page_number": 3,
+          "resource_id": "e7a8494db0190dc97d1681a17052855ae51caa59a3b239bd5fb7e0385cf29638",
+          "source_label": "附表十八之一：全民健康保險血友病患者使用「第八、第九凝血因子」在家治療紀錄表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "ae685e7729fc4587542ddf5ffac0217e2c16e41551152fcf5644820fe695ecf2",
+          "page_number": 2,
+          "resource_id": "8c58f209086897f1a056dd21c77ef24ae6b10382666c25e06c476b0d25782fc4",
+          "source_label": "「藥品給付規定」修訂對照表第8節免疫製劑Immunologic agents.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "bf83dedf3d6398056444ea0037c106d41d4816f42a13cff0ac794ba71c5521df",
+          "page_number": 2,
+          "resource_id": "0fce82893de9e5b16c80eaf17b1e9cc8747a97473258a4f488c8e2794da1c2fc",
+          "source_label": "附件2：「藥品給付規定」修訂對照表第1節 神經系統藥物 Drugs acting on the nervous system.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "eb6c9c8b2fb4145364abc7d33fff1958769bfceced2ab688cea203c78db5062d",
+          "page_number": 2,
+          "resource_id": "63c1bdad2ecd19573126416dae1aaa8ba3a97422c398cbc04a83479a3c49e8ab",
+          "source_label": "附件2 「藥品給付規定」修訂對照表第2節心臟血管及腎臟藥物Cardiovascular-renal drugs.PDF",
+          "status": "needs_ocr_or_visual_review"
+        }
+      ]
+    },
+    {
+      "scope": "FINT exact-phrase post-109 reconstructed accepted raw set",
+      "acquisition_run_id": "51189ce2-ce51-461c-bd96-c59a526f6065",
+      "raw_manifest_sha256": "4000c186385760d879fd77c04c08f39523243bfc43396cec474471650efa96b2",
+      "parse_run_id": "3775d6c9-935e-4fac-b75a-cdde95dd6a98",
+      "input_fingerprint": "15f070796179dafe23356fe617394bb6c82e7704563f2ccd26ee995b19caf583",
+      "output_fingerprint": "2cf40db2512faa0c355258b9a5f4b89cab1f1555316e162cb8b918abf5b61be9",
+      "pdf_manifest_sha256": "b47981e8e1ec441a6d130ea0a108598f352cc8ed6f02eb00ce6c356331d8d213",
+      "counts": {
+        "declared_pdf_resources": 669,
+        "declared_pdf_artifacts": 666,
+        "text_extracted_artifacts": 666,
+        "image_only_needs_ocr_artifacts": 0,
+        "blocking_parse_failure_artifacts": 0,
+        "pages": 1666,
+        "pages_without_words": 9,
+        "flows": 39445,
+        "blocks": 52763,
+        "lines": 77994,
+        "words": 131290,
+        "blocking_issues": 0
+      },
+      "zero_word_page_reviews": [
+        {
+          "artifact_sha256": "2a54a867f861867d50ae225258a1aed1072d9816d42c6461551e333e8cba87b1",
+          "page_number": 4,
+          "resource_id": "9f8bf891b1f00b9578e189fd5fef72ebbb7f8bd1164fdad51bc4cddd242cf095",
+          "source_label": "附件2 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "446b70262cf28e278726bf0d23ef368b1b2ed90f44b57f83f3c49d6506523a2a",
+          "page_number": 14,
+          "resource_id": "35321b712674c907bc4ead32e5c4fbdb120816cd2ed265cc74927a905f5ab80a",
+          "source_label": "附件2 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "49eaad75f78cbe4a71d54f1d9f6d9198a0768e9f75b33c2db7c2fdd6e60d9d05",
+          "page_number": 3,
+          "resource_id": "33ccd6ab090d82c6ecc8490aaf44d44482296de2ec244b1edd17851ac82e54df",
+          "source_label": "附件 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "7faea62d2c32d6eb47d2ca5d5a9579b1dcfbee31ff94149585e40c9ad6ded5c8",
+          "page_number": 6,
+          "resource_id": "9c2801af924222867d81ef730bf1c63c2d0ba83f1b433458fc1fd87cb194694d",
+          "source_label": "附件2-「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "8369fe2acc42bf366955ac18f3e705b1afc5281b65ee4310ec2bece40987cac8",
+          "page_number": 3,
+          "resource_id": "fdb4a679ec8f2bfe1b54d4d1b9f0e65e8c1af4e033f936c247f6bc01f6792983",
+          "source_label": "附件 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "99aaf7102de85722bb04621e27099f85dce7ab0539d61413e08af6ff332df269",
+          "page_number": 2,
+          "resource_id": "572be77164c3cd41d87c948daa889030b6cff682e83ef85d9d90a7bf955f07e5",
+          "source_label": "附件 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "a28173073fb8b7106d9da6b132dd95c92008116f0c733a5a337d3bca3e33d310",
+          "page_number": 2,
+          "resource_id": "a61f5013a9a4088e3a3842b186633e97f867db10273942306c210a162996143d",
+          "source_label": "附件1 全民健康保險藥品新收載品項明細表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "c900139d2629bfcdee0b5d8db710b39b9a0b314f012c1882e60adb6081f608d1",
+          "page_number": 2,
+          "resource_id": "1e14351f728aea3b51fc8773201e2ab8ec8378057ea58459910389e2b0953711",
+          "source_label": "附件1 全民健康保險藥品新收載品項明細表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        },
+        {
+          "artifact_sha256": "d2bc77e945d06d1764e107d23d4fb97462b790b15621ab0499d8a8b8b772d16b",
+          "page_number": 10,
+          "resource_id": "bb6f81bf3ea11e078f1715a6560a85159e2f32bf4f2511c5f864ce6c29e365fa",
+          "source_label": "附件 「藥品給付規定」修訂對照表.PDF",
+          "status": "needs_ocr_or_visual_review"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "declared_pdf_artifacts_exhaustively_classified": true,
+    "artifact_resource_id_and_source_label_bindings_recomputed": true,
+    "manifested_file_size_and_sha256_recomputed": true,
+    "per_row_sha256_recomputed": true,
+    "per_artifact_layout_and_text_sha256_recomputed": true,
+    "page_flow_block_line_word_counts_recomputed": true,
+    "zero_word_page_locators_recomputed": true,
+    "blocking_issues": 0
+  },
+  "locator_contract": {
+    "path": "artifact_sha256/page_number/flow_index/block_index/line_index/word_index",
+    "index_base": 1,
+    "geometry": "Poppler bbox coordinates in PDF points",
+    "narrowest_exact_text_unit": "word text plus word bbox"
+  },
+  "open_limitations": [
+    "Sixteen pages across the two runs contain no extracted words and still require OCR or visual adjudication; an artifact with other text remains text_extracted at artifact level.",
+    "Poppler reading order and bbox geometry are retained, but table borders, merged cells, and semantic row or column relationships are not reconstructed.",
+    "The lane does not interpret legal dates, clause identity, amendment events, legal effect, predecessor or successor relations, or history completeness."
+  ],
+  "claims": {
+    "pdf_source_text_geometry_extraction_complete_for_these_two_hash_bound_runs": true,
+    "text_extraction_success_means_content_complete": false,
+    "page_level_content_complete": false,
+    "ocr_complete": false,
+    "semantic_table_reconstruction_complete": false,
+    "official_source_universe_closed": false,
+    "legal_event_effect_resolved": false,
+    "per_clause_history_complete": false,
+    "canonical_history_written": false
+  }
+}

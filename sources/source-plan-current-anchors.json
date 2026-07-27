@@ -1,0 +1,29 @@
+{
+  "schema": "nhi-rule-history/source-plan/v2",
+  "capture_cut": "2026-07-27",
+  "allowed_hosts": [
+    "www.nhi.gov.tw"
+  ],
+  "adapters": [
+    {
+      "id": "nhi-current-whole",
+      "kind": "nhi_current_whole",
+      "enabled": true,
+      "base_url": "https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html",
+      "implementation_status": "implemented_deterministic_discovery"
+    },
+    {
+      "id": "nhi-current-chapters",
+      "kind": "nhi_chapters",
+      "enabled": true,
+      "base_url": "https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html",
+      "implementation_status": "implemented_deterministic_discovery"
+    }
+  ],
+  "excluded_semantics": [
+    "legal_effective_date",
+    "stable_rule_identity",
+    "rule_lineage",
+    "predecessor_diff"
+  ]
+}

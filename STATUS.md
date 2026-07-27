@@ -20,33 +20,189 @@
   1,353 attachments、1,719 resources；A/B resource-key set 完全一致。
 - corrected acquisition PG run `51189ce2-ce51-461c-bd96-c59a526f6065`
   已 sealed：1,712 unique artifacts、85,642,128 bytes、0 issues。
+- 同一 post-109 bounded set 已依 366 個正式文號形成 366 個 deterministic
+  notice bundles；全部 1,353 attachments／1,719 resources 均 offline
+  verify，且 byte-identical replay 通過。
 - corrected structural PG run `d60dcfb2-2bd1-4c3e-8baf-5ad998b01f54`
   已 sealed：360 ODT resources／358 unique artifacts、31,377 blocks、
   1,228 occurrence candidates、547 nonblocking issues、0 blocking issues。
+- 1996–2020 歷史公告精確詞基線已完成兩輪獨立 discovery：1996–1998
+  為 0 筆，1999–2020 共 942 detail／1,178 attachments／2,120 resources，
+  A/B key set 完全一致。Corrected raw run
+  `c94220d4-3d06-4b05-8047-f833e41eebc1` 已抓取 91,694,925 bytes、0
+  issues 並 sealed；240/240 ODT 已解析為 13,995 blocks／676 occurrence
+  candidates，structural run `c9328039-7093-4f8a-b7eb-84d0ed245760`
+  亦已 sealed。
+- 同一 bounded 集合已依 942 個正式文號各自形成 deterministic notice
+  bundle；全部 1,178 個附件、2,120 個 resources、91,694,925 bytes 均
+  offline verify，且重跑為 byte-identical replay。這只關閉
+  source-local bundle materialization，不代表來源宇宙、生效日或逐條歷史
+  已完整。
+- historical bounded set 的 431/431 PDF artifacts 已完成 deterministic
+  text＋geometry extraction：845 頁、58,981 words、0 blocking parse
+  failures；7 個 zero-word pages 明列 `needs_ocr_or_visual_review`。這關閉
+  PDF 檔案級 typed extraction，不代表表格語意、OCR、法律 effect 或逐條
+  歷史已完成。
+- 147/147 ODS artifacts 亦已完成 deterministic cell extraction：179
+  sheets、950 physical rows、6,521 physical cells、0 unsupported cells。
+  官方檔以 repeat 壓縮約 1.431 兆 logical cells，parser 只保存 exact
+  logical ranges／repeat／span／formula／typed value，不做不可控展開；
+  byte-identical replay 已通過。此層尚未接 marker matcher 或法律 semantics。
+- 13/13 historical image artifacts（9 JPEG、3 GIF、1 TIFF）已完成
+  magic/hash/resource binding、deterministic render 與 sandboxed local
+  OCR；13/13 OCR observations 均非空，共 11,959 characters，但全數仍是
+  `needs_visual_review`、0 human-verified。OCR 候選不能直接升為官方文字。
 - acquisition/structural migrations 均通過 transaction rollback，
   live load 後以 fresh connection 重算 counts 與 row-set fingerprints。
 - v2 的 corrected/superseded run、capture window、PG sealed fingerprints
   與 0-collision receipt 已寫入 machine-readable release eligibility gate；
   現有資產只稱 partial evidence bundle，不稱 portable dataset release。
+- 「通則」與專案導航碼 `chapter:00` 的 provenance 已分離進 PostgreSQL／
+  SQLite schema；讀者顯示不得稱「第 0 章」。
+- 完成 legacy history 日期註記稽核：1,548 條 current articles／3,691
+  version rows 中，980 條現行文字含日期註記，而 980/980 的日期集合都與
+  legacy version dates 不一致。稽核結果已機器可讀保存。
+- PostgreSQL／SQLite schema 已加入 source-local 日期註記、公告 effect
+  對應，以及逐條文完整性 gate；`complete_to_declared_cut` 會在 annotation、
+  transition、direct adjacency、source-universe closure 或 anchor parity
+  任一缺口存在時拒絕寫入。
+- legacy current text 的日期註記已程式化抽取至隔離、append-only stage：
+  1,548 條均有 exact text observation，983 條共 6,366 個原樣 marker；
+  6,360 個可形成 ISO calendar candidate，分布於 323 個不同日期
+  （1996-01-01..2026-07-01）；其餘 6 個已逐筆確認為 Trelegy Ellipta
+  `92/55/22`／`184/55/22 mcg` 劑量，不是日期。raw stage 為保留抽取證據
+  仍全數 `unresolved_event`；正式 amendment-date denominator 是 6,360，
+  所以這是明確 gap inventory，不是完整歷史。
+- 第一輪真實 event-resolution stage 已 sealed：將 6,366 個 raw candidates 與
+  5 個 2026-08-01 新公告 effect 依 exact date、條號與 locator 比對，得到
+  6,360 `no_match`、6 `invalid`、0 `resolved_candidate`；沒有把不相干的
+  新公告誤接成舊沿革，也沒有寫 canonical history。
+- 另以 sealed 的 1999–2020 historical ODT stage 做唯讀 candidate preflight：
+  6,360 個有效 marker 形成 3,080 個條文×日期組合，其中 1,897 組
+  （61.59%）可在 240 份 ODT 找到同日期；3,010 組正式數字條號中，只有
+  826 組（27.44%）可在同一 artifact 同時找到日期與條號。70 組 `0.x`
+  是「通則」的 project navigation code，只檢查日期，不冒充官方條號。
+  這只是 candidate co-occurrence，沒有解析公告、生效日、修正 effect、
+  前後版本或 canonical history。
+- 同一 denominator 已再由跨格式 matcher 以兩次 byte-identical replay
+  重算：納入 ODT、PDF、OLE、ODS 的原生文字後，同日期候選為
+  2,034/3,080（較 ODT +137），同一 artifact 的日期＋正式條號候選為
+  909/3,010（+83）。未人工覆核 OCR 另列 155 個日期候選與 4 個
+  日期＋條號候選；其中只有 3 個 joint candidate 超出 native lane，且
+  `authoritative_text=0`，不能升格為官方文字或法律 link。
+- 909 個原生文字 joint candidates 已再以 artifact→resource→正式文號的
+  sealed acquisition 鏈回溯；0 unmapped，490 組只有一個正式文號候選，
+  419 組有 2–11 個候選，共 282 個不同文號。此步只形成 bounded review
+  queue，沒有把 unique candidate 自動升格為 amendment effect。
+- stage-only continuous updater 已在真實 PostgreSQL 排程通過 scheduled
+  poll 與 proposal fires。來源 bundle／corpus bundle 會保留公告明列的
+  全部附件，包括多 PDF、ODS 與 ODT；兩則真實工作均驗到 cm1 Claude
+  failure／timeout 後只啟動一次 hm4 Codex fallback，並安全停在
+  `staged_needs_review`。`AUTO_PROMOTION_ENABLED=false`，尚未寫 canonical
+  history。
+- 2026-07-27T13:01:41Z 再以 fresh read-only query 核對 live stage：
+  immutable raw annotation stage 的 6,366/6,366 rows 仍為
+  `unresolved_event`；resolution outcomes 為 6,360 `no_match`、6
+  `invalid`、0 `resolved_candidate`。7/7 proposals 均為 `needs_review`，
+  canonical history schema 不存在。機器可讀 observation 已封存，避免
+  文件進度與實庫狀態互相推論。
+- NHI 現行整份／分章 anchor 已由正式 CLI 獨立列舉兩次，均得到 268 個
+  resources，key-set 完全一致；266 個附件已全數實抓，267 個 unique
+  artifacts／57,999,120 bytes 通過 raw verification。92/92 ODT 已解析為
+  44,504 blocks／1,322 occurrence candidates，兩個 PG runs 均 sealed。
+- NHI `lp-3258` 法規公告 listing adapter 已依 live DOM／query pagination
+  修正並做兩輪全量、未先篩關鍵字的 enumeration：43/43 頁、858/858 rows，
+  兩輪 resource JSONL byte-identical，resource-key set 完全一致；858/858
+  detail pages 與 2,400/2,400 attachments 亦已抓取並 sealed。NHI 與 FINT
+  的 parsed metadata 再按正規化正式文號分組對帳：NHI 858 rows／847 keys，
+  FINT exact phrase 366 rows／365 keys，交集 217、NHI-only 630、
+  FINT-only 148，union 995；另有 7 個 collision keys，因此不能做一對一
+  join。這關閉可重跑的 source-surface discrepancy inventory，不關閉
+  relevance、同義 query、法律來源或逐條 event/effect。
+- 同批 occurrence header multiset preflight 已完成：整份 662、分章 660，
+  其中 655 個相符、整份獨有 7、分章獨有 5。這是明確的 discrepancy
+  inventory；只比較條號／標題 occurrence，不是全文逐條 parity，故
+  whole↔chapter gate 仍為 open。
+- 後續已用 sealed lossless structural rows 重建現行整份／分章各 639 條
+  完整條文並逐條比對；606 條全文相同、33 條不同，無結構 blocker。這
+  證明目前兩個官方 current surfaces 確實不一致，狀態為 `parity_failed`；
+  其中 19 個是 leafmost mismatches，其餘是子條文差異向父層傳播。仍須逐一
+  判讀何者為正確／何時生效，不能任選一側當 canonical anchor。
+- 19 個 leafmost mismatches 已逐條 exact diff 並暫分為：6 個版本／日期
+  實質差異、6 個 list-marker 結構差異、6 個純標點、1 個尾端補充表 layout。
+  `8.2.16` 的分章檔包含 115/8/1 future-effective 版本，是不能把「最新
+  公布」直接當「今日生效」的實例。分類未選 canonical side，whole↔chapter
+  gate 仍 open。
+- 已完成一頁式 reader prototype：最新版全文置頂，歷史紀錄只顯示與直接
+  下一版的 diff；目前仍是靜態真實案例 prototype，尚未接 canonical API。
 
 ## 尚未完成
 
-- 完整官方來源宇宙：本輪只封閉「精確字串＋日期窗」的 MOHW FINT query；
-  NHI current whole／chapter、NHI listing 與同義 query 仍待 discrepancy closure。
+- 完整官方來源宇宙：MOHW FINT 仍只封閉「精確字串＋日期窗」；NHI current
+  whole／chapter 的 acquisition 已關閉；全文 parity 已執行但失敗（639
+  條中 33 條不同）；NHI listing 的 858-row index 與 858/858 detail HTML
+  皆已兩輪擷取，兩輪各解析出相同的 2,400 個附件 URL 與 5 個零附件頁；
+  2,400/2,400 附件已抓取（476,139,573 bytes、2,396 unique artifacts、
+  0 issues）並 sealed 到 append-only PG acquisition stage。NHI↔FINT
+  文號分組對帳留下 NHI-only 630、FINT-only 148 及 7 個 collision keys；
+  相關性、附件語意、同義 query、法務來源與逐筆 discrepancy 裁決仍待
+  closure。
+  歷史精確詞資料的 431 PDF 已完成 text＋geometry extraction，但 7 個
+  zero-word pages 仍需 OCR／視覺覆核；147 ODS 已完成 typed cell
+  extraction；13 images 已 render＋OCR 但仍有 13/13 visual review；347/347
+  OLE 已完成 CFB inventory 與 Word／Excel typed extraction，344 份有原生
+  typed output，另 3 份 Word（5 頁）明列為 image-only visual review。
+  PDF／OLE／ODS 的原生文字已接入 date/designation matcher；仍須解析法律
+  effect。OCR 只作非 authoritative 搜尋候選。
 - 法律生效日與公告 event/effect ledger。
+- 6,360 個有效 source date annotations 與舊正式公告／effect 的逐一對應；
+  另 6 個 raw slash-triplet occurrences 已終結判為非日期劑量；
+  exact marker backfill 已完成；cross-format preflight 找到 2,034/3,080
+  原生文字同日期候選及 909/3,010 同檔日期＋正式條號候選，第一輪 event
+  resolver 只納入 5 個 future-effective 新公告，因此有效日期的正式
+  resolution 仍為 0/6,360。
 - 穩定條文身分、條號重用、split／merge／move／restore／correction。
 - cumulative anchor event replay。
 - 直接相鄰版本 diff。
+- anchor-gated canonical promotion；需讓 future-effective snapshot 先排程，
+  到生效日且 replay 通過後才成 current，前一版才轉為 history。
+  多輪獨立 disposable-PG review 已依序找出來源綁定、時間鏈、MIME
+  self-attestation、假 ODF ZIP、壞 CRC payload 與 51-byte 假 PDF 等
+  High。最新 fail-closed 草案把 release-linked ODT、ODS、PDF 全部設為
+  observation-only；三個 format policy 均無正向 lane，須等 governed
+  external full-document verifier 才能另行開放。42/42 專項及 271 項
+  public suite 通過（6 skip）；第八次獨立 disposable-PG review 的
+  C/H/M/L 為 0/0/1/2，local Critical／High gate 已清；migration 尚無
+  正向 lane，也未套用 live PostgreSQL。
+- GPT Pro 已對 exact fingerprinted public-method packet 回覆
+  `PRO_METHOD_AUDIT=ACCEPT`，C/H/M/L 同為 0/0/1/2；明確維持
+  `LEGAL_HISTORY_COMPLETE=false`、`CANONICAL_LIVE_APPLY=BLOCKED` 與
+  `PUBLICATION_AUTHORIZED=false`。唯一 Medium 是尚無 governed positive
+  full-document verifier／admission path。兩個 Low 已轉為 reader/API
+  regression：`chapter:00` 永不呈現為官方「第 0 章」，每個 coverage
+  numerator 必須連同 population、exclusions 與 claim limit。
 - normalized public clause dataset 與 SQLite snapshot。
 - v2 acquisition/structural 的 typed-row JSONL↔SQLite projection。
 - v2 clean-room rebuild 與 final-commit code-hash binding。
 - 真實資料 API／讀者頁。
 
-## 現在的下一步
+## 目前完整性結論
 
-WP03：以 NHI 最新整份／分章為 cumulative anchors，對 366 份公告 detail 與
-附件建立 evidence-backed event/effect candidates；先做 whole↔chapter parity
-與跨來源 discrepancy，不直接從日期字串推論法律生效日。
+**逐條文歷史目前不完整。** 日期註記是缺口偵測器，不是舊版全文；只有在
+每個 marker 都已抽取並對上正式公告或明列缺口、每個已解析事件都有完整
+before/after snapshot、相鄰 edge 齊全，且 cumulative anchor replay 與來源
+宇宙 cut 都通過後，單條才可標示 `complete_to_declared_cut`。
+
+2026-07-27 的可重現 scoreboard 為 **0/1,548 條通過完整性 gate**。983 條
+至少有一個有效日期候選，但 0/6,360 已對上正式 event/effect；其餘 565 條
+沒有有效日期候選，不能因此假定從未修正。
+
+因此可對外說「0/1,548 尚未通過完整性認證」，不可改寫成「已證明 1,548
+條都有缺版」。日期讓缺口 audit 變容易，不代表重建工作已完成。
+
+WP03 下一步：全量建立日期註記 ledger；以 NHI 最新整份／分章為 cumulative
+anchors，對公告 detail 與附件建立 evidence-backed event/effect candidates，
+補齊每條相鄰快照並做 whole↔chapter／anchor parity。
 
 注意：第一次 acquisition run `43ecabc6-64c6-4f30-80ec-ecebe25ea361`
 在雙輪驗證時發現 RowNo-based resource identity 缺陷。該 immutable run 留在

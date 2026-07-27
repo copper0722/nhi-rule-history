@@ -1,0 +1,50 @@
+{
+  "schema": "nhi-rule-history/invalid-date-candidate-adjudication/v1",
+  "observed_at": "2026-07-27T12:01:17Z",
+  "source": {
+    "postgresql": "hmj/vault_main",
+    "transaction": "read_only",
+    "annotation_stage_receipt": "docs/audits/2026-07-27-legacy-date-annotation-stage-receipt.json",
+    "annotation_stage_receipt_sha256": "156e784f4af4603150b323a145709f8e6828a4e61d955ca575305762d89be12f"
+  },
+  "counts": {
+    "raw_slash_triplet_occurrences": 6366,
+    "valid_calendar_date_occurrences": 6360,
+    "invalid_calendar_candidates_reviewed": 6,
+    "non_date_dosage_strength_occurrences": 6,
+    "unresolved_invalid_candidates": 0,
+    "articles_with_raw_candidates": 983,
+    "articles_with_valid_date_candidates": 983,
+    "articles_with_only_non_date_candidates": 0
+  },
+  "adjudication": {
+    "classification": "non_date_dosage_strength",
+    "product": "Trelegy Ellipta",
+    "unit": "mcg",
+    "raw_values": {
+      "92/55/22": 4,
+      "184/55/22": 2
+    },
+    "article_occurrences": {
+      "6.1": 3,
+      "6.1.2": 3
+    },
+    "annotation_ids": [
+      "e1019249-374c-5ef7-a327-14eeef5fad9c",
+      "d98e170a-5662-540f-8f81-dea9938cc7bc",
+      "1c05975b-a872-5ea9-aab4-a4c1bab4968e",
+      "7ff6168c-4ac1-57ef-94ca-9c1fb2b076ab",
+      "e0139368-5966-5b20-85ef-4c26d2bdf9a1",
+      "b1674cdc-1fcd-5296-883e-d1eb2f2a829a"
+    ]
+  },
+  "methodological_effect": {
+    "raw_extraction_denominator_preserved": 6366,
+    "amendment_date_marker_denominator": 6360,
+    "event_resolution_denominator": 6360,
+    "terminal_non_date_adjudications": 6,
+    "resolved_official_event_effects": 0,
+    "per_clause_history_complete": false
+  },
+  "statement": "All six invalid calendar candidates are dose-strength strings followed by mcg, not amendment dates. They remain in the raw slash-triplet ledger for auditability but are terminally excluded from the amendment-date and official-event resolution denominators."
+}

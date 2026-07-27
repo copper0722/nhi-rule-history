@@ -73,6 +73,22 @@ licence
 目前 14 份 ODT 的 manifest：
 [data/manifests/nhi-history-odt-v1.jsonl](../data/manifests/nhi-history-odt-v1.jsonl)。
 
+歷史公告 acquisition 完成後，另以正式文號為原子單位建立 deterministic
+source-local bundle。每份 bundle 都必須同時綁定 detail page 與該頁明列的
+全部附件；沒有 ODT、只有 PDF／影像／OLE、或零附件都不能從分母消失：
+
+```bash
+PYTHONPATH=src python3 -m nhi_rule_history.cli historical-bundles \
+  --run-dir build/historical-raw-run \
+  --source-plan sources/source-plan-historical-events-exact-phrase.json \
+  --output-root build/historical-notice-bundles
+PYTHONPATH=src python3 -m nhi_rule_history.cli verify-historical-bundles \
+  --output-root build/historical-notice-bundles
+```
+
+這個步驟只證明 bounded input 內每份公文的原始 bytes 都已封裝與可重播；
+不解讀生效日、條文身分或修正內容。
+
 ## WP02：結構解析
 
 已實作的 ODT stage parser 會保存：
@@ -96,13 +112,49 @@ licence
 每個 accepted effective date 必須指回官方 locator。公告列出的日期、附件正文
 日期與實際生效日分欄保存。
 
+### 日期註記 ledger
+
+每一條／子項原文中的 ROC 日期註記全部列舉，不先去重成「條文日期」：
+
+1. exact source span → `source_date_annotation`；
+2. deterministic ROC conversion 只產生 ISO candidate；calendar-invalid
+   slash triplets 必須讀 exact context，將劑量等非日期 observation 明確
+   `rejected_non_amendment`，不可永遠留在日期分母；
+3. 先由同檔日期＋條號 locator 沿 artifact→resource→parent detail 回查
+   正式文號；unique owning document 仍只是 review candidate；
+4. 再讀公告 detail 的生效句與 old/new 附件，建立 effect proposal；
+5. 找不到公告時保留 `unresolved_event`，不刪掉 marker；
+6. 找到公告仍須有完整 before/after snapshots 才能建立 transition；
+7. 每一條公開 `annotation_count / resolved_count / verified_transition_count`
+   與 gap reasons。
+
+日期集合是 completeness checksum。它不能取代歷史附件、被刪文字或
+cumulative anchor replay。
+
+Legacy current-text 的第一輪 gap inventory 可用公開 CLI 重建：
+
+```bash
+PYTHONPATH=src python3 -m nhi_rule_history.cli load-annotation-stage \
+  --input-jsonl legacy-article-observations.jsonl \
+  --dsn "$NHI_RULE_HISTORY_DSN"
+```
+
+每個 JSONL row 必須包含 `article_id`、`article_num`、exact `full_text` 與明示
+的 `source_identity` object。這個命令只寫 isolated append-only stage；所有
+marker 初態都是 `unresolved_event`，不會推定公告、建立快照或寫入 canonical
+history。
+
 ## WP04：條文身分與版本
 
 - `rule_identity` 使用永久 ID。
+- 官方「通則」以 project navigation code `chapter:00` 排序；`00` 必須標記
+  `project_assigned`，讀者顯示仍為「通則」，不稱「第 0 章」。
 - `rule_designation` 保存條號、標題與有效區間。
 - 相同條號不保證同一條文。
 - split／merge／number reuse／restore／correction 必須有 curation decision。
 - 每個 `rule_snapshot` 保存完整文字、結構、來源 locator 與 evidence。
+- 日期／條號同檔 preflight 只建立 evidence candidate；不得據此自動建立
+  `official_event_effect`、選 canonical side 或把前一版移入 history。
 
 ## WP05：重播與 diff
 

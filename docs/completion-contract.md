@@ -21,6 +21,10 @@
 - 發文、刊登、生效、失效、as-of、fetch time 分欄。
 - 每個 accepted 生效日有官方 locator。
 - 不使用資料庫時間或 filename date 代替法律日期。
+- 每個 source-local slash-triplet observation 都有 terminal classification：
+  valid amendment-date candidate 必須連到 event/effect 或明列 unresolved
+  gap；劑量等非日期 observation 必須有 exact-context
+  `rejected_non_amendment` evidence。
 
 ## Identity
 

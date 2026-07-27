@@ -80,3 +80,157 @@ regression test，第二個由 production corpus coverage gate 驗證，第三�
 
 這套分工讓 Grok 這類 agent 的速度用在 groundwork，同時把法律歷史的最終
 聲明鎖在可驗證 evidence，而不是鎖在模型自信。
+
+## 2026-07-27 recurring worker canary
+
+連續更新 lane 另外用真實公告測試 cm1 Claude primary 與 hm4 Codex
+failure-only fallback。結果不是比較誰「回答較好」，而是觀察各模型在同一個
+嚴格 JSON／exact-span contract 下能否穩定完成 bounded work：
+
+- primary 已有成功案例，也出現一次 schema／span contract failure及一次
+  600 秒 timeout；
+- fallback 只在前一 attempt 已明確失敗後啟動，兩次都產生通過 deterministic
+  validator 的 proposal；
+- cabazitaxel 的部分修訂，以及同時涵蓋 carboplatin、pemetrexed 與免疫
+  檢查點抑制劑的多條文公告，都正確停在 `needs_review`；
+- fallback success 只證明可用性恢復，不能取代獨立法律身分、相鄰版本及
+  anchor replay 審查。
+
+這組 canary 顯示，最重要的能力不是模型能否寫出看似完整的 JSON，而是
+controller 能否拒絕不合格輸出、保存失敗 attempt，並讓下一個模型從同一份
+公開來源封包重做。對大型多條文公告，後續應在 deterministic controller
+先依 source designation 切成數個 clause-scoped work packets；完整附件
+inventory 與共同公告 metadata 仍保留，但每個 worker 只處理一個可驗證
+effect scope。這可降低 primary timeout，也避免單一 proposal 把 split／merge
+風險混成普通 replacement。
+
+## 2026-07-27 歷史回溯與 promotion audit 的再蒸餾
+
+把 query window 往 1996 年回溯後，又出現四類必須固化成 skill/checklist
+的反例：
+
+- FINT 沒有結果時仍會回傳空的 `<table id="dat04">`。只看 selector 存在會
+  捏造一筆 record；adapter 必須區分 empty table、valid row 與 selector
+  drift，並把 0-row partition 留在 manifest。
+- 官方 `GetFile.ashx` 對早期 GIF/JPEG/TIFF 也可能宣告 `text/html`。
+  Magic-first 不只適用 PDF/ODT；已知政府附件格式的 signature matrix 必須
+  完整，未知格式只能進 gap，不能用 header 猜。
+- NHI 最新「整份版」與「分章版」都由官方發布，但完整重建後 639 條中有
+  33 個 designation hashes 不同。兩個 authoritative surfaces 衝突時，
+  agent 不得替 owner 選邊；要產生 source-span discrepancy tickets，
+  回查公告與生效時間。
+- 第一次 promotion schema 的測試雖全過，獨立 adversarial reviewer 仍能
+  找到 self-attested ODT-only、endpoint parity 冒充 event replay、
+  rollback TOCTOU 及 security-state fingerprint 漏項。Migration review
+  skill 必須固定測試「另一個 authenticated writer 在 rollback check/drop
+  中插入」、「停用 trigger」、「開啟 RLS」、「任意 replay count/hash」
+  與「producer/reviewer/executor 角色重疊」，不能只看 happy-path role grant。
+
+對後續 agent 的明確改進：
+
+1. Discovery adapter fixture 必須包含 empty、reordered、duplicate boundary、
+   selector drift 與 content-type lie。
+2. 「parity」一律在名稱中標明比較的層級：resource-key、header occurrence、
+   full clause endpoint，或 ordered event replay；不得省略層級。
+3. Absence claim 必須來自 sealed exhaustive inventory。PG 裡「沒有 PDF
+   row」不能證明官方只提供 ODT。
+4. Rollback 的 emptiness gate 要先取得會阻擋 writer 的 locks，再檢查、再
+   drop；check-then-lock 是資料遺失風險。
+5. Schema fingerprint 必須涵蓋 security-relevant catalog state，不只
+   columns/functions 的表面定義。
+
+同輪執行還補了兩個 workflow 級教訓：
+
+- `sources/source-plan-v2.json` 在後續啟用 current-anchor adapters 後，已不再
+  等於先前 post-109 raw run 的 exact input bytes。幸好 raw manifest 保存
+  `source_plan_sha256`，materializer 因 hash 不符而 fail closed。每個 accepted
+  run 都應把原始 source plan 以不可變檔名另存；working plan 只能用於下一輪，
+  不能悄悄代表舊 run。
+- 整份／分章 33 個 mismatch designations 若只看數量，容易被誤讀成 33 個
+  法律差異。階層 hash 會把 19 個 leaf differences 傳播到 14 個 ancestors；
+  leaf exact diff 又分成 6 個版本／日期內容、6 個 list-marker 結構、6 個
+  純標點與 1 個尾端補充表 layout。Agent 必須先把 provenance-preserving
+  diff 與法律裁決分開，尤其 future-effective 文字不能因出現在較新的官方
+  檔案就提前成為 current。
+
+Promotion schema 的第二輪 adversarial review 又證明「把上一輪 finding
+字面補上」仍不夠：
+
+- attachment inventory 若只算特定 role，將 PDF 改標 `supporting` 就能繞過
+  ODT-only gate；inventory 必須從 release-linked official attachment 全集
+  推導，格式文字也不能靠一段任意 exact span 自我聲明；
+- ordered event ID／count／fingerprint 相同，仍不等於逐條套用
+  `before_hash → after_hash`；replay 要維護每條 running state 並和 post
+  anchor 收斂；
+- trigger/RLS fingerprint 完整，也可能漏掉 `UNLOGGED` durability drift 與
+  owner-role membership backdoor；
+- 只限制 effective date 不在未來，仍可能讓 publication/document dates
+  在未來的假 event 通過。
+
+後續 migration-audit skill 應固定加入 hidden-role attachment、companion-rule
+unapplied event、`SET UNLOGGED`、owner membership、future publication date
+五個 adversarial fixtures。完整 finding 見
+[`2026-07-27-canonical-promotion-independent-review.md`](audits/2026-07-27-canonical-promotion-independent-review.md)。
+
+第三輪工作又補上兩組可移植教訓：
+
+- Listing adapter 不能從舊 selector 或網址外觀推演。NHI live surface 已是
+  `section.list > table.rwdTable` 與
+  `lp-3258-1.html?pi=N&ps=20`；pagination section 同時含每頁 20/40/60
+  links，若把所有數字 anchor 都當頁碼，走到第 19 頁才會出現隱蔽衝突。
+  六欄又同時有發文日、刊登日、刊登期限，且 858 rows 中有一筆期限空值。
+  Skill 應先從 live DOM 建 exact contract，再用全頁真實 crawl 驗證 header、
+  1..N 顯示序號、total/page declaration、query parameters 與兩輪 row-set
+  parity；不可只用第一頁 synthetic fixture 宣告完成。
+- Promotion suite 第二次全綠後，獨立 reviewer 仍成功 promotion 三個惡意
+  fixture：`exhaustive_verified` 內被 quarantine 的 supporting PDF、anchor
+  文字已改但沒有 accepted event 的 companion rule，以及原文未來
+  `effective_date_raw` 被正規化成過去日期。Audit skill 必須檢查「全集中
+  每個被隔離成員仍阻擋」、「所有 changed anchor members 都有完整 running
+  chain」，並對每個 source-bound raw temporal value 做 deterministic parse
+  與 normalized equality；不能把 candidate 自填的 date 欄位當真。
+
+這兩組反例也說明 independent review 不是 reviewer 讀過 SQL 即完成，而是要
+在 disposable PG 實際嘗試讓壞資料 promotion。Declared suite 的通過數只能
+證明已知不變量，不能取代另一個人設計的攻擊資料。重現與 exact finding 見
+[`2026-07-27-canonical-promotion-independent-rereview.md`](audits/2026-07-27-canonical-promotion-independent-rereview.md)。
+
+日期完整性檢查與第四輪 promotion review 再補三項 skill 改進：
+
+- slash-triplet regex 的「invalid date」不一定是錯印日期。這次六筆全是
+  Trelegy Ellipta `92/55/22`／`184/55/22 mcg` 劑量。Date-marker skill
+  必須分成 raw pattern、calendar validation、context adjudication 三層；
+  raw 分母保留 6,366 供稽核，公告解析分母則是 6,360，不能讓劑量永遠卡在
+  unresolved queue。
+- 同檔日期＋條號 co-occurrence 之後，必須沿 artifact→resource→parent
+  detail→official document number 回溯。這次 909 組全部可追到文號，但
+  只有 490 組唯一、419 組仍有 2–11 個候選。Unique owning document 只是
+  人工閱讀優先序，不是 amendment effect；同 bytes 被多份公文引用時必須
+  保留所有 provenance，不能任選一份。
+- 「byte-derived receipt」若仍由同一 caller 首次寫入，只是 immutable
+  self-attestation。第四次獨立攻擊用真 PDF／ODT bytes 搭配自洽的
+  `opaque` receipt 仍能繞過。Promotion skill 應要求不同 SESSION_USER 的
+  detector/reviewer capability、SECURITY DEFINER 函數直接重算 raw bytes
+  SHA/length/magic/mimetype、兩份 immutable receipts，且 promotion 重新
+  驗證函式定義 hash；作者的 receipt producer 不得同時充當測試 oracle。
+- 兩個獨立角色若共用同一個過度寬鬆的格式判定邏輯，仍會一起錯。第五次
+  review 的 90-byte `BadZipFile` 同時含 `PK` magic 與 ODT mimetype 字串，
+  兩位 classifier 都判成 ODT，promotion 因「一致」而通過。格式驗證不能
+  停在 magic＋substring；ODT 必須驗 central directory、第一個 uncompressed
+  `mimetype` entry、exact mimetype、必要 `content.xml`／manifest entries、
+  offset/length 與 path safety。Independence 要求不同 authority，也要求
+  判定 contract 本身足以識別有效 container。
+- 合法 container structure 仍不等於 payload 完整。第六次 review 將
+  deflated `content.xml` 破壞到 CRC 錯誤，但不改外層 central/local metadata；
+  兩個 SQL parser 仍接受並產生 canonical receipt。若執行環境不能獨立
+  解壓所有 payload、驗 CRC 並解析必要 XML，skill 不應在資料庫內手寫
+  inflate 或保留「stored ODT 可過」的例外。最小安全邊界是所有 ODT/ODS
+  observation-only、promotion receipt 固定為 0，直到 governed external
+  archive verifier、簽署 receipt 與獨立 replay contract 完成。
+- 同一原則適用 PDF：magic 不是 structural validity。第七次 review 用只有
+  `%PDF-` 前綴、沒有版本、xref、trailer、catalog、page tree 或 EOF 的
+  51-byte 假檔；兩個 SQL classifier 一致判 PDF 並 promotion。修補不應把
+  更多 PDF parser 細節手寫進 PG；沒有 bounded full-document parser 與真正
+  獨立 oracle 時，合法 PDF 與假 PDF 都只能 observation-only。Skill 的
+  成功測試必須包含 valid、truncated、bad-xref、missing-trailer／catalog
+  與 decoy cases，且在 verifier 尚未完成時全部 canonical receipt=0。

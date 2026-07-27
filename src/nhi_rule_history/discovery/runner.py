@@ -19,7 +19,11 @@ from nhi_rule_history.contracts import (
 )
 from nhi_rule_history.discovery.base import DiscoveryContext
 from nhi_rule_history.discovery.fint import MohwFintAdapter
-from nhi_rule_history.discovery.stubs import PlannedAdapter
+from nhi_rule_history.discovery.nhi_current import (
+    NhiCurrentChaptersAdapter,
+    NhiCurrentWholeAdapter,
+)
+from nhi_rule_history.discovery.nhi_listing import NhiListingAdapter
 from nhi_rule_history.fetch.http import HttpClient
 from nhi_rule_history.raw import RawStore
 
@@ -196,9 +200,9 @@ def discover_run(
     recorder = DiscoveryRecorder(run_dir, plan, active_client)
     implementations = {
         "mohw_fint": MohwFintAdapter(),
-        "nhi_current_whole": PlannedAdapter("nhi_current_whole"),
-        "nhi_chapters": PlannedAdapter("nhi_chapters"),
-        "nhi_3258": PlannedAdapter("nhi_3258"),
+        "nhi_current_whole": NhiCurrentWholeAdapter(),
+        "nhi_chapters": NhiCurrentChaptersAdapter(),
+        "nhi_3258": NhiListingAdapter(),
     }
     adapter_results: list[dict[str, Any]] = []
     for adapter_config in plan.adapters:

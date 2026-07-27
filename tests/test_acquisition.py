@@ -149,6 +149,27 @@ class AcquisitionTests(unittest.TestCase):
             media_type({"content-type": "text/html"}, buffer.getvalue()),
             "application/vnd.oasis.opendocument.text",
         )
+        self.assertEqual(
+            media_type(
+                {"content-type": "text/html"},
+                b"GIF89a" + b"x" * 20,
+            ),
+            "image/gif",
+        )
+        self.assertEqual(
+            media_type(
+                {"content-type": "text/html"},
+                b"\xff\xd8\xff" + b"x" * 20,
+            ),
+            "image/jpeg",
+        )
+        self.assertEqual(
+            media_type(
+                {"content-type": "text/html"},
+                b"II*\x00" + b"x" * 20,
+            ),
+            "image/tiff",
+        )
 
     def test_discover_resume_fetch_verify_and_no_semantic_leak(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

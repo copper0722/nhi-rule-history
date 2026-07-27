@@ -1,0 +1,152 @@
+{
+  "schema": "nhi-rule-history/historical-ole-extraction-public-receipt/v1",
+  "scope": "deterministic source-local CFB inventory and typed legacy Word/Excel extraction for the exact historical OLE denominator",
+  "implementation": {
+    "parser_version": "nhi-rule-history-cfb-office/1.1.0",
+    "parser_bundle_sha256": "1d287f1fc7a029390e8cb9ee8ea92a7f09721cd7202e51d8c1711c07f41723ed",
+    "test_bundle_sha256": "e16228214269ae3a48f2d4bbf70798911806e8b923062cbb0043d25af30b39be",
+    "tools": {
+      "libreoffice": {
+        "version": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+        "executable_sha256": "b4efedd0c18e62c5598ad55a2531756be5b4476bdc8e766c6b4210fa09dc1a91"
+      },
+      "pdfinfo": {
+        "version": "pdfinfo version 26.03.0",
+        "executable_sha256": "aca7c31b014695b109454d0f2f917105d8d2fb65984c4a123b8c5fb7792eb887"
+      },
+      "sandbox_exec": {
+        "executable_sha256": "8290e4be7387a0df83cd1559e86afd880464f269450573d012795761fe298f16",
+        "network_deny_policy_sha256": "80de7c41c4cac0234db39d259c29450b17c4e5768f24bc7dd9f9f8c75d2c12a3"
+      },
+      "xlrd": {
+        "version": "2.0.2",
+        "package_python_sha256": "7419383141f56513f4f437ebdca3fbb5970d52e43037597be2b5004e8197100d"
+      }
+    },
+    "execution_boundary": "local read-only source handling; subprocess argument arrays with shell=false; LibreOffice and pdfinfo executed under a network-denied sandbox; no PostgreSQL write"
+  },
+  "run": {
+    "scope": "FINT exact-phrase historical acquisition through 2020",
+    "acquisition_run_id": "c94220d4-3d06-4b05-8047-f833e41eebc1",
+    "raw_manifest_sha256": "f3b573fa73bcaa85c2c5eb9c08bebffb565ca4c5d29d610b4b80b605b1c1cd25",
+    "parse_run_id": "b3b37d3c-71df-4d20-94a8-1588e1bb4f32",
+    "ole_manifest_sha256": "d18c11b69634836ae34088a3a79ff22634559db8fa43bb29f3137130dddf4e42",
+    "input_fingerprint": "e60a242c14d5ce95da326c939c6274afc092edb67f09dc1e3bb788ff0772a0c1",
+    "output_fingerprint": "0b8a6bcb353cfb46fefbd2103f5fd6f6857ab62d99a5665b26bfec32c94c7c9f",
+    "status": "partial",
+    "counts": {
+      "declared_ole_resources": 347,
+      "declared_ole_artifacts": 347,
+      "word_candidate_artifacts": 328,
+      "excel_candidate_artifacts": 19,
+      "typed_extracted_artifacts": 344,
+      "needs_review_artifacts": 3,
+      "streams": 2153,
+      "storages": 235,
+      "word_paragraphs": 28649,
+      "word_tables": 515,
+      "word_cells": 11658,
+      "word_visual_pages": 5,
+      "excel_sheets": 21,
+      "excel_cells": 511,
+      "issues": 3
+    },
+    "actual_cfb_subtypes": {
+      "word_doc": 328,
+      "excel_xls": 19
+    },
+    "classification_counts": {
+      "word_typed_extracted": 325,
+      "excel_typed_extracted": 19,
+      "needs_image_ocr_or_visual_review": 3
+    },
+    "excel_cell_types": {
+      "text": 437,
+      "number": 72,
+      "date_serial": 2
+    }
+  },
+  "needs_review": [
+    {
+      "artifact_sha256": "8105a6aa45f4d049de00154084fff35cc47e853d23185e0bddd32bb21049940f",
+      "resource_id": "56e1eeddc02821a2dcb0cd4fa350b0208f713997cc25696d2d60eb0c2ec409de",
+      "source_label": "全民健康保險使用抗癌藥品dasatinib申請表.DOC",
+      "classification": "needs_image_ocr_or_visual_review",
+      "drawing_count": 1,
+      "page_numbers": [
+        1
+      ],
+      "rendered_pdf_sha256": "81aef266e83c3033564b249b9a253f5af7264b1ba9821bb4ce1fe177d050771e",
+      "manual_visual_confirmation": "The only rendered page contains reader-visible image text; it is not a blank document."
+    },
+    {
+      "artifact_sha256": "8ffde8625f5b0424a2972683bc11fbdfed4fa9394c749e13505941fe29021670",
+      "resource_id": "e927073a3fef20c2559d89b7416d0c0f8e47fbc399debbb10e95eee83dbc9b03",
+      "source_label": "附表九之三全民健康保險使用抗癌藥品Bortezomib申請表.DOC",
+      "classification": "needs_image_ocr_or_visual_review",
+      "drawing_count": 1,
+      "page_numbers": [
+        1
+      ],
+      "rendered_pdf_sha256": "637fc10f11cd8461c83bedada48186fcd9e91fe95af3e5b1f76acc75d24e8474",
+      "manual_visual_confirmation": "The only rendered page contains reader-visible image text; it is not a blank document."
+    },
+    {
+      "artifact_sha256": "bd693b961e5a45b8f2f7ccf7da90f071a52899a102ab7a76c973bb9652dbdded",
+      "resource_id": "e139a4f5a972cf22d9f6899fbd363bedf0cd4b4e4579cdcdb4c8a3b2efca851f",
+      "source_label": "附件.DOC",
+      "classification": "needs_image_ocr_or_visual_review",
+      "drawing_count": 4,
+      "page_numbers": [
+        1,
+        2,
+        3
+      ],
+      "rendered_pdf_sha256": "7c4b33473e2139e8a653bea8241755f52cd57e914d4ee4b300acac26cbfc8c12",
+      "manual_visual_confirmation": "All three rendered pages contain reader-visible image text or tables; none is a blank document."
+    }
+  ],
+  "verification": {
+    "tests": "11 passed",
+    "declared_ole_artifacts_exhaustively_classified": true,
+    "raw_ole_denominator_recomputed": 347,
+    "artifact_resource_id_and_source_label_bindings_recomputed": 347,
+    "cfb_stream_inventories_recomputed": 347,
+    "cfb_streams_read_without_error": 2153,
+    "manifested_file_size_and_sha256_recomputed": 9,
+    "per_row_sha256_recomputed": true,
+    "visual_review_page_locators_recomputed": 5,
+    "needs_review_rows_match_artifact_classifications": true
+  },
+  "locator_contract": {
+    "cfb_stream": "artifact_sha256/directory_entry_id/stream_path",
+    "word_paragraph": "artifact_sha256/container_path/block_index/paragraph_ordinal",
+    "word_table": "artifact_sha256/container_path/block_index/table_ordinal",
+    "word_cell": "artifact_sha256/table_ordinal/row_index/cell_index",
+    "word_visual_page": "artifact_sha256/rendered_pdf_sha256/page_number",
+    "excel_sheet": "artifact_sha256/sheet_index/sheet_name",
+    "excel_cell": "artifact_sha256/sheet_index/row_index/column_index",
+    "index_base": 1
+  },
+  "open_limitations": [
+    "Three image-bearing Word artifacts, comprising five rendered pages, contain no extractable OOXML body text and remain explicitly blocked on OCR or visual transcription.",
+    "Legacy Word page layout depends on the bound LibreOffice renderer. Page locators are retained only for the zero-text artifacts that require visual review; text-bearing Word artifacts use paragraph, table, and cell locators.",
+    "xlrd exposes cached BIFF cell values and merged ranges, not complete formula expressions or print-page layout. The two date-typed cells are retained as uninterpreted serial values with their workbook date system.",
+    "Embedded object streams are inventoried and hashed, but nested semantic content is not recursively typed-extracted.",
+    "This lane does not interpret legal dates, stable clause identity, amendment events, legal effect, predecessor or successor relations, diffs, or history completeness."
+  ],
+  "claims": {
+    "historical_ole_denominator_exhaustively_classified": true,
+    "cfb_container_and_stream_inventory_complete_for_hash_bound_run": true,
+    "word_body_and_cached_excel_cell_extraction_complete_except_listed_needs_review": true,
+    "all_reader_visible_content_extracted": false,
+    "ocr_complete": false,
+    "word_page_layout_complete": false,
+    "excel_formula_expressions_complete": false,
+    "embedded_object_content_complete": false,
+    "official_source_universe_closed": false,
+    "legal_event_effect_resolved": false,
+    "per_clause_history_complete": false,
+    "canonical_history_written": false
+  }
+}

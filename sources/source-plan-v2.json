@@ -32,23 +32,23 @@
     {
       "id": "nhi-current-whole",
       "kind": "nhi_current_whole",
-      "enabled": false,
+      "enabled": true,
       "base_url": "https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html",
-      "implementation_status": "declared_adapter_stub"
+      "implementation_status": "implemented_deterministic_discovery"
     },
     {
       "id": "nhi-current-chapters",
       "kind": "nhi_chapters",
-      "enabled": false,
+      "enabled": true,
       "base_url": "https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html",
-      "implementation_status": "declared_adapter_stub"
+      "implementation_status": "implemented_deterministic_discovery"
     },
     {
       "id": "nhi-amendment-listing-3258",
       "kind": "nhi_3258",
       "enabled": false,
       "base_url": "https://www.nhi.gov.tw/ch/lp-3258-1.html",
-      "implementation_status": "declared_adapter_stub"
+      "implementation_status": "implemented_deterministic_discovery"
     }
   ],
   "excluded_semantics": [

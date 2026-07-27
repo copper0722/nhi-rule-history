@@ -1,0 +1,60 @@
+{
+  "schema": "nhi-rule-history/source-plan/v2",
+  "capture_cut": "2026-07-27",
+  "allowed_hosts": [
+    "mohwlaw.mohw.gov.tw",
+    "www.nhi.gov.tw"
+  ],
+  "adapters": [
+    {
+      "id": "mohw-fint-drug-reimbursement-2021-capture-cut",
+      "kind": "mohw_fint",
+      "enabled": true,
+      "base_url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx",
+      "start_date": "2021-01-01",
+      "end_date": "2026-07-27",
+      "partition_months": 12,
+      "valid": "3",
+      "record_type": "etype_",
+      "queries": [
+        {
+          "id": "drug-reimbursement-rule-phrase",
+          "keywords": [
+            "藥品給付規定",
+            "",
+            "",
+            ""
+          ]
+        }
+      ],
+      "notes": "Gregorian inclusive date partitions; FINT RowNo is an acquisition locator only."
+    },
+    {
+      "id": "nhi-current-whole",
+      "kind": "nhi_current_whole",
+      "enabled": false,
+      "base_url": "https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html",
+      "implementation_status": "declared_adapter_stub"
+    },
+    {
+      "id": "nhi-current-chapters",
+      "kind": "nhi_chapters",
+      "enabled": false,
+      "base_url": "https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html",
+      "implementation_status": "declared_adapter_stub"
+    },
+    {
+      "id": "nhi-amendment-listing-3258",
+      "kind": "nhi_3258",
+      "enabled": false,
+      "base_url": "https://www.nhi.gov.tw/ch/lp-3258-1.html",
+      "implementation_status": "declared_adapter_stub"
+    }
+  ],
+  "excluded_semantics": [
+    "legal_effective_date",
+    "stable_rule_identity",
+    "rule_lineage",
+    "predecessor_diff"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "nhi-rule-history/audit-receipt/v1",
+  "status": "pass_a_offline_expansion_verified",
+  "source_plan_sha256": "33d954b51dc781e114409dca71c2fcaa2a73aaa80666662a741be2049fa29b28",
+  "upstream_raw_manifest_sha256": "33edf8f0315259f3eb2b620b70839b79c2c3aec8be16557e754d14d93ebdc6a5",
+  "parser": {
+    "version": "nhi-listing-detail-expansion/1.0.0",
+    "code_sha256": "55111f7c3c547c342b45c3fc8d046e3ba5f744442abb4ead01637dfc5f635be0"
+  },
+  "fingerprints": {
+    "expansion_id": "b7a849d50bb63c4f7350ef4accb39c9d00dfcf8a11b22639d5ea4309e9ee7623",
+    "input": "8e4ed655c204dc1ce7ad0dd20554e40ed79eabfe73d5feca8d3287d377c33420",
+    "output": "5e57208a3f63e63569074bc5a029ba2334f687616d5e1d53f6306925d4850489",
+    "detail_row_set": "e20c565548c71627eb821f3fdf6c5a6381c08e42d7ae450d1aa13e08afbbfb5f",
+    "attachment_occurrence_row_set": "252030e0f058ac674c35b7e4b08fd10acc7289429ca692c5eca6c3158a76e550",
+    "attachment_resource_row_set": "e64804c259ef534160d4530d1f7e4767a05b8bc3dcb60c7e7bde6ab637fe75a6"
+  },
+  "counts": {
+    "detail_resources": 858,
+    "detail_artifacts": 858,
+    "zero_attachment_details": 5,
+    "attachment_occurrences": 2400,
+    "attachment_resources": 2400,
+    "cross_detail_duplicate_occurrences": 0,
+    "max_attachments_per_detail": 20
+  },
+  "files": [
+    {
+      "filename": "detail-provenance.jsonl",
+      "bytes": 1095918,
+      "sha256": "6e31a4f8be67425249640edcb8033cd35f4752416be5e5391a44a0ace3c517fc"
+    },
+    {
+      "filename": "attachment-occurrences.jsonl",
+      "bytes": 3436996,
+      "sha256": "03757ac1526915609fba59167bf8f40b4bc398543bf26e8b8bd82905877bf6c8"
+    },
+    {
+      "filename": "discovered-resources.jsonl",
+      "bytes": 4168996,
+      "sha256": "c846c2c80ba308991b3b5493ef7873fac06825cbc146ed6e3d4300edf33cffcc"
+    },
+    {
+      "filename": "discovery-manifest.json",
+      "bytes": 2033,
+      "sha256": "6d6e8383b381e36d90f00bd5c9da3ea37d1f96ec49788ca7347c1e81a10ec60f"
+    }
+  ],
+  "verification": {
+    "upstream_verify_raw": "passed",
+    "exact_detail_denominator": true,
+    "exactly_one_verified_text_html_binding_per_detail": true,
+    "offline_replay_from_same_sealed_run_byte_identical": true,
+    "network_requested": false,
+    "postgresql_written": false,
+    "standard_attachment_fetch_projection_materializable": true
+  },
+  "cross_pass_verification": {
+    "status": "pending_pass_b_expansion",
+    "comparison_unit": "parsed_attachment_occurrence_and_canonical_url_key_sets",
+    "detail_html_byte_equality_required": false,
+    "reason": "Independent live detail pages contain volatile server-rendered counters and challenge fields; preserve both raw hashes and compare deterministic parsed outputs."
+  },
+  "limitations": {
+    "attachment_link_is_legal_event": false,
+    "listing_date_is_legal_effective_date": false,
+    "rule_identity_inferred": false,
+    "lineage_or_predecessor_inferred": false,
+    "history_complete": false
+  },
+  "statement": "Pass A exhausts the sealed 858-detail acquisition only. It preserves source-local attachment occurrences and a deduplicated fetch projection; it does not establish amendment semantics or complete per-clause history."
+}

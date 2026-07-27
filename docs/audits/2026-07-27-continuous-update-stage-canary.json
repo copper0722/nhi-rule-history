@@ -1,0 +1,67 @@
+{
+  "schema": "nhi-rule-history/continuous-update-stage-canary-public-receipt/v1",
+  "observed_at": "2026-07-27",
+  "scheduler": {
+    "registry": "private_postgresql_registered",
+    "scheduled_poll_with_work": "passed",
+    "scheduled_proposal_with_work": "passed",
+    "max_work_items_per_fire": 1,
+    "auto_promotion_enabled": false
+  },
+  "canaries": [
+    {
+      "reference_number": "健保審字第1150055406號",
+      "source_scope": "single_clause_partial_patch",
+      "declared_attachment_count": 4,
+      "declared_attachment_media_sequence": [
+        "application/pdf",
+        "application/vnd.oasis.opendocument.spreadsheet",
+        "application/pdf",
+        "application/vnd.oasis.opendocument.text"
+      ],
+      "corpus_manifest_version": "1.1",
+      "verified_file_count": 7,
+      "registered_source_file_count": 5,
+      "verified_not_registered_metadata_file_count": 2,
+      "origin_bundle_fingerprint": "b3b988781793203514d325a96ffc7ba8c4bfe8f756d35a822ad576fae06de6cc",
+      "primary": {
+        "outcome": "contract_failed",
+        "duration_seconds": 242
+      },
+      "fallback": {
+        "policy": "failure_only_once",
+        "outcome": "success",
+        "duration_seconds": 165
+      },
+      "candidate_state": "needs_review"
+    },
+    {
+      "reference_number": "健保審字第1150671889號",
+      "source_scope": "multiple_clauses_with_omitted_text",
+      "declared_attachment_count": 8,
+      "corpus_manifest_version": "1.1",
+      "verified_file_count": 11,
+      "registered_source_file_count": 9,
+      "verified_not_registered_metadata_file_count": 2,
+      "origin_bundle_fingerprint": "96198826bc82ea21851f59fb60babf53b2e00ad72f921151dcf31fd0c644524f",
+      "primary": {
+        "outcome": "timeout",
+        "duration_seconds": 600
+      },
+      "fallback": {
+        "policy": "failure_only_once",
+        "outcome": "success",
+        "duration_seconds": 271
+      },
+      "candidate_state": "needs_review"
+    }
+  ],
+  "claims": {
+    "complete_declared_attachment_capture_verified": true,
+    "scheduled_failover_verified": true,
+    "stage_write_verified": true,
+    "canonical_history_written": false,
+    "prior_snapshot_closed": false,
+    "reader_diff_published": false
+  }
+}

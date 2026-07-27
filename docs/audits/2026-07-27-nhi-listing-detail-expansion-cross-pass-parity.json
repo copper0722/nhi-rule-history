@@ -1,0 +1,85 @@
+{
+  "schema": "nhi-rule-history/audit-receipt/v1",
+  "status": "cross_pass_parity_passed",
+  "source_plan_sha256": "33d954b51dc781e114409dca71c2fcaa2a73aaa80666662a741be2049fa29b28",
+  "parser": {
+    "version": "nhi-listing-detail-expansion/1.0.0",
+    "code_sha256": "55111f7c3c547c342b45c3fc8d046e3ba5f744442abb4ead01637dfc5f635be0"
+  },
+  "passes": {
+    "a": {
+      "raw_manifest_sha256": "33edf8f0315259f3eb2b620b70839b79c2c3aec8be16557e754d14d93ebdc6a5",
+      "raw_artifacts_jsonl_sha256": "4ca326703f318a711f6f01e074ff394764b6bffa36acf4af5acfe61c2cd87363",
+      "resource_artifact_links_jsonl_sha256": "21e083e189b16d225c9b27ebeaf8babdb7fbb3b706e05cf1b0e731c244ef208f",
+      "expansion_id": "b7a849d50bb63c4f7350ef4accb39c9d00dfcf8a11b22639d5ea4309e9ee7623",
+      "input_fingerprint": "8e4ed655c204dc1ce7ad0dd20554e40ed79eabfe73d5feca8d3287d377c33420",
+      "output_fingerprint": "5e57208a3f63e63569074bc5a029ba2334f687616d5e1d53f6306925d4850489",
+      "same_sealed_input_byte_identical_replay": true
+    },
+    "b": {
+      "raw_manifest_sha256": "90639b7fe30bb9f024851c062264a41ac5d588acd1f59233aa26de8637b522ea",
+      "raw_artifacts_jsonl_sha256": "087bd82fcf6f734c6354b4afe79d4b73816af6a4333a554699fa47e119ba4d5f",
+      "resource_artifact_links_jsonl_sha256": "9d0583d6dbaaac68507fae4880f8f973a3371a4eac56a54895c453342d03b322",
+      "expansion_id": "2683109074758b2b4c2842c379704275986db24f14c01d7bc8b6639befb062ac",
+      "input_fingerprint": "d07f35c8b960bab551643d8f3efe259fda4db2e389850b475dafdfda4e49afdc",
+      "output_fingerprint": "40c1827670752210f9c7afdcfb6e825f01f7ab932fff35d9da9304c8efb5537d",
+      "same_sealed_input_byte_identical_replay": true
+    }
+  },
+  "independent_raw_observations": {
+    "paired_detail_resources": 858,
+    "same_resource_id_set": true,
+    "paired_equal_artifact_sha256": 0,
+    "paired_different_artifact_sha256": 858,
+    "raw_html_byte_equality_required": false,
+    "sampled_difference_classification": [
+      "server-rendered cumulative page-counter values",
+      "Cloudflare challenge r/t fields"
+    ],
+    "method_boundary": "Both independent raw manifests and artifact bindings are retained. The sampled field classification explains why raw HTML equality is unsuitable; it is not a claim that every differing byte was exhaustively classified."
+  },
+  "stable_semantic_parity": {
+    "counts": {
+      "detail_resources_each_pass": 858,
+      "detail_artifacts_each_pass": 858,
+      "zero_attachment_details_each_pass": 5,
+      "attachment_occurrences_each_pass": 2400,
+      "canonical_attachment_urls_each_pass": 2400,
+      "max_attachments_per_detail_each_pass": 20
+    },
+    "detail_projection": {
+      "equal": true,
+      "rows": 858,
+      "sha256": "b989cf79e386c8fda5af189d1ebbb8d0841ced084433d79d45df08fdd0ff959a",
+      "algorithm": "Preserve source row order; remove schema, expansion_id, parent_artifact_sha256, parent_artifact_byte_size, and parent_artifact_content_path; SHA-256 the canonical-JSON array of all remaining parent resource, document, listing-locator, order, and attachment-count fields."
+    },
+    "attachment_occurrence_projection": {
+      "equal": true,
+      "rows": 2400,
+      "sha256": "958d97bb56e57ee202803595b9972a0b39b71b9d4032aab3eb68dee8c1a2da57",
+      "algorithm": "Preserve source row order; remove schema, occurrence_id, expansion_id, and parent_artifact_sha256; SHA-256 the canonical-JSON array of all remaining global order, source sequence, attachment URL/label/resource, and parent resource/document/listing-locator fields."
+    },
+    "canonical_attachment_url_key_set": {
+      "equal": true,
+      "keys": 2400,
+      "sha256": "2af5687865a7b9365054adf1769ebb41a7bd6b0d5c35c9474835ac26fe0409ec",
+      "algorithm": "Sort the unique canonical attachment URL strings, serialize as one canonical-JSON array, and SHA-256 the bytes."
+    },
+    "zero_attachment_parent_set": {
+      "equal": true,
+      "keys": 5,
+      "sha256": "f7343014e53d877edb80be625a49dbda6c771ad279c4005e237e3c0fa42ffa0c",
+      "algorithm": "Sort the parent resource IDs whose parsed attachment count is zero, serialize as one canonical-JSON array, and SHA-256 the bytes."
+    }
+  },
+  "limitations": {
+    "attachment_link_is_legal_event": false,
+    "listing_date_is_legal_effective_date": false,
+    "rule_identity_inferred": false,
+    "lineage_or_predecessor_inferred": false,
+    "history_complete": false,
+    "network_requested_by_expansion": false,
+    "postgresql_written_by_expansion": false
+  },
+  "statement": "Two independently acquired 858-detail raw runs have different preserved HTML artifacts but yield identical stable detail, attachment-occurrence, canonical-URL, and zero-attachment projections. This closes attachment-discovery parity for this listing capture only; it does not resolve amendment semantics or per-clause history."
+}

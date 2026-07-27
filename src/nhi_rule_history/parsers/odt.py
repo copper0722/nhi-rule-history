@@ -324,10 +324,29 @@ def _artifact_resources(
 
 
 def _odt_candidate(resource_rows: list[Mapping[str, Any]]) -> bool:
+    return any(_resource_declares_odt(row) for row in resource_rows)
+
+
+def _resource_declares_odt(row: Mapping[str, Any]) -> bool:
+    if row.get("resource_kind") not in {
+        "official_attachment",
+        "official_current_whole_attachment",
+        "official_current_chapter_attachment",
+    }:
+        return False
+    locator = row.get("discovery_locator")
+    locator = locator if isinstance(locator, Mapping) else {}
+    declared_values = (
+        row.get("source_label"),
+        row.get("source_url"),
+        locator.get("attachment_title"),
+        locator.get("attachment_visible_label"),
+    )
     return any(
-        row.get("resource_kind") == "official_attachment"
-        and str(row.get("source_label", "")).lower().endswith(".odt")
-        for row in resource_rows
+        str(value).strip().lower().endswith(".odt")
+        or str(value).strip().lower() == "odt"
+        for value in declared_values
+        if value is not None
     )
 
 
@@ -390,8 +409,7 @@ def parse_verified_odt_run(
         if not _odt_candidate(resource_rows):
             continue
         counts["declared_odt_resources"] += sum(
-            row.get("resource_kind") == "official_attachment"
-            and str(row.get("source_label", "")).lower().endswith(".odt")
+            _resource_declares_odt(row)
             for row in resource_rows
         )
         counts["declared_odt_artifacts"] += 1

@@ -1,0 +1,169 @@
+{
+  "schema": "nhi-rule-history/current-anchor-leafmost-diff-classification/v1",
+  "declared_cut": "2026-07-27",
+  "input": {
+    "full_clause_parity_report": "docs/audits/2026-07-27-current-anchor-full-clause-parity.json",
+    "full_clause_parity_report_sha256": "394477137b43072e355258e878a14c79a8414bf9145d4fbaf4200aacdb826a8a",
+    "whole_artifact_sha256": "381efb78fcedec1dafbf55794cdad489d18a3f7de17ba04960550cc763706202",
+    "mismatch_designations": 33,
+    "leafmost_mismatch_designations": 19
+  },
+  "method": {
+    "comparison_unit": "one leafmost designation within the same section membership",
+    "text_normalization": "Unicode NFKC only for comparison display; source rows and hashes remain in the input report",
+    "diff_direction": "whole_to_split",
+    "classification_is_canonical_decision": false,
+    "classification_is_legal_effect_determination": false
+  },
+  "counts": {
+    "version_or_date_bearing_content": 6,
+    "list_marker_structure": 6,
+    "punctuation_only": 6,
+    "trailing_supplement_layout": 1,
+    "leafmost_total": 19,
+    "ancestor_hash_propagation_designations": 14
+  },
+  "classifications": [
+    {
+      "membership": "section:10",
+      "designation": "10.6.1.3",
+      "class": "version_or_date_bearing_content",
+      "difference": "whole includes 111/2/1 in the amendment-date list; split does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:10",
+      "designation": "10.6.10",
+      "class": "version_or_date_bearing_content",
+      "difference": "whole includes 111/2/1 in the amendment-date list; split does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:2",
+      "designation": "2.13.2",
+      "class": "version_or_date_bearing_content",
+      "difference": "split adds 111/2/1 at the clause and subcondition date markers; whole does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:4",
+      "designation": "4.3.2.2",
+      "class": "version_or_date_bearing_content",
+      "difference": "split adds 112/1/1 markers to multiple subconditions; whole does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:7",
+      "designation": "7.1",
+      "class": "version_or_date_bearing_content",
+      "difference": "split adds 113/8/1 to the amendment-date list; whole does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:8",
+      "designation": "8.2.16",
+      "class": "version_or_date_bearing_content",
+      "difference": "split adds future-effective 115/8/1 and revises the continuing-use application wording; whole retains the earlier wording",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.2.2",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 through 4; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.3.22",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 and 2; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.3.23",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 and 2; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.3.24",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 and 2; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:5",
+      "designation": "5.4.8",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 and 2; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:6",
+      "designation": "6.2.10",
+      "class": "list_marker_structure",
+      "difference": "whole preserves numbered list markers 1 through 4; split omits the visible markers",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:10",
+      "designation": "10.8.4",
+      "class": "punctuation_only",
+      "difference": "whole has one terminal ideographic full stop after the deletion note; split does not",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.3.9",
+      "class": "punctuation_only",
+      "difference": "whole has a duplicated terminal ideographic full stop; split has one",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:4",
+      "designation": "4.1.2.1",
+      "class": "punctuation_only",
+      "difference": "the same full stop is placed on opposite sides of the 86/9/1 marker",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:4",
+      "designation": "4.2.1",
+      "class": "punctuation_only",
+      "difference": "colon and full stops are placed on opposite sides of date markers without changing words",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:6",
+      "designation": "6.2.3",
+      "class": "punctuation_only",
+      "difference": "whole uses an ASCII comma between two dates; split uses an ideographic comma",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:9",
+      "designation": "9.3",
+      "class": "punctuation_only",
+      "difference": "whole has one extra closing parenthesis after the amendment-date list",
+      "canonical_side": null
+    },
+    {
+      "membership": "section:3",
+      "designation": "3.3.31",
+      "class": "trailing_supplement_layout",
+      "difference": "the split section places a Fabry cardiac-variant indicator table after the final dotted clause, so the current subtree boundary attaches it to 3.3.31; the table is not present in the whole-document 3.3.31 span and also appears elsewhere at its referenced locations",
+      "canonical_side": null
+    }
+  ],
+  "claims": {
+    "leafmost_differences_classified": true,
+    "whole_chapter_parity_closed": false,
+    "official_event_effect_resolution_complete": false,
+    "future_effective_content_detected": true,
+    "canonical_current_selected": false,
+    "per_clause_history_complete": false
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "nhi-rule-history/date-marker-denominator-reconciliation/v1",
+  "observed_at": "2026-07-27T11:25:54Z",
+  "transaction": "read_only",
+  "source_run_id": "cca6580b-bc23-5b6b-a65b-69ffb1397a09",
+  "article_denominator": 1548,
+  "counts": {
+    "strict_contiguous_ascii_slash_pattern_articles": 980,
+    "expanded_exact_marker_contract_articles": 983,
+    "expanded_only_articles": 3,
+    "expanded_exact_marker_occurrences": 6366
+  },
+  "expanded_only_articles": [
+    {
+      "article_id": "2980",
+      "article_num": "13.10.5",
+      "raw_expression": "93/8 /1",
+      "reason_strict_pattern_missed": "source-preserved whitespace before the second slash"
+    },
+    {
+      "article_id": "2981",
+      "article_num": "13.10.6",
+      "raw_expression": "93/8 /1",
+      "reason_strict_pattern_missed": "source-preserved whitespace before the second slash"
+    },
+    {
+      "article_id": "132",
+      "article_num": "3.3.12",
+      "raw_expression": "99/2 /1",
+      "reason_strict_pattern_missed": "source-preserved whitespace before the second slash"
+    }
+  ],
+  "method": {
+    "strict_pattern": "[0-9]{2,3}/[0-9]{1,2}/[0-9]{1,2}",
+    "expanded_contract": "two- or three-digit ROC year; one- or two-digit month/day; optional horizontal whitespace around slash; halfwidth or fullwidth slash; invalid calendar candidates retained",
+    "comparison": "same sealed legacy_article_observation rows in PostgreSQL"
+  },
+  "decision": {
+    "canonical_checklist_denominator": "6366 exact marker occurrences across 983 articles",
+    "prior_980_count_role": "reproducible narrow-pattern audit result, not the final exact-marker denominator",
+    "history_complete": false
+  },
+  "limitations": [
+    "This reconciles marker extraction counts only.",
+    "It does not resolve any marker to an official amendment event or effective date.",
+    "It does not recover deleted text, establish stable clause identity, or create adjacent snapshots."
+  ]
+}

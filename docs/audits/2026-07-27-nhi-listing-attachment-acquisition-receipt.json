@@ -1,0 +1,55 @@
+{
+  "schema": "nhi-rule-history/nhi-listing-attachment-acquisition-public-receipt/v1",
+  "scope": "all canonical attachment URLs discovered from the two-pass 858-detail NHI lp-3258 listing capture",
+  "source_plan_sha256": "33d954b51dc781e114409dca71c2fcaa2a73aaa80666662a741be2049fa29b28",
+  "detail_expansion_id": "b7a849d50bb63c4f7350ef4accb39c9d00dfcf8a11b22639d5ea4309e9ee7623",
+  "acquisition": {
+    "run_id": "56416cad-5760-5301-9724-846338b9b8b2",
+    "raw_manifest_sha256": "bf85a28ac98998217677309e8a5d5cb5118369f1064641fb32fd9c2475370350",
+    "completed_at": "2026-07-27T11:45:52+00:00",
+    "status": "success",
+    "network_resources": 2400,
+    "resource_artifact_links": 2400,
+    "unique_artifacts": 2396,
+    "artifact_bytes": 476139573,
+    "issues": 0,
+    "offline_verify_raw": "passed"
+  },
+  "detected_media_types": {
+    "application/pdf": 1412,
+    "application/vnd.oasis.opendocument.spreadsheet": 555,
+    "application/vnd.oasis.opendocument.text": 407,
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": 11,
+    "application/x-ole-storage": 4,
+    "application/zip": 6,
+    "text/csv": 1
+  },
+  "postgresql_stage": {
+    "database": "vault_main",
+    "schema": "tw_drug_history_acq_stage",
+    "state": "sealed",
+    "already_loaded": false,
+    "input_fingerprint": "9e0b2a6c953bcfc1557e314e2d2b8ebb9df79e6a469b51f585dd3a96b6916955",
+    "output_fingerprint": "bb34f355cc5bfe45774fe1c9ec48fa4bdbaa968e19ef1ba08ffd4f980ca2abab",
+    "sealed_fingerprint": "882b84dcd57984024cfcc8e2398e7ce31cb6650d207d4921727541a4722870f0",
+    "fresh_connection_verified": true,
+    "canonical_history_written": false
+  },
+  "claims": {
+    "attachment_url_denominator_acquired": true,
+    "every_resource_has_verified_raw_artifact": true,
+    "append_only_acquisition_stage_sealed": true,
+    "typed_content_extraction_complete": false,
+    "notice_relevance_adjudicated": false,
+    "legal_effective_date_resolved": false,
+    "stable_clause_identity_resolved": false,
+    "per_clause_history_complete": false,
+    "canonical_history_written": false
+  },
+  "limitations": [
+    "Four pairs of official attachment URLs returned byte-identical content, so 2400 resource bindings correspond to 2396 unique artifacts.",
+    "Media types are acquisition classifications; application/zip and every document subtype still require terminal typed-content classification before legal use.",
+    "The unfiltered NHI listing includes notices outside drug reimbursement clauses. All bytes are preserved before downstream relevance adjudication.",
+    "Listing, document and publication dates are not automatically legal effective dates."
+  ]
+}

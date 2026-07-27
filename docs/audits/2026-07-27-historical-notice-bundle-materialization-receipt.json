@@ -1,0 +1,49 @@
+{
+  "schema": "nhi-rule-history/historical-notice-bundle-materialization-public-receipt/v1",
+  "declared_cut": "2026-07-27",
+  "input": {
+    "source_scope": "FINT 1996-01-01..2020-12-31 exact phrase 藥品給付規定",
+    "source_plan_sha256": "37e62cf470d712e506051a779c1f0848edca1a6e6c382a6d495402cbbf213799",
+    "accepted_acquisition_run_id": "c94220d4-3d06-4b05-8047-f833e41eebc1",
+    "raw_manifest_sha256": "f3b573fa73bcaa85c2c5eb9c08bebffb565ca4c5d29d610b4b80b605b1c1cd25"
+  },
+  "materialization": {
+    "status": "passed",
+    "batch_id": "b711ed964babdcfde57756517b259b8f85195b0c5fae0cae0419f0dc678f8778",
+    "batch_fingerprint": "0d38ab99acd58e7f6cf87dd1745cc839df2a6051935a1b834db44205ed5127bc",
+    "batch_index_sha256": "bc87fe6477fe0b212c56689aa878292cab629ad3135bd94c0c4248ff8c8d5b98",
+    "official_documents": 942,
+    "detail_resources": 942,
+    "declared_attachments": 1178,
+    "materialized_bundles": 942,
+    "materialized_resources": 2120,
+    "materialized_artifact_bytes": 91694925,
+    "terminal_status_counts": {
+      "materialized_verified": 942
+    }
+  },
+  "verification": {
+    "every_bundle_verified_offline": true,
+    "every_declared_resource_present": true,
+    "unmanifested_files": 0,
+    "byte_identical_replay": true,
+    "replay_returned_existing_batch": true
+  },
+  "format_policy": {
+    "odt_required": false,
+    "pdf_only_supported": true,
+    "image_only_supported": true,
+    "ole_supported_as_preserved_source_bytes": true,
+    "ods_supported_as_preserved_source_bytes": true,
+    "zero_attachment_notice_supported": true,
+    "unparsed_format_means_no_change": false
+  },
+  "claims": {
+    "source_local_bundles_complete_for_this_bounded_input": true,
+    "official_source_universe_closed": false,
+    "legal_effective_dates_resolved": false,
+    "stable_clause_identity_resolved": false,
+    "canonical_history_written": false,
+    "per_clause_history_complete": false
+  }
+}

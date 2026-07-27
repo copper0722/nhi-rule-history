@@ -1,0 +1,38 @@
+{
+  "schema": "nhi-rule-history/source-plan/v2",
+  "capture_cut": "2026-07-27",
+  "allowed_hosts": [
+    "mohwlaw.mohw.gov.tw"
+  ],
+  "adapters": [
+    {
+      "id": "mohw-fint-drug-reimbursement-1996-2020-exact-phrase",
+      "kind": "mohw_fint",
+      "enabled": true,
+      "base_url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx",
+      "start_date": "1996-01-01",
+      "end_date": "2020-12-31",
+      "partition_months": 12,
+      "valid": "3",
+      "record_type": "etype_",
+      "queries": [
+        {
+          "id": "drug-reimbursement-rule-phrase",
+          "keywords": [
+            "藥品給付規定",
+            "",
+            "",
+            ""
+          ]
+        }
+      ],
+      "notes": "Bounded baseline for the 323-date annotation ledger; exact phrase only, so a clean capture does not close synonymous or cross-source notices."
+    }
+  ],
+  "excluded_semantics": [
+    "legal_effective_date",
+    "stable_rule_identity",
+    "rule_lineage",
+    "predecessor_diff"
+  ]
+}

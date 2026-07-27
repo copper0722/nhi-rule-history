@@ -3,6 +3,12 @@
 This directory is the public, byte-for-byte metadata projection of one bounded
 two-pass acquisition run over the Ministry of Health and Welfare FINT query for
 the exact phrase `藥品給付規定`, from 2021-01-01 through 2026-07-27.
+The exact immutable input plan is
+[`sources/source-plan-post109-exact-phrase.json`](../../../sources/source-plan-post109-exact-phrase.json)
+with canonical SHA-256
+`92fbe30822de67535c5ad91285bbd8f68fd78a63e9156f279f83685c673a42d3`;
+the working `source-plan-v2.json` may evolve for later captures and must not be
+used to stand in for this accepted run.
 
 It records:
 
