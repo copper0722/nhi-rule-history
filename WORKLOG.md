@@ -26,6 +26,11 @@
   table 之後卻被提前輸出的 XML traversal 錯誤。最新驗證為 70 項 legacy
   tests（1 skip）與 335 項 public tests（7 skip），另 private worker
   runtime 9 項與 schedule migration 3 項通過。
+- 公開 PR 的 Linux CI 暴露 undeclared runtime dependency：Pillow 未安裝，
+  使 image parser 與 cross-format preflight 在 import 階段失敗。
+  `pyproject.toml` 現明列 Pillow 與 PostgreSQL loader 使用的
+  `psycopg[binary]`，CI 先安裝 package 再測試；全新 virtualenv 已重跑
+  70＋335 項 tests、manifest、SQLite 與 public-tree gates 全數通過。
 - GPT Pro post-audit v2 以 `ACCEPT`、C/H/M/L=`0/0/1/2` 接受 R2 stage-only
   修復與 bounded activation sequence；未授權 canonical、release 或
   frontend。依 Low findings 再把 legacy attempt 固定標示為

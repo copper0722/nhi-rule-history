@@ -10,7 +10,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "nhi-rule-history contributors" }]
-dependencies = []
+dependencies = [
+  "Pillow>=10,<13",
+  "psycopg[binary]>=3.1,<4",
+]
 
 [project.scripts]
 nhi-rule-history = "nhi_rule_history.cli:main"
