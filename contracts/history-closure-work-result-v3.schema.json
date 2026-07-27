@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/copper0722/nhi-rule-history/contracts/history-closure-work-result-v3.schema.json",
+  "title": "NHI rule-history closure work result v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "work_unit_id",
+    "work_unit_fingerprint",
+    "declared_cut",
+    "source_universe_status",
+    "outcome",
+    "clause_identity",
+    "pre_version",
+    "post_version",
+    "effective_date",
+    "adjacency",
+    "transition_evidence",
+    "notice_linkage",
+    "diff",
+    "replay",
+    "canonical_write_authorized"
+  ],
+  "properties": {
+    "schema": {
+      "const": "nhi-rule-history/history-closure-work-result/v3"
+    },
+    "work_unit_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "work_unit_fingerprint": {
+      "$ref": "#/$defs/sha256"
+    },
+    "declared_cut": {
+      "type": "string",
+      "format": "date"
+    },
+    "source_universe_status": {
+      "enum": [
+        "open",
+        "bounded_enumerated",
+        "bounded_enumerated_with_gaps"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "transition_verified_candidate",
+        "no_text_change",
+        "non_amendment_annotation",
+        "identity_ambiguous",
+        "date_role_ambiguous",
+        "source_gap",
+        "format_review_required",
+        "notice_candidates_ambiguous",
+        "input_tamper_or_drift"
+      ]
+    },
+    "clause_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_rule_id",
+        "source_designation_raw",
+        "operation",
+        "review_state"
+      ],
+      "properties": {
+        "stable_rule_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "source_designation_raw": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "enum": [
+            "create",
+            "amend",
+            "delete",
+            "restore",
+            "rename",
+            "move",
+            "split",
+            "merge",
+            "correction",
+            "no_change",
+            "unresolved"
+          ]
+        },
+        "review_state": {
+          "enum": [
+            "candidate",
+            "ambiguous",
+            "reviewed"
+          ]
+        }
+      }
+    },
+    "pre_version": {
+      "$ref": "#/$defs/versionSide"
+    },
+    "post_version": {
+      "$ref": "#/$defs/versionSide"
+    },
+    "effective_date": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "role",
+        "basis",
+        "locator"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "role": {
+          "enum": [
+            "effective_from",
+            "effective_until",
+            "publication_date",
+            "document_date",
+            "as_of",
+            "unresolved"
+          ]
+        },
+        "basis": {
+          "$ref": "#/$defs/evidenceBasis"
+        },
+        "locator": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "adjacency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "enumerated_version_ids",
+        "gap_reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "direct_in_declared_source_set",
+            "not_direct",
+            "unresolved"
+          ]
+        },
+        "enumerated_version_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "gap_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "transition_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "notice_linkage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "notice_ids",
+        "search_observation_ids"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "linked_notice",
+            "notice_not_found_after_bounded_search",
+            "notice_availability_unknown",
+            "notice_not_searched",
+            "notice_not_applicable",
+            "notice_candidates_ambiguous"
+          ]
+        },
+        "notice_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "search_observation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_scope",
+        "mapping_status",
+        "hunk_count",
+        "diff_sha256"
+      ],
+      "properties": {
+        "comparison_scope": {
+          "const": "direct_predecessor_only"
+        },
+        "mapping_status": {
+          "enum": [
+            "complete",
+            "ambiguous",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "hunk_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "diff_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_replay_status",
+        "anchor_replay_status",
+        "receipt_sha256"
+      ],
+      "properties": {
+        "edge_replay_status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "anchor_replay_status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "receipt_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "canonical_write_authorized": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evidenceBasis": {
+      "enum": [
+        "official_notice_effect",
+        "official_old_new_comparison",
+        "official_cumulative_versions",
+        "official_cumulative_annotation",
+        "official_archival_snapshot",
+        "unresolved"
+      ]
+    },
+    "versionSide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version_id",
+        "artifact_sha256",
+        "locator",
+        "full_text_sha256",
+        "full_text_complete"
+      ],
+      "properties": {
+        "version_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "locator": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "full_text_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "full_text_complete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "basis",
+        "artifact_sha256",
+        "locator",
+        "side",
+        "review_state"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "$ref": "#/$defs/evidenceBasis"
+        },
+        "artifact_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "locator": {
+          "type": "object"
+        },
+        "side": {
+          "enum": [
+            "pre",
+            "post",
+            "both",
+            "date",
+            "adjacency"
+          ]
+        },
+        "review_state": {
+          "enum": [
+            "candidate",
+            "accepted",
+            "rejected"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "transition_verified_candidate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "transition_evidence": {
+            "minItems": 1
+          },
+          "adjacency": {
+            "properties": {
+              "status": {
+                "const": "direct_in_declared_source_set"
+              }
+            }
+          },
+          "replay": {
+            "properties": {
+              "edge_replay_status": {
+                "const": "passed"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -11,6 +11,11 @@ JSONL 與 SQLite 可攜資料。
 
 **尚未完成完整歷史庫。**
 
+2026-07-28 起，條文整理的 Claude／其他模型派送已依 Copper 指示暫停。
+deterministic raw acquisition 可保留；在 v3 transition-evidence schema、
+queue converter、validator 與 10-unit pilot 完成前，不重新啟動 agent
+量產。
+
 現有成果分成兩個互不冒充的受限 staging：
 
 | 項目 | v1 年度整份檔 | 歷史公告 exact phrase | post-109 公告 exact phrase |
@@ -27,7 +32,7 @@ JSONL 與 SQLite 可攜資料。
 
 `9,303` 與 `1,228` 都不是唯一條文數或版本數。v2 ODT 多為「修訂後／原
 給付規定」對照表；兩欄的文字已 lossless 入 stage，但尚未把欄位提升成法律
-事件、穩定條文身分或版本先後。目前仍未完成法律生效日、公告事件重播與
+事件、穩定條文身分或版本先後。目前仍未完成法律生效日、transition 重播與
 相鄰版本 diff。
 
 日期註記也不能直接證明歷史完整。2026-07-27 對舊庫的第一輪窄格式稽核
@@ -37,16 +42,18 @@ version dates 不一致。後續 exact-marker parser 允許來源原有的斜線
 `93/8 /1`，最終 raw extraction 分母是 983 條、6,366 個 occurrence；[980→983
 分母核對](docs/audits/2026-07-27-date-marker-denominator-reconciliation.json)
 已用同一 sealed PG rows 在唯讀交易中重算。日期應作為 completeness
-checksum，用來要求每個 marker 都對上公告、
-前後完整快照與直接相鄰 edge；不能用它逆推出已被刪除的舊文字。另「通則」
+checksum，用來要求每個 marker 都有終結的日期角色／transition 裁決、
+前後完整快照與直接相鄰 edge；不能用它逆推出已被刪除的舊文字。公告若能
+找到則另作補強 linkage，但不是完成必要條件。另「通則」
 是官方名稱，`chapter:00` 只是本專案排序碼，不是官方「第 0 章」。詳見
 [v2 方法學](docs/methodology-v2.md)與
 [機器可讀稽核](docs/audits/2026-07-27-legacy-history-date-annotation-audit.json)。
 完整重建的 source-universe、bundle、marker resolution、snapshot/replay
 工作包與硬性分母見[逐條歷史重建計畫](docs/history-rebuild-plan.md)。目前
 6,366 個 slash-triplet occurrences 中，6 筆已確認是 Trelegy Ellipta
-劑量而非日期；其餘 6,360 個有效日期的 official event/effect resolution
-仍是 0；terminal
+劑量而非日期；其餘 6,360 個有效日期尚未依 v3 evidence-basis 契約完成
+日期角色／transition adjudication；舊 resolver 的 `0/6,360 連到公告`
+不是完成 gate，也不能解讀為公告不存在。terminal
 current 整份／分章各重建 639 條後，也驗出 33 條全文不同。
 
 日期的確讓缺口容易核對，但目前只能做到 candidate coverage：6,360 個有效
@@ -61,9 +68,11 @@ PDF、OLE 與 ODS 的原生文字後，兩個數字分別增為 2,034（+137）�
 909 組 joint candidates 再沿 immutable artifact→resource→正式文號鏈回溯，
 全部都有公文候選：490 組只對到一個文號，419 組對到 2–11 個文號，共涉及
 282 個文號。唯一文號仍只是下一輪閱讀佇列，不是已證明的 amendment effect。
-完整 3,080 組現已各有一筆可續跑工作單，見
+完整 3,080 組現已各有一筆可續跑的 v1 discovery 工作單，見
 [history gap work queue manifest](docs/audits/2026-07-27-history-gap-work-queue-manifest.json)；
-四條優先 lane 僅用於安排來源閱讀，不是法律判定或完整性證書。
+四條優先 lane 僅用於安排來源閱讀，不是法律判定或完整性證書。該 v1
+contract 因錯把 official event 設為必要結果，已停止直接執行；下一步是轉成
+direct-edge v3 work units 與 10-unit pilot。
 
 ATC linkage 的原始來源也已重新釐清。既有 runtime 的確使用
 [`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01)
@@ -95,6 +104,7 @@ annotation stage；event resolver 已把其中 6 筆終結判為非日期劑量�
 ## Repo 的重點
 
 - [資料取得與更新 workflow](docs/workflow.md)
+- [逐條文歷史工作的 agent 方法學（v3）](docs/agent-work-methodology.md)
 - [v2 方法學與日期完整性檢核](docs/methodology-v2.md)
 - [逐條歷史重建計畫](docs/history-rebuild-plan.md)
 - [日期／條號候選到正式文號的 machine-readable receipt](docs/audits/2026-07-27-history-marker-document-candidate-preflight.json)

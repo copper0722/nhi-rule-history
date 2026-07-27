@@ -2,6 +2,17 @@
 
 最後核對：2026-07-28
 
+## 目前操作狀態
+
+- 條文整理 agent dispatch 已依 Copper 指示暫停：PG proposal task =
+  `skipped_gate`、next due = 2099；執行 wrapper 預設
+  `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=false`。
+- deterministic RSS／raw acquisition 可保留，但不呼叫 Claude 或其他模型
+  整理條文。
+- canonical 方法已改為 v3 transition-evidence contract；公告 linkage 是
+  獨立補強 coverage，不是必要完成 gate。舊 3,080-row v1 queue 保留作
+  discovery provenance，不直接執行。
+
 ## 已完成
 
 - 公開 GitHub repo 與資料授權邊界。
@@ -116,24 +127,26 @@
   sealed acquisition 鏈回溯；0 unmapped，490 組只有一個正式文號候選，
   419 組有 2–11 個候選，共 282 個不同文號。此步只形成 bounded review
   queue，沒有把 unique candidate 自動升格為 amendment effect。
-- 3,080 個條文×日期已全數程式化成一對一、可續跑的 source-review
-  work units，並綁定兩份輸入 ledger 的 SHA-256。優先序為 490
+- 3,080 個條文×日期已全數程式化成一對一、可續跑的 v1 source-review
+  discovery units，並綁定兩份輸入 ledger 的 SHA-256。優先序為 490
   `unique_document_candidate`、419 `ambiguous_document_candidates`、
   1,125 `native_date_without_joint_document_candidate`、1,046
-  `marker_without_native_document_date_match`；合計精確為 3,080。每列仍須
-  回填 official event、日期角色、stable identity、前後 exact text、
-  direct adjacency 與 anchor replay，`canonical_write_authorized=false`。
+  `marker_without_native_document_date_match`；合計精確為 3,080。v1
+  mandatory official-event gate 已撤回，須先轉成 v3 direct-edge work
+  units，再回填 transition evidence、日期角色、stable identity、前後
+  exact text、direct adjacency 與 anchor replay；
+  `canonical_write_authorized=false`。
 - 第一批 5 個 history closure canary 已逐份核對官方 ODT：5/5 都明寫
   `自…生效`、有完整舊／新欄，且新欄與 2026 whole/chapter endpoint
   相等。這只把 source-local 日期角色確認為 5/5；PG event/effect admission
   仍為 0、direct predecessor 與歷史 anchor replay 仍為 0，因此法律
   closure delta 是 0，逐條完整性仍是 0/1,548。
-- stage-only continuous updater 已在真實 PostgreSQL 排程通過 scheduled
+- stage-only continuous updater 曾在真實 PostgreSQL 排程通過 scheduled
   poll 與 proposal fires。來源 bundle／corpus bundle 會保留公告明列的
   全部附件，包括多 PDF、ODS 與 ODT；兩則真實工作均驗到 cm1 Claude
   failure／timeout 後只啟動一次 hm4 Codex fallback，並安全停在
   `staged_needs_review`。`AUTO_PROMOTION_ENABLED=false`，尚未寫 canonical
-  history。
+  history。proposal dispatch 現已停用，不再呼叫 Claude。
 - 2026-07-28 最新 fresh live observation：21 個 update work items
   分別為 2 `selected`、9 `staged_needs_review`、2 `failed_terminal`、
   8 `ignored_non_rule`；`corpus_registered` 為 0。
@@ -261,13 +274,15 @@
   typed output，另 3 份 Word（5 頁）明列為 image-only visual review。
   PDF／OLE／ODS 的原生文字已接入 date/designation matcher；仍須解析法律
   effect。OCR 只作非 authoritative 搜尋候選。
-- 法律生效日與公告 event/effect ledger。
-- 6,360 個有效 source date annotations 與舊正式公告／effect 的逐一對應；
+- 法律生效日與 transition evidence ledger；公告以 optional notice link
+  保存。
+- 6,360 個有效 source date annotations 的日期角色／transition evidence
+  adjudication；
   另 6 個 raw slash-triplet occurrences 已終結判為非日期劑量；
   exact marker backfill 已完成；cross-format preflight 找到 2,034/3,080
-  原生文字同日期候選及 909/3,010 同檔日期＋正式條號候選，第一輪 event
-  resolver 只納入 5 個 future-effective 新公告，因此有效日期的正式
-  resolution 仍為 0/6,360。
+  原生文字同日期候選及 909/3,010 同檔日期＋正式條號候選。第一輪舊
+  event resolver 的 0/6,360 只表示沒對上那 5 個 future-effective 新公告，
+  不能當 v3 completion gate，也不能推論舊公告不存在。
 - 穩定條文身分、條號重用、split／merge／move／restore／correction。
 - cumulative anchor event replay。
 - 直接相鄰版本 diff。
@@ -304,21 +319,24 @@
 ## 目前完整性結論
 
 **逐條文歷史目前不完整。** 日期註記是缺口偵測器，不是舊版全文；只有在
-每個 marker 都已抽取並對上正式公告或明列缺口、每個已解析事件都有完整
-before/after snapshot、相鄰 edge 齊全，且 cumulative anchor replay 與來源
-宇宙 cut 都通過後，單條才可標示 `complete_to_declared_cut`。
+每個 marker 都已抽取並取得終結日期角色／transition 裁決、每個 accepted
+transition 都有至少一種直接官方 evidence basis、完整 before/after
+snapshot、相鄰 edge，且 cumulative anchor replay 與來源宇宙 cut 都通過
+後，單條才可標示
+`evidence_complete_to_declared_cut_for_enumerated_official_versions`。
+公告 linkage 另計，不是必要 gate。
 
-2026-07-27 的可重現 scoreboard 為 **0/1,548 條通過完整性 gate**。983 條
-至少有一個有效日期候選，但 0/6,360 已對上正式 event/effect；其餘 565 條
-沒有有效日期候選，不能因此假定從未修正。
+2026-07-27 的舊契約 scoreboard 為 **0/1,548 條通過完整性 gate**。983 條
+至少有一個有效日期候選，但尚未依 v3 契約裁決；其餘 565 條沒有有效日期
+候選，也不能因此假定從未修正。
 
 因此可對外說「0/1,548 尚未通過完整性認證」，不可改寫成「已證明 1,548
 條都有缺版」。日期讓缺口 audit 變容易，不代表重建工作已完成。
 
-WP03 下一步：依 3,080-row work queue 逐筆閱讀正式公告與附件，先處理
-490 個 unique-document candidates，再裁決 419 個 ambiguous candidates；
-所有結果仍須通過 event/effect、stable identity、直接相鄰快照及
-whole↔chapter／anchor replay，才可關閉單條歷史。
+下一步不是派 agent 逐筆量產，而是 M1/M2：建立 v3
+`transition_evidence`／optional `transition_notice_link` schema、validator
+與 v1→v3 queue converter，再凍結 10 個代表性 pilot packets。Copper 明確
+指示恢復 dispatch 且 pilot 通過後，才可分批處理。
 
 注意：第一次 acquisition run `43ecabc6-64c6-4f30-80ec-ecebe25ea361`
 在雙輪驗證時發現 RowNo-based resource identity 缺陷。該 immutable run 留在

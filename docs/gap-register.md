@@ -8,14 +8,14 @@
 | G-SOURCE-03 | MOHW FINT exact-query date-window acquisition | source_bundles_passed_bounded | A/B 1,719-key parity、1,719/1,719 fetch、366/366 deterministic notice bundles、offline hash verify 與 byte-identical replay |
 | G-SOURCE-04 | MOHW FINT 1996–2020 exact-phrase historical baseline | source_bundles_all_declared_types_extracted_cross_format_candidate_matcher_passed_visual_review_open | A/B 2,120-key parity；942 detail、1,178 attachments 全抓並形成 942 bundles；ODT/PDF/OLE/ODS 原生 typed text matcher 得 2,034/3,080 日期與 909/3,010 joint candidates；3 份 Word／5 頁、13 standalone images 與 7 PDF zero-word pages仍有 OCR／visual review，且 candidate 尚未解析法律 effect |
 | G-SOURCE-02 | current whole/chapter 官方內容不一致 | leaf_diffs_classified_canonical_resolution_open | 268 resources、267 unique artifacts、92/92 ODT 已 sealed；各重建 639 條，606 相同／33 不同；19 個 leaf 為 6 version/date、6 list-marker、6 punctuation、1 trailing-layout，仍須以 event/effect 裁決 canonical anchor |
-| G-UPDATE-01 | 單一 update orchestration 未完成 | stage_lane_live_canonical_promotion_missing | RSS→完整附件→corpus→primary/fallback→candidate stage 已通過真實排程；尚缺 anchor-gated canonical promotion |
+| G-UPDATE-01 | 單一 update orchestration 未完成 | agent_dispatch_paused_methodology_rebuild | deterministic RSS/raw acquisition 可保留；依 Copper 2026-07-28 指示停止 Claude／其他模型條文整理。恢復前須完成 v3 evidence contract、queue conversion 與 10-unit pilot |
 | G-PROMOTION-01 | canonical promotion 尚缺 external full-document verifier 與正向 lane | pro_method_audit_accepted_live_blocked_external_verifier_missing | adversarial review 依序找出來源綁定、時間鏈、MIME self-attestation、假 ODF ZIP、損壞壓縮 payload 與 51-byte 假 PDF 等缺口；最新草案將 release-linked ODT/ODS/PDF 全部設為 observation-only，三個 format policy 均無正向 lane。第八次獨立 disposable-PG gate 與 GPT Pro method audit 均為 C/H/M/L 0/0/1/2、`ACCEPT`；post-audit 271 項 public tests 通過（6 skip）。Medium 正是缺少 governed positive verifier/admission path，故 live 未套用 |
-| G-SCHEDULE-01 | recurring RSS/update lane | passed_stage_only_with_one_dual_timeout | 真實 scheduled poll 與 proposal fires、durable result log、primary timeout／fallback success均有成功案例；最新另有 1 筆 primary／fallback 皆 timeout 而安全轉 `failed_terminal`，`AUTO_PROMOTION_ENABLED=false`、canonical write 仍為 0 |
-| G-EVENT-01 | event/effect ledger 未建立 | blocked | 公告、附件新舊欄、correction/supersession |
+| G-SCHEDULE-01 | recurring RSS/update lane | proposal_dispatch_paused_by_owner | proposal task 已設 `skipped_gate`、next due 2099，wrapper 預設拒絕 agent dispatch；恢復需 Copper 明示與 `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=true`。raw poll 不等於條文整理 |
+| G-EVENT-01 | transition evidence ledger 未建立 | methodology_v3_defined_schema_migration_open | transition 不再要求 mandatory official-event FK；須建立 `transition_evidence` 與 optional `transition_notice_link` |
 | G-DATE-01 | 生效日未證據化 | blocked | 每個 accepted date 的 official locator |
-| G-ANNOTATION-01 | source-local 日期註記尚未完成 event resolution | raw_6366_adjudicated_3080_pair_queue_prepared_resolution_0_of_6360 | 6,366 個 exact slash-triplet candidates 已入 append-only stage；6 筆已確認是 Trelegy 劑量而非日期，有效日期分母 6,360。3,080 個條文×日期已各形成一個 hash-bound 工作單：490 unique-document、419 ambiguous-document、1,125 有原生日期但無 joint 文號、1,046 無原生同日期文件候選。佇列只排來源閱讀優先序；法律 resolution 仍為 6,360 no-match／6 terminal non-date／0 resolved |
-| G-WORK-01 | 3,080 個條文×日期缺口尚待逐筆來源閱讀 | queue_prepared_0_legally_resolved | `2026-07-27-history-gap-work-queue.jsonl` 共 3,080 列／9,547,157 bytes，SHA-256 `947dfd5a8ddbf29633ee9b7b0d945bd17b23f06c90f6a1e60c1af3a9ae606c57`；每列要求 official event、日期角色、stable identity、前後 exact text、direct adjacency 與 anchor replay，模型只能產生 candidate，不能寫 canonical |
-| G-COVERAGE-01 | 尚無逐條完整性 closure | schema_ready_all_blocked | annotation/event/snapshot/adjacency/source-universe/anchor 六項全通過 |
+| G-ANNOTATION-01 | source-local 日期註記尚未完成 transition adjudication | raw_6366_adjudicated_v3_resolution_pending | 6,366 個 exact slash-triplet candidates 已入 append-only stage；6 筆已確認是 Trelegy 劑量而非日期，有效日期分母 6,360。3,080 個條文×日期 discovery pairs 已 hash-bound；公告 linkage 與 transition evidence 分開計算，尚未依 v3 契約 adjudicate |
+| G-WORK-01 | 3,080 個 discovery pairs 尚待轉為 direct-edge work units | v1_queue_superseded_for_execution | v1 queue 與 SHA-256 保留作不可變 discovery provenance；其 mandatory `official_event_identity` gate 已撤回。下一步是 v3 queue converter、validator 與 10-unit pilot，不可直接派模型量產 |
+| G-COVERAGE-01 | 尚無逐條完整性 closure | methodology_v3_schema_implementation_open | annotation terminal／transition evidence／snapshot／adjacency／source-universe／anchor replay 全通過；notice linkage 只作獨立 coverage |
 | G-ID-01 | stable identity 未建立 | blocked | UUID、designation、curation、無 cycle |
 | G-REPLAY-01 | event replay 未對 anchors | blocked | rule set/text hash parity |
 | G-DIFF-01 | adjacent diff 未建立 | blocked | direct edge、100% source mapping |
@@ -45,14 +45,15 @@
 - 313 項 public tests（307 passed、6 項環境性 skip），另有 private registrar/migration
   contract tests、sealed DML guard、bounded rollback與 idempotent replay。
 - legacy 日期註記稽核已完成；它證明缺口存在，不是完成證據。
-- 3,080 個條文×日期已全部轉成一對一、可續跑、來源 hash-bound 的 review
-  work units；四條 priority lanes 的合計精確等於 3,080，尚無任一列完成
-  legal event/effect resolution。
+- 3,080 個條文×日期已全部轉成一對一、可續跑、來源 hash-bound 的 v1
+  discovery work units；四條 priority lanes 的合計精確等於 3,080。因
+  mandatory-event 方法學已撤回，這批 v1 rows 不得直接執行，須先轉成 v3
+  direct-edge work units。
 - PostgreSQL／SQLite 已能 fail-closed 表達 navigation-code provenance、
   source date annotations 與 per-rule history coverage。
-- 連續更新已在真實排程完成完整附件 corpus registration；PDF、ODS、PDF、
-  ODT 及八附件公告皆未丟檔。primary failure／timeout 後的一次性 fallback
-  亦已實際成功，候選仍停在 `needs_review`。
+- 連續更新曾在真實排程完成完整附件 corpus registration；PDF、ODS、PDF、
+  ODT 及八附件公告皆未丟檔。proposal agent dispatch 現依 Copper 指示暫停，
+  既有候選仍停在 `needs_review`。
 - NHI 現行整份／分章已獨立列舉兩次並實抓全部附件；raw 與 ODT structural
   stages 已 sealed。完整條文重建各 639 條，606 相同／33 不同；parity
   gate 已執行但失敗，33 個 discrepancy 仍 open。

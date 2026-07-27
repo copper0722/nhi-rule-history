@@ -14,7 +14,8 @@
 official pages
   -> immutable source artifacts + manifest
   -> structural parse + source occurrences
-  -> official event/effect ledger
+  -> transition evidence ledger
+  -> optional official-notice linkage
   -> stable rule identity + version snapshots
   -> adjacent comparisons + diffs
   -> normalized JSONL
@@ -101,16 +102,20 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli verify-historical-bundles \
 
 它不推論法律生效日、不以條號建立 canonical identity，也不計算跨版 diff。
 
-## WP03：公告事件
+## WP03：Transition evidence 與可選公告連結
 
-一則公告與其對條文的影響分開：
+一個條文 transition 與公告是否仍可取得分開：
 
-- `official_event`：發文字號、主旨、發文／刊登／生效資訊及附件。
-- `official_event_effect`：對某一條文的 create、amend、delete、restore、
-  rename、move、split、merge 或 correction。
+- `rule_transition`：對某一條文的 create、amend、delete、restore、
+  rename、move、split、merge 或 correction；
+- `transition_evidence`：官方 cumulative version、old/new 對照表、條文
+  日期註記、archival snapshot 或公告 effect 的 exact locator；
+- `official_notice` 與 `transition_notice_link`：找到時保存的補強 provenance，
+  不是 mandatory transition foreign key。
 
-每個 accepted effective date 必須指回官方 locator。公告列出的日期、附件正文
-日期與實際生效日分欄保存。
+每個 accepted effective date 必須指回官方 locator。公告列出的日期、附件
+正文日期與實際生效日分欄保存。不能證明所有歷史公告都仍存在或可由現行
+查詢找到，因此 notice linkage 是獨立 coverage，不是完成 gate。
 
 ### 日期註記 ledger
 
@@ -122,11 +127,16 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli verify-historical-bundles \
    `rejected_non_amendment`，不可永遠留在日期分母；
 3. 先由同檔日期＋條號 locator 沿 artifact→resource→parent detail 回查
    正式文號；unique owning document 仍只是 review candidate；
-4. 再讀公告 detail 的生效句與 old/new 附件，建立 effect proposal；
-5. 找不到公告時保留 `unresolved_event`，不刪掉 marker；
-6. 找到公告仍須有完整 before/after snapshots 才能建立 transition；
-7. 每一條公開 `annotation_count / resolved_count / verified_transition_count`
-   與 gap reasons。
+4. 有公告候選時，讀 detail 的生效句與 old/new 附件，建立 evidence
+   proposal；
+5. 找不到公告時記
+   `notice_not_found_after_bounded_search`／`notice_availability_unknown`，
+   不刪 marker，也不推論公告不存在；
+6. 以其他官方 evidence basis 足以證明 transition 時，可在沒有公告連結下
+   完成；但仍須完整 before/after、stable identity、direct adjacency 與
+   anchor replay；
+7. 每一條分開公開 `annotation_terminal_coverage`、
+   `transition_evidence_coverage`、`notice_linkage_coverage` 與 gap reasons。
 
 日期集合是 completeness checksum。它不能取代歷史附件、被刪文字或
 cumulative anchor replay。
@@ -141,8 +151,9 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli load-annotation-stage \
 
 每個 JSONL row 必須包含 `article_id`、`article_num`、exact `full_text` 與明示
 的 `source_identity` object。這個命令只寫 isolated append-only stage；所有
-marker 初態都是 `unresolved_event`，不會推定公告、建立快照或寫入 canonical
-history。
+marker 的舊 v1 初態都是 `unresolved_event`；該欄名只代表尚未裁決。v3
+工作包會將它轉為 evidence-basis candidate，不會推定公告、建立快照或寫入
+canonical history。
 
 ## WP04：條文身分與版本
 

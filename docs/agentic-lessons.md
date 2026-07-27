@@ -328,3 +328,31 @@ event」。歷史重建 contract 必須拆成 `owning_document_identity` 與
 `marker_event_identity`：前者可 supported、後者仍 unresolved。此 pilot
 5/5 都是這種情況，故 0/5 能關閉 pre/post text、direct adjacency 或 anchor
 replay。Grok 的可接受角色是 hash-bound source triage，不是逐條完整性認證。
+
+## 2026-07-28 公告 availability 方法學修正
+
+先前 contract 更根本的錯誤，是把 `marker_event_identity` 由「可能找不到」
+提升成每個 transition 的必要結果。現有資料只能證明某些公告已取得，不能
+證明每一份歷史公告至今仍存在於公開網頁、仍被索引，或一定可由目前的查詢
+介面找到。於是「找不到」同時可能代表 query miss、索引缺口、網站遷移、
+附件移除或原始公告不可用；它不能被解讀成「公告不存在」，也不能永久阻擋
+由官方 cumulative versions／old-new comparison／archival snapshot
+充分證明的 transition。
+
+因此後續 skill／packet 的改進是：
+
+- work unit 從 `clause × date marker` 改成
+  `stable-clause candidate × direct-predecessor edge × declared cut`；
+- mandatory output 從 `official_event_identity` 改成至少一筆 accepted
+  `transition_evidence`；
+- `official_notice` 改成 nullable many-to-many linkage；
+- bounded search miss 使用
+  `notice_not_found_after_bounded_search`，並保存 query ledger；
+- completion、notice linkage、source version、annotation terminal 與 anchor
+  replay 各自報 coverage，不能共用一個 numerator；
+- v1 的 3,080-row queue 保留為 discovery provenance，但停止直接交給模型。
+
+這也修正了如何評估 Grok／Gemini／Claude 的能力：模型能否找到公告，只能
+評估 retrieval／triage；真正的歷史工作能力必須看它能否在 exact
+source spans 上重建完整前後版、識別 stable identity、說明日期角色、證明
+direct adjacency，並讓 deterministic replay 通過。

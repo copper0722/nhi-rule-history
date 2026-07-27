@@ -28,7 +28,8 @@ checklist 分母。兩者已用同一 sealed PG rows 唯讀重算並逐條列出
 
 6,366 是 fail-closed raw pattern denominator；其中 6 筆已確認為 Trelegy
 Ellipta 劑量而非日期。有效 amendment-date denominator 是 6,360，目前
-event/effect resolution 是 0/6,360。完整歷史未成立。
+尚未依 v3 evidence-basis 契約完成日期角色／transition adjudication。
+`0/6,360 連到公告事件` 只描述舊 resolver，不是完成 gate。完整歷史未成立。
 
 ## 已取得的原始資料
 
@@ -183,11 +184,16 @@ cross-source discrepancies = 0 or explicitly adjudicated
 
 格式尚未解析的 bundle 狀態是 `needs_format_extraction`，不是「沒有修正」。
 
-## WP3 — Agent proposal lane
+## WP3 — Agent proposal lane（暫停）
 
-Controller 先決定 document identity、attachment inventory、候選日期 locator、
-old/new table coordinates 與 dotted designation candidates。Agent 只能提出
-綁定 exact source spans 的 proposal。
+2026-07-28 起依 Copper 指示暫停呼叫 Claude 或其他模型整理條文。既有 raw
+acquisition 可繼續，但 proposal lane 只有在
+[agent 方法學](agent-work-methodology.md) 的 M1/M2 與 10-unit pilot packet
+完成，且 Copper 明確指示恢復後才可重啟。
+
+重啟後，Controller 先決定 document identity、attachment inventory、候選
+日期 locator、old/new table coordinates 與 dotted designation candidates。
+Agent 只能提出綁定 exact source spans 的 proposal。
 
 ```text
 primary = cm1 Claude
@@ -217,17 +223,22 @@ denominator 永遠保留 6,366 個 occurrence rows。
 
 ODT preflight 可用來排序搜尋工作，但不得自動 promotion：先處理 826 組
 同檔候選，再由 typed PDF／OLE／ODS／image extraction 補回 ODT miss；每一
-組最後仍須通過下列 event/effect contract。
+組最後仍須通過 v3 transition-evidence contract。
 
-唯一 resolved link 必須同時具備：
+唯一 verified transition candidate 必須同時具備：
 
 - exact normalized date；
 - 日期角色已證明為法律 effective date；
 - 相容 designation 與已裁決 stable identity；
 - marker exact locator；
-- official effective-date exact locator；
+- official effective-date exact locator 與明列 evidence basis；
 - effect scope 涵蓋 marker 所在子項；
-- 沒有省略、多條合併、條號重用或同日多 event 歧義。
+- 完整 pre/post sides、direct adjacency 與 anchor replay；
+- 沒有省略、多條合併、條號重用或同日多 transition 歧義。
+
+公告若找到，另以 `transition_notice_link` 保存；找不到時只能記 bounded
+search result 或 availability unknown，不能阻擋由其他官方 evidence basis
+完成的 transition。
 
 ```text
 6366
@@ -269,8 +280,10 @@ Inventory closure 可以保留明列 gap；「完整歷史」要求
 ## 完成 gate
 
 - 6,366/6,366 markers terminal adjudication；
-- 每個 accepted effect 都有 official event FK、effective-date locator、
-  identity/operation decision 與 operation-required full sides；
+- 每個 accepted transition 都有至少一筆 accepted official-source
+  `transition_evidence`、effective-date locator、identity/operation
+  decision 與 operation-required full sides；
+- 公告 linkage 另計 coverage，沒有 mandatory official-event FK；
 - interval overlap = 0；
 - unordered same-day effects = 0；
 - 每條最多一個 open head；
@@ -295,11 +308,12 @@ Inventory closure 可以保留明列 gap；「完整歷史」要求
 - 後來附件內出現舊日期 = 已取得當年原始公告；
 - agent fallback 同意 primary = 獨立證據；
 - 把 whole/chapter 差異當排版雜訊。
+- bounded search 找不到公告 = 公告不存在。
 
 ## 下一個可交付 milestone
 
 1,308 份已取得公文的 deterministic source-local bundles 已完成。下一個
-milestone 是補通 PDF/OLE/image typed extraction，讓每份公文都有 terminal
-proposal receipt；發布 marker candidate matrix，但仍不寫 canonical。其後
-才以 NHI listing 與 widened FINT 關閉 source universe，再按 anchor interval
-建完整 snapshots 與 replay。
+milestone 不是直接量產 agent proposal，而是完成 v3 transition-evidence
+schema、將舊 3,080-row discovery queue 轉成 direct-edge work units，並建立
+10-unit pilot packet。仍需補通 PDF/OLE/image typed extraction；其後才可在
+Copper 明示恢復 dispatch 後，按 anchor interval 建完整 snapshots 與 replay。

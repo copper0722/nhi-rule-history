@@ -681,14 +681,42 @@ claims:
     14 份年度 ODT stage 與一個 MOHW FINT exact-query/date-window 的
     bounded acquisition/source-local ODT stage，以及 NHI 現行整份／分章
     raw/structural capture 已驗收；均非完整法律歷史
-  reader_safe_before_completion: 官方年度版本與已核實公告異動
+  reader_safe_before_completion: 已取得的官方版本與已核實異動
   forbidden_now: 完整健保給付條文歷史已入庫
 
+methodology_v3:
+  status: canonical_method_defined_implementation_open
+  admin_ops_project_todo_id: 41
+  document: docs/agent-work-methodology.md
+  work_result_schema: contracts/history-closure-work-result-v3.schema.json
+  core_unit: stable_clause_candidate_x_direct_predecessor_edge_x_declared_source_cut
+  completion_claim: evidence_complete_to_declared_cut_for_enumerated_official_versions
+  notice_linkage:
+    required_for_transition_completion: false
+    coverage_reported_separately: true
+    absence_claim_allowed: false
+  superseded_execution_artifact:
+    schema: nhi-rule-history/history-gap-work-unit/v1
+    rows: 3080
+    disposition: retained_discovery_provenance_not_executable
+    reason: mandatory_official_event_identity_cannot_be_a_completion_gate
+  agent_dispatch:
+    status: paused_by_owner
+    paused_on: "2026-07-28"
+    scope: clause_history_agent_calls
+    deterministic_raw_acquisition_allowed: true
+    resume_requires:
+      - explicit_Copper_instruction
+      - v3_transition_evidence_schema_and_validator
+      - v3_queue_converter
+      - frozen_10_unit_pilot_packet
+      - NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED_true
+
 current_work_package:
-  id: WP03
-  title: Build the official event/effect evidence layer
+  id: M1
+  title: Implement the v3 transition-evidence work contract
   next_action: >
-    Process the 3,080 hash-bound clause-date work units into official
-    event/effect evidence or explicit gaps, beginning with the 490
-    unique-document candidates; complete same-cut NHI whole/chapter parity and
-    adjacent snapshots before any complete-history claim.
+    Do not dispatch clause-history workers. Add an additive PostgreSQL/SQLite
+    transition-evidence schema with optional notice links, build a validator
+    and v1-to-v3 queue converter, then freeze 10 representative pilot packets
+    for owner review before any model-assisted scale-out.

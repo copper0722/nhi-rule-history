@@ -1,5 +1,12 @@
 # v2 方法學：從官方原始資料到可稽核的結構化 stage
 
+> 2026-07-28 方法學修正：本文件的 acquisition／raw／structural stage
+> 仍有效；凡將 `official_event` 或「找到公告」設為逐條 transition 必要
+> 條件的文字，均由
+> [逐條文歷史工作的 agent 方法學](agent-work-methodology.md) 取代。
+> 無法證明所有歷史公告至今仍公開可得，故公告 linkage 只能是獨立的補強
+> 證據與 coverage metric。
+
 ## 裁決
 
 本專案採用 C+ 雙軌：
@@ -20,8 +27,9 @@ source plan
   -> fetch attempt
   -> immutable raw artifact
   -> structural parse
-  -> event/effect candidate
-  -> promoted official event/effect
+  -> transition-evidence candidate
+  -> accepted transition evidence
+  -> optional official-notice linkage
   -> stable rule identity and canonical history
   -> adjacent diff and reader model
 ```
@@ -74,17 +82,22 @@ markers。每一個原樣日期都必須先成為 `source_date_annotation`，保
 annotation recall
   = every accepted source marker was extracted exactly
 
-event resolution
-  = every marker maps to an official event/effect or an explicit unresolved gap
+transition resolution
+  = every marker maps to an accepted official-source evidence basis or an
+    explicit unresolved gap
 
 snapshot realization
   = every resolved transition has complete before/after snapshots and direct adjacency
 ```
 
 最後再做 cumulative anchor replay：從較早的已驗證整份檔依生效順序重播所有
-event effects，必須逐條得到下一個已驗證整份／分章 anchor 的 exact normalized
+accepted transitions，必須逐條得到下一個已驗證整份／分章 anchor 的 exact normalized
 hash。單條只有在 annotation、event、snapshot、adjacency、anchor parity 與
 source-universe cut 都無缺口時，才能標為 `complete_to_declared_cut`。
+
+上句的歷史欄名 `event` 只保留為既有 audit vocabulary；v3 gate 實際要求
+`transition_evidence`，不要求公告一定存在或可找到。對外狀態名稱改為
+`evidence_complete_to_declared_cut_for_enumerated_official_versions`。
 
 ### 2026-07-27 舊庫實證
 
@@ -123,16 +136,20 @@ denominator 是 6,360。公開 adjudication receipt 見
 [`audits/2026-07-27-invalid-date-candidate-adjudication.json`](audits/2026-07-27-invalid-date-candidate-adjudication.json)。
 
 6,360 個有效 candidate 分布在 323 個不同日期，範圍為
-1996-01-01 至 2026-07-01；這讓公告 event ledger 有明確的 date
-denominator，但同日仍可能有多個公告／多條 effect，不能只靠日期自動配對。
+1996-01-01 至 2026-07-01；這讓 transition adjudication 有明確的 date
+denominator，但同日仍可能有多個版本、公告或 effect，不能只靠日期自動配對。
 每列保留原始字串、Unicode code-point offsets、hash 與 source identity，
-初態一律是 `unresolved_event`。重播與 fresh-connection row-set fingerprint
-已通過，但 0/6,360 有效日期完成公告／transition resolution，因此不改變
+既有 v1 stage 初態一律是 `unresolved_event`。重播與 fresh-connection
+row-set fingerprint 已通過，但尚未依 v3 evidence-basis 契約完成日期角色／
+transition resolution，因此不改變
 `LEGACY_HISTORY_NOT_COMPLETE` 結論。公開 receipt 見
 [`audits/2026-07-27-legacy-date-annotation-stage-receipt.json`](audits/2026-07-27-legacy-date-annotation-stage-receipt.json)。
 
+`0/6,360 連到公告事件` 只描述舊 v1 resolver 的狀態，不能當作逐條完整度
+gate，也不能解讀為公告不存在。公告 linkage coverage 在 v3 另行計算。
+
 逐條層級的 declared-cut scoreboard 因此是 0/1,548 certified complete：
-983 條至少有一個有效日期候選但尚無 event/effect resolution；另外 565 條
+983 條至少有一個有效日期候選但尚無 transition resolution；另外 565 條
 未觀察到有效日期候選，也不能在來源宇宙尚未封閉時反推「從未修正」。這是
 認證狀態，不是聲稱 1,548 條都必然存在遺漏版本。機器可讀報告見
 [`audits/2026-07-27-per-clause-history-completeness-scoreboard.json`](audits/2026-07-27-per-clause-history-completeness-scoreboard.json)。
@@ -165,7 +182,7 @@ text 合併，仍以相同 3,080／3,010 denominator 重算兩次。原生文字
 pages 的 OCR 另列為未人工覆核 lane：155 個日期候選、4 個 joint candidate，
 只有 3 個 joint candidate 超出 native lane，且 authoritative text
 observation 固定為 0。因此 61.59%、27.44%、2,034 與 909 都不是逐條文
-完整率，正式 event resolution 仍是 0/6,360 valid dates；另 6 筆
+完整率，v3 transition adjudication 尚未執行；另 6 筆
 non-date candidates 已終結分類。
 
 跨格式 preflight 之後，909 個 joint pairs 再以兩份 exact-locator ledgers

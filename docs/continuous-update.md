@@ -371,15 +371,16 @@ loader. It may promote only after all of the following are proven:
 6. the comparison new side agrees with the first applicable
    post-effective-date cumulative anchor;
 7. replay from the preceding official cumulative anchor through all intervening
-   accepted events reproduces the next whole/chapter anchor rule set and text
+   accepted transitions reproduces the next whole/chapter anchor rule set and text
    hashes;
 8. ODT/PDF parity is verified when both official formats exist;
 9. the canonical head and generation checked before the transaction are still
    unchanged at commit time.
 
-Only then may one atomic canonical transaction create the accepted event/effect
-and new snapshot, close the prior snapshot at the new
-`effective_from`, and attach exact source evidence. The transaction must abort
+Only then may one atomic canonical transaction create the accepted transition,
+its accepted official-source evidence, and the new snapshot; official-notice
+links are nullable enrichment. The transaction closes the prior snapshot at the new
+`effective_from` and attaches exact source evidence. The transaction must abort
 on any stale head, overlap, replay mismatch, missing anchor, or identity
 conflict. A post-commit replay and fresh read must then reproduce the accepted
 anchors.
@@ -389,6 +390,12 @@ current version and prevents an announcement table from being treated as proof
 of direct legal adjacency.
 
 ## 10. Verified stage-only scheduling profile
+
+Owner override, 2026-07-28: the proposal/agent-dispatch portion is paused while
+the v3 transition-evidence methodology, queue converter, validator, and pilot
+are built. Deterministic poll/acquisition may continue. No Claude or fallback
+worker may be called until Copper explicitly resumes the lane and
+`NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=true`.
 
 The registered recurring deployment performs only:
 
