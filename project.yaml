@@ -310,9 +310,9 @@ machine_status:
       high: 0
       medium: 1
       low: 2
-    official_source_canary_authorized: false
+    official_source_canary_authorized: true
     repair_hold_removal_authorized: false
-    blocking_evidence: actual_claude_model_resolution_and_zero_custom_context
+    blocking_evidence: official_source_canary_and_post_canary_audit_pending
     nonsource_isolation_canary:
       status: routing_observation_incomplete
       observed_on: "2026-07-28"
@@ -326,6 +326,22 @@ machine_status:
       official_source_canary_authorized: false
       repair_hold_removal_authorized: false
       receipt: docs/audits/2026-07-28-primary-claude-nonsource-isolation-canary.json
+    nonsource_isolation_canary_success:
+      status: passed_resolved_first_party_allowlisted
+      observed_at: "2026-07-27T18:37:42Z"
+      synthetic_stdin_only: true
+      successful_inference: true
+      return_code: 0
+      stdout_bytes: 373
+      actual_resolved_model_observed: true
+      resolved_model_identity: claude-sonnet-5
+      resolved_provider: firstParty
+      zero_tool_mcp_custom_context_event_verified: true
+      isolated_orphan_processes: 0
+      isolated_runtime_directories: 0
+      official_source_canary_authorized: true
+      repair_hold_removal_authorized: false
+      receipt: docs/audits/2026-07-28-primary-claude-nonsource-isolation-canary-success.json
   nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
   v2_acquisition_stage: VERIFIED_BOUNDED
   v2_structural_stage: VERIFIED_SOURCE_LOCAL

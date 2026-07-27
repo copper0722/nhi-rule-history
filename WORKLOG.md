@@ -48,6 +48,21 @@
   safe-mode startup 或既存並行程序，不能宣稱 plugin activity 為零。
   收據明列 `routing-observation-incomplete`，repair hold 與
   official-source canary block 均維持。
+- 修正第一次 canary 的 Draft 2020-12 transport incompatibility後，primary
+  wrapper 改採 bounded FIFO、獨立 process group、前後 managed-settings
+  attestation 與 Claude JSON envelope 驗證；精確檢查 resolved
+  model／canonical model／provider tuple、token counters、terminal state、
+  permission denials 與 server-tool counters。hostile descendants、signal、
+  timeout、512 KiB envelope、128 KiB proposal 與 settings drift 都有
+  fail-closed regression；獨立 re-review 最終 C/H/M 為 0。
+- 第二次 534-byte synthetic、stdin-only canary 在 13.028 秒成功。
+  `sonnet` alias 實際解析為 first-party `claude-sonnet-5`；另有明列的
+  first-party `claude-haiku-4-5-20251001` auxiliary。web search/fetch 與
+  permission denials 都是 0，沒有官方來源、corpus 或 PG prompt/input，
+  結束後沒有 isolated orphan 或 runtime dir。故只授權下一個
+  cefiderocol stage-only official-source canary；repair hold、canonical
+  promotion、release 與 frontend 仍不授權。成功 receipt 另存，不覆寫
+  第一次失敗 receipt。
 - 依 Copper 指認的官方入口重新核對
   `https://info.nhi.gov.tw/INAE3000/INAE3000S01`。以一列、只讀 current
   query 驗證其 `POST /api/INAE3000/INAE3000S01/SQL0001`，官方回報

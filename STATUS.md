@@ -158,6 +158,16 @@
   也只能證明設定層隔離，不能證明 event 層為零。狀態是
   `routing-observation-incomplete`；repair hold 保留，official-source
   canary 仍未獲授權。
+- 保留上述失敗 receipt 後，以修正過的同一路徑重跑 534-byte synthetic
+  canary：13.028 秒成功，selected model 精確解析為第一方
+  `claude-sonnet-5`，CLI 另透明回報第一方 Haiku auxiliary；
+  `web_search=0`、`web_fetch=0`、permission denial=0。safe mode 明列停用
+  CLAUDE.md、skills、plugins、hooks、MCP、commands、agents、styles 與
+  workflows；managed settings 僅有 root-owned `autoCompactEnabled`
+  boolean，session persistence 關閉。獨立 runtime review C/H/M=`0/0/0`，
+  44 項 hostile process／overflow／drift tests 通過，結束後 isolated
+  process 與 runtime dir 都是 0。這只解除一次 stage-only official-source
+  canary 的 block；repair hold 與 canonical mutation 仍未授權。
 - 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；
