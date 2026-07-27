@@ -66,7 +66,7 @@ PDF、OLE 與 ODS 的原生文字後，兩個數字分別增為 2,034（+137）�
 四條優先 lane 僅用於安排來源閱讀，不是法律判定或完整性證書。
 
 ATC linkage 的原始來源也已重新釐清。既有 runtime 的確使用
-[`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1)
+[`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01)
 建立品項連結；可公開重建的主來源則是 IODE resource
 `A21030000I-E41001-001`。2026-07-27 實抓為 224,455 列、45,124 個健保
 藥品代號、2,244 個 ATC codes，95,520 列帶給付規定文件 URL。repo 現已
@@ -84,7 +84,7 @@ NHI 858 筆形成 847 個文號鍵，FINT exact-phrase 366 筆形成 365 個文�
 實庫狀態不靠人工翻頁判斷；唯讀
 [`history-completeness-status.sql`](database/queries/history-completeness-status.sql)
 會直接列出 marker、resolution、review queue 與 canonical schema 狀態。
-2026-07-27 的 fresh run 是 6,366 unresolved、0 resolved、7/7
+2026-07-28 的 fresh run 是 6,366 unresolved、0 resolved、9/9
 needs-review，且 canonical schema 尚不存在。這裡 6,366 是 immutable raw
 annotation stage；event resolver 已把其中 6 筆終結判為非日期劑量，
 有效 amendment-date denominator 是 6,360。以 declared cut 逐條驗收時，
@@ -156,7 +156,7 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli verify-raw \
 - [全民健康保險藥品給付規定歷史檔](https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html)
 - [健保署法規公告](https://www.nhi.gov.tw/ch/lp-3258-1.html)
 - [衛福部法規函釋查詢](https://mohwlaw.mohw.gov.tw/FINT/FINTQRY01-1.aspx)
-- [健保用藥品項網路查詢（INAE3000）](https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1)
+- [健保用藥品項網路查詢（INAE3000）](https://info.nhi.gov.tw/INAE3000/INAE3000S01)
 - [健保用藥品項查詢項目檔（IODE）](https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=111)
 
 本專案與衛生福利部中央健康保險署、WHO 或 WHO Collaborating Centre 無隸屬、

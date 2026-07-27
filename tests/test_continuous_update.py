@@ -70,6 +70,116 @@ def fixture_odt(new_text: str = "9.4 新條文完整文字") -> bytes:
     return buffer.getvalue()
 
 
+def fixture_nested_table_odt() -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "mimetype",
+            "application/vnd.oasis.opendocument.text",
+            compress_type=zipfile.ZIP_STORED,
+        )
+        archive.writestr(
+            "content.xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0">
+ <office:body><office:text>
+  <text:p>表格外生效資訊</text:p>
+  <table:table>
+   <table:table-row>
+    <table:table-cell>
+     <text:p>外層儲存格文字</text:p>
+     <text:list><text:list-item><text:p>外層清單文字</text:p></text:list-item></text:list>
+     <table:table>
+      <table:table-row>
+       <table:table-cell><text:p>內層儲存格文字</text:p></table:table-cell>
+      </table:table-row>
+     </table:table>
+     <text:p>內層表格之後的外層文字</text:p>
+    </table:table-cell>
+   </table:table-row>
+  </table:table>
+ </office:text></office:body>
+</office:document-content>""",
+        )
+    return buffer.getvalue()
+
+
+def fixture_structural_table_odt() -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "mimetype",
+            "application/vnd.oasis.opendocument.text",
+            compress_type=zipfile.ZIP_STORED,
+        )
+        archive.writestr(
+            "content.xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0">
+ <office:body><office:text>
+  <table:table>
+   <table:table-header-rows>
+    <table:table-row>
+     <table:table-cell table:number-columns-spanned="2">
+      <text:p>相同文字</text:p>
+     </table:table-cell>
+     <table:covered-table-cell><text:p>covered 來源文字</text:p></table:covered-table-cell>
+    </table:table-row>
+   </table:table-header-rows>
+   <table:table-row table:number-rows-repeated="2">
+    <table:table-cell table:number-columns-repeated="3">
+     <text:p>相同文字</text:p>
+    </table:table-cell>
+    <table:table-cell table:number-rows-spanned="2">
+     <text:p>row span 來源文字</text:p>
+    </table:table-cell>
+   </table:table-row>
+  </table:table>
+ </office:text></office:body>
+</office:document-content>""",
+        )
+    return buffer.getvalue()
+
+
+def fixture_nested_duplicate_regression_odt(
+    paragraph_count: int = 106,
+) -> bytes:
+    paragraphs = "".join(
+        f"<text:p>內層段落 {index:03d}</text:p>"
+        for index in range(paragraph_count)
+    )
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "mimetype",
+            "application/vnd.oasis.opendocument.text",
+            compress_type=zipfile.ZIP_STORED,
+        )
+        archive.writestr(
+            "content.xml",
+            f"""<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0">
+ <office:body><office:text>
+  <table:table><table:table-row><table:table-cell>
+   <table:table><table:table-row><table:table-cell>
+    {paragraphs}
+   </table:table-cell></table:table-row></table:table>
+  </table:table-cell></table:table-row></table:table>
+ </office:text></office:body>
+</office:document-content>""",
+        )
+    return buffer.getvalue()
+
+
 def fixture_feed() -> bytes:
     return """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel><title>NHI</title>
@@ -117,10 +227,6 @@ def valid_proposal(
     temporal_span = span(effective)
     return {
         "schema": PROPOSAL_SCHEMA,
-        "notice": {
-            "reference_number_raw": "健保審字第1150000000號",
-            "subject_raw": "修訂藥品給付規定",
-        },
         "temporal_evidence": [
             {
                 "source_span": temporal_span,
@@ -245,6 +351,110 @@ class ContinuousUpdateTests(unittest.TestCase):
         self.assertEqual(len(links), 1)
         with self.assertRaises(ContractError):
             parse_rss(b"<rss><channel></channel></rss>")
+
+    def test_nested_odt_table_paragraphs_are_emitted_exactly_once(self) -> None:
+        from nhi_rule_history.update.odt import (
+            extract_odt_blocks,
+            inspect_odt_document,
+        )
+
+        inspected = inspect_odt_document(
+            fixture_nested_table_odt(),
+            "a" * 64,
+        )
+        blocks = inspected["blocks"]
+        texts = [block["raw_text"] for block in blocks]
+        self.assertEqual(
+            texts,
+            [
+                "表格外生效資訊",
+                "外層儲存格文字",
+                "外層清單文字",
+                "內層儲存格文字",
+                "內層表格之後的外層文字",
+            ],
+        )
+        self.assertEqual(len({block["block_id"] for block in blocks}), 5)
+        self.assertEqual(
+            [block["locator"]["table_index"] for block in blocks],
+            [None, 0, 0, 1, 0],
+        )
+        self.assertEqual(
+            [block["locator"]["table_depth"] for block in blocks],
+            [None, 0, 0, 1, 0],
+        )
+        self.assertEqual(
+            [block["locator"]["parent_table_index"] for block in blocks],
+            [None, None, None, 0, None],
+        )
+        self.assertEqual(
+            [blocks[index]["locator"]["paragraph_index"] for index in (1, 2, 4)],
+            [0, 1, 2],
+        )
+        self.assertEqual(
+            inspected["structural_facts"]["source_paragraph_count"],
+            inspected["structural_facts"]["emitted_block_count"],
+        )
+        self.assertTrue(
+            inspected["structural_facts"]["exact_once_verified"]
+        )
+        self.assertEqual(
+            extract_odt_blocks(fixture_nested_table_odt(), "a" * 64),
+            blocks,
+        )
+
+    def test_odt_structural_facts_preserve_distinct_equal_text(self) -> None:
+        from nhi_rule_history.update.odt import inspect_odt_document
+
+        first = inspect_odt_document(
+            fixture_structural_table_odt(),
+            "b" * 64,
+        )
+        second = inspect_odt_document(
+            fixture_structural_table_odt(),
+            "b" * 64,
+        )
+        blocks = first["blocks"]
+        facts = first["structural_facts"]
+        self.assertEqual(
+            [block["raw_text"] for block in blocks],
+            [
+                "相同文字",
+                "covered 來源文字",
+                "相同文字",
+                "row span 來源文字",
+            ],
+        )
+        self.assertNotEqual(blocks[0]["block_id"], blocks[2]["block_id"])
+        self.assertEqual(first, second)
+        self.assertEqual(facts["covered_cell_count"], 1)
+        self.assertEqual(facts["column_span_cell_count"], 1)
+        self.assertEqual(facts["row_span_cell_count"], 1)
+        self.assertEqual(facts["repeated_cell_count"], 1)
+        self.assertEqual(facts["repeated_row_count"], 1)
+        self.assertEqual(facts["source_paragraph_count"], 4)
+        self.assertEqual(facts["emitted_block_count"], 4)
+        self.assertEqual(blocks[0]["locator"]["row_kind"], "header")
+        self.assertEqual(blocks[1]["locator"]["row_kind"], "header")
+        self.assertEqual(blocks[2]["locator"]["row_kind"], "body")
+        self.assertEqual(blocks[3]["locator"]["row_kind"], "body")
+
+    def test_observed_nested_duplicate_pattern_emits_106_not_212(self) -> None:
+        from nhi_rule_history.update.odt import inspect_odt_document
+
+        inspected = inspect_odt_document(
+            fixture_nested_duplicate_regression_odt(),
+            "c" * 64,
+        )
+        self.assertEqual(len(inspected["blocks"]), 106)
+        self.assertEqual(
+            inspected["structural_facts"]["source_paragraph_count"],
+            106,
+        )
+        self.assertEqual(
+            len({block["block_id"] for block in inspected["blocks"]}),
+            106,
+        )
 
     def test_non_drug_payment_notice_is_not_selected(self) -> None:
         payload = """<?xml version="1.0" encoding="UTF-8"?>
@@ -521,6 +731,7 @@ class ContinuousUpdateTests(unittest.TestCase):
                 source_blocks=packet["source_blocks"],
                 bundle_id=sealed.bundle_id,
                 bundle_fingerprint=sealed.bundle_fingerprint,
+                expected_notice=packet["notice_binding_source"],
             )
             self.assertTrue(validated["first_lane_shape"])
             self.assertEqual(
@@ -534,6 +745,7 @@ class ContinuousUpdateTests(unittest.TestCase):
                     source_blocks=packet["source_blocks"],
                     bundle_id=sealed.bundle_id,
                     bundle_fingerprint=sealed.bundle_fingerprint,
+                    expected_notice=packet["notice_binding_source"],
                 )
 
     def test_legacy_worker_directory_does_not_collide_and_new_run_replays(

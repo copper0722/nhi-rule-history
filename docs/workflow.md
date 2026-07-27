@@ -167,7 +167,8 @@ history。
    resolution。
 4. 條文到 ATC 只由已解析產品列推導，保存 support count 與 source release；
    不把它宣稱成整個 ATC class 的適用範圍。
-5. 每月 IODE snapshot 是可重建基線；INAE3000 current API 作每週 freshness
+5. 每月 IODE snapshot 是可重建基線；INAE3000
+   `POST /api/INAE3000/INAE3000S01/SQL0001` 作每週 freshness
    reconciliation，不覆寫或刪除舊 snapshot。
 6. PostgreSQL 與 SQLite 使用相同
    `linkage_import_run`／`nhi_drug_item_observation`／

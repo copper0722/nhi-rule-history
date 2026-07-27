@@ -738,12 +738,7 @@ def _prepare_update_load(
             bundle_id=verification["bundle_id"],
             bundle_fingerprint=verification["bundle_fingerprint"],
             required_true_document_flags=required_flags,
-            expected_notice={
-                "reference_number_raw": packet["notice_metadata"][
-                    "reference_number_raw"
-                ],
-                "subject_raw": packet["notice_metadata"]["subject_raw"],
-            },
+            expected_notice=packet["notice_binding_source"],
         )
     except (KeyError, OSError, UnicodeError, ContractError, ValueError) as exc:
         raise UpdateStageLoadError("worker candidate revalidation failed") from exc

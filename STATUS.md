@@ -1,6 +1,6 @@
 # 專案進度
 
-最後核對：2026-07-27
+最後核對：2026-07-28
 
 ## 已完成
 
@@ -24,8 +24,13 @@
   品項→給付條文 links 中 6,990 列解析到 498 條文章、508 列尚未解析。
   另 2,025 條 article↔ATC mappings 中 1,708 為自動、317 為 curated；
   不能把三類證據混稱官方 direct linkage。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 313 項 public tests
-  （307 passed、6 skip；含真實 PostgreSQL linkage transaction test）；
+- 2026-07-28 直接對
+  `POST /api/INAE3000/INAE3000S01/SQL0001` 做一列只讀核對，官方 current
+  API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
+  給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
+  immutable clean-room rebuild 基線。
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 335 項 public tests
+  （328 passed、7 skip；含真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
 - `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、
@@ -118,13 +123,32 @@
   `marker_without_native_document_date_match`；合計精確為 3,080。每列仍須
   回填 official event、日期角色、stable identity、前後 exact text、
   direct adjacency 與 anchor replay，`canonical_write_authorized=false`。
+- 第一批 5 個 history closure canary 已逐份核對官方 ODT：5/5 都明寫
+  `自…生效`、有完整舊／新欄，且新欄與 2026 whole/chapter endpoint
+  相等。這只把 source-local 日期角色確認為 5/5；PG event/effect admission
+  仍為 0、direct predecessor 與歷史 anchor replay 仍為 0，因此法律
+  closure delta 是 0，逐條完整性仍是 0/1,548。
 - stage-only continuous updater 已在真實 PostgreSQL 排程通過 scheduled
   poll 與 proposal fires。來源 bundle／corpus bundle 會保留公告明列的
   全部附件，包括多 PDF、ODS 與 ODT；兩則真實工作均驗到 cm1 Claude
   failure／timeout 後只啟動一次 hm4 Codex fallback，並安全停在
   `staged_needs_review`。`AUTO_PROMOTION_ENABLED=false`，尚未寫 canonical
   history。
-- 2026-07-27T16:09:28Z 最新 live observation：21 個 update work items
+- 2026-07-28 最新 fresh live observation：21 個 update work items
+  分別為 2 `selected`、9 `staged_needs_review`、2 `failed_terminal`、
+  8 `ignored_non_rule`；`corpus_registered` 為 0。
+  9/9 candidate proposals 均需人工複核。兩個 terminal works 各自保有
+  primary→fallback 的 immutable failure receipt；舊 evidence 尚未冒充成
+  PostgreSQL worker-attempt rows，recovery-v2 migration 也尚未套入 live。
+  canonical history schema 仍不存在。
+- GPT Pro post-audit v2 以 `C/H/M/L=0/0/1/2` 接受 R2 stage-only
+  worker/runtime/recovery repair。依其條件，legacy admission 現在明列
+  `sha256_hex_v1` attempt identity、immutable JSONL origin、verifier
+  contract/code/output schema 與 admission payload hash。尚未關閉的 Medium
+  是 live Claude model resolution／zero-custom-context isolation canary；
+  在此收據通過前，不執行 cefiderocol official-source canary，也不解除
+  repair hold。
+- 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；
   8/8 candidate proposals 均需人工複核。該 terminal item 的 primary 與

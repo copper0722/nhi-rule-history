@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/copper0722/nhi-rule-history/blob/main/contracts/worker-proposal-v2.schema.json",
+  "title": "NHI rule-history evidence-only worker proposal v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "temporal_evidence",
+    "effect_candidates",
+    "document_flags",
+    "model_assessment",
+    "reason_codes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "nhi-rule-history/agent-source-proposal/v2"
+    },
+    "temporal_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/temporalEvidence"
+      }
+    },
+    "effect_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/effectCandidate"
+      }
+    },
+    "document_flags": {
+      "$ref": "#/$defs/documentFlags"
+    },
+    "model_assessment": {
+      "enum": [
+        "single_full_replacement_candidate",
+        "needs_review",
+        "no_relevant_rule"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_sha256",
+        "block_id",
+        "start",
+        "end",
+        "exact_text",
+        "exact_text_sha256"
+      ],
+      "properties": {
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "block_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "exact_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exact_text_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "temporalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_span",
+        "expression_raw",
+        "calendar",
+        "precision",
+        "semantic_role",
+        "scope_raw",
+        "conditionality",
+        "iso_date_candidate"
+      ],
+      "properties": {
+        "source_span": {
+          "$ref": "#/$defs/sourceSpan"
+        },
+        "expression_raw": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calendar": {
+          "enum": [
+            "ROC",
+            "gregorian",
+            "unknown"
+          ]
+        },
+        "precision": {
+          "enum": [
+            "day",
+            "month",
+            "year",
+            "unknown"
+          ]
+        },
+        "semantic_role": {
+          "enum": [
+            "effective_from",
+            "document_date",
+            "publication_date",
+            "unknown"
+          ]
+        },
+        "scope_raw": {
+          "type": "string"
+        },
+        "conditionality": {
+          "enum": [
+            "unconditional",
+            "conditional",
+            "unknown"
+          ]
+        },
+        "iso_date_candidate": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "reviewFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "omitted_text",
+        "merged_cells",
+        "cross_row_dependency",
+        "partial_patch",
+        "multi_rule",
+        "correction",
+        "same_url_different_bytes",
+        "odt_pdf_disagreement",
+        "identity_uncertainty"
+      ],
+      "properties": {
+        "omitted_text": {
+          "type": "boolean"
+        },
+        "merged_cells": {
+          "type": "boolean"
+        },
+        "cross_row_dependency": {
+          "type": "boolean"
+        },
+        "partial_patch": {
+          "type": "boolean"
+        },
+        "multi_rule": {
+          "type": "boolean"
+        },
+        "correction": {
+          "type": "boolean"
+        },
+        "same_url_different_bytes": {
+          "type": "boolean"
+        },
+        "odt_pdf_disagreement": {
+          "type": "boolean"
+        },
+        "identity_uncertainty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "effectCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "designation_raw",
+        "parent_chapter_raw",
+        "comparison_kind_hint",
+        "old_text_spans",
+        "new_text_spans",
+        "scope_count",
+        "comparison_row_count",
+        "review_flags"
+      ],
+      "properties": {
+        "designation_raw": {
+          "type": "string"
+        },
+        "parent_chapter_raw": {
+          "type": "string"
+        },
+        "comparison_kind_hint": {
+          "enum": [
+            "full_replacement",
+            "partial_replacement",
+            "creation",
+            "deletion",
+            "unknown"
+          ]
+        },
+        "old_text_spans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceSpan"
+          }
+        },
+        "new_text_spans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceSpan"
+          }
+        },
+        "scope_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "comparison_row_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "review_flags": {
+          "$ref": "#/$defs/reviewFlags"
+        }
+      }
+    },
+    "documentFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correction_notice",
+        "same_url_different_bytes",
+        "odt_pdf_disagreement",
+        "odt_pdf_parity_unverified",
+        "declared_attachment_coverage_uncertain"
+      ],
+      "properties": {
+        "correction_notice": {
+          "type": "boolean"
+        },
+        "same_url_different_bytes": {
+          "type": "boolean"
+        },
+        "odt_pdf_disagreement": {
+          "type": "boolean"
+        },
+        "odt_pdf_parity_unverified": {
+          "type": "boolean"
+        },
+        "declared_attachment_coverage_uncertain": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

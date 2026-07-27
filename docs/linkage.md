@@ -8,9 +8,11 @@
 
 本專案把兩個健保署介面視為同一來源家族、不同用途：
 
-- [`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1)
-  是讀者與高頻現況核對介面。既有 runtime 也是從它的 API 建立品項、ATC
-  與條文連結。
+- [`INAE3000` 健保用藥品項網路查詢](https://info.nhi.gov.tw/INAE3000/INAE3000S01)
+  是讀者與高頻現況核對介面。其前端以
+  `POST /api/INAE3000/INAE3000S01/SQL0001` 分頁查詢；既有 runtime
+  正是從這個 API 保存品項、ATC、`PAY_CODE_LIST` 與 `pdfList`，再建立
+  品項到條文的可追溯關聯。
 - [`IODE` 健保用藥品項查詢項目檔](https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=111)
   是公開、按月更新、可整批重建的主來源。dataset identifier 是
   `A21030000I-E41001`，CSV resource 是 `A21030000I-E41001-001`。
@@ -39,6 +41,11 @@ ATC codes；95,703 列有給付章節、95,520 列有給付文件 URL。原檔
 148 列；所以舊表只能作 discovery／對帳證據，不能直接冒充可重播的當月
 snapshot。完整 receipt 見
 [`2026-07-27-inae3000-atc-linkage-audit.json`](audits/2026-07-27-inae3000-atc-linkage-audit.json)。
+
+2026-07-28 再以一列、只讀的 current query 核對上述 API，官方回報
+14,066 筆現行品項，回應欄位仍含品項代碼、ATC、給付代碼清單、給付文件
+清單與價格有效期。請見
+[`2026-07-28-inae3000-live-api-observation.json`](audits/2026-07-28-inae3000-live-api-observation.json)。
 
 ## Raw snapshot 與更新
 

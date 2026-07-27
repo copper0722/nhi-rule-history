@@ -1,0 +1,35 @@
+{
+  "schema": "nhi-rule-history/inae3000-live-api-observation/v1",
+  "observed_at": "2026-07-27T17:14:44Z",
+  "official_ui_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01",
+  "official_api": {
+    "method": "POST",
+    "url": "https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/SQL0001",
+    "request_scope": {
+      "show_type": "Y",
+      "current_page": 1,
+      "page_size": 1,
+      "all_search_fields_empty": true
+    },
+    "request_payload_sha256": "21fafaf2a16f417c63ee4690edb901fe46ec368c1092336e7632a4ad796645d7",
+    "response_sha256": "c19fdd333926ad6ea8a55de963b87719e4b1e49e80cb12e449594910e6a7d2fc",
+    "returned_rows": 1,
+    "reported_total_rows": 14066,
+    "sample_row_sha256": "55d68540b54e5dd8e7d3616e570df4911d94191adcd89ec35b16cd1ddeaa56e2",
+    "sample_fields_present": [
+      "druG_CODE",
+      "atC_CODE",
+      "paY_CODE_LIST",
+      "pdfList",
+      "paY_START_DATE",
+      "paY_END_DATE"
+    ]
+  },
+  "interpretation": [
+    "INAE3000 is the official current-item lookup and weekly freshness source.",
+    "The response schema directly carries product identifiers and ATC codes, with reimbursement-rule references where present.",
+    "Rule-to-ATC remains a derived projection through supporting product rows and must not be represented as whole-class legal applicability.",
+    "The monthly IODE immutable CSV remains the clean-room rebuild baseline; this paginated API does not replace it."
+  ],
+  "canonical_history_written": false
+}

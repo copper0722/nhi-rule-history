@@ -1,0 +1,51 @@
+{
+  "canonical_history_schema_exists": false,
+  "candidate_proposals": {
+    "needs_review": 9,
+    "total": 9
+  },
+  "claims": {
+    "canonical_history_complete": false,
+    "canonical_history_written": false,
+    "live_stage_observed": true,
+    "per_rule_history_complete": false
+  },
+  "event_resolution": {
+    "ambiguous": 0,
+    "invalid": 6,
+    "no_match": 6360,
+    "resolved_candidate": 0,
+    "total_outcomes": 6366
+  },
+  "observed_at": "2026-07-27T17:28:50.307856Z",
+  "query": {
+    "path": "database/queries/history-completeness-status.sql",
+    "sha256": "da642a38c92feffe2bb2a3b7bf5839ab21b88970652d4ececcd4d917b74379d5",
+    "transaction": "read_only"
+  },
+  "schema": "nhi-rule-history/live-stage-status-observation/v1",
+  "source_date_annotations": {
+    "articles_with_raw_candidates": 983,
+    "articles_with_valid_calendar_candidates": 983,
+    "invalid_calendar_candidates": 6,
+    "total": 6366,
+    "unresolved_event": 6366,
+    "valid_calendar_candidates": 6360
+  },
+  "statement": "Fresh read-only PostgreSQL observation. It does not promote candidates, create the canonical history schema, or establish per-clause history completeness.",
+  "update_queue": {
+    "corpus_registered": 0,
+    "failed_terminal": 2,
+    "ignored_non_rule": 8,
+    "selected": 2,
+    "staged_needs_review": 9,
+    "total": 21
+  },
+  "worker_failure_observation": {
+    "auto_promotion_enabled": false,
+    "failed_terminal_items": 2,
+    "legacy_receipts_admitted_to_recovery_v2": 0,
+    "legacy_worker_attempt_rows_fabricated": 0,
+    "recovery_v2_migration_live_applied": false
+  }
+}

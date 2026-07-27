@@ -303,6 +303,16 @@ superseded_audit_runs:
 
 machine_status:
   branch_gate: READY_FOR_COMMIT_PRO_METHOD_ACCEPTED_LIVE_AND_RELEASE_BLOCKED
+  worker_recovery_post_audit:
+    decision: ACCEPT_R2_STAGE_ONLY
+    counts:
+      critical: 0
+      high: 0
+      medium: 1
+      low: 2
+    official_source_canary_authorized: false
+    repair_hold_removal_authorized: false
+    blocking_evidence: actual_claude_model_resolution_and_zero_custom_context
   nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
   v2_acquisition_stage: VERIFIED_BOUNDED
   v2_structural_stage: VERIFIED_SOURCE_LOCAL
@@ -312,22 +322,30 @@ machine_status:
   source_universe_closed: false
   legal_history_complete: false
   live_stage_observation:
-    observed_at: "2026-07-27T16:09:28Z"
+    observed_at: "2026-07-28"
     source_date_annotations: 6366
     unresolved_source_date_annotations: 6366
     resolved_event_candidates: 0
     valid_date_resolution_denominator: 6360
     terminal_non_date_candidates: 6
-    candidate_proposals_needs_review: 8
+    candidate_proposals_needs_review: 9
     update_queue:
       total: 21
-      selected: 3
-      corpus_registered: 1
-      staged_needs_review: 8
-      failed_terminal: 1
+      selected: 2
+      corpus_registered: 0
+      staged_needs_review: 9
+      failed_terminal: 2
       ignored_non_rule: 8
     canonical_history_schema_exists: false
-    receipt: docs/audits/2026-07-27-live-stage-status-observation-4.json
+    receipt: docs/audits/2026-07-28-live-stage-status-observation.json
+    worker_recovery_v2:
+      migration_live_applied: false
+      legacy_terminal_receipts: 2
+      fabricated_legacy_worker_attempt_rows: 0
+      method: append_only_hash_bound_legacy_admission_before_generation_2
+      legacy_attempt_id_scheme: sha256_hex_v1
+      legacy_attempt_id_origin: immutable_worker_attempt_jsonl
+      admission_verifier_identity_bound: true
 
 gates:
   public_repository:
@@ -433,6 +451,15 @@ gates:
     articles_without_valid_date_candidates: 565
     certified_complete_articles: 0
     receipt: docs/audits/2026-07-27-per-clause-history-completeness-scoreboard.json
+    closure_canary:
+      status: source_effective_dates_located_legal_closure_zero
+      selected_units: 5
+      source_effective_dates_located: 5
+      event_effect_ledger_admissions: 0
+      legally_closed_units: 0
+      direct_predecessor_verified: 0
+      current_endpoint_equal: 5
+      receipt: docs/audits/2026-07-28-history-closure-canary-batch.md
   stable_rule_identity:
     status: blocked
   deterministic_event_replay:
@@ -454,6 +481,13 @@ gates:
       distinct_nhi_drug_codes: 45124
       distinct_atc_codes: 2244
       rows_with_rule_url: 95520
+    current_api_observation:
+      observed_at: "2026-07-27T17:14:44Z"
+      source_url: https://info.nhi.gov.tw/INAE3000/INAE3000S01
+      api_url: https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/SQL0001
+      show_type: Y
+      reported_total_rows: 14066
+      receipt: docs/audits/2026-07-28-inae3000-live-api-observation.json
     legacy_runtime_audit:
       item_rule_links: 7498
       resolved_article_rows: 6990

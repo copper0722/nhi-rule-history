@@ -23,6 +23,7 @@ from nhi_rule_history.contracts import (
     sha256_bytes,
     stable_id,
     utc_now,
+    validate_jsonl_row,
 )
 from nhi_rule_history.pg.common import json_text
 from nhi_rule_history.fetch.runner import media_type
@@ -51,6 +52,28 @@ TRANSITION_RECEIPT_SCHEMA = (
     "nhi-rule-history/work-item-transition-receipt/v1"
 )
 ATTEMPT_RECEIPT_SCHEMA = "nhi-rule-history/work-item-attempt-receipt/v1"
+RECOVERY_AUTHORIZATION_RECEIPT_SCHEMA = (
+    "nhi-rule-history/work-recovery-authorization-receipt/v2"
+)
+RECOVERY_TRANSITION_RECEIPT_SCHEMA = (
+    "nhi-rule-history/work-recovery-transition-receipt/v2"
+)
+RECOVERY_ROUTE_ATTEMPT_RECEIPT_SCHEMA = (
+    "nhi-rule-history/work-recovery-route-attempt-receipt/v2"
+)
+LEGACY_FAILURE_ADMISSION_RECEIPT_SCHEMA = (
+    "nhi-rule-history/legacy-worker-failure-admission-receipt/v2"
+)
+LEGACY_WORKER_RUN_SCHEMA = "nhi-rule-history/worker-run/v2"
+LEGACY_WORKER_ATTEMPT_SCHEMA = "nhi-rule-history/worker-attempt/v1"
+LEGACY_FAILURE_BYTE_VERIFIER_CONTRACT = (
+    "nhi-rule-history/legacy-failure-byte-verifier/v1"
+)
+LEGACY_FAILURE_ADMISSION_PAYLOAD_SCHEMA = (
+    "nhi-rule-history/legacy-failure-admission-payload/v1"
+)
+LEGACY_ATTEMPT_ID_SCHEME = "sha256_hex_v1"
+LEGACY_ATTEMPT_ID_ORIGIN = "immutable_worker_attempt_jsonl"
 ATTEMPT_SANITIZATION_PROFILE = (
     "nhi-rule-history/attempt-evidence-sanitization/v1"
 )
@@ -65,12 +88,14 @@ _STATES = {
     "staged_needs_review",
     "staged_pending_anchor",
     "failed_terminal",
+    "partition_required",
     "ignored_non_rule",
 }
 _TERMINAL_STATES = {
     "staged_needs_review",
     "staged_pending_anchor",
     "failed_terminal",
+    "partition_required",
     "ignored_non_rule",
 }
 _ALLOWED_EDGES = {
@@ -82,12 +107,28 @@ _ALLOWED_EDGES = {
         "staged_needs_review",
         "staged_pending_anchor",
         "failed_terminal",
+        "partition_required",
     },
 }
 _ATTEMPT_STATES = {
     "acquisition": {"selected"},
     "corpus_registration": {"acquired"},
     "proposal": {"proposal_running"},
+}
+_RECOVERY_ROUTE = "primary_then_fallback"
+_RECOVERY_ATTEMPT_ROUTES = {"primary", "fallback"}
+_LEGACY_FAILURE_STATUSES = {
+    "execution_failed",
+    "contract_failed",
+    "timeout",
+    "transport_failed",
+}
+_RECOVERY_TRANSITION_STATES = {
+    "proposal_running",
+    "staged_needs_review",
+    "staged_pending_anchor",
+    "failed_terminal",
+    "partition_required",
 }
 _SENSITIVE_EVIDENCE_KEY = re.compile(
     r"(?i)(?:authorization|cookie|credential|password|passwd|secret|token|"
@@ -1431,4 +1472,878 @@ def append_work_attempt(
         "evidence_sha256": evidence_sha,
         "sanitization_profile": ATTEMPT_SANITIZATION_PROFILE,
         "fingerprint": sha256_bytes(canonical_json_bytes(normalized_row)),
+    }
+
+
+def _recovery_uuid(value: str, label: str) -> str:
+    try:
+        return str(uuid.UUID(value))
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise UpdateQueueError(f"{label} must be a UUID") from exc
+
+
+def _recovery_sha256(value: str, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or re.fullmatch(r"[0-9a-f]{64}", value) is None
+    ):
+        raise UpdateQueueError(f"{label} must be a lowercase SHA-256")
+    return value
+
+
+def _recovery_text(value: str, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise UpdateQueueError(f"{label} must be non-empty")
+    return value.strip()
+
+
+def _recovery_relative_path(value: str, label: str) -> str:
+    normalized = _recovery_text(value, label)
+    path = Path(normalized)
+    if (
+        path.is_absolute()
+        or "\\" in normalized
+        or normalized != path.as_posix()
+        or any(part in {"", ".", ".."} for part in path.parts)
+    ):
+        raise UpdateQueueError(
+            f"{label} must be a normalized repository-relative POSIX path"
+        )
+    return normalized
+
+
+def _load_legacy_failure_files(
+    *,
+    failure_receipt_path: Path,
+    attempts_path: Path,
+) -> tuple[dict[str, Any], tuple[dict[str, Any], ...], bytes, bytes]:
+    try:
+        receipt_bytes = failure_receipt_path.read_bytes()
+        attempts_bytes = attempts_path.read_bytes()
+        receipt = json.loads(receipt_bytes)
+        raw_lines = attempts_bytes.splitlines(keepends=True)
+        attempts = tuple(json.loads(line) for line in raw_lines)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise UpdateQueueError(
+            "legacy failure receipt or attempts ledger is unreadable"
+        ) from exc
+    if (
+        not isinstance(receipt, dict)
+        or receipt_bytes != canonical_json_bytes(receipt)
+        or len(raw_lines) != 2
+        or any(
+            not isinstance(attempt, dict)
+            or line != canonical_json_bytes(attempt)
+            for line, attempt in zip(raw_lines, attempts, strict=True)
+        )
+    ):
+        raise UpdateQueueError(
+            "legacy failure evidence must be canonical immutable JSON"
+        )
+    try:
+        for attempt in attempts:
+            validate_jsonl_row(attempt)
+    except ContractError as exc:
+        raise UpdateQueueError(
+            "legacy attempt row violates worker-attempt/v1"
+        ) from exc
+    return receipt, attempts, receipt_bytes, attempts_bytes
+
+
+def admit_legacy_failure_evidence(
+    conninfo: str,
+    *,
+    work_item_id: str,
+    terminal_transition_id: str,
+    failure_receipt_path: str | Path,
+    attempts_path: str | Path,
+    failure_receipt_relative_path: str,
+    attempts_relative_path: str,
+    verifier_code_identity: str,
+    actor_kind: str,
+    admitted_at: str | None = None,
+) -> dict[str, Any]:
+    """Admit an immutable pre-PG two-route worker failure for recovery.
+
+    The file attempt identifiers remain their original 64-hex values.  This
+    bridge does not fabricate UUID rows in ``worker_attempt`` and does not
+    change the legacy terminal transition.
+    """
+
+    work_item_id = _recovery_uuid(work_item_id, "work_item_id")
+    terminal_transition_id = _recovery_uuid(
+        terminal_transition_id, "terminal_transition_id"
+    )
+    failure_receipt_relative_path = _recovery_relative_path(
+        failure_receipt_relative_path, "failure_receipt_relative_path"
+    )
+    attempts_relative_path = _recovery_relative_path(
+        attempts_relative_path, "attempts_relative_path"
+    )
+    relative_receipt = Path(failure_receipt_relative_path)
+    relative_attempts = Path(attempts_relative_path)
+    if (
+        relative_receipt.name != "failure-receipt.json"
+        or relative_attempts.name != "attempts.jsonl"
+        or relative_receipt.parent != relative_attempts.parent
+    ):
+        raise UpdateQueueError(
+            "legacy receipt and attempts paths must share one run directory"
+        )
+    actor_kind = _recovery_text(actor_kind, "actor_kind")
+    verifier_code_identity = _recovery_sha256(
+        verifier_code_identity, "verifier_code_identity"
+    )
+    admission_time = _timestamp(admitted_at or utc_now(), "admitted_at")
+    receipt, attempts, receipt_bytes, attempts_bytes = (
+        _load_legacy_failure_files(
+            failure_receipt_path=Path(failure_receipt_path),
+            attempts_path=Path(attempts_path),
+        )
+    )
+    if (
+        receipt.get("schema") != LEGACY_WORKER_RUN_SCHEMA
+        or receipt.get("status") != "failed"
+        or receipt.get("attempt_count") != 2
+        or receipt.get("selected_attempt_id") is not None
+    ):
+        raise UpdateQueueError(
+            "legacy failure receipt is not a terminal two-attempt v2 receipt"
+        )
+    source_bundle_uid = _recovery_text(
+        receipt.get("bundle_id"), "receipt.bundle_id"
+    )
+    source_bundle_fingerprint = _recovery_sha256(
+        receipt.get("bundle_fingerprint"),
+        "receipt.bundle_fingerprint",
+    )
+    source_manifest_sha256 = _recovery_sha256(
+        receipt.get("manifest_sha256"), "receipt.manifest_sha256"
+    )
+    worker_job_fingerprint = _recovery_sha256(
+        receipt.get("job_fingerprint"), "receipt.job_fingerprint"
+    )
+    if relative_receipt.parent.name != worker_job_fingerprint:
+        raise UpdateQueueError(
+            "legacy receipt path does not bind its worker job fingerprint"
+        )
+    prompt_sha256 = _recovery_sha256(
+        receipt.get("prompt_sha256"), "receipt.prompt_sha256"
+    )
+    attempts_sha256 = sha256_bytes(attempts_bytes)
+    if receipt.get("attempts_sha256") != attempts_sha256:
+        raise UpdateQueueError(
+            "legacy failure receipt does not bind the exact attempts stream"
+        )
+
+    primary, fallback = attempts
+    for expected_role, attempt in zip(
+        ("primary", "fallback"), attempts, strict=True
+    ):
+        if (
+            attempt.get("schema") != LEGACY_WORKER_ATTEMPT_SCHEMA
+            or attempt.get("role") != expected_role
+            or attempt.get("status") not in _LEGACY_FAILURE_STATUSES
+            or attempt.get("prompt_sha256") != prompt_sha256
+            or not isinstance(attempt.get("worker_id"), str)
+            or not attempt["worker_id"].strip()
+        ):
+            raise UpdateQueueError(
+                "legacy attempts must be failed primary/fallback records "
+                "for one semantic prompt"
+            )
+        _recovery_sha256(
+            attempt.get("attempt_id"), f"{expected_role}.attempt_id"
+        )
+    if (
+        primary.get("primary_attempt_id") is not None
+        or fallback.get("primary_attempt_id") != primary.get("attempt_id")
+        or primary.get("attempt_id") == fallback.get("attempt_id")
+        or not isinstance(fallback.get("fallback_reason"), str)
+        or not fallback["fallback_reason"].strip()
+    ):
+        raise UpdateQueueError(
+            "legacy fallback must point to one distinct failed primary"
+        )
+    method_versions = {
+        attempt.get("prompt_version") for attempt in attempts
+    }
+    if (
+        len(method_versions) != 1
+        or not isinstance(next(iter(method_versions)), str)
+        or not next(iter(method_versions)).strip()
+    ):
+        raise UpdateQueueError(
+            "legacy attempts must share one non-empty prompt version"
+        )
+    prior_method_version = next(iter(method_versions)).strip()
+    expected_attempt_ids = [
+        stable_id(
+            "nhi-worker-attempt",
+            source_bundle_uid,
+            prompt_sha256,
+            str(attempt["role"]),
+            str(attempt["worker_id"]),
+        )
+        for attempt in attempts
+    ]
+    if expected_attempt_ids != [
+        str(attempt["attempt_id"]) for attempt in attempts
+    ]:
+        raise UpdateQueueError(
+            "legacy attempt IDs do not match their immutable lineage"
+        )
+
+    failure_receipt_sha256 = sha256_bytes(receipt_bytes)
+    attempt_record_sha256s = [
+        sha256_bytes(canonical_json_bytes(attempt)) for attempt in attempts
+    ]
+    material = {
+        "work_item_id": work_item_id,
+        "terminal_transition_id": terminal_transition_id,
+        "failure_receipt_relative_path": failure_receipt_relative_path,
+        "failure_receipt_sha256": failure_receipt_sha256,
+        "attempts_relative_path": attempts_relative_path,
+        "attempts_sha256": attempts_sha256,
+        "source_bundle_uid": source_bundle_uid,
+        "source_manifest_sha256": source_manifest_sha256,
+        "worker_job_fingerprint": worker_job_fingerprint,
+        "attempt_ids": [str(attempt["attempt_id"]) for attempt in attempts],
+        "attempt_record_sha256s": attempt_record_sha256s,
+        "verifier_contract_version": (
+            LEGACY_FAILURE_BYTE_VERIFIER_CONTRACT
+        ),
+        "verifier_code_identity": verifier_code_identity,
+        "verifier_output_schema_version": (
+            LEGACY_FAILURE_ADMISSION_PAYLOAD_SCHEMA
+        ),
+    }
+    admission_payload_sha256 = sha256_bytes(canonical_json_bytes(material))
+    admission_id = _deterministic_uuid(
+        "legacy-worker-failure-admission",
+        admission_payload_sha256,
+    )
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT admission_id::text, replayed
+                FROM {QUEUE_SCHEMA}.admit_legacy_failure_evidence(
+                  %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,
+                  %s,%s,%s::jsonb,%s::text[],%s,%s,%s,%s,%s,%s
+                )
+                """,
+                (
+                    admission_id,
+                    work_item_id,
+                    terminal_transition_id,
+                    source_bundle_uid,
+                    source_bundle_fingerprint,
+                    source_manifest_sha256,
+                    worker_job_fingerprint,
+                    prior_method_version,
+                    prompt_sha256,
+                    failure_receipt_relative_path,
+                    failure_receipt_sha256,
+                    json_text(receipt),
+                    attempts_relative_path,
+                    attempts_sha256,
+                    json_text(list(attempts)),
+                    attempt_record_sha256s,
+                    LEGACY_FAILURE_BYTE_VERIFIER_CONTRACT,
+                    verifier_code_identity,
+                    LEGACY_FAILURE_ADMISSION_PAYLOAD_SCHEMA,
+                    admission_payload_sha256,
+                    actor_kind,
+                    _iso(admission_time),
+                ),
+            )
+            result = cursor.fetchone()
+    if result is None:
+        raise UpdateQueueError("legacy failure admission returned no receipt")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(
+                f"""
+                SELECT evidence.admission_id::text,
+                       evidence.terminal_transition_id::text,
+                       evidence.source_bundle_uid,
+                       evidence.source_manifest_sha256::text,
+                       evidence.worker_job_fingerprint::text,
+                       evidence.failure_receipt_sha256::text,
+                       evidence.attempts_sha256::text,
+                       evidence.verifier_contract_version,
+                       evidence.verifier_code_identity::text,
+                       evidence.verifier_output_schema_version,
+                       evidence.admission_payload_sha256::text,
+                       array_agg(attempt.attempt_id::text ORDER BY attempt.route),
+                       array_agg(attempt.attempt_id_scheme ORDER BY attempt.route),
+                       array_agg(attempt.attempt_id_origin ORDER BY attempt.route)
+                FROM {QUEUE_SCHEMA}.legacy_failure_evidence evidence
+                JOIN {QUEUE_SCHEMA}.legacy_failure_attempt_evidence attempt
+                  ON attempt.admission_id = evidence.admission_id
+                WHERE evidence.admission_id = %s
+                GROUP BY evidence.admission_id
+                """,
+                (admission_id,),
+            )
+            current = cursor.fetchone()
+    expected_ids = sorted(str(attempt["attempt_id"]) for attempt in attempts)
+    if (
+        current is None
+        or str(current[0]) != admission_id
+        or str(current[1]) != terminal_transition_id
+        or str(current[2]) != source_bundle_uid
+        or str(current[3]) != source_manifest_sha256
+        or str(current[4]) != worker_job_fingerprint
+        or str(current[5]) != failure_receipt_sha256
+        or str(current[6]) != attempts_sha256
+        or str(current[7]) != LEGACY_FAILURE_BYTE_VERIFIER_CONTRACT
+        or str(current[8]) != verifier_code_identity
+        or str(current[9]) != LEGACY_FAILURE_ADMISSION_PAYLOAD_SCHEMA
+        or str(current[10]) != admission_payload_sha256
+        or sorted(str(value) for value in current[11]) != expected_ids
+        or set(str(value) for value in current[12])
+        != {LEGACY_ATTEMPT_ID_SCHEME}
+        or set(str(value) for value in current[13])
+        != {LEGACY_ATTEMPT_ID_ORIGIN}
+    ):
+        raise UpdateQueueError(
+            "fresh-connection legacy failure admission verification failed"
+        )
+    return {
+        "schema": LEGACY_FAILURE_ADMISSION_RECEIPT_SCHEMA,
+        "admission_id": admission_id,
+        "work_item_id": work_item_id,
+        "terminal_transition_id": terminal_transition_id,
+        "source_bundle_uid": source_bundle_uid,
+        "source_bundle_fingerprint": source_bundle_fingerprint,
+        "source_manifest_sha256": source_manifest_sha256,
+        "worker_job_fingerprint": worker_job_fingerprint,
+        "prior_method_version": prior_method_version,
+        "prior_semantic_prompt_fingerprint": prompt_sha256,
+        "failure_receipt_relative_path": failure_receipt_relative_path,
+        "failure_receipt_sha256": failure_receipt_sha256,
+        "attempts_relative_path": attempts_relative_path,
+        "attempts_sha256": attempts_sha256,
+        "attempt_ids": expected_ids,
+        "attempt_id_scheme": LEGACY_ATTEMPT_ID_SCHEME,
+        "attempt_id_origin": LEGACY_ATTEMPT_ID_ORIGIN,
+        "verifier_contract_version": (
+            LEGACY_FAILURE_BYTE_VERIFIER_CONTRACT
+        ),
+        "verifier_code_identity": verifier_code_identity,
+        "verifier_output_schema_version": (
+            LEGACY_FAILURE_ADMISSION_PAYLOAD_SCHEMA
+        ),
+        "admission_payload_sha256": admission_payload_sha256,
+        "replayed": bool(result[1]),
+        "fingerprint": sha256_bytes(canonical_json_bytes(_normalize(current))),
+    }
+
+
+def authorize_work_recovery(
+    conninfo: str,
+    *,
+    work_item_id: str,
+    prior_generation: int,
+    source_bundle_uid: str,
+    source_manifest_sha256: str,
+    prior_method_version: str,
+    new_method_version: str,
+    prior_semantic_prompt_fingerprint: str,
+    new_semantic_prompt_fingerprint: str,
+    decision_basis_id: str,
+    reason: str,
+    actor_kind: str,
+    superseded_attempt_ids: list[str] | tuple[str, ...] = (),
+    legacy_failure_admission_id: str | None = None,
+    route: str = _RECOVERY_ROUTE,
+    authorized_at: str | None = None,
+) -> dict[str, Any]:
+    """Authorize immutable generation ``G+1`` for failed stage work.
+
+    The legacy ``failed_terminal`` transition and its worker attempts are
+    never changed.  The deterministic authorization creates only a generation
+    in ``retry_pending``.  Starting model work remains a separate call.
+    """
+
+    work_item_id = _recovery_uuid(work_item_id, "work_item_id")
+    if not isinstance(prior_generation, int) or prior_generation < 1:
+        raise UpdateQueueError("prior_generation must be a positive integer")
+    new_generation = prior_generation + 1
+    source_bundle_uid = _recovery_text(
+        source_bundle_uid, "source_bundle_uid"
+    )
+    source_manifest_sha256 = _recovery_sha256(
+        source_manifest_sha256, "source_manifest_sha256"
+    )
+    prior_method_version = _recovery_text(
+        prior_method_version, "prior_method_version"
+    )
+    new_method_version = _recovery_text(
+        new_method_version, "new_method_version"
+    )
+    prior_semantic_prompt_fingerprint = _recovery_sha256(
+        prior_semantic_prompt_fingerprint,
+        "prior_semantic_prompt_fingerprint",
+    )
+    new_semantic_prompt_fingerprint = _recovery_sha256(
+        new_semantic_prompt_fingerprint,
+        "new_semantic_prompt_fingerprint",
+    )
+    if (
+        prior_method_version == new_method_version
+        and prior_semantic_prompt_fingerprint
+        == new_semantic_prompt_fingerprint
+    ):
+        raise UpdateQueueError(
+            "recovery must change the method or semantic prompt"
+        )
+    decision_basis_id = _recovery_text(
+        decision_basis_id, "decision_basis_id"
+    )
+    sanitized_reason = _sanitize_attempt_evidence(reason)
+    if not isinstance(sanitized_reason, str) or not sanitized_reason.strip():
+        raise UpdateQueueError("reason must remain non-empty after sanitization")
+    actor_kind = _recovery_text(actor_kind, "actor_kind")
+    if route != _RECOVERY_ROUTE:
+        raise UpdateQueueError(
+            "route must be the primary_then_fallback contract"
+        )
+    if not isinstance(superseded_attempt_ids, (list, tuple)):
+        raise UpdateQueueError(
+            "superseded_attempt_ids must be a sequence of UUIDs"
+        )
+    attempts = tuple(
+        sorted(
+            _recovery_uuid(value, "superseded_attempt_id")
+            for value in superseded_attempt_ids
+        )
+    )
+    if len(set(attempts)) != len(attempts) or len(attempts) > 2:
+        raise UpdateQueueError(
+            "at most two distinct superseded attempt IDs are allowed"
+        )
+    if legacy_failure_admission_id is not None:
+        legacy_failure_admission_id = _recovery_uuid(
+            legacy_failure_admission_id, "legacy_failure_admission_id"
+        )
+    if bool(attempts) == bool(legacy_failure_admission_id):
+        raise UpdateQueueError(
+            "distinct superseded attempt IDs or one legacy admission "
+            "are required, but not both"
+        )
+    if legacy_failure_admission_id is not None and prior_generation != 1:
+        raise UpdateQueueError(
+            "legacy failure evidence may authorize only generation 1 to 2"
+        )
+    authorization_time = _timestamp(
+        authorized_at or utc_now(), "authorized_at"
+    )
+    material = {
+        "work_item_id": work_item_id,
+        "prior_generation": prior_generation,
+        "new_generation": new_generation,
+        "source_bundle_uid": source_bundle_uid,
+        "source_manifest_sha256": source_manifest_sha256,
+        "prior_method_version": prior_method_version,
+        "new_method_version": new_method_version,
+        "prior_semantic_prompt_fingerprint": (
+            prior_semantic_prompt_fingerprint
+        ),
+        "new_semantic_prompt_fingerprint": new_semantic_prompt_fingerprint,
+        "superseded_attempt_ids": list(attempts),
+        "legacy_failure_admission_id": legacy_failure_admission_id,
+        "decision_basis_id": decision_basis_id,
+        "reason": sanitized_reason,
+        "route": route,
+        "actor_kind": actor_kind,
+    }
+    material_sha = sha256_bytes(canonical_json_bytes(material))
+    authorization_id = _deterministic_uuid(
+        "work-recovery-authorization", material_sha
+    )
+    initial_transition_id = _deterministic_uuid(
+        "work-recovery-transition",
+        authorization_id,
+        str(new_generation),
+        "1",
+        "retry_pending",
+    )
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            if legacy_failure_admission_id is None:
+                cursor.execute(
+                    f"""
+                    SELECT authorization_id::text, generation,
+                           transition_id::text, replayed
+                    FROM {QUEUE_SCHEMA}.authorize_failed_work_recovery(
+                      %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::uuid[],
+                      %s,%s,%s,%s,%s
+                    )
+                    """,
+                    (
+                        authorization_id,
+                        initial_transition_id,
+                        work_item_id,
+                        prior_generation,
+                        new_generation,
+                        source_bundle_uid,
+                        source_manifest_sha256,
+                        prior_method_version,
+                        new_method_version,
+                        prior_semantic_prompt_fingerprint,
+                        new_semantic_prompt_fingerprint,
+                        list(attempts),
+                        decision_basis_id,
+                        sanitized_reason,
+                        route,
+                        actor_kind,
+                        _iso(authorization_time),
+                    ),
+                )
+            else:
+                cursor.execute(
+                    f"""
+                    SELECT authorization_id::text, generation,
+                           transition_id::text, replayed
+                    FROM {QUEUE_SCHEMA}.
+                      authorize_failed_work_recovery_from_legacy(
+                        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                        %s,%s,%s,%s,%s
+                      )
+                    """,
+                    (
+                        authorization_id,
+                        initial_transition_id,
+                        work_item_id,
+                        prior_generation,
+                        new_generation,
+                        legacy_failure_admission_id,
+                        source_bundle_uid,
+                        source_manifest_sha256,
+                        prior_method_version,
+                        new_method_version,
+                        prior_semantic_prompt_fingerprint,
+                        new_semantic_prompt_fingerprint,
+                        decision_basis_id,
+                        sanitized_reason,
+                        route,
+                        actor_kind,
+                        _iso(authorization_time),
+                    ),
+                )
+            result = cursor.fetchone()
+    if result is None:
+        raise UpdateQueueError("recovery authorization returned no receipt")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(
+                f"""
+                SELECT authorization_id::text, generation, current_state,
+                       is_terminal, source_bundle_uid,
+                       source_manifest_sha256::text, decision_basis_id, route,
+                       legacy_failure_admission_id::text
+                FROM {QUEUE_SCHEMA}.v_recovery_generation_current
+                WHERE work_item_id = %s AND generation = %s
+                """,
+                (work_item_id, new_generation),
+            )
+            current = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT attempt_id::text
+                FROM {QUEUE_SCHEMA}.recovery_superseded_attempt
+                WHERE authorization_id = %s
+                ORDER BY attempt_id
+                """,
+                (authorization_id,),
+            )
+            persisted_attempts = tuple(str(row[0]) for row in cursor.fetchall())
+    if (
+        current is None
+        or str(current[0]) != authorization_id
+        or int(current[1]) != new_generation
+        or str(current[2]) != "retry_pending"
+        or bool(current[3])
+        or str(current[4]) != source_bundle_uid
+        or str(current[5]) != source_manifest_sha256
+        or str(current[6]) != decision_basis_id
+        or str(current[7]) != route
+        or (
+            None if current[8] is None else str(current[8])
+        ) != legacy_failure_admission_id
+        or persisted_attempts != attempts
+    ):
+        raise UpdateQueueError(
+            "fresh-connection recovery authorization verification failed"
+        )
+    normalized = _normalize(list(current)) + [list(persisted_attempts)]
+    return {
+        "schema": RECOVERY_AUTHORIZATION_RECEIPT_SCHEMA,
+        "authorization_id": authorization_id,
+        "work_item_id": work_item_id,
+        "prior_generation": prior_generation,
+        "generation": new_generation,
+        "transition_id": initial_transition_id,
+        "current_state": "retry_pending",
+        "is_terminal": False,
+        "replayed": bool(result[3]),
+        "source_bundle_uid": source_bundle_uid,
+        "source_manifest_sha256": source_manifest_sha256,
+        "prior_method_version": prior_method_version,
+        "new_method_version": new_method_version,
+        "prior_semantic_prompt_fingerprint": (
+            prior_semantic_prompt_fingerprint
+        ),
+        "new_semantic_prompt_fingerprint": new_semantic_prompt_fingerprint,
+        "superseded_attempt_ids": list(attempts),
+        "legacy_failure_admission_id": legacy_failure_admission_id,
+        "decision_basis_id": decision_basis_id,
+        "route": route,
+        "fingerprint": sha256_bytes(canonical_json_bytes(normalized)),
+    }
+
+
+def advance_work_recovery(
+    conninfo: str,
+    *,
+    work_item_id: str,
+    generation: int,
+    to_state: str,
+    actor_kind: str,
+    source_job_id: str | None = None,
+    bundle_receipt_id: str | None = None,
+    candidate_proposal_id: str | None = None,
+    recorded_at: str | None = None,
+) -> dict[str, Any]:
+    """Advance one authorized generation; terminal states never requeue it."""
+
+    work_item_id = _recovery_uuid(work_item_id, "work_item_id")
+    if not isinstance(generation, int) or generation < 2:
+        raise UpdateQueueError("generation must be an integer of at least 2")
+    if to_state not in _RECOVERY_TRANSITION_STATES:
+        raise UpdateQueueError("recovery transition target is invalid")
+    actor_kind = _recovery_text(actor_kind, "actor_kind")
+    if source_job_id is not None:
+        source_job_id = _recovery_uuid(source_job_id, "source_job_id")
+    if bundle_receipt_id is not None:
+        bundle_receipt_id = _recovery_uuid(
+            bundle_receipt_id, "bundle_receipt_id"
+        )
+    if candidate_proposal_id is not None:
+        candidate_proposal_id = _recovery_uuid(
+            candidate_proposal_id, "candidate_proposal_id"
+        )
+    if to_state == "proposal_running" and source_job_id is None:
+        raise UpdateQueueError(
+            "proposal_running recovery requires source_job_id"
+        )
+    transition_time = _timestamp(recorded_at or utc_now(), "recorded_at")
+    material = {
+        "work_item_id": work_item_id,
+        "generation": generation,
+        "to_state": to_state,
+        "actor_kind": actor_kind,
+        "source_job_id": source_job_id,
+        "bundle_receipt_id": bundle_receipt_id,
+        "candidate_proposal_id": candidate_proposal_id,
+    }
+    transition_id = _deterministic_uuid(
+        "work-recovery-transition",
+        sha256_bytes(canonical_json_bytes(material)),
+    )
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT transition_id::text, transition_seq, to_state, replayed
+                FROM {QUEUE_SCHEMA}.advance_recovery_generation(
+                  %s,%s,%s,%s,%s,%s,%s,%s,%s
+                )
+                """,
+                (
+                    transition_id,
+                    work_item_id,
+                    generation,
+                    to_state,
+                    actor_kind,
+                    source_job_id,
+                    bundle_receipt_id,
+                    candidate_proposal_id,
+                    _iso(transition_time),
+                ),
+            )
+            result = cursor.fetchone()
+    if result is None:
+        raise UpdateQueueError("recovery transition returned no receipt")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(
+                f"""
+                SELECT transition_seq, current_state, is_terminal,
+                       source_job_id::text, bundle_receipt_id::text,
+                       candidate_proposal_id::text
+                FROM {QUEUE_SCHEMA}.v_recovery_generation_current
+                WHERE work_item_id = %s AND generation = %s
+                """,
+                (work_item_id, generation),
+            )
+            current = cursor.fetchone()
+    expected_terminal = to_state in {
+        "staged_needs_review",
+        "staged_pending_anchor",
+        "failed_terminal",
+        "partition_required",
+    }
+    if (
+        current is None
+        or int(current[0]) != int(result[1])
+        or str(current[1]) != to_state
+        or bool(current[2]) != expected_terminal
+        or (str(current[3]) if current[3] is not None else None)
+        != source_job_id
+        or (str(current[4]) if current[4] is not None else None)
+        != bundle_receipt_id
+        or (str(current[5]) if current[5] is not None else None)
+        != candidate_proposal_id
+    ):
+        raise UpdateQueueError(
+            "fresh-connection recovery transition verification failed"
+        )
+    normalized = _normalize(list(current))
+    return {
+        "schema": RECOVERY_TRANSITION_RECEIPT_SCHEMA,
+        "transition_id": transition_id,
+        "work_item_id": work_item_id,
+        "generation": generation,
+        "transition_seq": int(result[1]),
+        "to_state": to_state,
+        "is_terminal": expected_terminal,
+        "replayed": bool(result[3]),
+        "fingerprint": sha256_bytes(canonical_json_bytes(normalized)),
+    }
+
+
+def register_work_recovery_attempt(
+    conninfo: str,
+    *,
+    work_item_id: str,
+    generation: int,
+    route: str,
+    attempt_id: str,
+    source_job_id: str,
+    method_version: str,
+    semantic_prompt_fingerprint: str,
+    recorded_at: str | None = None,
+) -> dict[str, Any]:
+    """Link one existing worker attempt to one recovery generation route."""
+
+    work_item_id = _recovery_uuid(work_item_id, "work_item_id")
+    attempt_id = _recovery_uuid(attempt_id, "attempt_id")
+    source_job_id = _recovery_uuid(source_job_id, "source_job_id")
+    if not isinstance(generation, int) or generation < 2:
+        raise UpdateQueueError("generation must be an integer of at least 2")
+    if route not in _RECOVERY_ATTEMPT_ROUTES:
+        raise UpdateQueueError("recovery attempt route is invalid")
+    method_version = _recovery_text(method_version, "method_version")
+    semantic_prompt_fingerprint = _recovery_sha256(
+        semantic_prompt_fingerprint, "semantic_prompt_fingerprint"
+    )
+    attempt_time = _timestamp(recorded_at or utc_now(), "recorded_at")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT attempt_id::text, route, replayed
+                FROM {QUEUE_SCHEMA}.register_recovery_route_attempt(
+                  %s,%s,%s,%s,%s,%s,%s,%s
+                )
+                """,
+                (
+                    work_item_id,
+                    generation,
+                    route,
+                    attempt_id,
+                    source_job_id,
+                    method_version,
+                    semantic_prompt_fingerprint,
+                    _iso(attempt_time),
+                ),
+            )
+            result = cursor.fetchone()
+    if result is None:
+        raise UpdateQueueError("recovery route attempt returned no receipt")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(
+                f"""
+                SELECT linked.attempt_id::text, linked.route,
+                       linked.source_job_id::text, linked.method_version,
+                       linked.semantic_prompt_fingerprint::text,
+                       attempt.status
+                FROM {QUEUE_SCHEMA}.recovery_route_attempt linked
+                JOIN {OPS_SCHEMA}.worker_attempt attempt
+                  ON attempt.attempt_id = linked.attempt_id
+                WHERE linked.work_item_id = %s
+                  AND linked.generation = %s
+                  AND linked.route = %s
+                """,
+                (work_item_id, generation, route),
+            )
+            current = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT current_state
+                FROM {QUEUE_SCHEMA}.v_recovery_generation_current
+                WHERE work_item_id = %s AND generation = %s
+                """,
+                (work_item_id, generation),
+            )
+            generation_state = cursor.fetchone()
+    if (
+        current is None
+        or generation_state is None
+        or str(current[0]) != attempt_id
+        or str(current[1]) != route
+        or str(current[2]) != source_job_id
+        or str(current[3]) != method_version
+        or str(current[4]) != semantic_prompt_fingerprint
+        or str(generation_state[0]) != "proposal_running"
+    ):
+        raise UpdateQueueError(
+            "fresh-connection recovery route verification failed"
+        )
+    normalized = _normalize(list(current))
+    return {
+        "schema": RECOVERY_ROUTE_ATTEMPT_RECEIPT_SCHEMA,
+        "attempt_id": attempt_id,
+        "work_item_id": work_item_id,
+        "generation": generation,
+        "route": route,
+        "outcome": str(current[5]),
+        "current_state": "proposal_running",
+        "replayed": bool(result[2]),
+        "fingerprint": sha256_bytes(canonical_json_bytes(normalized)),
     }

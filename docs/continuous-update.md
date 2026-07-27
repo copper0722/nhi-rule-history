@@ -160,9 +160,12 @@ receipts must not be conflated.
 
 ## 4. Model authority and failover
 
-Models receive only a self-contained public-source packet: deterministic notice
-metadata, attachment inventory, controller facts, and ODT source blocks. Their
-only permitted role is to propose:
+Models receive only a self-contained source packet made from the immutable
+attachment inventory and ordered ODT source blocks. Worker contract v2
+deliberately withholds notice title, date, URL, reference number, feed
+classification, rule identity, and every database identifier. Those fields
+remain controller facts and are bound only after worker output has passed the
+source-only contract. The worker's only permitted role is to propose:
 
 - exact source spans using `[start,end)` character offsets and hashes;
 - raw temporal expressions plus a date interpretation candidate;
@@ -174,14 +177,22 @@ Models may not emit stable or canonical rule IDs, predecessor IDs, snapshot
 IDs, interval end fields, head generations, or proposed/executable database
 operations. Unknown fields and forbidden keys are rejected recursively.
 Every quoted span must resolve exactly to one supplied block and its hash.
-Notice metadata must exactly match the deterministic HTML extraction.
+The controller then binds the proposal to the independently extracted notice
+metadata and rejects any mismatch; the worker cannot supply or override that
+binding.
 
-The first worker is invoked once. A fallback worker is invoked once only after
-the primary attempt has a recorded execution, timeout, transport, or output
-contract failure. A fallback is availability recovery, not a second legal
-review. It must link to the failed primary attempt and record the failure
-reason. A successful primary suppresses fallback. If both attempts fail, the
-job ends with a failure receipt and no candidate.
+The first worker is invoked once in an isolated, source-only runtime. A fallback
+worker is invoked once only after the primary attempt has a recorded execution,
+timeout, transport, or output-contract failure. A fallback is availability
+recovery, not a second legal review. It must link to the failed primary attempt
+and record the failure reason. A successful primary suppresses fallback. If
+both attempts fail, the job ends with a failure receipt and no candidate.
+
+Before either call, the deterministic controller enforces packet budgets and
+source shape. A structurally complex packet becomes `partition_required` with a
+replayable reason and **zero model calls**. This is a terminal operator-review
+outcome, not a failed model attempt. General multi-rule partitioning remains a
+separate open implementation item.
 
 Before contract validation, the runner preserves exact stdout and stderr bytes
 for every attempted worker. It also preserves the exact prompt, append-only
@@ -252,8 +263,8 @@ schemas. It can only be demoted to `needs_review` or rejected.
 
 The stage loader independently re-verifies the source bundle, canonical JSON
 receipt, append-only attempt stream, raw stdout/stderr hashes, selected output,
-source packet, exact spans, notice metadata, and proposal contract before
-opening a transaction.
+source packet, exact spans, controller-owned notice binding, and proposal
+contract before opening a transaction.
 
 Job, lease, receipt, attempt, and candidate UUIDs are derived
 deterministically from immutable fingerprints. Loading is serialized by a
@@ -433,6 +444,32 @@ Recovery is append-only:
   never `CASCADE`;
 - canonical history is unaffected because this lane has no canonical write
   path.
+
+Terminal worker recovery uses an explicit generation state machine. A recovery
+request must name a new method version and semantic prompt fingerprint; changing
+only an attempt identifier or timestamp is rejected. Duplicate or concurrent
+delivery can authorize at most one next generation. Within each generation the
+same one-primary/one-fallback limit applies, and a second terminal failure is
+never automatically requeued.
+
+Two 2026-07-27 terminal receipts predate the PostgreSQL `worker_attempt` ledger
+and contain 64-hex attempt identities rather than UUID rows. They are not
+rewritten or fabricated into modern attempts. The recovery-v2 bridge first
+admits their exact immutable receipt, attempt-stream paths, bytes, hashes,
+primary/fallback lineage, terminal transition, and terminal evidence into
+append-only legacy-evidence tables. Only that hash-bound admission may
+authorize generation 2. Later generations must use native PostgreSQL attempt
+rows. A structurally complex recovered work item may therefore end in
+`partition_required` with zero calls, while preserving the original terminal
+receipt byte-for-byte.
+
+Each admitted legacy attempt declares
+`attempt_id_scheme=sha256_hex_v1` and
+`attempt_id_origin=immutable_worker_attempt_jsonl`; these identifiers are never
+represented as UUIDs. The admission row also retains the byte-verifier contract
+version, the reviewed code/diff SHA-256, verifier output schema, and canonical
+admission-payload SHA-256. This is an audit identity, not a legal signature or
+a claim that PostgreSQL directly read the operator filesystem.
 
 ## 13. Public/private boundary
 

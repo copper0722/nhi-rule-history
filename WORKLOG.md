@@ -1,5 +1,44 @@
 # Worklog
 
+## 2026-07-28
+
+- 完成 worker contract／recovery v2 的 public implementation 與 private
+  runtime hardening。worker 改為只看 source blocks，不再接觸 notice
+  metadata；title、date、URL、文號與 stable identity 全由 controller
+  獨立綁定。packet 超過結構預算時以可重播 `partition_required` 結束，
+  model calls 為 0；general partitioner 仍明列未完成。
+- 對兩筆 legacy `failed_terminal` 做 hash-bound recovery bridge：保留原始
+  receipt、attempt JSONL、stdout/stderr、64-hex attempt identity、
+  primary→fallback lineage、terminal transition／evidence，先收入 append-only
+  legacy evidence tables，再允許 generation 2；不偽造 UUID worker-attempt
+  rows，也不改寫舊 terminal evidence。migration 尚未套用 live。
+- 新增 ODT nested-table document-order regression；修正外層段落在 nested
+  table 之後卻被提前輸出的 XML traversal 錯誤。最新驗證為 70 項 legacy
+  tests（1 skip）與 335 項 public tests（7 skip），另 private worker
+  runtime 9 項與 schedule migration 3 項通過。
+- GPT Pro post-audit v2 以 `ACCEPT`、C/H/M/L=`0/0/1/2` 接受 R2 stage-only
+  修復與 bounded activation sequence；未授權 canonical、release 或
+  frontend。依 Low findings 再把 legacy attempt 固定標示為
+  `sha256_hex_v1`／`immutable_worker_attempt_jsonl`，並將 verifier contract、
+  reviewed code identity、output schema 與 canonical admission-payload hash
+  持久化。唯一 Medium 是 live Claude model resolution 與 zero custom
+  context 尚未由 non-source isolation canary 證明；它阻擋 official-source
+  canary 與 repair-hold removal，但不阻擋 commit、additive migration、legacy
+  admission 或零呼叫 `partition_required` 分類。
+- 依 Copper 指認的官方入口重新核對
+  `https://info.nhi.gov.tw/INAE3000/INAE3000S01`。以一列、只讀 current
+  query 驗證其 `POST /api/INAE3000/INAE3000S01/SQL0001`，官方回報
+  14,066 筆現行品項，回應 schema 仍含品項代碼、ATC、
+  `PAY_CODE_LIST`、`pdfList` 與價格有效起迄。新增 hash-bound observation
+  receipt，並明確區分每週 INAE freshness 與每月 IODE immutable baseline。
+- 重審最早五個 history closure canary。四份官方 ODT 對五個條文均明載
+  `自…生效`，舊／新 comparison cells 完整，且五個新文字 hash 均等於
+  2026 whole/chapter endpoint。故 source-local date role 已定位 5/5；
+  但這些 observations 尚未收入 PG event/effect ledger，stable identity、
+  direct predecessor、pre/post release anchors、governed ODT verifier
+  與 cumulative replay 仍缺，legal closure delta 維持 0，完整性 scoreboard
+  維持 0/1,548。
+
 ## 2026-07-26
 
 - 完成官方頁、舊資料庫、既有下載器與來源持有量盤點。

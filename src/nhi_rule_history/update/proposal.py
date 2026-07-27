@@ -1,4 +1,4 @@
-"""Strict contract for non-authoritative agent proposals."""
+"""Strict contract for non-authoritative, evidence-only worker proposals."""
 
 from __future__ import annotations
 
@@ -10,19 +10,39 @@ from typing import Any, Iterable, Mapping
 from nhi_rule_history.contracts import canonical_json_bytes, sha256_bytes, stable_id
 
 
-PROPOSAL_SCHEMA = "nhi-rule-history/agent-source-proposal/v1"
-VALIDATED_SCHEMA = "nhi-rule-history/validated-source-candidate/v1"
+PROPOSAL_SCHEMA = "nhi-rule-history/agent-source-proposal/v2"
+VALIDATED_SCHEMA = "nhi-rule-history/validated-source-candidate/v2"
+NOTICE_BINDING_SCHEMA = "nhi-rule-history/controller-notice-binding/v1"
+WORKER_OUTPUT_MAX_BYTES = 131_072
+WORKER_JSON_MAX_DEPTH = 16
 
 _TOP_LEVEL_FIELDS = {
     "schema",
-    "notice",
     "temporal_evidence",
     "effect_candidates",
     "document_flags",
     "model_assessment",
     "reason_codes",
 }
-_NOTICE_FIELDS = {"reference_number_raw", "subject_raw"}
+_NOTICE_BINDING_SOURCE_FIELDS = {
+    "bundle_id",
+    "bundle_fingerprint",
+    "detail_artifact_sha256",
+    "request_url",
+    "final_url",
+    "metadata",
+}
+_NOTICE_METADATA_FIELDS = {
+    "subject_raw",
+    "reference_number_raw",
+    "reference_number_normalized",
+    "reference_number_normalization",
+    "reference_number_normalization_rule",
+    "document_date_roc_raw",
+    "publication_date_roc_raw",
+    "update_date_roc_raw",
+    "announcement_text_raw",
+}
 _SPAN_FIELDS = {
     "artifact_sha256",
     "block_id",
@@ -70,6 +90,32 @@ _DOCUMENT_FLAGS = {
     "declared_attachment_coverage_uncertain",
 }
 _FORBIDDEN_KEYS = {
+    "notice",
+    "notice_metadata",
+    "notice_binding",
+    "notice_binding_source",
+    "binding_sha256",
+    "detail_artifact_sha256",
+    "request_url",
+    "final_url",
+    "bundle_id",
+    "bundle_fingerprint",
+    "official_document_number",
+    "official_document_number_raw",
+    "document_number",
+    "document_number_raw",
+    "ref_number",
+    "ref_number_raw",
+    "source_uid",
+    "reference_number_raw",
+    "reference_number_normalized",
+    "reference_number_normalization",
+    "reference_number_normalization_rule",
+    "subject_raw",
+    "document_date_roc_raw",
+    "publication_date_roc_raw",
+    "update_date_roc_raw",
+    "announcement_text_raw",
     "rule_id",
     "stable_rule_id",
     "canonical_slug",
@@ -91,6 +137,42 @@ class ProposalError(ValueError):
     """Raised when an agent output crosses its authority or evidence boundary."""
 
 
+def _ensure_bounded_json_shape(
+    value: Any,
+    *,
+    depth: int = 1,
+    active: set[int] | None = None,
+) -> None:
+    """Reject excessive nesting and cyclic direct-Python inputs.
+
+    Parsed JSON cannot contain cycles, but :func:`validate_proposal` is also a
+    public Python API.  Apply the same depth contract to both entry points.
+    """
+
+    if depth > WORKER_JSON_MAX_DEPTH:
+        raise ProposalError(
+            f"worker JSON exceeds maximum depth {WORKER_JSON_MAX_DEPTH}"
+        )
+    if not isinstance(value, (Mapping, list)):
+        return
+    if active is None:
+        active = set()
+    identity = id(value)
+    if identity in active:
+        raise ProposalError("worker JSON contains a cyclic container")
+    active.add(identity)
+    try:
+        children = value.values() if isinstance(value, Mapping) else value
+        for child in children:
+            _ensure_bounded_json_shape(
+                child,
+                depth=depth + 1,
+                active=active,
+            )
+    finally:
+        active.remove(identity)
+
+
 def _strict_keys(value: Mapping[str, Any], allowed: set[str], label: str) -> None:
     extra = set(value) - allowed
     if extra:
@@ -100,7 +182,7 @@ def _strict_keys(value: Mapping[str, Any], allowed: set[str], label: str) -> Non
 def _walk_keys(value: Any) -> Iterable[str]:
     if isinstance(value, Mapping):
         for key, child in value.items():
-            yield str(key)
+            yield str(key).casefold()
             yield from _walk_keys(child)
     elif isinstance(value, list):
         for child in value:
@@ -159,6 +241,58 @@ def _boolean_map(
     return dict(value)
 
 
+def controller_notice_binding(
+    value: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Create the exact notice binding that only the controller may author."""
+
+    if not isinstance(value, Mapping):
+        raise ProposalError("controller notice metadata must be an object")
+    _strict_keys(
+        value,
+        _NOTICE_BINDING_SOURCE_FIELDS,
+        "controller notice metadata",
+    )
+    if set(value) != _NOTICE_BINDING_SOURCE_FIELDS:
+        raise ProposalError("controller notice metadata is incomplete")
+    for field in _NOTICE_BINDING_SOURCE_FIELDS - {"metadata"}:
+        if not isinstance(value[field], str) or not value[field]:
+            raise ProposalError(
+                "controller notice identity values must be non-empty strings"
+            )
+    for field in (
+        "bundle_fingerprint",
+        "detail_artifact_sha256",
+    ):
+        if not _SHA256.fullmatch(value[field]):
+            raise ProposalError(
+                f"controller notice {field} must be a SHA-256 digest"
+            )
+    metadata = value["metadata"]
+    if not isinstance(metadata, Mapping):
+        raise ProposalError("controller notice metadata payload must be an object")
+    _strict_keys(metadata, _NOTICE_METADATA_FIELDS, "controller notice metadata")
+    if set(metadata) != _NOTICE_METADATA_FIELDS:
+        raise ProposalError("controller notice metadata payload is incomplete")
+    if any(not isinstance(metadata[field], str) for field in metadata):
+        raise ProposalError(
+            "controller notice metadata payload values must be strings"
+        )
+    basis = {
+        "schema": NOTICE_BINDING_SCHEMA,
+        "bundle_id": value["bundle_id"],
+        "bundle_fingerprint": value["bundle_fingerprint"],
+        "detail_artifact_sha256": value["detail_artifact_sha256"],
+        "request_url": value["request_url"],
+        "final_url": value["final_url"],
+        "metadata": dict(metadata),
+    }
+    return {
+        **basis,
+        "binding_sha256": sha256_bytes(canonical_json_bytes(basis)),
+    }
+
+
 def validate_proposal(
     proposal: Mapping[str, Any],
     *,
@@ -166,12 +300,13 @@ def validate_proposal(
     bundle_id: str,
     bundle_fingerprint: str,
     required_true_document_flags: Iterable[str] = (),
-    expected_notice: Mapping[str, str] | None = None,
+    expected_notice: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate evidence binding and return a controller-owned candidate receipt."""
 
     if not isinstance(proposal, Mapping):
         raise ProposalError("proposal must be a JSON object")
+    _ensure_bounded_json_shape(proposal)
     forbidden = _FORBIDDEN_KEYS.intersection(_walk_keys(proposal))
     if forbidden:
         raise ProposalError(
@@ -182,18 +317,15 @@ def validate_proposal(
         raise ProposalError("proposal is missing required top-level fields")
     if proposal["schema"] != PROPOSAL_SCHEMA:
         raise ProposalError("unexpected proposal schema")
-
-    notice = proposal["notice"]
-    if not isinstance(notice, Mapping):
-        raise ProposalError("notice must be an object")
-    _strict_keys(notice, _NOTICE_FIELDS, "notice")
-    if set(notice) != _NOTICE_FIELDS:
-        raise ProposalError("notice fields are incomplete")
-    if any(not isinstance(notice[field], str) for field in _NOTICE_FIELDS):
-        raise ProposalError("notice values must be strings")
-    if expected_notice is not None and dict(notice) != dict(expected_notice):
+    if expected_notice is None:
+        raise ProposalError("controller notice metadata is required")
+    notice_binding = controller_notice_binding(expected_notice)
+    if (
+        notice_binding["bundle_id"] != bundle_id
+        or notice_binding["bundle_fingerprint"] != bundle_fingerprint
+    ):
         raise ProposalError(
-            "notice metadata does not match deterministic detail-page extraction"
+            "controller notice binding does not match candidate bundle"
         )
 
     blocks: dict[str, Mapping[str, Any]] = {}
@@ -359,7 +491,6 @@ def validate_proposal(
 
     normalized_proposal = {
         **dict(proposal),
-        "notice": dict(notice),
         "temporal_evidence": validated_temporal,
         "effect_candidates": validated_effects,
         "document_flags": document_flags,
@@ -371,6 +502,7 @@ def validate_proposal(
         bundle_id,
         bundle_fingerprint,
         proposal_sha,
+        notice_binding["binding_sha256"],
     )
     return {
         "schema": VALIDATED_SCHEMA,
@@ -378,6 +510,7 @@ def validate_proposal(
         "bundle_id": bundle_id,
         "bundle_fingerprint": bundle_fingerprint,
         "proposal_sha256": proposal_sha,
+        "notice_binding": notice_binding,
         "state": state,
         "auto_promotion_enabled": False,
         "first_lane_shape": first_lane_shape,
@@ -386,17 +519,42 @@ def validate_proposal(
     }
 
 
+def _reject_duplicate_json_keys(
+    pairs: list[tuple[str, Any]],
+) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, child in pairs:
+        if key in value:
+            raise ProposalError(f"worker JSON repeats key {key!r}")
+        value[key] = child
+    return value
+
+
 def parse_and_validate_proposal(
-    payload: str,
+    payload: str | bytes,
     *,
     source_blocks: Iterable[Mapping[str, Any]],
     bundle_id: str,
     bundle_fingerprint: str,
     required_true_document_flags: Iterable[str] = (),
-    expected_notice: Mapping[str, str] | None = None,
+    expected_notice: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    payload_bytes = (
+        payload.encode("utf-8") if isinstance(payload, str) else payload
+    )
+    if len(payload_bytes) > WORKER_OUTPUT_MAX_BYTES:
+        raise ProposalError(
+            f"worker output exceeds {WORKER_OUTPUT_MAX_BYTES} bytes"
+        )
     try:
-        value = json.loads(payload)
+        payload_text = payload_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ProposalError("worker output is not UTF-8 JSON") from exc
+    try:
+        value = json.loads(
+            payload_text,
+            object_pairs_hook=_reject_duplicate_json_keys,
+        )
     except json.JSONDecodeError as exc:
         raise ProposalError("worker output is not one JSON object") from exc
     return validate_proposal(

@@ -150,19 +150,15 @@ def build_candidate_receipt(bundle_path: Path, candidate_root: Path) -> Path:
         parity_unverified=True,
         identity_uncertainty=True,
     )
-    proposal["notice"] = {
-        "reference_number_raw": packet["notice_metadata"][
-            "reference_number_raw"
-        ],
-        "subject_raw": packet["notice_metadata"]["subject_raw"],
-    }
+    proposal.pop("notice", None)
+    expected_notice = packet["notice_binding_source"]
     candidate = validate_proposal(
         proposal,
         source_blocks=packet["source_blocks"],
         bundle_id=packet["bundle_id"],
         bundle_fingerprint=packet["bundle_fingerprint"],
         required_true_document_flags={"odt_pdf_parity_unverified"},
-        expected_notice=proposal["notice"],
+        expected_notice=expected_notice,
     )
     prompt_sha = sha256_bytes(
         build_worker_prompt(packet).encode("utf-8")
