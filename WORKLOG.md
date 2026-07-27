@@ -40,6 +40,14 @@
   context 尚未由 non-source isolation canary 證明；它阻擋 official-source
   canary 與 repair-hold removal，但不阻擋 commit、additive migration、legacy
   admission 或零呼叫 `partition_required` 分類。
+- 執行一次 592-byte synthetic、stdin-only primary Claude isolation
+  canary；未讀官方來源、PG 或 corpus 作為 prompt。CLI capability/schema
+  checks 通過，但程序 2.245 秒即 code 1、stdout 0 bytes，沒有成功
+  inference，故 resolved model identity、event-level zero-tool／MCP／custom
+  context 皆未證。另有 5 個 plugin-area 檔案在觀測窗內變動，可能來自
+  safe-mode startup 或既存並行程序，不能宣稱 plugin activity 為零。
+  收據明列 `routing-observation-incomplete`，repair hold 與
+  official-source canary block 均維持。
 - 依 Copper 指認的官方入口重新核對
   `https://info.nhi.gov.tw/INAE3000/INAE3000S01`。以一列、只讀 current
   query 驗證其 `POST /api/INAE3000/INAE3000S01/SQL0001`，官方回報

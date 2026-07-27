@@ -152,6 +152,12 @@
   是 live Claude model resolution／zero-custom-context isolation canary；
   在此收據通過前，不執行 cefiderocol official-source canary，也不解除
   repair hold。
+- synthetic、stdin-only、零官方來源的 primary Claude isolation canary
+  已執行，但在成功 inference 前以 code 1 結束，stdout 0 bytes；因此實際
+  resolved model 仍不可觀測，tools／MCP／custom context／plugin execution
+  也只能證明設定層隔離，不能證明 event 層為零。狀態是
+  `routing-observation-incomplete`；repair hold 保留，official-source
+  canary 仍未獲授權。
 - 2026-07-27T16:09:28Z 前次 live observation：21 個 update work items
   分別為 3 `selected`、1 `corpus_registered`、8
   `staged_needs_review`、1 `failed_terminal`、8 `ignored_non_rule`；
