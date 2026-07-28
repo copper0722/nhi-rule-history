@@ -4,12 +4,12 @@
     "agent_history_summary": 1,
     "chapter": 1,
     "clause": 12,
-    "clause_condition_marker": 21,
+    "clause_condition_marker": 23,
     "clause_diff_hunk": 26,
-    "clause_semantic_tag": 66,
-    "clause_semantic_tag_atc": 51,
+    "clause_semantic_tag": 81,
+    "clause_semantic_tag_atc": 70,
     "clause_semantic_tag_icd11_code": 21,
-    "clause_semantic_tag_icd11_lookup": 21,
+    "clause_semantic_tag_icd11_lookup": 20,
     "clause_version": 29,
     "clause_version_block": 318,
     "clause_version_date": 261,
@@ -24,9 +24,9 @@
   },
   "files": {
     "agent_history_summary.jsonl": {
-      "bytes": 2423,
+      "bytes": 2376,
       "rows": 1,
-      "sha256": "dc6bbcbe967be5af91ec82563fa075274ac738b40fe40416280377a7558bb3a3"
+      "sha256": "cbedfe47b1723385b94d860788bfacf6ac30156ebbad4f0ee83b208fb8b9eb91"
     },
     "chapter.jsonl": {
       "bytes": 239,
@@ -39,9 +39,9 @@
       "sha256": "4e58166a768dade3e8e558e2b6c62836163aa0fa6b5f1f8e10a142a6383c1f05"
     },
     "clause_condition_marker.jsonl": {
-      "bytes": 9148,
-      "rows": 21,
-      "sha256": "fa903561c75b9737b781ba33b1dab7bdbf90efc444bd16a6f0330a069234ce19"
+      "bytes": 10014,
+      "rows": 23,
+      "sha256": "fd6ffaf5de69df3c33623ffc8c76adc6da40bbcec2665c515567fa2379dc28ce"
     },
     "clause_diff_hunk.jsonl": {
       "bytes": 41410,
@@ -49,24 +49,24 @@
       "sha256": "b69bef25b468c91bb120e340b628e03cf7871c7a126421964ce0f509c44f7110"
     },
     "clause_semantic_tag.jsonl": {
-      "bytes": 38444,
-      "rows": 66,
-      "sha256": "02cf6ee8bb75324e95ba4d80c385330da3a556f4075bdf7556dfaa682fedc217"
+      "bytes": 49997,
+      "rows": 81,
+      "sha256": "e78d39294a1d5e74553d173161c9b710af105dc4b3683a1fbdfd17d9f9964237"
     },
     "clause_semantic_tag_atc.jsonl": {
-      "bytes": 20261,
-      "rows": 51,
-      "sha256": "0bdb310064a0a5df2a2f62540db5107ffaa35898b1718b21454ba6a7cce31c7e"
+      "bytes": 27702,
+      "rows": 70,
+      "sha256": "78b958aa7cbd0e0a5bdffce8d86c2dda3d9cf21f62ea37f32c93868ba78d995e"
     },
     "clause_semantic_tag_icd11_code.jsonl": {
       "bytes": 6056,
       "rows": 21,
-      "sha256": "ccb7843f2db0407b819866b95aaefd9c649c830c0bb80ddae4bfb24358d1b834"
+      "sha256": "aec4356aee1e6b2b4dbdf226f12e7f70e8a1c8040fe524de31d010e13f0f6985"
     },
     "clause_semantic_tag_icd11_lookup.jsonl": {
-      "bytes": 11678,
-      "rows": 21,
-      "sha256": "79367adf0703e174f4bd2284fae5b16ac995216ba5e3196dd0075b6b07b7a5c2"
+      "bytes": 11121,
+      "rows": 20,
+      "sha256": "8f7b4a1285606a6e22d205ac4336c3e07192b5c8603fb4c71bb7326352062c30"
     },
     "clause_version.jsonl": {
       "bytes": 343566,
@@ -116,7 +116,7 @@
     "reader_enrichment_run.jsonl": {
       "bytes": 613,
       "rows": 1,
-      "sha256": "39fc3928064ab4dc57376858a7d6afcd169a2ebef47785d36ca9bf76a3bd99c1"
+      "sha256": "8a93862a5d2c372655db2a55aaa7fef27299031c95e8cbf1d09da11d37cfc142"
     },
     "source_edition.jsonl": {
       "bytes": 9866,

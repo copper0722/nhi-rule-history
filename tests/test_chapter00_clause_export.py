@@ -60,12 +60,12 @@ class Chapter00ClauseExportTests(unittest.TestCase):
                 "chapter": 1,
                 "clause": 12,
                 "agent_history_summary": 1,
-                "clause_condition_marker": 21,
+                "clause_condition_marker": 23,
                 "clause_diff_hunk": 26,
-                "clause_semantic_tag": 66,
-                "clause_semantic_tag_atc": 51,
+                "clause_semantic_tag": 81,
+                "clause_semantic_tag_atc": 70,
                 "clause_semantic_tag_icd11_code": 21,
-                "clause_semantic_tag_icd11_lookup": 21,
+                "clause_semantic_tag_icd11_lookup": 20,
                 "clause_version": 29,
                 "clause_version_block": 318,
                 "clause_version_date": 261,
@@ -221,8 +221,8 @@ class Chapter00ClauseExportTests(unittest.TestCase):
             READER_ENRICHMENT_VERSION,
         )
         self.assertEqual(diff_run["hunk_count"], 26)
-        self.assertEqual(enrichment["semantic_tag_count"], 66)
-        self.assertEqual(enrichment["condition_marker_count"], 21)
+        self.assertEqual(enrichment["semantic_tag_count"], 81)
+        self.assertEqual(enrichment["condition_marker_count"], 23)
 
     def test_icd11_codes_are_public_but_icd_content_stays_private(self) -> None:
         self.assertFalse(

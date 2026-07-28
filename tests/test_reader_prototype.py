@@ -113,6 +113,7 @@ class ReaderPrototypeTests(unittest.TestCase):
             tag for tag in tags if tag["tag_text"] == "apomorphine"
         )
         diabetes = next(tag for tag in tags if tag["tag_text"] == "糖尿病")
+        tags_by_text = {tag["tag_text"]: tag for tag in tags}
         self.assertEqual(octreotide["terminology"]["system"], "ATC")
         self.assertEqual(
             octreotide["terminology"]["codes"][0]["code"],
@@ -137,6 +138,29 @@ class ReaderPrototypeTests(unittest.TestCase):
         )
         self.assertNotIn("title", diabetes["terminology"]["codes"][0])
         self.assertNotIn("uri", diabetes["terminology"]["codes"][0])
+        expected_atc = {
+            "透析液": {"B05D"},
+            "抗生素": {"J01"},
+            "抗凝血劑": {"B01AB"},
+            "第八、第九凝血因子": {"B02BD02", "B02BD04"},
+            "繞徑治療藥物": {"B02BD03", "B02BD08"},
+            "第十三凝血因子": {"B02BD07"},
+            "靜脈營養輸液": {"B05BA"},
+            "化學治療藥品": {"L01"},
+            "exenatide": {"A10BJ01"},
+            "liraglutide": {"A10BJ02"},
+        }
+        for term, codes in expected_atc.items():
+            self.assertEqual(
+                {
+                    item["code"]
+                    for item in tags_by_text[term]["terminology"]["codes"]
+                },
+                codes,
+                term,
+            )
+        self.assertNotIn("CAPD", tags_by_text)
+        self.assertNotIn("癌症", tags_by_text)
         marker_texts = {
             marker["marker_text"] for marker in CLAUSE_04["condition_markers"]
         }
@@ -158,6 +182,12 @@ class ReaderPrototypeTests(unittest.TestCase):
                 duration_markers
             )
         )
+        quantity_markers = {
+            marker["marker_text"]
+            for marker in CLAUSE_04["condition_markers"]
+            if marker["semantic_role"] == "quantity"
+        }
+        self.assertEqual(quantity_markers, {"15支", "20支"})
         self.assertNotIn("需要", marker_texts)
         self.assertNotIn("應", marker_texts)
         self.assertNotIn("需", marker_texts)
@@ -175,6 +205,9 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertNotIn("terminologyLabel", SCRIPT)
         self.assertIn("condition-term--logical", CSS)
         self.assertIn("condition-term--duration", CSS)
+        self.assertIn("condition-term--quantity", CSS)
+        self.assertIn('marker.marker_text === "限"', SCRIPT)
+        self.assertIn('=== "上限"', SCRIPT)
         self.assertIn("ATC", TAG_SCRIPT)
         self.assertIn("已確認關聯", TAG_SCRIPT)
         self.assertIn("候選關聯", TAG_SCRIPT)
@@ -220,7 +253,13 @@ for (const [actual, expected] of cases) {
         self.assertTrue(
             any(block["render_kind"] == "list_item" for block in blocks)
         )
-        self.assertIn("AGENT SUMMARIZE", HTML)
+        self.assertIn("歷史變更總覽（本節由生成式AI輸出）", HTML)
+        self.assertNotIn("先看懂", HTML)
+        self.assertNotIn("摘要不取代官方條文", HTML)
+        summary_markdown = CLAUSE_04["agent_history_summary"][
+            "summary_markdown"
+        ]
+        self.assertNotIn("不是反覆重寫全文，而是", summary_markdown)
         self.assertIn("rule-heading", SCRIPT)
         self.assertIn(".rule-date", CSS)
 

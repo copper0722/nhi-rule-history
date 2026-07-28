@@ -1,0 +1,82 @@
+{
+  "schema": "nhi-rule-history/chapter-04-coding-able-tag-scan/v1",
+  "scope": {
+    "canonical_clause": "0.4",
+    "surfaces_scanned": [
+      "latest_full_text",
+      "all_stored_transition_hunks",
+      "agent_history_summary"
+    ]
+  },
+  "admission_rule": {
+    "label": "coding-able",
+    "link_only_when": [
+      "the exact source term or a documented source alias is present",
+      "an ATC or ICD-11 code relation is explicitly adjudicated",
+      "the referenced code exists in the canonical PostgreSQL terminology table"
+    ],
+    "do_not_link_when": [
+      "the term is only medical-looking",
+      "the configured terminology does not cover the entity type",
+      "the source term is too broad for one defensible code relation"
+    ]
+  },
+  "added_atc_terms": [
+    {"term": "透析液", "codes": ["B05D"]},
+    {"term": "抗生素", "codes": ["J01"]},
+    {"term": "抗凝血劑", "codes": ["B01AB"]},
+    {"term": "第八、第九凝血因子", "codes": ["B02BD02", "B02BD04"]},
+    {"term": "繞徑治療藥物", "codes": ["B02BD03", "B02BD08"]},
+    {"term": "第十三凝血因子", "codes": ["B02BD07"]},
+    {"term": "靜脈營養輸液", "codes": ["B05BA"]},
+    {"term": "電解質及營養靜脈補充輸液", "codes": ["B05BA", "B05BB"]},
+    {"term": "長效型干擾素", "codes": ["L03AB"]},
+    {"term": "短效型干擾素", "codes": ["L03AB"]},
+    {"term": "生物製劑皮下注射劑", "codes": ["L04"]},
+    {"term": "化學治療藥品", "codes": ["L01"]},
+    {"term": "exenatide", "codes": ["A10BJ01"]},
+    {"term": "liraglutide", "codes": ["A10BJ02"]},
+    {"term": "Britaject Pen", "codes": ["N04BC07"]},
+    {
+      "term": "filgrastin",
+      "codes": ["L03AA02"],
+      "source_term_status": "historical_spelling_alias"
+    }
+  ],
+  "not_linked": [
+    {
+      "term": "CAPD",
+      "reason": "treatment modality; no verified intervention-code system is wired into this prototype"
+    },
+    {
+      "term": "癌症",
+      "reason": "too broad for one defensible ICD-11 relation in this clause context"
+    },
+    {
+      "term": "血液製劑",
+      "reason": "broad product family with no single admitted ATC relation"
+    },
+    {
+      "term": "懷孕病患",
+      "reason": "clinical context rather than an admitted disease-code relation"
+    },
+    {
+      "term": "藥效波動",
+      "reason": "no verified ICD-11 relation admitted"
+    }
+  ],
+  "postgresql_receipt": {
+    "generator_version": "chapter-00-reader-enrichment/v8",
+    "run_id": "8ce108b2-d745-59a0-a36b-dae86d7f4de1",
+    "semantic_tag_count": 81,
+    "atc_relation_count": 70,
+    "icd_lookup_tag_count": 20,
+    "icd_code_relation_count": 21,
+    "output_sha256": "ebeb6ffbf53a26b0af51c9a0db85fdbad0c3edda62caf8a666478ea788d1731d"
+  },
+  "claims": {
+    "semantic_coverage_complete_for_declared_scan_and_admission_rule": true,
+    "complete_medical_ontology_claimed": false,
+    "unmapped_terms_are_silently_linked": false
+  }
+}

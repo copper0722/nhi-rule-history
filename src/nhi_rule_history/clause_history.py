@@ -38,7 +38,7 @@ from nhi_rule_history.edition_history import (
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
 DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
-READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v5"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v8"
 NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
 ICD11_CODING_TOOL_URL = (
     "https://icd.who.int/ct/icd11_mms/en/2026-01"
@@ -77,6 +77,11 @@ ROC_DATE_PART_RE = re.compile(
 CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "insulin", "type": "ingredient", "atc": ("A10AB01", "A10AB03", "A10AC01", "A10AC03", "A10AD01", "A10AD03", "A10AE01")},
     {"term": "GLP-1受體促效劑", "type": "drug_class", "atc": ("A10BJ",)},
+    {"term": "exenatide", "type": "ingredient", "atc": ("A10BJ01",)},
+    {"term": "liraglutide", "type": "ingredient", "atc": ("A10BJ02",)},
+    {"term": "透析液", "type": "drug_class", "atc": ("B05D",)},
+    {"term": "抗生素", "type": "drug_class", "atc": ("J01",)},
+    {"term": "抗凝血劑", "type": "drug_class", "atc": ("B01AB",)},
     {"term": "Desferrioxamine", "type": "ingredient", "atc": ("V03AC01",)},
     {"term": "Desferal", "type": "brand", "atc": ("V03AC01",)},
     {"term": "紅血球生成素", "type": "drug_class", "atc": ("B03XA",)},
@@ -85,12 +90,20 @@ CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "Aranesp", "type": "brand", "atc": ("B03XA02",)},
     {"term": "Mircera", "type": "brand", "atc": ("B03XA03",)},
     {"term": "α-interferon", "type": "drug_class", "atc": ("L03AB",)},
+    {"term": "長效型干擾素", "type": "drug_class", "atc": ("L03AB",)},
+    {"term": "短效型干擾素", "type": "drug_class", "atc": ("L03AB",)},
     {"term": "G-CSF", "type": "drug_class", "atc": ("L03AA",)},
     {"term": "filgrastim", "type": "ingredient", "atc": ("L03AA02",)},
+    {"term": "filgrastin", "type": "ingredient", "atc": ("L03AA02",), "source_term_status": "historical_spelling_alias"},
     {"term": "lenograstim", "type": "ingredient", "atc": ("L03AA10",)},
     {"term": "生長激素", "type": "drug_class", "atc": ("H01AC01",)},
     {"term": "human growth hormone", "type": "drug_class", "atc": ("H01AC01",)},
+    {"term": "第八、第九凝血因子", "type": "drug_class", "atc": ("B02BD02", "B02BD04")},
+    {"term": "繞徑治療藥物", "type": "drug_class", "atc": ("B02BD03", "B02BD08")},
+    {"term": "第十三凝血因子", "type": "drug_class", "atc": ("B02BD07",)},
     {"term": "TPN", "type": "abbreviation", "atc": ("B05BA10",)},
+    {"term": "靜脈營養輸液", "type": "drug_class", "atc": ("B05BA",)},
+    {"term": "電解質及營養靜脈補充輸液", "type": "drug_class", "atc": ("B05BA", "B05BB")},
     {"term": "octreotide", "type": "ingredient", "atc": ("H01CB02",)},
     {"term": "lanreotide", "type": "ingredient", "atc": ("H01CB03",)},
     {"term": "Sandostatin", "type": "brand", "atc": ("H01CB02",)},
@@ -103,6 +116,7 @@ CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "Apomorphine hydrochloride", "type": "ingredient", "atc": ("N04BC07",)},
     {"term": "apomorphine", "type": "ingredient", "atc": ("N04BC07",)},
     {"term": "Apo-Go Pen", "type": "brand", "atc": ("N04BC07",)},
+    {"term": "Britaject Pen", "type": "brand", "atc": ("N04BC07",)},
     {"term": "維生素B12注射劑", "type": "drug_class", "atc": ("B03BA01",)},
     {"term": "aldesleukin", "type": "ingredient", "atc": ("L03AC01",)},
     {"term": "Proleukin Inj", "type": "brand", "atc": ("L03AC01",)},
@@ -113,6 +127,7 @@ CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "opinercept", "type": "ingredient", "atc": ("L04AB07",)},
     {"term": "certolizumab", "type": "ingredient", "atc": ("L04AB05",)},
     {"term": "brodalumab", "type": "ingredient", "atc": ("L04AC12",)},
+    {"term": "生物製劑皮下注射劑", "type": "drug_class", "atc": ("L04",)},
     {"term": "teriparatide", "type": "ingredient", "atc": ("H05AA02",)},
     {"term": "interferon beta-1a", "type": "ingredient", "atc": ("L03AB07",)},
     {"term": "interferon beta-1b", "type": "ingredient", "atc": ("L03AB08",)},
@@ -120,6 +135,7 @@ CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "Fondaparinux", "type": "ingredient", "atc": ("B01AX05",)},
     {"term": "Arixtra", "type": "brand", "atc": ("B01AX05",)},
     {"term": "morphine", "type": "ingredient", "atc": ("N02AA01",)},
+    {"term": "化學治療藥品", "type": "drug_class", "atc": ("L01",)},
 )
 
 CHAPTER_04_DISEASE_TAGS: tuple[dict[str, Any], ...] = (
@@ -226,11 +242,6 @@ CHAPTER_04_DISEASE_TAGS: tuple[dict[str, Any], ...] = (
         "query": "venous thromboembolism",
         "mappings": (("BD72", "agent_selected", 0.90),),
     },
-    {
-        "term": "癌症",
-        "query": "malignant neoplasm",
-        "mappings": (),
-    },
 )
 
 CHAPTER_04_CONDITION_MARKERS: tuple[tuple[str, str], ...] = (
@@ -257,11 +268,17 @@ DURATION_MARKER_PATTERN = re.compile(
     r"(?![\d/])"
 )
 
+QUANTITY_MARKER_PATTERN = re.compile(
+    r"(?<![\d/])"
+    r"(?:\d+|[零〇○一二三四五六七八九十百千兩]+)支"
+    r"(?![\d/])"
+)
+
 CHAPTER_04_AGENT_SUMMARY = """\
-這一條的歷史變動不是反覆重寫全文，而是逐步擴大「哪些注射藥可讓病人攜回」、調整可攜回天數或數量，並增加申報與紀錄要求。
+歷次版本逐步擴大可由病人攜回的注射藥品範圍，調整可攜回天數與數量，並增加申報與紀錄要求。
 
 - **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。
-- **99/11**：apomorphine 每月上限由 15 支提高為 20 支。
+- **99/11**：apomorphine 每月上限由 15支提高為 20支。
 - **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。
 - **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。
 - **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。
@@ -1728,6 +1745,16 @@ def rebuild_reader_enrichment(
         if not source_edge_ids:
             raise ValueError("clause 0.4 has no diff edges")
 
+        uncodeable_drug_terms = sorted(
+            str(keyword["term"])
+            for keyword in CHAPTER_04_DRUG_KEYWORDS
+            if not keyword["atc"]
+        )
+        if uncodeable_drug_terms:
+            raise ValueError(
+                "semantic links require ATC mappings: "
+                f"{uncodeable_drug_terms}"
+            )
         expected_codes = sorted(
             {
                 code
@@ -1757,12 +1784,15 @@ def rebuild_reader_enrichment(
 
         semantic_tag_rows: list[dict[str, Any]] = []
         atc_rows: list[dict[str, Any]] = []
+        normalized_semantic_source = _normalized_keyword(
+            condition_source_text
+        )
         for keyword in CHAPTER_04_DRUG_KEYWORDS:
             term = str(keyword["term"])
             normalized = _normalized_keyword(term)
-            if normalized not in _normalized_keyword(latest_text):
+            if normalized not in normalized_semantic_source:
                 raise ValueError(
-                    f"configured drug keyword absent from latest 0.4: {term}"
+                    f"configured drug keyword absent from 0.4 history: {term}"
                 )
             tag_id = _stable_id(
                 "semantic-tag",
@@ -1791,6 +1821,10 @@ def rebuild_reader_enrichment(
                         "selection": "agent_curated_exact_term_from_clause_0.4",
                         "atc_validation": "tw_drug.ref_atc_pg_snapshot",
                         "public_scope": "only_codes_used_by_this_clause",
+                        "source_term_status": keyword.get(
+                            "source_term_status",
+                            "canonical_or_class_term",
+                        ),
                     },
                 }
             )
@@ -1833,6 +1867,16 @@ def rebuild_reader_enrichment(
                     }
                 )
 
+        uncodeable_disease_terms = sorted(
+            str(disease["term"])
+            for disease in CHAPTER_04_DISEASE_TAGS
+            if not disease["mappings"]
+        )
+        if uncodeable_disease_terms:
+            raise ValueError(
+                "semantic links require ICD-11 mappings: "
+                f"{uncodeable_disease_terms}"
+            )
         expected_icd_codes = sorted(
             {
                 str(mapping[0])
@@ -1867,9 +1911,9 @@ def rebuild_reader_enrichment(
         for disease in CHAPTER_04_DISEASE_TAGS:
             term = str(disease["term"])
             normalized = _normalized_keyword(term)
-            if normalized not in _normalized_keyword(latest_text):
+            if normalized not in normalized_semantic_source:
                 raise ValueError(
-                    f"configured disease tag absent from latest 0.4: {term}"
+                    f"configured disease tag absent from 0.4 history: {term}"
                 )
             tag_id = _stable_id(
                 "semantic-tag",
@@ -2049,6 +2093,18 @@ def rebuild_reader_enrichment(
                     "programmatic_quantity_plus_time_unit_across_clause_history"
                 ),
             )
+        quantity_markers = sorted(
+            set(QUANTITY_MARKER_PATTERN.findall(condition_source_text)),
+            key=lambda value: (-len(value), value),
+        )
+        for marker_text in quantity_markers:
+            append_condition(
+                marker_text,
+                "quantity",
+                selection=(
+                    "programmatic_number_plus_count_unit_across_clause_history"
+                ),
+            )
 
     input_payload = {
         "clause_import_run_id": str(clause_import_run_id),
@@ -2058,6 +2114,7 @@ def rebuild_reader_enrichment(
         "disease_tags": list(CHAPTER_04_DISEASE_TAGS),
         "condition_markers": list(CHAPTER_04_CONDITION_MARKERS),
         "duration_marker_pattern": DURATION_MARKER_PATTERN.pattern,
+        "quantity_marker_pattern": QUANTITY_MARKER_PATTERN.pattern,
         "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
     }
     input_sha256 = _sha256_text(_canonical_json(input_payload))

@@ -105,6 +105,12 @@ function collectRichTextMatches(text) {
   for (const marker of markers) {
     const pattern = new RegExp(escapeRegExp(marker.marker_text), "gu");
     for (const match of text.matchAll(pattern)) {
+      if (
+        marker.marker_text === "限" &&
+        text.slice(Math.max(0, match.index - 1), match.index + 1) === "上限"
+      ) {
+        continue;
+      }
       candidates.push({
         start: match.index,
         end: match.index + match[0].length,
@@ -141,15 +147,64 @@ function collectRichTextMatches(text) {
   return selected;
 }
 
-function renderRichText(value) {
+function renderChangedSlice(text, start, end, changedRanges, changeSide) {
+  if (!changedRanges?.length || !changeSide || start >= end) {
+    return escapeHtml(text.slice(start, end));
+  }
+  const boundaries = new Set([start, end]);
+  for (const range of changedRanges) {
+    if (range.end <= start || range.start >= end) continue;
+    boundaries.add(Math.max(start, range.start));
+    boundaries.add(Math.min(end, range.end));
+  }
+  const points = [...boundaries].sort((left, right) => left - right);
+  return points
+    .slice(0, -1)
+    .map((point, index) => {
+      const next = points[index + 1];
+      const content = escapeHtml(text.slice(point, next));
+      const changed = changedRanges.some(
+        (range) => range.start <= point && range.end >= next,
+      );
+      if (!changed) return content;
+      return changeSide === "old"
+        ? `<del class="inline-change inline-change--old">${content}</del>`
+        : `<ins class="inline-change inline-change--new">${content}</ins>`;
+    })
+    .join("");
+}
+
+function renderRichText(value, changedRanges = [], changeSide = null) {
   const text = String(value ?? "");
   const matches = collectRichTextMatches(text);
-  if (!matches.length) return escapeHtml(text);
+  if (!matches.length) {
+    return renderChangedSlice(
+      text,
+      0,
+      text.length,
+      changedRanges,
+      changeSide,
+    );
+  }
   const output = [];
   let cursor = 0;
   for (const match of matches) {
-    output.push(escapeHtml(text.slice(cursor, match.start)));
-    const matchedText = escapeHtml(text.slice(match.start, match.end));
+    output.push(
+      renderChangedSlice(
+        text,
+        cursor,
+        match.start,
+        changedRanges,
+        changeSide,
+      ),
+    );
+    const matchedText = renderChangedSlice(
+      text,
+      match.start,
+      match.end,
+      changedRanges,
+      changeSide,
+    );
     if (match.kind === "tag") {
       const tag = match.payload;
       output.push(
@@ -167,7 +222,15 @@ function renderRichText(value) {
     }
     cursor = match.end;
   }
-  output.push(escapeHtml(text.slice(cursor)));
+  output.push(
+    renderChangedSlice(
+      text,
+      cursor,
+      text.length,
+      changedRanges,
+      changeSide,
+    ),
+  );
   return output.join("");
 }
 
@@ -228,18 +291,19 @@ function inlineSide(segments, side, fallback) {
     (segment) => segment.side === "both" || segment.side === side,
   );
   if (!visible.length) return renderRichText(fallback);
-  return visible
-    .map((segment) => {
-      const content = renderRichText(segment.text);
-      const changed =
-        (side === "old" && segment.kind === "removed") ||
-        (side === "new" && segment.kind === "added");
-      if (!changed) return content;
-      return side === "old"
-        ? `<del class="inline-change inline-change--old">${content}</del>`
-        : `<ins class="inline-change inline-change--new">${content}</ins>`;
-    })
-    .join("");
+  let text = "";
+  const changedRanges = [];
+  for (const segment of visible) {
+    const start = text.length;
+    text += segment.text;
+    const changed =
+      (side === "old" && segment.kind === "removed") ||
+      (side === "new" && segment.kind === "added");
+    if (changed) {
+      changedRanges.push({ start, end: text.length });
+    }
+  }
+  return renderRichText(text, changedRanges, side);
 }
 
 function renderHunk(hunk) {
