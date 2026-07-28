@@ -9,10 +9,12 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import unicodedata
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -35,11 +37,229 @@ from nhi_rule_history.edition_history import (
 
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
+DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v3"
+NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+ICD11_CODING_TOOL_URL = (
+    "https://icd.who.int/ct/icd11_mms/en/2026-01"
+)
+SINGLE_QUOTES = frozenset({"'", "’", "‘", "＇", "ʼ"})
+IGNORED_CHANGE_POLICY = (
+    {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。",
+    },
+    {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。",
+    },
+    {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。",
+    },
+)
 EDITION_IMPORT_RUN_ID = uuid.UUID("b1a3aed6-7dff-563a-a1eb-4c5454a960b0")
 EDITION_RULE_ID = "rule:general-principles"
 CHAPTER_ID = "chapter:general-principles"
 CHAPTER_CODE = "chapter:00"
 TOP_LEVEL_RE = re.compile(r"^(?P<numeral>[一二三四五六七八九十]+)、\s*(?P<body>.*)")
+ROC_DATE_PART_RE = re.compile(
+    r"(?P<year>\d{2,3})\s*/\s*(?P<month>\d{1,2})\s*/\s*(?P<day>\d{1,2})"
+)
+
+# Agent-curated exact terms for the 0.4 prototype.  Every configured ATC code
+# is validated against the live PG reference before it is admitted to the
+# project-owned enrichment tables.  Only mappings used by this clause are
+# exported; the repository never mirrors the complete ATC index.
+CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
+    {"term": "insulin", "type": "ingredient", "atc": ("A10AB01", "A10AB03", "A10AC01", "A10AC03", "A10AD01", "A10AD03", "A10AE01")},
+    {"term": "GLP-1受體促效劑", "type": "drug_class", "atc": ("A10BJ",)},
+    {"term": "Desferrioxamine", "type": "ingredient", "atc": ("V03AC01",)},
+    {"term": "Desferal", "type": "brand", "atc": ("V03AC01",)},
+    {"term": "紅血球生成素", "type": "drug_class", "atc": ("B03XA",)},
+    {"term": "Eprex", "type": "brand", "atc": ("B03XA01",)},
+    {"term": "Recormon", "type": "brand", "atc": ("B03XA01",)},
+    {"term": "Aranesp", "type": "brand", "atc": ("B03XA02",)},
+    {"term": "Mircera", "type": "brand", "atc": ("B03XA03",)},
+    {"term": "α-interferon", "type": "drug_class", "atc": ("L03AB",)},
+    {"term": "G-CSF", "type": "drug_class", "atc": ("L03AA",)},
+    {"term": "filgrastim", "type": "ingredient", "atc": ("L03AA02",)},
+    {"term": "lenograstim", "type": "ingredient", "atc": ("L03AA10",)},
+    {"term": "生長激素", "type": "drug_class", "atc": ("H01AC01",)},
+    {"term": "human growth hormone", "type": "drug_class", "atc": ("H01AC01",)},
+    {"term": "TPN", "type": "abbreviation", "atc": ("B05BA10",)},
+    {"term": "octreotide", "type": "ingredient", "atc": ("H01CB02",)},
+    {"term": "lanreotide", "type": "ingredient", "atc": ("H01CB03",)},
+    {"term": "Sandostatin", "type": "brand", "atc": ("H01CB02",)},
+    {"term": "Somatuline", "type": "brand", "atc": ("H01CB03",)},
+    {"term": "streptomycin", "type": "ingredient", "atc": ("J01GA01",)},
+    {"term": "kanamycin", "type": "ingredient", "atc": ("J01GB04",)},
+    {"term": "enviomycin", "type": "ingredient", "atc": ("J04AB06",)},
+    {"term": "抗精神病長效針劑", "type": "drug_class", "atc": ("N05A",)},
+    {"term": "低分子量肝凝素", "type": "drug_class", "atc": ("B01AB",)},
+    {"term": "Apomorphine hydrochloride", "type": "ingredient", "atc": ("N04BC07",)},
+    {"term": "Apo-Go Pen", "type": "brand", "atc": ("N04BC07",)},
+    {"term": "維生素B12注射劑", "type": "drug_class", "atc": ("B03BA01",)},
+    {"term": "aldesleukin", "type": "ingredient", "atc": ("L03AC01",)},
+    {"term": "Proleukin Inj", "type": "brand", "atc": ("L03AC01",)},
+    {"term": "etanercept", "type": "ingredient", "atc": ("L04AB01",)},
+    {"term": "adalimumab", "type": "ingredient", "atc": ("L04AB04",)},
+    {"term": "abatacept", "type": "ingredient", "atc": ("L04AA24",)},
+    {"term": "tocilizumab", "type": "ingredient", "atc": ("L04AC07",)},
+    {"term": "opinercept", "type": "ingredient", "atc": ("L04AB07",)},
+    {"term": "certolizumab", "type": "ingredient", "atc": ("L04AB05",)},
+    {"term": "brodalumab", "type": "ingredient", "atc": ("L04AC12",)},
+    {"term": "teriparatide", "type": "ingredient", "atc": ("H05AA02",)},
+    {"term": "interferon beta-1a", "type": "ingredient", "atc": ("L03AB07",)},
+    {"term": "interferon beta-1b", "type": "ingredient", "atc": ("L03AB08",)},
+    {"term": "glatiramer", "type": "ingredient", "atc": ("L03AX13",)},
+    {"term": "Fondaparinux", "type": "ingredient", "atc": ("B01AX05",)},
+    {"term": "Arixtra", "type": "brand", "atc": ("B01AX05",)},
+    {"term": "morphine", "type": "ingredient", "atc": ("N02AA01",)},
+)
+
+CHAPTER_04_DISEASE_TAGS: tuple[dict[str, Any], ...] = (
+    {
+        "term": "糖尿病",
+        "query": "diabetes mellitus",
+        "mappings": (("5A14", "candidate", 0.65),),
+    },
+    {
+        "term": "慢性腎臟功能衰竭",
+        "query": "chronic kidney disease",
+        "mappings": (("GB61", "agent_selected", 0.85),),
+    },
+    {
+        "term": "白血病",
+        "query": "leukaemia",
+        "mappings": (("2B33.4", "candidate", 0.60),),
+    },
+    {
+        "term": "血友病",
+        "query": "haemophilia",
+        "mappings": (
+            ("3B10.0", "candidate", 0.75),
+            ("3B11.0", "candidate", 0.75),
+        ),
+    },
+    {
+        "term": "肢端肥大症",
+        "query": "acromegaly",
+        "mappings": (("5A60.0", "agent_selected", 0.98),),
+    },
+    {
+        "term": "結核病",
+        "query": "tuberculosis",
+        "mappings": (("1B1Z", "candidate", 0.60),),
+    },
+    {
+        "term": "巴金森氏病",
+        "query": "Parkinson disease",
+        "mappings": (("8A00.0", "agent_selected", 0.98),),
+    },
+    {
+        "term": "惡性貧血",
+        "query": "pernicious anaemia",
+        "mappings": (("3A01.30", "agent_selected", 0.98),),
+    },
+    {
+        "term": "pernicious anemia",
+        "query": "pernicious anaemia",
+        "mappings": (("3A01.30", "agent_selected", 0.98),),
+    },
+    {
+        "term": "維生素B12缺乏",
+        "query": "vitamin B12 deficiency",
+        "mappings": (("5B5F", "agent_selected", 0.98),),
+    },
+    {
+        "term": "慢性病毒性B型肝炎",
+        "query": "chronic hepatitis B",
+        "mappings": (("1E51.0", "agent_selected", 0.98),),
+    },
+    {
+        "term": "慢性病毒性C型肝炎",
+        "query": "chronic hepatitis C",
+        "mappings": (("1E51.1", "agent_selected", 0.98),),
+    },
+    {
+        "term": "類風濕關節炎",
+        "query": "rheumatoid arthritis",
+        "mappings": (("FA20", "agent_selected", 0.98),),
+    },
+    {
+        "term": "僵直性脊椎炎",
+        "query": "axial spondyloarthritis",
+        "mappings": (("FA92.0", "candidate", 0.80),),
+    },
+    {
+        "term": "乾癬性周邊關節炎",
+        "query": "psoriatic arthritis",
+        "mappings": (("FA21", "candidate", 0.85),),
+    },
+    {
+        "term": "乾癬性脊椎病變",
+        "query": "psoriatic arthritis",
+        "mappings": (("FA21", "candidate", 0.75),),
+    },
+    {
+        "term": "乾癬",
+        "query": "psoriasis",
+        "mappings": (("EA90", "agent_selected", 0.98),),
+    },
+    {
+        "term": "克隆氏症",
+        "query": "Crohn disease",
+        "mappings": (("DD70", "agent_selected", 0.98),),
+    },
+    {
+        "term": "靜脈血栓",
+        "query": "venous thromboembolism",
+        "mappings": (("BD72", "agent_selected", 0.90),),
+    },
+    {
+        "term": "VTE",
+        "query": "venous thromboembolism",
+        "mappings": (("BD72", "agent_selected", 0.90),),
+    },
+    {
+        "term": "癌症",
+        "query": "malignant neoplasm",
+        "mappings": (),
+    },
+)
+
+CHAPTER_04_CONDITION_MARKERS: tuple[tuple[str, str], ...] = (
+    ("經事前審查核准後", "prior_authorization"),
+    ("需個案事前報准", "prior_authorization"),
+    ("需敘明理由", "requirement"),
+    ("不得超過", "prohibition"),
+    ("不超過", "maximum"),
+    ("至多", "maximum"),
+    ("為限", "maximum"),
+    ("方得", "restriction"),
+    ("不得", "prohibition"),
+    ("需要", "requirement"),
+    ("且", "conjunction"),
+    ("應", "requirement"),
+    ("惟", "exception"),
+    ("限", "restriction"),
+)
+
+CHAPTER_04_AGENT_SUMMARY = """\
+這一條的歷史變動不是反覆重寫全文，而是逐步擴大「哪些注射藥可讓病人攜回」、調整可攜回天數或數量，並增加申報與紀錄要求。
+
+- **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。
+- **99/11**：apomorphine 每月上限由 15 支提高為 20 支。
+- **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。
+- **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。
+- **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。
+- **111/1–111/3**：靜脈營養輸液條件擴及不需調配的製劑，並新增 fondaparinux。
+
+日期取自新文字中首次出現的條文註記，用來幫助閱讀版本變化；尚未把它認定為經公告證實的法律生效日。"""
 
 CHINESE_DIGITS = {
     "一": 1,
@@ -96,6 +316,142 @@ class ClauseObservation:
     @property
     def comparison_sha256(self) -> str:
         return _sha256_text(_comparison_key(self.normalized_text))
+
+
+def _semantic_units(
+    text: str | None,
+) -> tuple[list[tuple[int, str, str]], list[str]]:
+    units: list[tuple[int, str, str]] = []
+    classifications: list[str] = []
+    for index, char in enumerate(text or ""):
+        if char.isspace() or char in SINGLE_QUOTES:
+            classifications.append("ignored")
+            continue
+        classifications.append("pending")
+        units.append((index, char, unicodedata.normalize("NFKC", char)))
+    return units, classifications
+
+
+def _group_semantic_segments(
+    text: str,
+    classifications: Sequence[str],
+    *,
+    side: str,
+) -> list[dict[str, str]]:
+    if not text:
+        return []
+    segments: list[dict[str, str]] = []
+    start = 0
+    current = classifications[0]
+    for index in range(1, len(text)):
+        if classifications[index] == current:
+            continue
+        segments.append(
+            {
+                "side": side,
+                "kind": current,
+                "text": text[start:index],
+            }
+        )
+        start = index
+        current = classifications[index]
+    segments.append(
+        {
+            "side": side,
+            "kind": current,
+            "text": text[start:],
+        }
+    )
+    return segments
+
+
+def semantic_diff_presentation(
+    old_text: str | None,
+    new_text: str | None,
+) -> dict[str, Any]:
+    """Classify substantive changes while retaining exact display text."""
+
+    old_value = old_text or ""
+    new_value = new_text or ""
+    old_units, old_classes = _semantic_units(old_value)
+    new_units, new_classes = _semantic_units(new_value)
+    ignored_classes: set[str] = set()
+
+    old_whitespace = [char for char in old_value if char.isspace()]
+    new_whitespace = [char for char in new_value if char.isspace()]
+    if old_whitespace != new_whitespace:
+        ignored_classes.add("whitespace")
+
+    old_quotes = [char for char in old_value if char in SINGLE_QUOTES]
+    new_quotes = [char for char in new_value if char in SINGLE_QUOTES]
+    if old_quotes != new_quotes:
+        ignored_classes.add("single_quote")
+
+    matcher = SequenceMatcher(
+        None,
+        [unit[2] for unit in old_units],
+        [unit[2] for unit in new_units],
+        autojunk=False,
+    )
+    for tag, old_start, old_end, new_start, new_end in matcher.get_opcodes():
+        if tag == "equal":
+            for old_unit, new_unit in zip(
+                old_units[old_start:old_end],
+                new_units[new_start:new_end],
+                strict=True,
+            ):
+                old_index, old_char, old_key = old_unit
+                new_index, new_char, new_key = new_unit
+                if old_char != new_char and old_key == new_key:
+                    old_classes[old_index] = "ignored"
+                    new_classes[new_index] = "ignored"
+                    ignored_classes.add("width_variant")
+                else:
+                    old_classes[old_index] = "unchanged"
+                    new_classes[new_index] = "unchanged"
+            continue
+        if tag in {"delete", "replace"}:
+            for index, _, _ in old_units[old_start:old_end]:
+                old_classes[index] = "removed"
+        if tag in {"insert", "replace"}:
+            for index, _, _ in new_units[new_start:new_end]:
+                new_classes[index] = "added"
+
+    if "pending" in old_classes or "pending" in new_classes:
+        raise ValueError("semantic diff left unclassified characters")
+
+    has_removed = "removed" in old_classes
+    has_added = "added" in new_classes
+    if has_removed and has_added:
+        change_kind = "replaced"
+        display_note = "下一版改寫"
+    elif has_removed:
+        change_kind = "removed"
+        display_note = "下一版刪除"
+    elif has_added:
+        change_kind = "added"
+        display_note = "下一版新增"
+    else:
+        change_kind = "format_only"
+        display_note = "僅格式差異（已忽略）"
+
+    return {
+        "semantic_change_kind": change_kind,
+        "display_note": display_note,
+        "inline_segments": [
+            *_group_semantic_segments(
+                old_value,
+                old_classes,
+                side="old",
+            ),
+            *_group_semantic_segments(
+                new_value,
+                new_classes,
+                side="new",
+            ),
+        ],
+        "ignored_change_classes": sorted(ignored_classes),
+    }
 
 
 def _chinese_ordinal(value: str) -> int:
@@ -1122,8 +1478,750 @@ def rebuild(
     }
 
 
+def _base_hunks_for_import(
+    conn: psycopg.Connection[Any],
+    clause_import_run_id: uuid.UUID,
+) -> list[dict[str, Any]]:
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            SELECT hunk.*
+            FROM nhi_rule_history_clause.clause_diff_hunk hunk
+            JOIN nhi_rule_history_clause.clause_version_edge edge
+              ON edge.edge_id = hunk.edge_id
+            JOIN nhi_rule_history_clause.clause clause
+              ON clause.clause_id = edge.clause_id
+            WHERE clause.first_import_run_id = %s
+            ORDER BY edge.clause_id, edge.newer_first_observed_order,
+                     hunk.hunk_order
+            """,
+            (clause_import_run_id,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def rebuild_diff_presentations(
+    conn: psycopg.Connection[Any],
+    *,
+    clause_import_run_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    clause_import_run_id = clause_import_run_id or _latest_run_id(conn)
+    hunks = _base_hunks_for_import(conn, clause_import_run_id)
+    input_payload = {
+        "clause_import_run_id": str(clause_import_run_id),
+        "algorithm_version": DIFF_PRESENTATION_VERSION,
+        "ignored_change_policy": list(IGNORED_CHANGE_POLICY),
+        "hunks": [
+            {
+                "hunk_id": row["hunk_id"],
+                "old_text_sha256": row["old_text_sha256"],
+                "new_text_sha256": row["new_text_sha256"],
+            }
+            for row in hunks
+        ],
+    }
+    input_sha256 = _sha256_text(_canonical_json(input_payload))
+    run_id = uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f"nhi-rule-history-clause-diff:{input_sha256}",
+    )
+    presentations = [
+        {
+            "diff_run_id": run_id,
+            "hunk_id": row["hunk_id"],
+            **semantic_diff_presentation(
+                row["old_text"],
+                row["new_text"],
+            ),
+        }
+        for row in hunks
+    ]
+    output_sha256 = _sha256_text(_canonical_json(presentations))
+    started_at = datetime.now(timezone.utc)
+
+    with conn.transaction():
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                ("nhi-rule-history-clause-diff-presentation-v2",),
+            )
+            cur.execute(
+                """
+                SELECT state, input_sha256, output_sha256, hunk_count
+                FROM nhi_rule_history_clause.diff_run
+                WHERE run_id = %s
+                """,
+                (run_id,),
+            )
+            existing = cur.fetchone()
+            if existing is not None:
+                if (
+                    existing["state"] != "sealed"
+                    or existing["input_sha256"] != input_sha256
+                    or existing["output_sha256"] != output_sha256
+                    or int(existing["hunk_count"]) != len(presentations)
+                ):
+                    raise ValueError(
+                        "existing semantic diff run does not match replay"
+                    )
+                return {
+                    "status": "already_sealed",
+                    "run_id": str(run_id),
+                    "input_sha256": input_sha256,
+                    "output_sha256": output_sha256,
+                    "hunk_count": len(presentations),
+                }
+
+            cur.execute(
+                """
+                INSERT INTO nhi_rule_history_clause.diff_run (
+                  run_id, clause_import_run_id, algorithm_version,
+                  ignored_change_policy, state, input_sha256, started_at
+                ) VALUES (%s, %s, %s, %s, 'loading', %s, %s)
+                """,
+                (
+                    run_id,
+                    clause_import_run_id,
+                    DIFF_PRESENTATION_VERSION,
+                    Jsonb(list(IGNORED_CHANGE_POLICY)),
+                    input_sha256,
+                    started_at,
+                ),
+            )
+            _insert_many(
+                cur,
+                "diff_hunk_presentation",
+                presentations,
+                json_columns={
+                    "inline_segments",
+                    "ignored_change_classes",
+                },
+            )
+            cur.execute(
+                """
+                SELECT count(*)
+                FROM nhi_rule_history_clause.diff_hunk_presentation
+                WHERE diff_run_id = %s
+                """,
+                (run_id,),
+            )
+            if int(cur.fetchone()["count"]) != len(presentations):
+                raise ValueError("semantic diff presentation count mismatch")
+            cur.execute(
+                """
+                UPDATE nhi_rule_history_clause.diff_run
+                SET state = 'sealed',
+                    output_sha256 = %s,
+                    hunk_count = %s,
+                    sealed_at = %s
+                WHERE run_id = %s
+                  AND state = 'loading'
+                """,
+                (
+                    output_sha256,
+                    len(presentations),
+                    datetime.now(timezone.utc),
+                    run_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("failed to seal semantic diff run")
+
+    return {
+        "status": "sealed",
+        "run_id": str(run_id),
+        "input_sha256": input_sha256,
+        "output_sha256": output_sha256,
+        "hunk_count": len(presentations),
+    }
+
+
+def _normalized_keyword(value: str) -> str:
+    return re.sub(
+        r"\s+",
+        " ",
+        unicodedata.normalize("NFKC", value).strip().casefold(),
+    )
+
+
+def rebuild_reader_enrichment(
+    conn: psycopg.Connection[Any],
+    *,
+    clause_import_run_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    """Seal PG-canonical 0.4 semantic tags and a diff-bound summary."""
+
+    clause_import_run_id = clause_import_run_id or _latest_run_id(conn)
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            SELECT clause.clause_id, version.normalized_text
+            FROM nhi_rule_history_clause.clause clause
+            JOIN LATERAL (
+              SELECT normalized_text
+              FROM nhi_rule_history_clause.clause_version
+              WHERE clause_id = clause.clause_id
+                AND first_import_run_id = %s
+              ORDER BY state_order DESC
+              LIMIT 1
+            ) version ON true
+            WHERE clause.first_import_run_id = %s
+              AND clause.canonical_code = '0.4'
+            """,
+            (clause_import_run_id, clause_import_run_id),
+        )
+        clause_row = cur.fetchone()
+        if clause_row is None:
+            raise ValueError("clause 0.4 missing from sealed import")
+        clause_id = str(clause_row["clause_id"])
+        latest_text = str(clause_row["normalized_text"])
+
+        cur.execute(
+            """
+            SELECT run_id, output_sha256, sealed_at
+            FROM nhi_rule_history_clause.diff_run
+            WHERE clause_import_run_id = %s
+              AND state = 'sealed'
+            ORDER BY sealed_at DESC, run_id DESC
+            LIMIT 1
+            """,
+            (clause_import_run_id,),
+        )
+        diff_run = cur.fetchone()
+        if diff_run is None:
+            raise ValueError("sealed semantic diff run required")
+        diff_run_id = diff_run["run_id"]
+        source_diff_sha256 = str(diff_run["output_sha256"])
+        summary_created_at = diff_run["sealed_at"]
+
+        cur.execute(
+            """
+            SELECT edge.edge_id
+            FROM nhi_rule_history_clause.clause_version_edge edge
+            WHERE edge.clause_id = %s
+            ORDER BY edge.newer_first_observed_order
+            """,
+            (clause_id,),
+        )
+        source_edge_ids = [str(row["edge_id"]) for row in cur.fetchall()]
+        if not source_edge_ids:
+            raise ValueError("clause 0.4 has no diff edges")
+
+        expected_codes = sorted(
+            {
+                code
+                for keyword in CHAPTER_04_DRUG_KEYWORDS
+                for code in keyword["atc"]
+            }
+        )
+        cur.execute(
+            """
+            SELECT atc_code, max(updated_at) AS source_updated_at
+            FROM tw_drug.ref_atc
+            WHERE atc_code = ANY(%s)
+            GROUP BY atc_code
+            ORDER BY atc_code
+            """,
+            (expected_codes,),
+        )
+        ref_rows = {
+            str(row["atc_code"]): row["source_updated_at"]
+            for row in cur.fetchall()
+        }
+        missing_codes = sorted(set(expected_codes) - set(ref_rows))
+        if missing_codes:
+            raise ValueError(
+                f"ATC codes absent from PG reference: {missing_codes}"
+            )
+
+        semantic_tag_rows: list[dict[str, Any]] = []
+        atc_rows: list[dict[str, Any]] = []
+        for keyword in CHAPTER_04_DRUG_KEYWORDS:
+            term = str(keyword["term"])
+            normalized = _normalized_keyword(term)
+            if normalized not in _normalized_keyword(latest_text):
+                raise ValueError(
+                    f"configured drug keyword absent from latest 0.4: {term}"
+                )
+            tag_id = _stable_id(
+                "semantic-tag",
+                {
+                    "clause_id": clause_id,
+                    "tag_type": "drug",
+                    "normalized_tag": normalized,
+                },
+            )
+            codes = tuple(str(code) for code in keyword["atc"])
+            semantic_tag_rows.append(
+                {
+                    "enrichment_run_id": None,
+                    "tag_id": tag_id,
+                    "clause_id": clause_id,
+                    "tag_text": term,
+                    "normalized_tag": normalized,
+                    "display_text": term,
+                    "tag_type": "drug",
+                    "entity_type": keyword["type"],
+                    "match_mode": "exact_case_insensitive",
+                    "resolution_status": (
+                        "multiple_atc" if len(codes) > 1 else "resolved_atc"
+                    ),
+                    "provenance": {
+                        "selection": "agent_curated_exact_term_from_clause_0.4",
+                        "atc_validation": "tw_drug.ref_atc_pg_snapshot",
+                        "public_scope": "only_codes_used_by_this_clause",
+                    },
+                }
+            )
+            for index, code in enumerate(codes):
+                cur.execute(
+                    """
+                    SELECT count(*) AS evidence_count
+                    FROM tw_drug.nhi_drugs
+                    WHERE atc_code = %s
+                      AND (
+                        coalesce(name_en, '') ILIKE %s
+                        OR coalesce(name_zh, '') ILIKE %s
+                      )
+                    """,
+                    (code, f"%{term}%", f"%{term}%"),
+                )
+                evidence_count = int(cur.fetchone()["evidence_count"])
+                if evidence_count:
+                    mapping_basis = "nhi_product_name_atc_match"
+                    review_status = "agent_verified"
+                elif keyword["type"] in {"drug_class", "abbreviation"}:
+                    mapping_basis = "nhi_rule_group_mapping"
+                    review_status = "agent_curated"
+                else:
+                    mapping_basis = (
+                        "nhi_atc_reference_plus_clause_context"
+                    )
+                    review_status = "agent_curated"
+                atc_rows.append(
+                    {
+                        "enrichment_run_id": None,
+                        "tag_id": tag_id,
+                        "atc_code": code,
+                        "is_primary": index == 0,
+                        "mapping_basis": mapping_basis,
+                        "evidence_count": evidence_count,
+                        "source_updated_at": ref_rows[code],
+                        "source_url": NHI_DRUG_LOOKUP_URL,
+                        "review_status": review_status,
+                    }
+                )
+
+        expected_icd_codes = sorted(
+            {
+                str(mapping[0])
+                for disease in CHAPTER_04_DISEASE_TAGS
+                for mapping in disease["mappings"]
+            }
+        )
+        cur.execute(
+            """
+            SELECT DISTINCT ON (code)
+              code, title, uri, release_id, imported_at
+            FROM medical_knowledge.icd11_who
+            WHERE code = ANY(%s)
+            ORDER BY code, release_year DESC, release_id DESC
+            """,
+            (expected_icd_codes,),
+        )
+        icd_by_code = {
+            str(row["code"]): dict(row) for row in cur.fetchall()
+        }
+        missing_icd_codes = sorted(
+            set(expected_icd_codes) - set(icd_by_code)
+        )
+        if missing_icd_codes:
+            raise ValueError(
+                f"ICD-11 codes absent from private PG: {missing_icd_codes}"
+            )
+
+        public_icd_lookup_rows: list[dict[str, Any]] = []
+        public_icd_code_rows: list[dict[str, Any]] = []
+        private_icd_rows: list[dict[str, Any]] = []
+        for disease in CHAPTER_04_DISEASE_TAGS:
+            term = str(disease["term"])
+            normalized = _normalized_keyword(term)
+            if normalized not in _normalized_keyword(latest_text):
+                raise ValueError(
+                    f"configured disease tag absent from latest 0.4: {term}"
+                )
+            tag_id = _stable_id(
+                "semantic-tag",
+                {
+                    "clause_id": clause_id,
+                    "tag_type": "disease",
+                    "normalized_tag": normalized,
+                },
+            )
+            semantic_tag_rows.append(
+                {
+                    "enrichment_run_id": None,
+                    "tag_id": tag_id,
+                    "clause_id": clause_id,
+                    "tag_text": term,
+                    "normalized_tag": normalized,
+                    "display_text": term,
+                    "tag_type": "disease",
+                    "entity_type": (
+                        "abbreviation"
+                        if term == "VTE"
+                        else "disease"
+                    ),
+                    "match_mode": "exact_case_insensitive",
+                    "resolution_status": "official_lookup_only",
+                    "provenance": {
+                        "selection": (
+                            "agent_curated_exact_term_from_clause_0.4"
+                        ),
+                        "private_icd_content": (
+                            "title_uri_and_reference_snapshot_stay_in_pg"
+                        ),
+                        "public_behavior": (
+                            "show_code_relation_without_packaging_icd_content"
+                        ),
+                    },
+                }
+            )
+            public_icd_lookup_rows.append(
+                {
+                    "enrichment_run_id": None,
+                    "tag_id": tag_id,
+                    "lookup_query": disease["query"],
+                    "official_lookup_url": ICD11_CODING_TOOL_URL,
+                    "icd11_release": "2026-01",
+                    "language_tag": "en",
+                    "mapping_status": (
+                        "official_lookup_only_no_crosswalk"
+                    ),
+                    "icd11_code": None,
+                    "icd11_uri": None,
+                    "license_note": (
+                        "Only the project-authored term-to-code relation is "
+                        "public. ICD-11 titles, URIs, definitions, and the "
+                        "reference snapshot remain private PostgreSQL data."
+                    ),
+                }
+            )
+            mappings = tuple(disease["mappings"])
+            if not mappings:
+                private_icd_rows.append(
+                    {
+                        "enrichment_run_id": None,
+                        "tag_id": tag_id,
+                        "candidate_rank": 1,
+                        "mapping_status": "ambiguous",
+                        "icd11_code": None,
+                        "icd11_title": None,
+                        "icd11_uri": None,
+                        "icd11_release": "2024-01",
+                        "confidence": 0.0,
+                        "rationale": (
+                            "The clause term is broader than one defensible "
+                            "ICD-11 MMS category."
+                        ),
+                        "source_table": "medical_knowledge.icd11_who",
+                        "verified_at": summary_created_at,
+                    }
+                )
+                continue
+            for rank, (code, status, confidence) in enumerate(
+                mappings,
+                start=1,
+            ):
+                icd_row = icd_by_code[str(code)]
+                public_icd_code_rows.append(
+                    {
+                        "enrichment_run_id": None,
+                        "tag_id": tag_id,
+                        "candidate_rank": rank,
+                        "icd11_code": code,
+                        "mapping_status": status,
+                        "confidence": confidence,
+                        "display_note": (
+                            "Agent-selected relation."
+                            if status == "agent_selected"
+                            else "Candidate relation; human review pending."
+                        ),
+                    }
+                )
+                private_icd_rows.append(
+                    {
+                        "enrichment_run_id": None,
+                        "tag_id": tag_id,
+                        "candidate_rank": rank,
+                        "mapping_status": status,
+                        "icd11_code": code,
+                        "icd11_title": icd_row["title"],
+                        "icd11_uri": icd_row["uri"],
+                        "icd11_release": icd_row["release_id"],
+                        "confidence": confidence,
+                        "rationale": (
+                            "Agentic term-to-code relation checked against "
+                            "the private WHO ICD-11 PG snapshot; broad "
+                            "source terms remain candidates."
+                        ),
+                        "source_table": "medical_knowledge.icd11_who",
+                        "verified_at": icd_row["imported_at"],
+                    }
+                )
+
+        condition_rows: list[dict[str, Any]] = []
+        normalized_latest = _normalized_keyword(latest_text)
+        for marker_text, semantic_role in CHAPTER_04_CONDITION_MARKERS:
+            normalized_marker = _normalized_keyword(marker_text)
+            if normalized_marker not in normalized_latest:
+                continue
+            condition_rows.append(
+                {
+                    "enrichment_run_id": None,
+                    "marker_id": _stable_id(
+                        "condition-marker",
+                        {
+                            "clause_id": clause_id,
+                            "normalized_marker": normalized_marker,
+                            "semantic_role": semantic_role,
+                        },
+                    ),
+                    "clause_id": clause_id,
+                    "marker_text": marker_text,
+                    "normalized_marker": normalized_marker,
+                    "semantic_role": semantic_role,
+                    "match_mode": "exact_longest_first",
+                    "provenance": {
+                        "selection": (
+                            "agent_curated_constraint_lexicon_for_clause_0.4"
+                        ),
+                        "rendering": "longest_match_wins",
+                    },
+                }
+            )
+
+    input_payload = {
+        "clause_import_run_id": str(clause_import_run_id),
+        "diff_run_id": str(diff_run_id),
+        "generator_version": READER_ENRICHMENT_VERSION,
+        "drug_keywords": list(CHAPTER_04_DRUG_KEYWORDS),
+        "disease_tags": list(CHAPTER_04_DISEASE_TAGS),
+        "condition_markers": list(CHAPTER_04_CONDITION_MARKERS),
+        "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
+    }
+    input_sha256 = _sha256_text(_canonical_json(input_payload))
+    run_id = uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f"nhi-rule-history-reader-enrichment:{input_sha256}",
+    )
+    for row in semantic_tag_rows:
+        row["enrichment_run_id"] = run_id
+    for row in atc_rows:
+        row["enrichment_run_id"] = run_id
+    for row in public_icd_lookup_rows:
+        row["enrichment_run_id"] = run_id
+    for row in public_icd_code_rows:
+        row["enrichment_run_id"] = run_id
+    for row in private_icd_rows:
+        row["enrichment_run_id"] = run_id
+    for row in condition_rows:
+        row["enrichment_run_id"] = run_id
+    summary_rows = [
+        {
+            "enrichment_run_id": run_id,
+            "summary_id": _stable_id(
+                "agent-summary",
+                {
+                    "clause_id": clause_id,
+                    "source_diff_sha256": source_diff_sha256,
+                    "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
+                },
+            ),
+            "clause_id": clause_id,
+            "language_tag": "zh-TW",
+            "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
+            "source_edge_ids": source_edge_ids,
+            "source_diff_sha256": source_diff_sha256,
+            "generation_method": "pure_agentic_from_structured_diff",
+            "generator_id": "openai-codex",
+            "review_status": "agent_generated_unreviewed",
+            "created_at": summary_created_at,
+        }
+    ]
+    output_payload = {
+        "semantic_tags": semantic_tag_rows,
+        "tag_atc": atc_rows,
+        "public_icd11_lookup": public_icd_lookup_rows,
+        "public_icd11_codes": public_icd_code_rows,
+        "private_icd11": private_icd_rows,
+        "condition_markers": condition_rows,
+        "summaries": summary_rows,
+    }
+    output_sha256 = _sha256_text(_canonical_json(output_payload))
+    started_at = datetime.now(timezone.utc)
+
+    with conn.transaction():
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                ("nhi-rule-history-clause-reader-enrichment-v3",),
+            )
+            cur.execute(
+                """
+                SELECT state, input_sha256, output_sha256,
+                       semantic_tag_count, tag_atc_count,
+                       tag_icd11_lookup_count, condition_marker_count,
+                       summary_count
+                FROM nhi_rule_history_clause.reader_enrichment_run
+                WHERE run_id = %s
+                """,
+                (run_id,),
+            )
+            existing = cur.fetchone()
+            expected_counts = (
+                len(semantic_tag_rows),
+                len(atc_rows),
+                len(public_icd_lookup_rows),
+                len(condition_rows),
+                len(summary_rows),
+            )
+            if existing is not None:
+                if (
+                    existing["state"] != "sealed"
+                    or existing["input_sha256"] != input_sha256
+                    or existing["output_sha256"] != output_sha256
+                ):
+                    raise ValueError(
+                        "existing reader enrichment does not match replay"
+                    )
+                actual_counts = (
+                    int(existing["semantic_tag_count"]),
+                    int(existing["tag_atc_count"]),
+                    int(existing["tag_icd11_lookup_count"]),
+                    int(existing["condition_marker_count"]),
+                    int(existing["summary_count"]),
+                )
+                if actual_counts != expected_counts:
+                    raise ValueError(
+                        "existing reader enrichment count mismatch"
+                    )
+                return {
+                    "status": "already_sealed",
+                    "run_id": str(run_id),
+                    "input_sha256": input_sha256,
+                    "output_sha256": output_sha256,
+                    "semantic_tag_count": len(semantic_tag_rows),
+                    "tag_atc_count": len(atc_rows),
+                    "tag_icd11_lookup_count": len(
+                        public_icd_lookup_rows
+                    ),
+                    "condition_marker_count": len(condition_rows),
+                    "summary_count": len(summary_rows),
+                }
+
+            cur.execute(
+                """
+                INSERT INTO
+                  nhi_rule_history_clause.reader_enrichment_run (
+                    run_id, clause_import_run_id, diff_run_id,
+                    generator_version, state, input_sha256, started_at
+                  ) VALUES (%s, %s, %s, %s, 'loading', %s, %s)
+                """,
+                (
+                    run_id,
+                    clause_import_run_id,
+                    diff_run_id,
+                    READER_ENRICHMENT_VERSION,
+                    input_sha256,
+                    started_at,
+                ),
+            )
+            _insert_many(
+                cur,
+                "clause_semantic_tag",
+                semantic_tag_rows,
+                json_columns={"provenance"},
+            )
+            _insert_many(
+                cur,
+                "clause_semantic_tag_atc",
+                atc_rows,
+            )
+            _insert_many(
+                cur,
+                "clause_semantic_tag_icd11_lookup",
+                public_icd_lookup_rows,
+            )
+            _insert_many(
+                cur,
+                "clause_semantic_tag_icd11_code",
+                public_icd_code_rows,
+            )
+            _insert_many(
+                cur,
+                "clause_semantic_tag_icd11_private",
+                private_icd_rows,
+            )
+            _insert_many(
+                cur,
+                "clause_condition_marker",
+                condition_rows,
+                json_columns={"provenance"},
+            )
+            _insert_many(
+                cur,
+                "agent_history_summary",
+                summary_rows,
+                json_columns={"source_edge_ids"},
+            )
+            cur.execute(
+                """
+                UPDATE nhi_rule_history_clause.reader_enrichment_run
+                SET state = 'sealed',
+                    output_sha256 = %s,
+                    semantic_tag_count = %s,
+                    tag_atc_count = %s,
+                    tag_icd11_lookup_count = %s,
+                    condition_marker_count = %s,
+                    summary_count = %s,
+                    sealed_at = %s
+                WHERE run_id = %s
+                  AND state = 'loading'
+                """,
+                (
+                    output_sha256,
+                    len(semantic_tag_rows),
+                    len(atc_rows),
+                    len(public_icd_lookup_rows),
+                    len(condition_rows),
+                    len(summary_rows),
+                    datetime.now(timezone.utc),
+                    run_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("failed to seal reader enrichment run")
+
+    return {
+        "status": "sealed",
+        "run_id": str(run_id),
+        "input_sha256": input_sha256,
+        "output_sha256": output_sha256,
+        "semantic_tag_count": len(semantic_tag_rows),
+        "tag_atc_count": len(atc_rows),
+        "tag_icd11_lookup_count": len(public_icd_lookup_rows),
+        "public_icd11_code_count": len(public_icd_code_rows),
+        "private_icd11_row_count": len(private_icd_rows),
+        "condition_marker_count": len(condition_rows),
+        "summary_count": len(summary_rows),
+    }
+
+
 EXPORT_TABLES = (
     "import_run",
+    "diff_run",
+    "reader_enrichment_run",
     "source_edition",
     "chapter",
     "clause",
@@ -1133,6 +2231,13 @@ EXPORT_TABLES = (
     "clause_version_date",
     "clause_version_edge",
     "clause_diff_hunk",
+    "diff_hunk_presentation",
+    "clause_semantic_tag",
+    "clause_semantic_tag_atc",
+    "clause_semantic_tag_icd11_lookup",
+    "clause_semantic_tag_icd11_code",
+    "clause_condition_marker",
+    "agent_history_summary",
     "coverage_assessment",
 )
 
@@ -1199,6 +2304,18 @@ def _export_rows(
 
     filters = {
         "import_run": "run_id = %s",
+        "diff_run": (
+            "run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.diff_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "reader_enrichment_run": (
+            "run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
         "chapter": (
             "chapter_id IN (SELECT chapter_id "
             "FROM nhi_rule_history_clause.clause "
@@ -1229,10 +2346,54 @@ def _export_rows(
             "FROM nhi_rule_history_clause.clause "
             "WHERE first_import_run_id = %s))"
         ),
+        "diff_hunk_presentation": (
+            "diff_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.diff_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_semantic_tag": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_semantic_tag_atc": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_semantic_tag_icd11_lookup": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_semantic_tag_icd11_code": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_condition_marker": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "agent_history_summary": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
         "coverage_assessment": "import_run_id = %s",
     }
     order_by = {
         "import_run": "started_at",
+        "diff_run": "sealed_at, run_id",
+        "reader_enrichment_run": "sealed_at, run_id",
         "chapter": "chapter_id",
         "clause": "ordinal_number",
         "clause_version": "clause_id, state_order",
@@ -1245,6 +2406,25 @@ def _export_rows(
             "clause_id, newer_first_observed_order"
         ),
         "clause_diff_hunk": "edge_id, hunk_order",
+        "diff_hunk_presentation": "diff_run_id, hunk_id",
+        "clause_semantic_tag": (
+            "enrichment_run_id, clause_id, tag_type, normalized_tag"
+        ),
+        "clause_semantic_tag_atc": (
+            "enrichment_run_id, tag_id, is_primary DESC, atc_code"
+        ),
+        "clause_semantic_tag_icd11_lookup": (
+            "enrichment_run_id, tag_id"
+        ),
+        "clause_semantic_tag_icd11_code": (
+            "enrichment_run_id, tag_id, candidate_rank"
+        ),
+        "clause_condition_marker": (
+            "enrichment_run_id, clause_id, normalized_marker"
+        ),
+        "agent_history_summary": (
+            "enrichment_run_id, clause_id, summary_id"
+        ),
         "coverage_assessment": "clause_id",
     }
     with conn.cursor(row_factory=dict_row) as cur:
@@ -1343,6 +2523,53 @@ def reader_projections(
     hunks_by_edge: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for hunk in data["clause_diff_hunk"]:
         hunks_by_edge[str(hunk["edge_id"])].append(hunk)
+    if not data["diff_run"]:
+        raise ValueError("no sealed semantic diff presentation run")
+    current_diff_run = data["diff_run"][-1]
+    current_diff_run_id = str(current_diff_run["run_id"])
+    presentation_by_hunk = {
+        str(row["hunk_id"]): row
+        for row in data["diff_hunk_presentation"]
+        if str(row["diff_run_id"]) == current_diff_run_id
+    }
+    if len(presentation_by_hunk) != len(data["clause_diff_hunk"]):
+        raise ValueError("semantic diff presentation coverage mismatch")
+    diff_policy = {
+        "algorithm_version": current_diff_run["algorithm_version"],
+        "ignored_change_policy": current_diff_run[
+            "ignored_change_policy"
+        ],
+    }
+    if not data["reader_enrichment_run"]:
+        raise ValueError("no sealed reader enrichment run")
+    current_enrichment_run = data["reader_enrichment_run"][-1]
+    current_enrichment_run_id = str(current_enrichment_run["run_id"])
+    tags_by_clause: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_semantic_tag"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            tags_by_clause[str(row["clause_id"])].append(row)
+    atc_by_tag: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_semantic_tag_atc"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            atc_by_tag[str(row["tag_id"])].append(row)
+    icd_lookup_by_tag = {
+        str(row["tag_id"]): row
+        for row in data["clause_semantic_tag_icd11_lookup"]
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id
+    }
+    icd_codes_by_tag: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_semantic_tag_icd11_code"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            icd_codes_by_tag[str(row["tag_id"])].append(row)
+    conditions_by_clause: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_condition_marker"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            conditions_by_clause[str(row["clause_id"])].append(row)
+    summary_by_clause = {
+        str(row["clause_id"]): row
+        for row in data["agent_history_summary"]
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id
+    }
     coverage_by_clause = {
         row["clause_id"]: row for row in data["coverage_assessment"]
     }
@@ -1390,6 +2617,54 @@ def reader_projections(
                 for row in rows
             ]
 
+        def transition_date_label(
+            older_id: str,
+            newer_id: str,
+        ) -> dict[str, Any]:
+            older_dates = {
+                str(row["date_value"])
+                for row in dates_by_version[older_id]
+                if row["date_value"] is not None
+            }
+            newly_observed = sorted(
+                (
+                    row
+                    for row in dates_by_version[newer_id]
+                    if row["date_value"] is not None
+                    and str(row["date_value"]) not in older_dates
+                ),
+                key=lambda row: (
+                    str(row["date_value"]),
+                    str(row["raw_value"]),
+                ),
+            )
+            if not newly_observed:
+                return {
+                    "label": None,
+                    "basis": "source_edition_fallback",
+                    "raw_values": [],
+                    "legal_effective_status": None,
+                }
+            selected = newly_observed[-1]
+            match = ROC_DATE_PART_RE.search(str(selected["raw_value"]))
+            if match is None:
+                label = str(selected["raw_value"])
+            else:
+                label = (
+                    f"{int(match.group('year'))}/"
+                    f"{int(match.group('month'))}"
+                )
+            return {
+                "label": label,
+                "basis": "new_text_date_annotation",
+                "raw_values": [
+                    str(row["raw_value"]) for row in newly_observed
+                ],
+                "legal_effective_status": selected[
+                    "legal_effective_status"
+                ],
+            }
+
         transitions: list[dict[str, Any]] = []
         for edge in sorted(
             edges_by_clause[clause_id],
@@ -1420,20 +2695,40 @@ def reader_projections(
                         "legal_predecessor_status"
                     ],
                     "crosses_known_gap": edge["crosses_known_gap"],
+                    "display_date": transition_date_label(
+                        older_id,
+                        newer_id,
+                    ),
                     "hunks": [
                         {
                             "hunk_order": hunk["hunk_order"],
-                            "change_kind": hunk["change_kind"],
+                            "source_change_kind": hunk["change_kind"],
+                            "change_kind": presentation_by_hunk[
+                                str(hunk["hunk_id"])
+                            ]["semantic_change_kind"],
                             "context_label": hunk["context_label"],
                             "old_text": hunk["old_text"],
                             "new_text": hunk["new_text"],
-                            "inline_segments": hunk["inline_segments"],
-                            "display_note": hunk["display_note"],
+                            "inline_segments": presentation_by_hunk[
+                                str(hunk["hunk_id"])
+                            ]["inline_segments"],
+                            "ignored_change_classes": (
+                                presentation_by_hunk[str(hunk["hunk_id"])][
+                                    "ignored_change_classes"
+                                ]
+                            ),
+                            "display_note": presentation_by_hunk[
+                                str(hunk["hunk_id"])
+                            ]["display_note"],
                         }
                         for hunk in sorted(
                             hunks_by_edge[str(edge["edge_id"])],
                             key=lambda row: row["hunk_order"],
                         )
+                        if presentation_by_hunk[str(hunk["hunk_id"])][
+                            "semantic_change_kind"
+                        ]
+                        != "format_only"
                     ],
                 }
             )
@@ -1441,10 +2736,78 @@ def reader_projections(
         latest_id = str(latest["clause_version_id"])
         latest_observations = observation_summary(latest_id)
         coverage = coverage_by_clause[clause_id]
+        semantic_tags = []
+        for tag in sorted(
+            tags_by_clause[clause_id],
+            key=lambda row: (
+                -len(str(row["tag_text"])),
+                str(row["normalized_tag"]),
+            ),
+        ):
+            tag_id = str(tag["tag_id"])
+            tag_payload: dict[str, Any] = {
+                "tag_id": tag_id,
+                "tag_text": tag["tag_text"],
+                "display_text": tag["display_text"],
+                "tag_type": tag["tag_type"],
+                "entity_type": tag["entity_type"],
+                "resolution_status": tag["resolution_status"],
+                "internal_url": (
+                    f"./tag.html?rule={canonical_code}&tag={tag_id}"
+                ),
+            }
+            if tag["tag_type"] == "drug":
+                tag_payload["terminology"] = {
+                    "system": "ATC",
+                    "codes": [
+                        {
+                            "code": row["atc_code"],
+                            "is_primary": row["is_primary"],
+                            "mapping_basis": row["mapping_basis"],
+                            "review_status": row["review_status"],
+                            "source_url": row["source_url"],
+                        }
+                        for row in sorted(
+                            atc_by_tag[tag_id],
+                            key=lambda row: (
+                                not bool(row["is_primary"]),
+                                str(row["atc_code"]),
+                            ),
+                        )
+                    ],
+                }
+            else:
+                lookup = icd_lookup_by_tag[tag_id]
+                tag_payload["terminology"] = {
+                    "system": "ICD-11",
+                    "public_export": "code_only_no_icd_content",
+                    "lookup_query": lookup["lookup_query"],
+                    "official_lookup_url": lookup[
+                        "official_lookup_url"
+                    ],
+                    "release": lookup["icd11_release"],
+                    "private_pg_mapping": True,
+                    "codes": [
+                        {
+                            "code": row["icd11_code"],
+                            "candidate_rank": row["candidate_rank"],
+                            "mapping_status": row["mapping_status"],
+                            "confidence": float(row["confidence"]),
+                            "display_note": row["display_note"],
+                        }
+                        for row in sorted(
+                            icd_codes_by_tag.get(tag_id, []),
+                            key=lambda row: int(row["candidate_rank"]),
+                        )
+                    ],
+                }
+            semantic_tags.append(tag_payload)
+        summary = summary_by_clause.get(clause_id)
         page = {
             "schema": "nhi-rule-history/single-clause-reader/v1",
             "generated_from": "PostgreSQL nhi_rule_history_clause",
             "canonical_version_unit": "single_clause",
+            "diff_policy": diff_policy,
             "chapter": {
                 "chapter_id": chapter["chapter_id"],
                 "display_label": chapter["display_label"],
@@ -1472,6 +2835,27 @@ def reader_projections(
                 "full_text_blocks": [
                     {
                         "block_order": block["block_order"],
+                        "block_kind": block["block_kind"],
+                        "structural_path": block["structural_path"],
+                        "render_kind": (
+                            "clause_heading"
+                            if block["block_order"] == 0
+                            else (
+                                "subsection"
+                                if re.match(
+                                    r"^（[一二三四五六七八九十]+）",
+                                    str(block["normalized_text"]),
+                                )
+                                else (
+                                    "list_item"
+                                    if re.match(
+                                        r"^\d+\.",
+                                        str(block["normalized_text"]),
+                                    )
+                                    else "paragraph"
+                                )
+                            )
+                        ),
                         "text": block["normalized_text"],
                     }
                     for block in sorted(
@@ -1494,6 +2878,36 @@ def reader_projections(
                     "legal_effective_status"
                 ],
             },
+            "semantic_tags": semantic_tags,
+            "condition_markers": [
+                {
+                    "marker_id": row["marker_id"],
+                    "marker_text": row["marker_text"],
+                    "semantic_role": row["semantic_role"],
+                }
+                for row in sorted(
+                    conditions_by_clause[clause_id],
+                    key=lambda row: (
+                        -len(str(row["marker_text"])),
+                        str(row["normalized_marker"]),
+                    ),
+                )
+            ],
+            "agent_history_summary": (
+                None
+                if summary is None
+                else {
+                    "summary_markdown": summary["summary_markdown"],
+                    "generation_method": summary[
+                        "generation_method"
+                    ],
+                    "generator_id": summary["generator_id"],
+                    "review_status": summary["review_status"],
+                    "source_diff_sha256": summary[
+                        "source_diff_sha256"
+                    ],
+                }
+            ),
             "transitions": transitions,
             "coverage": {
                 key: coverage[key]
@@ -1540,6 +2954,7 @@ def reader_projections(
         "schema": "nhi-rule-history/single-clause-index/v1",
         "generated_from": "PostgreSQL nhi_rule_history_clause",
         "canonical_version_unit": "single_clause",
+        "diff_policy": diff_policy,
         "default_clause_code": "0.4",
         "chapter": {
             "display_label": chapter["display_label"],

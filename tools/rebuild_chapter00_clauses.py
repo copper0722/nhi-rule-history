@@ -12,6 +12,8 @@ from nhi_rule_history.clause_history import (
     connect,
     export_jsonl,
     rebuild,
+    rebuild_diff_presentations,
+    rebuild_reader_enrichment,
     write_reader_projections,
 )
 
@@ -53,6 +55,8 @@ def main() -> int:
             if args.skip_rebuild
             else rebuild(conn)
         )
+        diff_result = rebuild_diff_presentations(conn)
+        enrichment_result = rebuild_reader_enrichment(conn)
         jsonl_result = export_jsonl(conn, output_dir=args.jsonl_dir)
         reader_result = write_reader_projections(
             conn,
@@ -61,6 +65,8 @@ def main() -> int:
 
     result = {
         "postgresql": rebuild_result,
+        "semantic_diff": diff_result,
+        "reader_enrichment": enrichment_result,
         "jsonl": jsonl_result,
         "reader_projection": reader_result,
     }

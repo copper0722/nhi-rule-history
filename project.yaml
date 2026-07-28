@@ -10,8 +10,8 @@ last_verified_date: "2026-07-28"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 423
-  public_tests_passed: 416
+  public_tests_run: 429
+  public_tests_passed: 422
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -27,6 +27,7 @@ public_outputs:
   sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
   reader_prototype: prototype/reader/index.html
+  reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
@@ -115,6 +116,36 @@ chapter_zero_template:
     same_clause_only: true
     adjacency_basis: adjacent_distinct_text_state_across_official_editions
     legal_predecessor_status: not_claimed
+  semantic_diff_presentation:
+    run_id: a2ebd8e5-bf91-5794-a974-b7128907cbf4
+    algorithm_version: chapter-00-semantic-diff-presentation/v2
+    ignored_change_classes:
+      - whitespace
+      - single_quote
+      - width_variant
+    pure_addition_has_fake_old_side: false
+  reader_enrichment:
+    run_id: 76eb6518-7900-5ccd-9994-5b6e85bba1a1
+    generator_version: chapter-00-reader-enrichment/v3
+    semantic_tags: 65
+    atc_code_relations: 50
+    icd11_code_only_relations: 21
+    condition_markers: 14
+    agent_history_summaries: 1
+    icd11_public_fields:
+      - code
+      - candidate_rank
+      - mapping_status
+      - confidence
+    icd11_private_fields:
+      - title
+      - uri
+      - definition
+      - reference_snapshot
+    reader_example_sha256: 694acad1796844ccc8d8557bbae26e6986b1524fe8235a708b36480da77cbd5e
+    sqlite_projection_sha256: 35eecae8c91564702745e89d6c648c469a099a1e0b4728cb9780e854f3bf905e
+    browser_desktop_check: passed_no_horizontal_overflow
+    browser_mobile_390x844_check: passed_no_horizontal_overflow
   claim_limits:
     official_source_universe_closed: false
     legal_history_complete: false
@@ -673,7 +704,10 @@ gates:
     canonical_rule_atc_publication_authorized: false
     receipt: docs/audits/2026-07-27-inae3000-atc-linkage-audit.json
   icd11_linkage:
-    status: blocked_pending_who_mapping_agreement
+    status: code_only_prototype_live_reusable_crosswalk_release_blocked
+    public_code_display: permitted_by_project_policy
+    full_icd_content_export: forbidden
+    reusable_crosswalk_release: blocked_pending_who_mapping_agreement
   postgresql_canonical_schema:
     status: pro_method_audit_accepted_live_blocked_external_verifier_missing
     live_applied: false

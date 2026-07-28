@@ -623,3 +623,38 @@
   public tests with seven skips. Playwright verified `0.4` desktop and mobile,
   global search routing `生物標記` to `0.12`, `0.2` zero-transition behavior,
   external-link safety, and zero horizontal overflow.
+
+## 2026-07-28 — semantic diff, tag rendering and public `0.4` demo
+
+- Added a sealed semantic-diff presentation layer while preserving the exact
+  source hunks. Unicode whitespace, single-quote variants and NFKC-equivalent
+  width variants are ignored only for change classification. Pure additions
+  render only `下一版新增`; no synthetic deleted old side is emitted.
+- Added PG-canonical reader enrichment for clause `0.4`: 65 semantic tags,
+  50 ATC code relations, 21 code-only ICD-11 relations, 14 longest-first
+  condition markers and one agent history summary bound to the diff hash.
+  Latest run `76eb6518-7900-5ccd-9994-5b6e85bba1a1` is sealed under
+  `chapter-00-reader-enrichment/v3`.
+- ICD-11 alphanumeric codes are visible in the reader and tag page. Confirmed
+  and candidate mappings are visibly different. WHO titles, URIs, definitions
+  and the reference snapshot stay in private PostgreSQL and are not exported.
+  A reusable crosswalk release remains a separate licensing gate.
+- Date labels are generated from newly appearing in-text date facts. The 99
+  edition of `0.4` displays `99/11`, retains the source-edition provenance and
+  states that the label is not a verified legal effective date.
+- Improved article rendering: top-level rule heading, subsection headings,
+  smaller parenthesized dates, semantic drug/disease links and role-colored
+  constraint phrases. Replaced the overly broad single-character `需` marker
+  with `需要` and `需敘明理由` to avoid highlighting one character inside
+  ordinary words.
+- Rebuilt JSONL, SQLite and 12 reader projections from PostgreSQL. SQLite
+  SHA-256 `35eecae8c91564702745e89d6c648c469a099a1e0b4728cb9780e854f3bf905e`
+  passed foreign-key and integrity checks; `0.4.json` SHA-256 is
+  `694acad1796844ccc8d8557bbae26e6986b1524fe8235a708b36480da77cbd5e`.
+- In-app Browser verified the desktop and 390×844 mobile layouts, direct code
+  display, candidate labels, `99/11`, agent summary, pure additions and zero
+  horizontal overflow. The full public suite passed 429 tests with seven
+  environment skips.
+- Added a GitHub Pages Actions workflow publishing only `prototype/reader`.
+  The page includes copy-link and GitHub issue feedback actions. No Claude,
+  Grok, Gemini or other rule-cleaning model was called.

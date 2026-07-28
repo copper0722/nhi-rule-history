@@ -59,9 +59,18 @@ ICD-11 is licensed by WHO under CC BY-ND 3.0 IGO. WHO's terms state that
 mapping or producing crosswalks between other classifications or terminologies
 and ICD-11 requires a separate written agreement.
 
-Therefore this repository publishes the linkage schema, indication source
-spans, API integration code, and empty examples, but no populated NHI-to-ICD-11
-crosswalk until the required agreement is documented.
+The public reader prototype may display an individual alphanumeric ICD-11 code
+beside a project-authored disease tag, together with an explicit
+`agent_selected` or `candidate` review state. These code-only relations are
+not passwords or secret data, but they are excluded from this repository's
+CC BY 4.0 data grant and are not represented as a WHO-authorized reusable
+crosswalk dataset.
+
+The repository does not publish WHO titles, URIs, definitions, hierarchy,
+indexes, or a reference snapshot. Those fields remain private PostgreSQL
+data. Because WHO separately regulates mappings and crosswalks, a stable
+reusable NHI-to-ICD-11 mapping release remains blocked until the required
+agreement is documented.
 
 References:
 

@@ -9,9 +9,12 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from nhi_rule_history.clause_history import (
+    DIFF_PRESENTATION_VERSION,
     DIFF_VERSION,
     EXTRACTOR_VERSION,
+    READER_ENRICHMENT_VERSION,
     build_sqlite,
+    semantic_diff_presentation,
 )
 
 
@@ -56,14 +59,23 @@ class Chapter00ClauseExportTests(unittest.TestCase):
             {
                 "chapter": 1,
                 "clause": 12,
+                "agent_history_summary": 1,
+                "clause_condition_marker": 14,
                 "clause_diff_hunk": 26,
+                "clause_semantic_tag": 65,
+                "clause_semantic_tag_atc": 50,
+                "clause_semantic_tag_icd11_code": 21,
+                "clause_semantic_tag_icd11_lookup": 21,
                 "clause_version": 29,
                 "clause_version_block": 318,
                 "clause_version_date": 261,
                 "clause_version_edge": 17,
                 "clause_version_observation": 152,
                 "coverage_assessment": 12,
+                "diff_hunk_presentation": 26,
+                "diff_run": 1,
                 "import_run": 1,
+                "reader_enrichment_run": 1,
                 "source_edition": 15,
             },
         )
@@ -164,12 +176,67 @@ class Chapter00ClauseExportTests(unittest.TestCase):
         self.assertEqual(runs[0]["state"], "sealed")
         self.assertEqual(runs[0]["extractor_version"], EXTRACTOR_VERSION)
         self.assertEqual(runs[0]["diff_version"], DIFF_VERSION)
+        import_owned_tables = {
+            "chapter",
+            "clause",
+            "clause_version",
+            "clause_version_observation",
+            "clause_version_block",
+            "clause_version_date",
+            "clause_version_edge",
+            "clause_diff_hunk",
+            "coverage_assessment",
+        }
         expected_counts = {
-            key: value
-            for key, value in MANIFEST["counts"].items()
-            if key not in {"import_run", "source_edition"}
+            key: MANIFEST["counts"][key] for key in import_owned_tables
         }
         self.assertEqual(runs[0]["row_counts"], expected_counts)
+
+    def test_semantic_diff_does_not_invent_a_deleted_old_side(self) -> None:
+        addition = semantic_diff_presentation("ABC", "ABCD")
+        self.assertEqual(addition["semantic_change_kind"], "added")
+        self.assertFalse(
+            any(
+                segment["kind"] == "removed"
+                for segment in addition["inline_segments"]
+            )
+        )
+
+        formatting = semantic_diff_presentation(
+            "Ａ B’C",
+            "AＢC",
+        )
+        self.assertEqual(formatting["semantic_change_kind"], "format_only")
+        self.assertEqual(
+            set(formatting["ignored_change_classes"]),
+            {"single_quote", "whitespace", "width_variant"},
+        )
+
+    def test_diff_and_reader_enrichment_are_sealed_projections(self) -> None:
+        diff_run = read_jsonl("diff_run")[0]
+        enrichment = read_jsonl("reader_enrichment_run")[0]
+        self.assertEqual(diff_run["algorithm_version"], DIFF_PRESENTATION_VERSION)
+        self.assertEqual(
+            enrichment["generator_version"],
+            READER_ENRICHMENT_VERSION,
+        )
+        self.assertEqual(diff_run["hunk_count"], 26)
+        self.assertEqual(enrichment["semantic_tag_count"], 65)
+        self.assertEqual(enrichment["condition_marker_count"], 14)
+
+    def test_icd11_codes_are_public_but_icd_content_stays_private(self) -> None:
+        self.assertFalse(
+            (EXPORT / "clause_semantic_tag_icd11_private.jsonl").exists()
+        )
+        public_rows = read_jsonl("clause_semantic_tag_icd11_lookup")
+        self.assertTrue(public_rows)
+        self.assertTrue(all(row["icd11_code"] is None for row in public_rows))
+        self.assertTrue(all(row["icd11_uri"] is None for row in public_rows))
+        code_rows = read_jsonl("clause_semantic_tag_icd11_code")
+        self.assertEqual(len(code_rows), 21)
+        self.assertTrue(all(row["icd11_code"] for row in code_rows))
+        self.assertTrue(all("icd11_title" not in row for row in code_rows))
+        self.assertTrue(all("icd11_uri" not in row for row in code_rows))
 
     def test_sqlite_is_a_full_portable_projection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

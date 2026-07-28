@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 6
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 0,
     "version_state_count": 1
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:6826b09db9eef375e7e15dabdedc713dd1670fe1b65c09415876388dd4e89ad9",
@@ -47,7 +69,13 @@
     "display_title": "維生素、荷爾蒙及白蛋白製劑等類藥品之使用，門診以附表三-A及三-B所列醫治病症，住院以特殊病症…",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.6"
+        ],
         "text": "六、維生素、荷爾蒙及白蛋白製劑等類藥品之使用，門診以附表三-A及三-B所列醫治病症，住院以特殊病症或施行大手術後必須積極治療者為原則，凡作一般營養補給者，不予給付。"
       }
     ],
@@ -222,5 +250,6 @@
     "state_order": 0
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": []
 }

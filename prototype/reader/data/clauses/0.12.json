@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 12
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 0,
     "version_state_count": 1
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:918ffc500a0a7d7b3102d8b6164823c022d2ca0924ce37f3b44885445f249b53",
@@ -53,19 +75,43 @@
     "display_title": "藥物給付規定所列需檢附生物標記檢測結果報告者，其報告須符合下列任一條件（113/6/1）",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.12"
+        ],
         "text": "十二、藥物給付規定所列需檢附生物標記檢測結果報告者，其報告須符合下列任一條件（113/6/1）："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.12"
+        ],
         "text": "（一）符合全民健康保險醫療服務給付項目及支付標準規定。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.12"
+        ],
         "text": "（二）使用經衛生福利部許可之伴隨式診斷用體外診斷醫療器材檢測（IVD）。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.12"
+        ],
         "text": "（三）經衛生福利部核定之實驗室開發檢測施行計畫表列醫療機構之認證實驗室執行，且技術項目符合核定之分析標的。"
       }
     ],
@@ -86,5 +132,6 @@
     "state_order": 0
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": []
 }

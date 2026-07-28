@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 5
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 1,
     "version_state_count": 2
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:10ea2d83f004f45b13f6a650d60297de260b2a4e1aea8f51c302af2b5d35b206",
@@ -47,7 +69,13 @@
     "display_title": "使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表 (附表一) 所列者為…",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.5"
+        ],
         "text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表 (附表一) 所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本保險規定之抗微生物製劑使用原則用藥。"
       }
     ],
@@ -156,10 +184,17 @@
     "state_order": 1
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:b2f503d98c1c2b3e15a9b54a020cdae0589ca8ec83afe0a62e92086aad43cf1b",
       "hunks": [
         {
@@ -167,36 +202,49 @@
           "context_label": "0.5",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": " "
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "(附表一)"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": " "
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本"
+              "side": "old",
+              "text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表(附表一)所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本"
             },
             {
               "kind": "removed",
               "side": "old",
               "text": "局"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "規定之抗微生物製劑使用原則用藥。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(附表一)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本"
             },
             {
               "kind": "added",
@@ -205,12 +253,13 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "規定之抗微生物製劑使用原則用藥。"
             }
           ],
           "new_text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表 (附表一) 所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本保險規定之抗微生物製劑使用原則用藥。",
-          "old_text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表(附表一)所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本局規定之抗微生物製劑使用原則用藥。"
+          "old_text": "五、使用抗微生物製劑，應優先選用全民健康保險醫療常用第一線抗微生物製劑品名表(附表一)所列者為限。但經微生物培養及藥物敏感試驗確實有效或病情需要者，依本局規定之抗微生物製劑使用原則用藥。",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

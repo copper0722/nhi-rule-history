@@ -230,6 +230,177 @@ CREATE TABLE clause_diff_hunk (
   CHECK (old_text IS NOT NULL OR new_text IS NOT NULL)
 );
 
+CREATE TABLE diff_run (
+  run_id TEXT PRIMARY KEY,
+  clause_import_run_id TEXT NOT NULL REFERENCES import_run(run_id),
+  algorithm_version TEXT NOT NULL,
+  ignored_change_policy TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state = 'sealed'),
+  input_sha256 TEXT NOT NULL CHECK (length(input_sha256) = 64),
+  output_sha256 TEXT NOT NULL CHECK (length(output_sha256) = 64),
+  hunk_count INTEGER NOT NULL CHECK (hunk_count >= 0),
+  started_at TEXT NOT NULL,
+  sealed_at TEXT NOT NULL,
+  UNIQUE (clause_import_run_id, algorithm_version)
+);
+
+CREATE TABLE diff_hunk_presentation (
+  diff_run_id TEXT NOT NULL REFERENCES diff_run(run_id),
+  hunk_id TEXT NOT NULL REFERENCES clause_diff_hunk(hunk_id),
+  semantic_change_kind TEXT NOT NULL CHECK (
+    semantic_change_kind IN (
+      'added', 'removed', 'replaced', 'format_only'
+    )
+  ),
+  inline_segments TEXT NOT NULL,
+  ignored_change_classes TEXT NOT NULL,
+  display_note TEXT NOT NULL,
+  PRIMARY KEY (diff_run_id, hunk_id)
+);
+
+CREATE TABLE reader_enrichment_run (
+  run_id TEXT PRIMARY KEY,
+  clause_import_run_id TEXT NOT NULL REFERENCES import_run(run_id),
+  diff_run_id TEXT NOT NULL REFERENCES diff_run(run_id),
+  generator_version TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state = 'sealed'),
+  input_sha256 TEXT NOT NULL CHECK (length(input_sha256) = 64),
+  output_sha256 TEXT NOT NULL CHECK (length(output_sha256) = 64),
+  semantic_tag_count INTEGER NOT NULL CHECK (semantic_tag_count >= 0),
+  tag_atc_count INTEGER NOT NULL CHECK (tag_atc_count >= 0),
+  tag_icd11_lookup_count INTEGER NOT NULL CHECK (
+    tag_icd11_lookup_count >= 0
+  ),
+  condition_marker_count INTEGER NOT NULL CHECK (
+    condition_marker_count >= 0
+  ),
+  summary_count INTEGER NOT NULL CHECK (summary_count >= 0),
+  started_at TEXT NOT NULL,
+  sealed_at TEXT NOT NULL,
+  UNIQUE (clause_import_run_id, diff_run_id, generator_version)
+);
+
+CREATE TABLE clause_semantic_tag (
+  enrichment_run_id TEXT NOT NULL REFERENCES reader_enrichment_run(run_id),
+  tag_id TEXT NOT NULL,
+  clause_id TEXT NOT NULL REFERENCES clause(clause_id),
+  tag_text TEXT NOT NULL,
+  normalized_tag TEXT NOT NULL,
+  display_text TEXT NOT NULL,
+  tag_type TEXT NOT NULL CHECK (tag_type IN ('drug', 'disease')),
+  entity_type TEXT NOT NULL CHECK (
+    entity_type IN (
+      'ingredient', 'brand', 'drug_class', 'abbreviation',
+      'disease', 'clinical_condition'
+    )
+  ),
+  match_mode TEXT NOT NULL CHECK (match_mode = 'exact_case_insensitive'),
+  resolution_status TEXT NOT NULL CHECK (
+    resolution_status IN (
+      'resolved_atc', 'multiple_atc',
+      'official_lookup_only', 'terminology_pending'
+    )
+  ),
+  provenance TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, tag_id),
+  UNIQUE (enrichment_run_id, clause_id, normalized_tag)
+);
+
+CREATE TABLE clause_semantic_tag_atc (
+  enrichment_run_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL,
+  atc_code TEXT NOT NULL,
+  is_primary INTEGER NOT NULL CHECK (is_primary IN (0, 1)),
+  mapping_basis TEXT NOT NULL CHECK (
+    mapping_basis IN (
+      'nhi_product_name_atc_match',
+      'nhi_atc_reference_plus_clause_context',
+      'nhi_rule_group_mapping'
+    )
+  ),
+  evidence_count INTEGER NOT NULL CHECK (evidence_count >= 0),
+  source_updated_at TEXT,
+  source_url TEXT NOT NULL,
+  review_status TEXT NOT NULL CHECK (
+    review_status IN ('agent_verified', 'agent_curated')
+  ),
+  PRIMARY KEY (enrichment_run_id, tag_id, atc_code),
+  FOREIGN KEY (enrichment_run_id, tag_id)
+    REFERENCES clause_semantic_tag(enrichment_run_id, tag_id)
+);
+
+CREATE TABLE clause_semantic_tag_icd11_lookup (
+  enrichment_run_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL,
+  lookup_query TEXT NOT NULL,
+  official_lookup_url TEXT NOT NULL,
+  icd11_release TEXT NOT NULL,
+  language_tag TEXT NOT NULL,
+  mapping_status TEXT NOT NULL CHECK (
+    mapping_status = 'official_lookup_only_no_crosswalk'
+  ),
+  icd11_code TEXT CHECK (icd11_code IS NULL),
+  icd11_uri TEXT CHECK (icd11_uri IS NULL),
+  license_note TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, tag_id),
+  FOREIGN KEY (enrichment_run_id, tag_id)
+    REFERENCES clause_semantic_tag(enrichment_run_id, tag_id)
+);
+
+CREATE TABLE clause_semantic_tag_icd11_code (
+  enrichment_run_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL,
+  candidate_rank INTEGER NOT NULL CHECK (candidate_rank >= 1),
+  icd11_code TEXT NOT NULL,
+  mapping_status TEXT NOT NULL CHECK (
+    mapping_status IN ('agent_selected', 'candidate')
+  ),
+  confidence REAL NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+  display_note TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, tag_id, candidate_rank),
+  UNIQUE (enrichment_run_id, tag_id, icd11_code),
+  FOREIGN KEY (enrichment_run_id, tag_id)
+    REFERENCES clause_semantic_tag(enrichment_run_id, tag_id)
+);
+
+CREATE TABLE clause_condition_marker (
+  enrichment_run_id TEXT NOT NULL REFERENCES reader_enrichment_run(run_id),
+  marker_id TEXT NOT NULL,
+  clause_id TEXT NOT NULL REFERENCES clause(clause_id),
+  marker_text TEXT NOT NULL,
+  normalized_marker TEXT NOT NULL,
+  semantic_role TEXT NOT NULL CHECK (
+    semantic_role IN (
+      'restriction', 'maximum', 'prohibition', 'requirement',
+      'conjunction', 'exception', 'prior_authorization'
+    )
+  ),
+  match_mode TEXT NOT NULL CHECK (match_mode = 'exact_longest_first'),
+  provenance TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, marker_id),
+  UNIQUE (enrichment_run_id, clause_id, normalized_marker)
+);
+
+CREATE TABLE agent_history_summary (
+  enrichment_run_id TEXT NOT NULL REFERENCES reader_enrichment_run(run_id),
+  summary_id TEXT NOT NULL,
+  clause_id TEXT NOT NULL REFERENCES clause(clause_id),
+  language_tag TEXT NOT NULL CHECK (language_tag = 'zh-TW'),
+  summary_markdown TEXT NOT NULL,
+  source_edge_ids TEXT NOT NULL,
+  source_diff_sha256 TEXT NOT NULL CHECK (length(source_diff_sha256) = 64),
+  generation_method TEXT NOT NULL CHECK (
+    generation_method = 'pure_agentic_from_structured_diff'
+  ),
+  generator_id TEXT NOT NULL,
+  review_status TEXT NOT NULL CHECK (
+    review_status IN ('agent_generated_unreviewed', 'human_reviewed')
+  ),
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, summary_id),
+  UNIQUE (enrichment_run_id, clause_id)
+);
+
 CREATE TABLE coverage_assessment (
   assessment_id TEXT PRIMARY KEY,
   clause_id TEXT NOT NULL REFERENCES clause(clause_id),
@@ -286,3 +457,9 @@ CREATE INDEX clause_block_version_order_idx
   ON clause_version_block(clause_version_id, block_order);
 CREATE INDEX clause_hunk_edge_order_idx
   ON clause_diff_hunk(edge_id, hunk_order);
+CREATE INDEX diff_presentation_hunk_idx
+  ON diff_hunk_presentation(hunk_id, diff_run_id);
+CREATE INDEX clause_semantic_tag_lookup_idx
+  ON clause_semantic_tag(
+    enrichment_run_id, clause_id, normalized_tag
+  );

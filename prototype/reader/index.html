@@ -63,6 +63,25 @@
           <span class="scope-note__icon" aria-hidden="true">i</span>
           <p>正在讀取單一條文 PG projection…</p>
         </div>
+        <div class="prototype-actions" aria-label="分享與回饋">
+          <div>
+            <strong>這是公開 prototype</strong>
+            <span>歡迎分享給臉友試讀，回報看不懂或容易誤解的地方。</span>
+          </div>
+          <button id="share-button" class="action-button" type="button">
+            複製分享網址
+          </button>
+          <a
+            id="feedback-link"
+            class="action-button action-button--primary"
+            href="https://github.com/copper0722/nhi-rule-history/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            提供回饋 ↗
+          </a>
+          <span id="share-status" class="share-status" aria-live="polite"></span>
+        </div>
       </section>
 
       <section class="find-bar" aria-labelledby="find-title">
@@ -149,6 +168,20 @@
           <span><i class="legend__mark legend__mark--old">−</i> 下一版移除</span>
           <span><i class="legend__mark legend__mark--new">＋</i> 下一版新增</span>
         </div>
+        <p id="diff-ignore-policy" class="diff-ignore-policy">
+          正在讀取可忽略的格式差異…
+        </p>
+
+        <article id="agent-summary" class="agent-summary" hidden>
+          <header>
+            <div>
+              <p class="eyebrow">AGENT SUMMARIZE · PURE AGENTIC WORK</p>
+              <h3>先看懂這一條怎麼變</h3>
+            </div>
+            <span>摘要不取代官方條文</span>
+          </header>
+          <div id="agent-summary-body" class="agent-summary__body"></div>
+        </article>
 
         <div id="transition-list" class="transition-list" aria-live="polite">
           <div class="skeleton"></div>

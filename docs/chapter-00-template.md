@@ -31,6 +31,12 @@ The single-clause import is:
 | In-text date annotations | 261 |
 | Same-clause version edges | 17 |
 | Diff hunks | 26 |
+| Semantic diff presentations | 26 |
+| Reader semantic tags | 65 |
+| ATC code relations | 50 |
+| ICD-11 code-only relations | 21 |
+| Condition marker rules | 14 |
+| Agent history summaries | 1 |
 | Per-clause coverage assessments | 12 |
 
 Run ID:
@@ -62,6 +68,14 @@ The additive `nhi_rule_history_clause` schema contains:
 | `clause_version_date` | in-text date candidates without legal promotion |
 | `clause_version_edge` | adjacent distinct text states of the same clause |
 | `clause_diff_hunk` | stored removed/added/replaced segments |
+| `diff_run` / `diff_hunk_presentation` | sealed reader-facing semantic diff |
+| `reader_enrichment_run` | sealed semantic-tag and summary generator receipt |
+| `clause_semantic_tag` | exact drug, class, brand and disease terms |
+| `clause_semantic_tag_atc` | code-only ATC relations used by this clause |
+| `clause_semantic_tag_icd11_code` | public code-only relation and review state |
+| `clause_semantic_tag_icd11_private` | private title/URI/full mapping evidence |
+| `clause_condition_marker` | longest-first restriction/requirement lexicon |
+| `agent_history_summary` | agent summary bound to the source diff hash |
 | `coverage_assessment` | per-clause denominator and claim limits |
 
 PostgreSQL is the only writable authority. JSONL, SQLite and reader JSON are
@@ -110,6 +124,29 @@ edge and hunk rows from the PG projection. The newest selected clause appears
 in full; each older row shows only what that older state loses and what the
 next state gains.
 
+### Semantic diff presentation
+
+The stored source hunk is never overwritten. A second sealed presentation
+layer normalizes only for comparison:
+
+- Unicode whitespace is ignored;
+- straight, curly and full-width single quotes are equivalent;
+- NFKC-equivalent full-width and half-width characters are equivalent.
+
+Display text always comes from the exact stored clause text. If `ABC` becomes
+`ABCD`, the reader emits only `下一版新增 D`; it does not invent a red
+`下一版刪除 ABC` block. A true replacement may show both sides. A
+format-only difference remains auditable in PostgreSQL but is not shown as a
+substantive reader change.
+
+### Reader date label
+
+For one adjacent clause-version edge, the reader compares the structured
+date-fact sets and selects the latest date annotation that first appears in
+the newer text. It renders only ROC year/month (`99/11`) as the primary label.
+The source-edition range remains visible as provenance. This is a reader
+label for the text annotation, not a promoted legal effective date.
+
 Edition labels and in-text slash dates do not automatically become legal
 effective dates. Per-clause coverage therefore remains:
 
@@ -117,6 +154,31 @@ effective dates. Per-clause coverage therefore remains:
 official_source_universe_closed = false
 legal_history_complete = false
 ```
+
+## Reader enrichment boundary
+
+The `0.4` prototype performs longest-match-first conditional rendering:
+
+- drug ingredients, brands and classes link to a local tag page and show the
+  primary ATC code inline; all clause-specific codes remain available on the
+  tag page;
+- disease terms link to a local tag page and show ICD-11 code(s);
+- `agent_selected` codes are visually distinct from `candidate` codes;
+- broad terms with no defensible single code remain `待判讀`;
+- phrases such as `至多`, `不得`, `需要`, `且` and prior-authorization
+  phrases are highlighted by semantic role;
+- parenthesized ROC dates use a smaller typographic level.
+
+The public ICD projection contains only the project-authored term→code
+relation, rank, confidence and review state. WHO titles, URIs, definitions and
+the ICD reference snapshot remain in private PostgreSQL and are absent from
+JSONL, SQLite and the static site. Code-only rows are not represented as WHO
+endorsement or as completed clinical coding advice.
+
+The `agent_history_summary` is generated from the sealed same-clause diff,
+stores the exact source edge IDs and diff hash, and appears immediately above
+the history. Its `agent_generated_unreviewed` state stays visible; it never
+replaces official clause text.
 
 ## Rebuild
 
@@ -148,6 +210,7 @@ identity; it cannot overwrite the earlier sealed receipt.
 - [Portable SQLite schema](../database/clause-sqlite-schema.sql)
 - [Reader clause index](../prototype/reader/data/clauses/index.json)
 - [Example `0.4` reader projection](../prototype/reader/data/clauses/0.4.json)
+- [Public `0.4` prototype](https://copper0722.github.io/nhi-rule-history/?rule=0.4)
 
 The earlier [`chapter-00`](../data/templates/chapter-00/) export remains useful
 as source-edition provenance. It is not the canonical clause-version dataset.

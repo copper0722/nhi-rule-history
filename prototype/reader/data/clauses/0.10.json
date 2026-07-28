@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 10
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 1,
     "version_state_count": 2
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:c4d40c640f1db8491b23d28748fb1ca6a4852b4e6a2a0236eaeddc61e734f3b1",
@@ -47,23 +69,53 @@
     "display_title": "下列藥品為本保險界定之「無積極療效藥品」，不建議使用",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.10"
+        ],
         "text": "十、下列藥品為本保險界定之「無積極療效藥品」，不建議使用："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.10"
+        ],
         "text": "（一）無藥品許可證，或許可證過期，或經主管機關再評估後未通過者。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.10"
+        ],
         "text": "（二）醫學專科教科書未列舉，或載明不適用者。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.10"
+        ],
         "text": "（三）醫學專科治療手冊未列舉，或載明不適用者。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 4,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.10"
+        ],
         "text": "（四）對藥品療效之原始文獻 (primary data) 之評論未收載於「臨床醫學電腦資訊系統」(Computer Clinical Information System)，或未給予正面評價者。"
       }
     ],
@@ -172,10 +224,17 @@
     "state_order": 1
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:046f2a1564a7d7d725996d34dab04652a47a8e1aac72d89901af8368472112c5",
       "hunks": [
         {
@@ -183,35 +242,28 @@
           "context_label": "0.10",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "width_variant"
+          ],
           "inline_segments": [
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": "("
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "（"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "一"
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": ")"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "）"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "無藥品許可證，或許可證過期，或經"
             },
             {
@@ -220,18 +272,44 @@
               "text": "衛生署"
             },
             {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "再評估後未通過者。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "（"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "一"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "無藥品許可證，或許可證過期，或經"
+            },
+            {
               "kind": "added",
               "side": "new",
               "text": "主管機關"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "再評估後未通過者。"
             }
           ],
           "new_text": "（一）無藥品許可證，或許可證過期，或經主管機關再評估後未通過者。",
-          "old_text": "(一)無藥品許可證，或許可證過期，或經衛生署再評估後未通過者。"
+          "old_text": "(一)無藥品許可證，或許可證過期，或經衛生署再評估後未通過者。",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

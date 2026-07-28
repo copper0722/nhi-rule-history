@@ -1,4 +1,7 @@
 const INDEX_URL = "./data/clauses/index.json";
+const PUBLIC_DEMO_URL = "https://copper0722.github.io/nhi-rule-history/";
+const FEEDBACK_URL =
+  "https://github.com/copper0722/nhi-rule-history/issues/new";
 
 const state = {
   index: null,
@@ -16,11 +19,17 @@ const els = {
   scopeNote: document.querySelector("#scope-note p"),
   latestMeta: document.querySelector("#latest-meta"),
   latestText: document.querySelector("#latest-text"),
+  agentSummary: document.querySelector("#agent-summary"),
+  agentSummaryBody: document.querySelector("#agent-summary-body"),
   transitionList: document.querySelector("#transition-list"),
+  diffIgnorePolicy: document.querySelector("#diff-ignore-policy"),
   search: document.querySelector("#page-search"),
   searchStatus: document.querySelector("#search-status"),
   clauseResults: document.querySelector("#clause-results"),
   print: document.querySelector("#print-button"),
+  share: document.querySelector("#share-button"),
+  shareStatus: document.querySelector("#share-status"),
+  feedback: document.querySelector("#feedback-link"),
   loadError: document.querySelector("#load-error"),
 };
 
@@ -38,6 +47,152 @@ function normalizedSearch(value) {
     .normalize("NFKC")
     .toLocaleLowerCase()
     .replace(/\s+/gu, "");
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function terminologyLabel(tag) {
+  if (tag.tag_type === "disease") {
+    const codes = tag.terminology?.codes ?? [];
+    if (!codes.length) return "ICD-11 待判讀";
+    const suffix = codes.some((item) => item.mapping_status === "candidate")
+      ? " · 候選"
+      : "";
+    return `ICD-11 ${codes.map((item) => item.code).join(" · ")}${suffix}`;
+  }
+  const codes = tag.terminology?.codes?.map((item) => item.code) ?? [];
+  if (!codes.length) return "ATC 待核對";
+  return codes.length === 1
+    ? `ATC ${codes[0]}`
+    : `ATC ${codes[0]} +${codes.length - 1}`;
+}
+
+function collectRichTextMatches(text) {
+  const candidates = [];
+  const tags = state.data?.semantic_tags ?? [];
+  for (const tag of tags) {
+    const pattern = new RegExp(escapeRegExp(tag.tag_text), "giu");
+    for (const match of text.matchAll(pattern)) {
+      candidates.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        kind: "tag",
+        priority: 30,
+        payload: tag,
+      });
+    }
+  }
+  const markers = state.data?.condition_markers ?? [];
+  for (const marker of markers) {
+    const pattern = new RegExp(escapeRegExp(marker.marker_text), "gu");
+    for (const match of text.matchAll(pattern)) {
+      candidates.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        kind: "condition",
+        priority: 10,
+        payload: marker,
+      });
+    }
+  }
+  const datePattern =
+    /[（(]\s*\d{2,3}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2}(?:\s*[、,，]\s*\d{2,3}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})*\s*[）)]/gu;
+  for (const match of text.matchAll(datePattern)) {
+    candidates.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      kind: "date",
+      priority: 20,
+      payload: null,
+    });
+  }
+  candidates.sort(
+    (left, right) =>
+      left.start - right.start ||
+      right.end - right.start - (left.end - left.start) ||
+      right.priority - left.priority,
+  );
+  const selected = [];
+  let cursor = 0;
+  for (const candidate of candidates) {
+    if (candidate.start < cursor) continue;
+    selected.push(candidate);
+    cursor = candidate.end;
+  }
+  return selected;
+}
+
+function renderRichText(value) {
+  const text = String(value ?? "");
+  const matches = collectRichTextMatches(text);
+  if (!matches.length) return escapeHtml(text);
+  const output = [];
+  let cursor = 0;
+  for (const match of matches) {
+    output.push(escapeHtml(text.slice(cursor, match.start)));
+    const matchedText = escapeHtml(text.slice(match.start, match.end));
+    if (match.kind === "tag") {
+      const tag = match.payload;
+      output.push(`
+        <a
+          class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}"
+          href="${escapeHtml(tag.internal_url)}"
+          title="${escapeHtml(terminologyLabel(tag))}"
+        >
+          <span>${matchedText}</span>
+          <small>${escapeHtml(terminologyLabel(tag))}</small>
+        </a>
+      `);
+    } else if (match.kind === "condition") {
+      const marker = match.payload;
+      output.push(
+        `<mark class="condition-term condition-term--${escapeHtml(marker.semantic_role)}">${matchedText}</mark>`,
+      );
+    } else {
+      output.push(
+        `<small class="rule-date" title="條文內日期註記；尚未認定為法律生效日">${matchedText}</small>`,
+      );
+    }
+    cursor = match.end;
+  }
+  output.push(escapeHtml(text.slice(cursor)));
+  return output.join("");
+}
+
+function renderMarkdownInline(value) {
+  return String(value ?? "")
+    .split("**")
+    .map((part, index) =>
+      index % 2 ? `<strong>${renderRichText(part)}</strong>` : renderRichText(part),
+    )
+    .join("");
+}
+
+function renderLimitedMarkdown(markdown) {
+  const lines = String(markdown ?? "").split(/\r?\n/u);
+  const output = [];
+  let listOpen = false;
+  for (const line of lines) {
+    if (line.startsWith("- ")) {
+      if (!listOpen) {
+        output.push("<ul>");
+        listOpen = true;
+      }
+      output.push(`<li>${renderMarkdownInline(line.slice(2))}</li>`);
+      continue;
+    }
+    if (listOpen) {
+      output.push("</ul>");
+      listOpen = false;
+    }
+    if (line.trim()) {
+      output.push(`<p>${renderMarkdownInline(line)}</p>`);
+    }
+  }
+  if (listOpen) output.push("</ul>");
+  return output.join("");
 }
 
 function sourceLink(url, label = "官方 ODT") {
@@ -58,14 +213,14 @@ function editionSource(observations, position = "last") {
 }
 
 function inlineSide(segments, side, fallback) {
-  if (!segments?.length) return escapeHtml(fallback);
+  if (!segments?.length) return renderRichText(fallback);
   const visible = segments.filter(
     (segment) => segment.side === "both" || segment.side === side,
   );
-  if (!visible.length) return escapeHtml(fallback);
+  if (!visible.length) return renderRichText(fallback);
   return visible
     .map((segment) => {
-      const content = escapeHtml(segment.text);
+      const content = renderRichText(segment.text);
       const changed =
         (side === "old" && segment.kind === "removed") ||
         (side === "new" && segment.kind === "added");
@@ -78,14 +233,18 @@ function inlineSide(segments, side, fallback) {
 }
 
 function renderHunk(hunk) {
-  const oldBlock = hunk.old_text
+  const kind = hunk.change_kind;
+  if (kind === "format_only") return "";
+  const showOld = kind === "removed" || kind === "replaced";
+  const showNew = kind === "added" || kind === "replaced";
+  const oldBlock = showOld && hunk.old_text
     ? `
       <div class="diff-side diff-side--old">
         <div class="diff-label"><span aria-hidden="true">−</span> 下一版刪除</div>
         <p>${inlineSide(hunk.inline_segments, "old", hunk.old_text)}</p>
       </div>`
     : "";
-  const newBlock = hunk.new_text
+  const newBlock = showNew && hunk.new_text
     ? `
       <div class="diff-side diff-side--new">
         <div class="diff-label"><span aria-hidden="true">＋</span> 下一版新增</div>
@@ -94,7 +253,7 @@ function renderHunk(hunk) {
     : "";
 
   return `
-    <section class="diff-hunk">
+    <section class="diff-hunk diff-hunk--${escapeHtml(kind)}">
       <p class="diff-context">${escapeHtml(hunk.display_note || hunk.context_label)}</p>
       ${oldBlock}
       ${newBlock}
@@ -108,13 +267,20 @@ function renderTransition(transition) {
   const olderSource = editionSource(transition.older.observed_editions);
   const newerSource = editionSource(transition.newer.observed_editions, "first");
   const hunks = transition.hunks.map(renderHunk).join("");
+  const dateLabel = transition.display_date?.label;
+  const mainLabel = dateLabel || newerRange;
+  const labelRole = dateLabel ? "條文內變更日期" : "下一文字版本的來源觀察";
+  const dateCaution = dateLabel
+    ? `<span class="date-caution">條文註記；尚未認定為法律生效日</span>`
+    : "";
 
   return `
     <article class="edition-row transition-row">
       <aside class="edition-meta">
-        <p class="edition-meta__role">舊文字的來源觀察</p>
-        <strong>${escapeHtml(olderRange)}</strong>
-        <span class="compare-label">下一個文字版本：${escapeHtml(newerRange)}</span>
+        <p class="edition-meta__role">${labelRole}</p>
+        <strong>${escapeHtml(mainLabel)}</strong>
+        ${dateCaution}
+        <span class="compare-label">來源觀察：${escapeHtml(olderRange)} → ${escapeHtml(newerRange)}</span>
         <div class="source-pair">
           ${sourceLink(olderSource?.source?.official_url, "舊版來源")}
           ${sourceLink(newerSource?.source?.official_url, "下一版來源")}
@@ -139,6 +305,17 @@ function renderHeader() {
   document.title = `${clause.canonical_code} ${clause.display_title}｜健保給付條文歷史`;
   els.editionCount.textContent = `${coverage.observed_edition_count} 份`;
   els.versionCount.textContent = `${coverage.version_state_count} 版`;
+  const feedbackTitle = `0.4 給付條文 prototype 回饋：${clause.canonical_code}`;
+  const feedbackBody = [
+    `我查看的條文：${clause.canonical_code} ${clause.display_title}`,
+    "",
+    "我看不懂／容易誤解的地方：",
+    "",
+    "我建議的呈現方式：",
+  ].join("\n");
+  els.feedback.href =
+    `${FEEDBACK_URL}?title=${encodeURIComponent(feedbackTitle)}` +
+    `&body=${encodeURIComponent(feedbackBody)}`;
 
   const unchangedNote =
     coverage.observed_edition_count === coverage.version_state_count
@@ -150,6 +327,12 @@ function renderHeader() {
     共形成 <strong>${coverage.version_state_count}</strong> 個文字版本。
     ${escapeHtml(unchangedNote)}
     這不代表法律公告來源宇宙已封閉，也不把來源版名或文內日期自動認作生效日。
+  `;
+  els.diffIgnorePolicy.innerHTML = `
+    <strong>不計入文字增刪：</strong>
+    ${state.data.diff_policy.ignored_change_policy
+      .map((item) => escapeHtml(item.label_zh))
+      .join("、")}。
   `;
 }
 
@@ -171,12 +354,38 @@ function renderLatest() {
   `;
 
   els.latestText.innerHTML = latest.full_text_blocks
-    .map((block, index) => {
+    .map((block) => {
+      const content = renderRichText(block.text);
+      if (block.render_kind === "clause_heading") {
+        return `<h3 class="rule-heading">${content}</h3>`;
+      }
+      if (block.render_kind === "subsection") {
+        return `<h4 class="rule-subsection">${content}</h4>`;
+      }
       const className =
-        index === 0 ? "rule-paragraph rule-paragraph--section" : "rule-paragraph";
-      return `<p class="${className}">${escapeHtml(block.text)}</p>`;
+        block.render_kind === "list_item"
+          ? "rule-paragraph rule-paragraph--list"
+          : "rule-paragraph";
+      return `<p class="${className}">${content}</p>`;
     })
     .join("");
+}
+
+function renderAgentSummary() {
+  const summary = state.data.agent_history_summary;
+  if (!summary) {
+    els.agentSummary.hidden = true;
+    els.agentSummaryBody.innerHTML = "";
+    return;
+  }
+  els.agentSummary.hidden = false;
+  els.agentSummaryBody.innerHTML = `
+    ${renderLimitedMarkdown(summary.summary_markdown)}
+    <p class="agent-summary__receipt">
+      由 agent 依本頁相鄰版本 diff 產生；狀態：
+      ${escapeHtml(summary.review_status)}。
+    </p>
+  `;
 }
 
 function renderHistory() {
@@ -236,6 +445,8 @@ function validateIndex(index) {
     index.schema === "nhi-rule-history/single-clause-index/v1" &&
     index.generated_from === "PostgreSQL nhi_rule_history_clause" &&
     index.canonical_version_unit === "single_clause" &&
+    index.diff_policy?.algorithm_version ===
+      "chapter-00-semantic-diff-presentation/v2" &&
     index.chapter.display_label === "通則" &&
     index.chapter.navigation_code_origin === "project_assigned" &&
     Array.isArray(index.clauses)
@@ -247,6 +458,8 @@ function validatePage(data, code) {
     data.schema === "nhi-rule-history/single-clause-reader/v1" &&
     data.generated_from === "PostgreSQL nhi_rule_history_clause" &&
     data.canonical_version_unit === "single_clause" &&
+    data.diff_policy?.algorithm_version ===
+      "chapter-00-semantic-diff-presentation/v2" &&
     data.chapter.display_label === "通則" &&
     data.chapter.navigation_code_origin === "project_assigned" &&
     data.clause.code_origin === "project_assigned" &&
@@ -283,6 +496,7 @@ async function load() {
     state.data = data;
     renderHeader();
     renderLatest();
+    renderAgentSummary();
     renderHistory();
 
     const allowedHashTargets = new Set(["#latest", "#history", "#method"]);
@@ -313,6 +527,18 @@ els.search.addEventListener("input", (event) => {
 });
 
 els.print.addEventListener("click", () => window.print());
+
+els.share.addEventListener("click", async () => {
+  const code = state.data?.clause?.canonical_code || "0.4";
+  const url = `${PUBLIC_DEMO_URL}?rule=${encodeURIComponent(code)}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    els.shareStatus.textContent = "已複製，可貼到 Facebook 分享。";
+  } catch {
+    window.prompt("複製這個示範網址", url);
+    els.shareStatus.textContent = "";
+  }
+});
 
 document.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {

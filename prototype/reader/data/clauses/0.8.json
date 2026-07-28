@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 8
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -39,6 +41,26 @@
     "unique_comparison_text_count": 4,
     "version_edge_count": 3,
     "version_state_count": 4
+  },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
   },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
@@ -78,19 +100,43 @@
     "display_title": "內服液劑之使用原則",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
         "text": "八、內服液劑之使用原則：(94/11/1、97/3/1、97/12 /1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
         "text": "（一）12歲(含)以下兒童得使用內服液劑(97/3/1)。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
         "text": "（二）不適合服用固型製劑之病人，如施行管灌飲食等，得依病情需要使用內服液劑(97/12/1)。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
         "text": "（三）非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。"
       }
     ],
@@ -199,27 +245,67 @@
     "state_order": 3
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:b4609d5d3503df19afcdfd8bd89bd09554703f79eab60666f5fcfd3cb225d2a9",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.8",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "八、內服液劑之使用原則"
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(94/11/1、97/3/1、97/12"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": ")"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、內服液劑之使用原則"
             },
             {
               "kind": "added",
@@ -228,22 +314,23 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "(94/11/1、97/3/1、97/12 /1"
+              "side": "new",
+              "text": "(94/11/1、97/3/1、97/12"
             },
             {
-              "kind": "removed",
-              "side": "old",
+              "kind": "ignored",
+              "side": "new",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": ")"
+              "side": "new",
+              "text": "/1)"
             }
           ],
           "new_text": "八、內服液劑之使用原則：(94/11/1、97/3/1、97/12 /1)",
-          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1、97/12 /1 )"
+          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1、97/12 /1 )",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -406,6 +493,16 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "97/12",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "97/12 /1",
+          "97/12/1",
+          "97/12/1"
+        ]
+      },
       "edge_id": "clause-edge:a73e16c0d3705698129856bfb6f9df638a37c76cb3d33aa37d9f9a549cc6fe94",
       "hunks": [
         {
@@ -413,30 +510,113 @@
           "context_label": "0.8",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "八、內服液劑之使用原則 (94/11/1、97/3/1"
+              "side": "old",
+              "text": "八、內服液劑之使用原則"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "、97/12 /1 "
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": ")\n(一)"
+              "side": "old",
+              "text": "(94/11/1、97/3/1)"
             },
             {
-              "kind": "added",
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(一)12歲(含)以下兒童得使用內服液劑。"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(二)施行管灌飲食等"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "不適合服用錠劑之病人"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "，得依病情需要使用內服液劑。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
               "side": "new",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
+              "text": "(94/11/1、97/3/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、97/12"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": ")"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(一)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
               "text": "12歲(含)以下兒童得使用內服液劑"
             },
             {
@@ -446,28 +626,33 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "。\n(二)"
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(二)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
             },
             {
               "kind": "added",
               "side": "new",
-              "text": " 不適合服用固型製劑之病人，如"
+              "text": "不適合服用固型製劑之病人，如"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "施行管灌飲食等"
-            },
-            {
-              "kind": "removed",
-              "side": "old",
-              "text": "不適合服用錠劑之病人"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "，得依病情需要使用內服液劑"
+              "side": "new",
+              "text": "施行管灌飲食等，得依病情需要使用內服液劑"
             },
             {
               "kind": "added",
@@ -476,17 +661,33 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
             },
             {
               "kind": "added",
               "side": "new",
-              "text": "\n(三) 非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。"
+              "text": "(三)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。"
             }
           ],
           "new_text": "八、內服液劑之使用原則 (94/11/1、97/3/1、97/12 /1 )\n(一) 12歲(含)以下兒童得使用內服液劑(97/3/1)。\n(二) 不適合服用固型製劑之病人，如施行管灌飲食等，得依病情需要使用內服液劑(97/12/1)。\n(三) 非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。",
-          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下兒童得使用內服液劑。\n(二)施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。"
+          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下兒童得使用內服液劑。\n(二)施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -561,6 +762,14 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "97/3",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "97/3/1"
+        ]
+      },
       "edge_id": "clause-edge:2a96d96259bc6effe8527e98f33fc73263218079edb75010bc4b0cb8b427595c",
       "hunks": [
         {
@@ -568,10 +777,13 @@
           "context_label": "0.8",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "八、"
             },
             {
@@ -580,13 +792,8 @@
               "text": "小"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "兒"
             },
             {
@@ -595,23 +802,74 @@
               "text": "科或"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "童得使用內服液劑。\n(二)"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。"
             },
             {
               "kind": "removed",
               "side": "old",
               "text": "(94/11/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(94/11/1、97/3/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(一)12歲(含)以下"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "兒"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "童得使用內服液劑。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(二)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。"
             }
           ],
           "new_text": "八、內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下兒童得使用內服液劑。\n(二)施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。",
-          "old_text": "八、小兒科或施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。(94/11/1)"
+          "old_text": "八、小兒科或施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。(94/11/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

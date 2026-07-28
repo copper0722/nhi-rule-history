@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 7
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 1,
     "version_state_count": 2
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:726172194385746a7a674ceba76e8340ec3ad8021d59140bbb4c318885337e5b",
@@ -63,7 +85,13 @@
     "display_title": "本保險處方用藥，需符合主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含…",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.7"
+        ],
         "text": "七、本保險處方用藥，需符合主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）"
       }
     ],
@@ -172,21 +200,29 @@
     "state_order": 1
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:82da1ef189af5b3b07f0a0df5f92f94cc6a53254af6a1a8da77798ba0038acc2",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "removed",
           "context_label": "0.7",
-          "display_note": "下一版改寫",
+          "display_note": "下一版刪除",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "七、本保險處方用藥，需符合"
             },
             {
@@ -196,12 +232,18 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "七、本保險處方用藥，需符合主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）"
             }
           ],
           "new_text": "七、本保險處方用藥，需符合主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）",
-          "old_text": "七、本保險處方用藥，需符合中央衛生主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）"
+          "old_text": "七、本保險處方用藥，需符合中央衛生主管機關核准藥品許可證登載之適應症，並應依病情治療所需劑量，處方合理之含量或規格藥品。（85/1/1、86/1/1、94/6/1）",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

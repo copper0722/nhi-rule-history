@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 1
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 1,
     "version_state_count": 2
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:d786261661a7572964b4357ffa8175af34ef94ee781c912ef806d858706926ce",
@@ -47,7 +69,13 @@
     "display_title": "本保險醫事服務機構申報之藥品，以收載於本標準者為限",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.1"
+        ],
         "text": "一、本保險醫事服務機構申報之藥品，以收載於本標準者為限。"
       }
     ],
@@ -156,10 +184,17 @@
     "state_order": 1
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:87250c71588f2ab9b4b44a2a7b8647b2319dddbaa563d41fc58e917c4fa9d4f7",
       "hunks": [
         {
@@ -167,10 +202,11 @@
           "context_label": "0.1",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "一、本保險醫事服務機構申報之藥品，以收載於"
             },
             {
@@ -179,18 +215,29 @@
               "text": "「全民健康保險用藥品項表」"
             },
             {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "者為限。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "一、本保險醫事服務機構申報之藥品，以收載於"
+            },
+            {
               "kind": "added",
               "side": "new",
               "text": "本標準"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "者為限。"
             }
           ],
           "new_text": "一、本保險醫事服務機構申報之藥品，以收載於本標準者為限。",
-          "old_text": "一、本保險醫事服務機構申報之藥品，以收載於「全民健康保險用藥品項表」者為限。"
+          "old_text": "一、本保險醫事服務機構申報之藥品，以收載於「全民健康保險用藥品項表」者為限。",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

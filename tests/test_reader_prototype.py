@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 READER = ROOT / "prototype" / "reader"
 HTML = (READER / "index.html").read_text(encoding="utf-8")
 SCRIPT = (READER / "app.js").read_text(encoding="utf-8")
+TAG_HTML = (READER / "tag.html").read_text(encoding="utf-8")
+TAG_SCRIPT = (READER / "tag.js").read_text(encoding="utf-8")
 CSS = (READER / "styles.css").read_text(encoding="utf-8")
 INDEX = json.loads(
     (READER / "data" / "clauses" / "index.json").read_text(encoding="utf-8")
@@ -88,6 +90,78 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertIn("diff-side--new", SCRIPT)
         self.assertIn(".inline-change--old", CSS)
         self.assertIn(".inline-change--new", CSS)
+
+    def test_history_uses_new_in_text_date_annotations_as_reader_labels(self) -> None:
+        transition_to_99 = next(
+            transition
+            for transition in CLAUSE_04["transitions"]
+            if transition["newer"]["observed_editions"][0]["edition_label"]
+            == "99年版"
+        )
+        self.assertEqual(transition_to_99["display_date"]["label"], "99/11")
+        self.assertEqual(
+            transition_to_99["display_date"]["basis"],
+            "new_text_date_annotation",
+        )
+        self.assertIn("條文註記；尚未認定為法律生效日", SCRIPT)
+
+    def test_pg_semantic_tags_drive_atc_disease_and_condition_rendering(self) -> None:
+        tags = CLAUSE_04["semantic_tags"]
+        octreotide = next(tag for tag in tags if tag["tag_text"] == "octreotide")
+        diabetes = next(tag for tag in tags if tag["tag_text"] == "糖尿病")
+        self.assertEqual(octreotide["terminology"]["system"], "ATC")
+        self.assertEqual(
+            octreotide["terminology"]["codes"][0]["code"],
+            "H01CB02",
+        )
+        self.assertEqual(diabetes["terminology"]["system"], "ICD-11")
+        self.assertEqual(
+            diabetes["terminology"]["public_export"],
+            "code_only_no_icd_content",
+        )
+        self.assertEqual(
+            diabetes["terminology"]["codes"][0]["code"],
+            "5A14",
+        )
+        self.assertEqual(
+            diabetes["terminology"]["codes"][0]["mapping_status"],
+            "candidate",
+        )
+        self.assertNotIn("title", diabetes["terminology"]["codes"][0])
+        self.assertNotIn("uri", diabetes["terminology"]["codes"][0])
+        marker_texts = {
+            marker["marker_text"] for marker in CLAUSE_04["condition_markers"]
+        }
+        self.assertTrue({"限", "至多", "不得", "且"}.issubset(marker_texts))
+        self.assertIn("需要", marker_texts)
+        self.assertNotIn("需", marker_texts)
+        self.assertIn("semantic-tag--drug", CSS)
+        self.assertIn("semantic-tag--disease", CSS)
+        self.assertIn("condition-term--prohibition", CSS)
+        self.assertIn("ATC", TAG_SCRIPT)
+        self.assertIn("已確認關聯", TAG_SCRIPT)
+        self.assertIn("候選關聯", TAG_SCRIPT)
+        self.assertIn("ICD-11", TAG_HTML)
+
+    def test_agent_summary_and_structured_clause_rendering_are_present(self) -> None:
+        summary = CLAUSE_04["agent_history_summary"]
+        self.assertIsNotNone(summary)
+        self.assertEqual(
+            summary["generation_method"],
+            "pure_agentic_from_structured_diff",
+        )
+        self.assertIn("99/11", summary["summary_markdown"])
+        blocks = CLAUSE_04["latest"]["full_text_blocks"]
+        self.assertEqual(blocks[0]["render_kind"], "clause_heading")
+        self.assertTrue(
+            any(block["render_kind"] == "subsection" for block in blocks)
+        )
+        self.assertTrue(
+            any(block["render_kind"] == "list_item" for block in blocks)
+        )
+        self.assertIn("AGENT SUMMARIZE", HTML)
+        self.assertIn("rule-heading", SCRIPT)
+        self.assertIn(".rule-date", CSS)
 
     def test_search_is_global_across_clause_index(self) -> None:
         insulin = [

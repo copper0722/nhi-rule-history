@@ -224,17 +224,19 @@ WHO ICD-11 條款允許在軟體內使用 classification，但要求保留 code�
 URI 與 attribution；更重要的是，WHO 明定「其他分類／術語與 ICD-11 的
 mapping 或 crosswalk」需要另外書面同意。
 
-因此分三階段：
+因此 code 與 WHO 內容必須分層：
 
-1. **現在公開**：linkage schema、條文 indication spans、WHO API client、
-   空白／synthetic example。
-2. **內部研究**：候選 URI 與人工審查可在不發布的 `licensed/` projection
-   進行。
-3. **取得 WHO agreement 後**：才發布 populated ICD-11 linkage rows，並在
-   release manifest 記錄 agreement/version/citation。
+1. **公開 reader prototype**：可顯示專案建立的 code-only 關係、候選／
+   已確認狀態與 WHO Coding Tool 連結；不得夾帶 WHO title、URI、definition
+   或完整 reference snapshot。
+2. **私有 PostgreSQL**：保存候選 title／URI、查核依據與完整參考快照，
+   不進 JSONL、SQLite 或 GitHub Pages。
+3. **可重用 crosswalk release**：WHO 條款把 mapping/crosswalk 另列為需
+   書面 agreement；取得並記錄 agreement 前，不把 prototype code rows
+   宣稱為 WHO 授權的正式 crosswalk dataset。
 
-沒有 agreement 時，CI 必須拒絕任何 `system='ICD11'` 且
-`publication_status='publishable'` 的 populated row。
+Code 本身不是密碼；這個邊界處理的是授權、內容再散布與關聯的審查狀態，
+不是保密。公開候選 code 必須明示 `candidate`，不能冒充 confirmed mapping。
 
 ## 搜尋
 

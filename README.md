@@ -3,6 +3,9 @@
 [![status: staging only](https://img.shields.io/badge/status-staging%20only-orange)](STATUS.md)
 [![repository: public](https://img.shields.io/badge/repository-public-brightgreen)](https://github.com/copper0722/nhi-rule-history)
 
+**[試用第 0.4 條單頁歷史 prototype](https://copper0722.github.io/nhi-rule-history/?rule=0.4)**
+— 最新全文置頂，往下只看每次實質文字變更；頁面內可直接回報 GitHub issue。
+
 這是一個公共資料工程專案：從健保署官方整份檔、公告頁與附件，重建每一條
 藥品給付規定的版本、生效時間、來源、前後關係與文字差異。PostgreSQL 是
 唯一可寫的結構化權威；GitHub 提供 JSONL 公開交換檔，並可轉成 SQLite
@@ -27,6 +30,13 @@ version chain**：目前共有 152 筆來源觀察、29 個不同文字狀態、
 或法律事件史完整。
 詳見 [`通則` 方法學](docs/chapter-00-template.md)與
 [reader template](prototype/reader/index.html)。
+
+第 `0.4` 條另完成 reader enrichment：藥名顯示 ATC，疾病詞顯示
+ICD-11 code 與「已確認／候選」狀態，限制條件詞以語意角色著色，文內民國
+日期縮小顯示，歷史前置一段由 stored diff 產生的 agent 摘要。ICD-11
+公開投影只含專案建立的 term→code 關係，不含 WHO 標題、URI、定義或完整
+參考資料；完整欄位仍留在私有 PostgreSQL。詳見
+[資料授權邊界](DATA_LICENSE.md)。
 
 其餘全庫工作仍分成互不冒充的受限 staging：
 

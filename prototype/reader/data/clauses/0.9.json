@@ -1,4 +1,5 @@
 {
+  "agent_history_summary": null,
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 9
   },
+  "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -40,6 +42,26 @@
     "version_edge_count": 1,
     "version_state_count": 2
   },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
     "clause_version_id": "clause-version:71739d06dbfde46d7dc9db9652c61ab6cba269c633a86dda71b003d9eb361706",
@@ -53,31 +75,73 @@
     "display_title": "本保險處方用藥有下列情況者視為重複用藥，不予給付(87/4/1)",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "九、本保險處方用藥有下列情況者視為重複用藥，不予給付(87/4/1)："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "（一）為達相同之治療目的，使用兩種以上同一治療類別 (或作用機轉) 之藥品，視為重複用藥。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "（二）為達相同之治療目的，使用兩種以上不同治療類別 (或作用機轉) 之藥品，而未能增加療效；或其併用不符合一般醫學學理，且無文獻佐證者。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "（三）但下列情形除外："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 4,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "1.長短效的藥品搭配使用或不同劑型配合使用，且其使用方法符合各項藥品藥動學或藥理性質之特色者。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 5,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "2.緊急傷病情況下之合併使用者，且其併用符合一般醫學學理。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 6,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.9"
+        ],
         "text": "3.本標準藥品給付規定有特別規定者。"
       }
     ],
@@ -186,10 +250,17 @@
     "state_order": 1
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:ef67c9de774601a3ffb31d16f4b06d03f7f2244507a89ab114ece7ff4dd3659b",
       "hunks": [
         {
@@ -197,25 +268,28 @@
           "context_label": "0.9",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "3."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
             },
             {
               "kind": "removed",
               "side": "old",
-              "text": " 「全民健康保險"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "本標準"
+              "text": "「全民健康保險"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "藥品給付規定"
             },
             {
@@ -225,12 +299,28 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "有特別規定者。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "3."
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "本標準"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "藥品給付規定有特別規定者。"
             }
           ],
           "new_text": "3.本標準藥品給付規定有特別規定者。",
-          "old_text": "3. 「全民健康保險藥品給付規定」有特別規定者。"
+          "old_text": "3. 「全民健康保險藥品給付規定」有特別規定者。",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",

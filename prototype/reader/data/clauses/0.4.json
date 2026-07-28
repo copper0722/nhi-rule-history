@@ -1,4 +1,11 @@
 {
+  "agent_history_summary": {
+    "generation_method": "pure_agentic_from_structured_diff",
+    "generator_id": "openai-codex",
+    "review_status": "agent_generated_unreviewed",
+    "source_diff_sha256": "bf8e215cbab732ea3116bf8994dba357f5fa4b064f9daaa91a4ee4368659562f",
+    "summary_markdown": "這一條的歷史變動不是反覆重寫全文，而是逐步擴大「哪些注射藥可讓病人攜回」、調整可攜回天數或數量，並增加申報與紀錄要求。\n\n- **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。\n- **99/11**：apomorphine 每月上限由 15 支提高為 20 支。\n- **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。\n- **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。\n- **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。\n- **111/1–111/3**：靜脈營養輸液條件擴及不需調配的製劑，並新增 fondaparinux。\n\n日期取自新文字中首次出現的條文註記，用來幫助閱讀版本變化；尚未把它認定為經公告證實的法律生效日。"
+  },
   "canonical_version_unit": "single_clause",
   "chapter": {
     "chapter_id": "chapter:general-principles",
@@ -16,6 +23,78 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 4
   },
+  "condition_markers": [
+    {
+      "marker_id": "condition-marker:3773e75a8369de66b7651d41967ec0b91cf7194bd0b9f4ea9c9cc561ee395c37",
+      "marker_text": "經事前審查核准後",
+      "semantic_role": "prior_authorization"
+    },
+    {
+      "marker_id": "condition-marker:0c9186a338f5281b26bb233d2ec44aa10957174e3bd04aca1ab45a7452445534",
+      "marker_text": "需個案事前報准",
+      "semantic_role": "prior_authorization"
+    },
+    {
+      "marker_id": "condition-marker:7ae5c385e7a59f7aa24ad298910175c07d3cbdfd7142fc181be0ddfcf522f3e9",
+      "marker_text": "需敘明理由",
+      "semantic_role": "requirement"
+    },
+    {
+      "marker_id": "condition-marker:8ea01c8a0cdce03c676475d84707b1c79c541e6242935b226deba2061033c554",
+      "marker_text": "不得超過",
+      "semantic_role": "prohibition"
+    },
+    {
+      "marker_id": "condition-marker:92f9d6d061e100cf4b0b2780576ee1b68e0c977ebbe22aed9f6a1a80f2423a55",
+      "marker_text": "不超過",
+      "semantic_role": "maximum"
+    },
+    {
+      "marker_id": "condition-marker:501561dc454806788bea229103fd99af4e0a24f2d56e56a420cb8c0c9d055c9d",
+      "marker_text": "不得",
+      "semantic_role": "prohibition"
+    },
+    {
+      "marker_id": "condition-marker:db0023fa014c9e55f1757b506eacf8e113914cbfbec9798b82a4b305ffc0bc14",
+      "marker_text": "方得",
+      "semantic_role": "restriction"
+    },
+    {
+      "marker_id": "condition-marker:725afd5879ffdf18551f6d8b62b63993dd9306ac05e8fb02e5b57ad41bb19059",
+      "marker_text": "為限",
+      "semantic_role": "maximum"
+    },
+    {
+      "marker_id": "condition-marker:f9eded274c89970f28069a35ffe5b474b177c995e51de49a2273483592843f60",
+      "marker_text": "至多",
+      "semantic_role": "maximum"
+    },
+    {
+      "marker_id": "condition-marker:20b33a3aa2c657074e58079ba2f8afcc3f2880716643e31acf600899f59f0781",
+      "marker_text": "需要",
+      "semantic_role": "requirement"
+    },
+    {
+      "marker_id": "condition-marker:bf75b0e3c853bd62e8dd7ac447e8fef952914902ecf513eda02a104156734edc",
+      "marker_text": "且",
+      "semantic_role": "conjunction"
+    },
+    {
+      "marker_id": "condition-marker:13bd282b0871cd495867786e417e4a61141a22938dbac3adb0e290319d68cbfa",
+      "marker_text": "惟",
+      "semantic_role": "exception"
+    },
+    {
+      "marker_id": "condition-marker:3c0e95803b9e8404c2154011e64d27f7a6e50ec9053d56a41c2feeab133b47a8",
+      "marker_text": "應",
+      "semantic_role": "requirement"
+    },
+    {
+      "marker_id": "condition-marker:19e70aa6a8096881bf378ef53c2151700cd3254833056b0f596a819fb7bb7703",
+      "marker_text": "限",
+      "semantic_role": "restriction"
+    }
+  ],
   "coverage": {
     "declared_edition_count": 15,
     "declared_edition_set_complete": true,
@@ -39,6 +118,26 @@
     "unique_comparison_text_count": 10,
     "version_edge_count": 9,
     "version_state_count": 10
+  },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
   },
   "generated_from": "PostgreSQL nhi_rule_history_clause",
   "latest": {
@@ -218,127 +317,313 @@
     "display_title": "注射藥品之使用原則",
     "full_text_blocks": [
       {
+        "block_kind": "paragraph",
         "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "四、注射藥品之使用原則："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "（一）注射藥品使用時機，應以經醫師診斷後，判斷病情需要且病人不能口服，或口服仍不能期待其有治療效果，記明於病歷表者，方得為之。(86/1/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "（二）因病情需要，經醫師指導使用方法由病人持回注射之藥品包括："
       },
       {
+        "block_kind": "paragraph",
         "block_order": 3,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "1.治療糖尿病之insulin及GLP-1受體促效劑。(109/12/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 4,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "2.CAPD使用之透析液。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 5,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "3.CAPD使用之抗生素及抗凝血劑（至多攜回二週）。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 6,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "4.Desferrioxamine（如 Desferal）。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 7,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "5.慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp、Mircera）為原則）。(98/9/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 8,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "6.治療白血病使用之α-interferon（至多攜回二週）。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 9,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "7.G-CSF (如filgrastim；lenograstim）(至多攜回六天）。(98/11/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 10,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "8.生長激素 (human growth hormone)（至多攜回一個月）。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 11,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子、繞徑治療藥物、第十三凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八之一─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄等）及申報費用時上傳上述治療紀錄表電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1、109/2/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 12,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "10.於醫院內完成調配之靜脈營養輸液(TPN)，或不需調配之靜脈營養輸液，可攜回使用。(85/10/1、93/12/1、111/1/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 13,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "11.肢端肥大症病人使用之octreotide、lanreotide (如Sandostatin、Somatuline等) 至多攜回一個月，另octreotide (如Sandostatin等)需個案事前報准 (93/12/1)。lanreotide inj 30 mg (如Somatuline) 每次注射間隔兩週 (88/6/1)，octreotide LAR (如Sandostatin LAR Microspheres for Inj.) 每次注射間隔四週 (89/7/1)。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 14,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "12.結核病病人持回之streptomycin、kanamycin及enviomycin注射劑（至多攜回二週）。（86/9/1）"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 15,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "13.抗精神病長效針劑（至多攜回三個月）。（87/4/1、109/6/1）"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 16,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "14.低分子量肝凝素注射劑：金屬瓣膜置換後之懷孕病患，可准予攜回低分子量肝凝素注射劑自行注射，但至多攜回兩週。（90/11/1）"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 17,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "15.Apomorphine hydrochloride 10mg/mL（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過20支。（91/2/1、99/11/1）"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 18,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "16.罹患惡性貧血（pernicious anemia）及維生素B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維生素B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 19,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "17.患者初次使用aldesleukin (如Proleukin Inj) 治療期間（第一療程），應每週發藥，俾回診觀察是否有無嚴重之副作用發生。第一療程使用若未發生嚴重副作用，在第二療程以後可攜回兩週之處方量。(91/12/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 20,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "18.慢性病毒性B型肝炎、慢性病毒性C型肝炎所使用之長效型干擾素或短效型干擾素，至多攜回四週之使用量。(92/10/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 21,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "19.類風濕關節炎、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症病患使用etanercept、adalimumab、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下注射劑，經事前審查核准後，在醫師指導下，至多可攜回四週之使用量。(93/8/1、109/10/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 22,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "20.(刪除) (109/12/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 23,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "21.(刪除) (109/12/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 24,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "22.含teriparatide成分注射劑。(103/9/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 25,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "23.含interferon beta-1a 成分注射劑。(103/9/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 26,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "24.含interferon beta-1b成分注射劑。(103/9/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 27,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "25.含glatiramer成分注射劑。(103/9/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 28,
+        "render_kind": "list_item",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "26.Fondaparinux（如Arixtra）用於靜脈血栓高危險病患，接受人工髖或膝關節置換術或再置換術後，預防其術後之靜脈血栓(VTE)。（111/3/1)"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 29,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "（三）電解質及營養靜脈補充輸液之使用，應說明理由並有明確需要，以積極治療為目的，始得為之。"
       },
       {
+        "block_kind": "paragraph",
         "block_order": 30,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.4"
+        ],
         "text": "（四）癌症病人使用之morphine及化學治療藥品，於院內經醫師或藥師完成調劑作業後，亦可由病人攜回使用。（85/10/1）"
       }
     ],
@@ -359,77 +644,1620 @@
     "state_order": 9
   },
   "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [
+    {
+      "display_text": "Apomorphine hydrochloride",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2eca4d830c8ea632d780ed8ebd8f7eeb9742033eed7db009471129ae7e203ef5",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:2eca4d830c8ea632d780ed8ebd8f7eeb9742033eed7db009471129ae7e203ef5",
+      "tag_text": "Apomorphine hydrochloride",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N04BC07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "human growth hormone",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7c718eeb59a1886009bed3447dbc0bc55075b9bb3aaff6fcfd9eb239206fba04",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:7c718eeb59a1886009bed3447dbc0bc55075b9bb3aaff6fcfd9eb239206fba04",
+      "tag_text": "human growth hormone",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "interferon beta-1a",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:1a1a350e25489ab123edbb7ae603ba6738064fa625437eef13e6204b97c6063a",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:1a1a350e25489ab123edbb7ae603ba6738064fa625437eef13e6204b97c6063a",
+      "tag_text": "interferon beta-1a",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AB07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "interferon beta-1b",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:f373aedfe83c6c702d3ab1e197c835eff358db2a163a29528361fc651d119112",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:f373aedfe83c6c702d3ab1e197c835eff358db2a163a29528361fc651d119112",
+      "tag_text": "interferon beta-1b",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AB08",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "pernicious anemia",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:d713dd93cb0bbfa2889ef141dc7067c2e18e0b610e6f57d9b7e92d982b43f27f",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:d713dd93cb0bbfa2889ef141dc7067c2e18e0b610e6f57d9b7e92d982b43f27f",
+      "tag_text": "pernicious anemia",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "3A01.30",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "pernicious anaemia",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "Desferrioxamine",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:94d618600a26a2c6e0f3e026d1f1003234f6eee945e1d8f9d337150a97a22320",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:94d618600a26a2c6e0f3e026d1f1003234f6eee945e1d8f9d337150a97a22320",
+      "tag_text": "Desferrioxamine",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "V03AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Proleukin Inj",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:36dfc39e3723019c2a0b52015e62345e2842ef7d573c9cd874068843580a8797",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:36dfc39e3723019c2a0b52015e62345e2842ef7d573c9cd874068843580a8797",
+      "tag_text": "Proleukin Inj",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "certolizumab",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:b2f9818e6c87e128aaf44c624b4eb37cacd6017187c5ad40aaf445c01fb6906c",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:b2f9818e6c87e128aaf44c624b4eb37cacd6017187c5ad40aaf445c01fb6906c",
+      "tag_text": "certolizumab",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AB05",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Fondaparinux",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:eb89abdb398f78e872e826f52cdc9f9a9635796abee2bf523f057052d05cc8b0",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:eb89abdb398f78e872e826f52cdc9f9a9635796abee2bf523f057052d05cc8b0",
+      "tag_text": "Fondaparinux",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B01AX05",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "streptomycin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:f0c3d85a99c73ec7520236c313ef2c7875d463234c34848e06b8530bd1272239",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:f0c3d85a99c73ec7520236c313ef2c7875d463234c34848e06b8530bd1272239",
+      "tag_text": "streptomycin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "J01GA01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "teriparatide",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:0f41ff3374835303fc24f4c9ebccb41c13e1a90139b237eccfca65886a013f1c",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:0f41ff3374835303fc24f4c9ebccb41c13e1a90139b237eccfca65886a013f1c",
+      "tag_text": "teriparatide",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H05AA02",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "α-interferon",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7f9202bec39b86271098744c297cab503874f88d0395a554ff844b5d8013b2e4",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:7f9202bec39b86271098744c297cab503874f88d0395a554ff844b5d8013b2e4",
+      "tag_text": "α-interferon",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AB",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "aldesleukin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7fc375d533b3bd0af41411cdb61278e9291a16caa3e699842bdfe5a10f11de7c",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:7fc375d533b3bd0af41411cdb61278e9291a16caa3e699842bdfe5a10f11de7c",
+      "tag_text": "aldesleukin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "lenograstim",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:d00e15709595fb81d99a2e6f13279ee88199feabcc220d2403c9fb893e5d7850",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:d00e15709595fb81d99a2e6f13279ee88199feabcc220d2403c9fb893e5d7850",
+      "tag_text": "lenograstim",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AA10",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Sandostatin",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:6b5c6bba5ac4de017a6c010040fd68eb512cc33149f63b881d8160942375b863",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:6b5c6bba5ac4de017a6c010040fd68eb512cc33149f63b881d8160942375b863",
+      "tag_text": "Sandostatin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01CB02",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "tocilizumab",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:48c9185a919dd039ec64db85cd3bf694efacf2ccda8dfcd6ebe507f54380c9ed",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:48c9185a919dd039ec64db85cd3bf694efacf2ccda8dfcd6ebe507f54380c9ed",
+      "tag_text": "tocilizumab",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AC07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "adalimumab",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:8afc751920f474e4c5989b94c2eeb4652eee9bf4a7f9de8d751b12671f60686d",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:8afc751920f474e4c5989b94c2eeb4652eee9bf4a7f9de8d751b12671f60686d",
+      "tag_text": "adalimumab",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AB04",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Apo-Go Pen",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:fbc108ab26bcaddc1b1de29bb93a9ffc888db56118b0ee279fc575774b2811c3",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:fbc108ab26bcaddc1b1de29bb93a9ffc888db56118b0ee279fc575774b2811c3",
+      "tag_text": "Apo-Go Pen",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N04BC07",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "brodalumab",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:408be3a4b2d2ad4b4055a989d8cfc2ece7068c4460387fea4681183308b8e86c",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:408be3a4b2d2ad4b4055a989d8cfc2ece7068c4460387fea4681183308b8e86c",
+      "tag_text": "brodalumab",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AC12",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "enviomycin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:e63040c74e935a05652cc54f37adff5471c85eb54b6cead21000439e872bbae8",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:e63040c74e935a05652cc54f37adff5471c85eb54b6cead21000439e872bbae8",
+      "tag_text": "enviomycin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "J04AB06",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "etanercept",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:72710696656ff8d9f9b06085125293c7581149ca9b5fb2bafba5b29a46d682e5",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:72710696656ff8d9f9b06085125293c7581149ca9b5fb2bafba5b29a46d682e5",
+      "tag_text": "etanercept",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AB01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "filgrastim",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:6a87049faaa2b94669cb5eaa78247937ccb51c958fda2dc1291026c30331b986",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:6a87049faaa2b94669cb5eaa78247937ccb51c958fda2dc1291026c30331b986",
+      "tag_text": "filgrastim",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AA02",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "glatiramer",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:886dcef1653bab5633230585e73802d1f689ae166e826e0626e951c331e7e8be",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:886dcef1653bab5633230585e73802d1f689ae166e826e0626e951c331e7e8be",
+      "tag_text": "glatiramer",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AX13",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "GLP-1受體促效劑",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:4bfcc47e67411cd64239c7237307fa3a4d72ba4f646e3efbf396ba75efdbb041",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:4bfcc47e67411cd64239c7237307fa3a4d72ba4f646e3efbf396ba75efdbb041",
+      "tag_text": "GLP-1受體促效劑",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "A10BJ",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "lanreotide",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:3e4df0fc43128fa157f02e9e4c760ba6eff5c8c98cad2b31f7366ec25071f4d7",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:3e4df0fc43128fa157f02e9e4c760ba6eff5c8c98cad2b31f7366ec25071f4d7",
+      "tag_text": "lanreotide",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01CB03",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "octreotide",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:17186f7756faf2c8b312244e18be4a87a0034ba9f3e1e4e861bbc7bf7a880b4b",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:17186f7756faf2c8b312244e18be4a87a0034ba9f3e1e4e861bbc7bf7a880b4b",
+      "tag_text": "octreotide",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01CB02",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "opinercept",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:b7f0868f6e6d10cc030725b814aef05beae596bca772ee1e1626b435b7ceec65",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:b7f0868f6e6d10cc030725b814aef05beae596bca772ee1e1626b435b7ceec65",
+      "tag_text": "opinercept",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AB07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Somatuline",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:e7284b6d8682c45d1d1a5c7e24dc232c1f2dbef5297911d7a91966377fe232e9",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:e7284b6d8682c45d1d1a5c7e24dc232c1f2dbef5297911d7a91966377fe232e9",
+      "tag_text": "Somatuline",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01CB03",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "abatacept",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:42d60680b36d7c4e08aaae12e57f448b3b1a6880967d838ac795c11a5920a505",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:42d60680b36d7c4e08aaae12e57f448b3b1a6880967d838ac795c11a5920a505",
+      "tag_text": "abatacept",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04AA24",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "kanamycin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:55e401ae83770b35c0adc94a0106043e4753b97c1219cca5bae389ecc0d4891d",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:55e401ae83770b35c0adc94a0106043e4753b97c1219cca5bae389ecc0d4891d",
+      "tag_text": "kanamycin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "J01GB04",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "慢性病毒性B型肝炎",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2d8d650f832d0cc8406056f4faded8ffc76f6e1ef7aa67d6e316c204f3e0ec03",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:2d8d650f832d0cc8406056f4faded8ffc76f6e1ef7aa67d6e316c204f3e0ec03",
+      "tag_text": "慢性病毒性B型肝炎",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "1E51.0",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "chronic hepatitis B",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "慢性病毒性C型肝炎",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:4ff0f40f51fbd91cd300ead8d1d0cdb4d279ac2246579f49e074c813a2788618",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:4ff0f40f51fbd91cd300ead8d1d0cdb4d279ac2246579f49e074c813a2788618",
+      "tag_text": "慢性病毒性C型肝炎",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "1E51.1",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "chronic hepatitis C",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "維生素B12注射劑",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:59eb7a451d418b4ed39a20bdc15dda06c9f4df5ca5c184ad6212f664fc76f938",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:59eb7a451d418b4ed39a20bdc15dda06c9f4df5ca5c184ad6212f664fc76f938",
+      "tag_text": "維生素B12注射劑",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03BA01",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Desferal",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:f38ba548f4d40748ae71732bab078ab570b46c142e396f4aa9f2c396ca5be0e6",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:f38ba548f4d40748ae71732bab078ab570b46c142e396f4aa9f2c396ca5be0e6",
+      "tag_text": "Desferal",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "V03AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "morphine",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:b5582e444b9a9e6e6226ccfd19f1b47ac29aa81d81f717f46ba1f4678dc67587",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:b5582e444b9a9e6e6226ccfd19f1b47ac29aa81d81f717f46ba1f4678dc67587",
+      "tag_text": "morphine",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N02AA01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Recormon",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7cf6569052054f73b71664c7c1cbd2085644c206f8bc5cff051dc697d71ef618",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:7cf6569052054f73b71664c7c1cbd2085644c206f8bc5cff051dc697d71ef618",
+      "tag_text": "Recormon",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03XA01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "乾癬性周邊關節炎",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:28721a211ba0746ce75df5227c8ec3153033d18bc2a32e36eb9dc0d7fcc51b9c",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:28721a211ba0746ce75df5227c8ec3153033d18bc2a32e36eb9dc0d7fcc51b9c",
+      "tag_text": "乾癬性周邊關節炎",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "FA21",
+            "confidence": 0.85,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "psoriatic arthritis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "慢性腎臟功能衰竭",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:15f8cb375da4eb96f9d5f023013d5924465101e71c147e95fb31383b1b664fd5",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:15f8cb375da4eb96f9d5f023013d5924465101e71c147e95fb31383b1b664fd5",
+      "tag_text": "慢性腎臟功能衰竭",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "GB61",
+            "confidence": 0.85,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "chronic kidney disease",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "抗精神病長效針劑",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:18fa5e76e33a265c568583fb4a34882f3eef25bb580adf627180119a2886e4aa",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:18fa5e76e33a265c568583fb4a34882f3eef25bb580adf627180119a2886e4aa",
+      "tag_text": "抗精神病長效針劑",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N05A",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "維生素B12缺乏",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:cf72fad3d232cf023383475711b83a5d18c20033b87fc8bc390d0e0e14bce09d",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:cf72fad3d232cf023383475711b83a5d18c20033b87fc8bc390d0e0e14bce09d",
+      "tag_text": "維生素B12缺乏",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "5B5F",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "vitamin B12 deficiency",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "Aranesp",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:204331030b974120bee0b899d1c31fccea0ad83495e63305dde29b8151892e37",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:204331030b974120bee0b899d1c31fccea0ad83495e63305dde29b8151892e37",
+      "tag_text": "Aranesp",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03XA02",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Arixtra",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:3af3f623c24d89bbe0507513da043d827745d2cf5882d5e3b030da8998b54780",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:3af3f623c24d89bbe0507513da043d827745d2cf5882d5e3b030da8998b54780",
+      "tag_text": "Arixtra",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B01AX05",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "insulin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:bb0cdf5e8a14b05505026f2442514b9c22b922509c3dd4766b093b6e681fc924",
+      "resolution_status": "multiple_atc",
+      "tag_id": "semantic-tag:bb0cdf5e8a14b05505026f2442514b9c22b922509c3dd4766b093b6e681fc924",
+      "tag_text": "insulin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "A10AB01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AB03",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AC01",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AC03",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AD01",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AD03",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "A10AE01",
+            "is_primary": false,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "Mircera",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:cfd05752e5a5ded3ad28629107529a3716c1ee3b7e014d5414c6b297e5dff6c9",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:cfd05752e5a5ded3ad28629107529a3716c1ee3b7e014d5414c6b297e5dff6c9",
+      "tag_text": "Mircera",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03XA03",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "乾癬性脊椎病變",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:1448e3119bf4c2a9a3830f6e6760265a7da0603b695250b17e414e72d1461ff1",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:1448e3119bf4c2a9a3830f6e6760265a7da0603b695250b17e414e72d1461ff1",
+      "tag_text": "乾癬性脊椎病變",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "FA21",
+            "confidence": 0.75,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "psoriatic arthritis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "低分子量肝凝素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:6140144758d708817390e8cf979bb3030e78019d5a91364a2d3752099c1d442f",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:6140144758d708817390e8cf979bb3030e78019d5a91364a2d3752099c1d442f",
+      "tag_text": "低分子量肝凝素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B01AB",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "僵直性脊椎炎",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:67e81147acbdb2734092da9453f7eb9b1bae855f4603e22ee0100345f3263c7c",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:67e81147acbdb2734092da9453f7eb9b1bae855f4603e22ee0100345f3263c7c",
+      "tag_text": "僵直性脊椎炎",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "FA92.0",
+            "confidence": 0.8,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "axial spondyloarthritis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "紅血球生成素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:358a52b87ae8b9897ba93229f33bbd8fe5c43d551374562c4b2e3f836ea28050",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:358a52b87ae8b9897ba93229f33bbd8fe5c43d551374562c4b2e3f836ea28050",
+      "tag_text": "紅血球生成素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03XA",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "類風濕關節炎",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:5180b2d1e8604908d1a8c040e09054077e20202885894b888d3989d9fb314c40",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:5180b2d1e8604908d1a8c040e09054077e20202885894b888d3989d9fb314c40",
+      "tag_text": "類風濕關節炎",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "FA20",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "rheumatoid arthritis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "Eprex",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:802290275ab08657dbb06f48191be923b912b4851581801de2178b54275f9ae5",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:802290275ab08657dbb06f48191be923b912b4851581801de2178b54275f9ae5",
+      "tag_text": "Eprex",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B03XA01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "G-CSF",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:4ce3e5ac8d08b7c5f5e5a62c99df39858b81359bd2ece293956d8379f63102fe",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:4ce3e5ac8d08b7c5f5e5a62c99df39858b81359bd2ece293956d8379f63102fe",
+      "tag_text": "G-CSF",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AA",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "巴金森氏病",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:b0384f2a2d88476897a9626430f369993118d4493470fae01a67887f2432f07a",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:b0384f2a2d88476897a9626430f369993118d4493470fae01a67887f2432f07a",
+      "tag_text": "巴金森氏病",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "8A00.0",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "Parkinson disease",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "肢端肥大症",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:193bd91891f7a5757d8ed191987a1d839d16f3995676427e0125ba98fd6341fa",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:193bd91891f7a5757d8ed191987a1d839d16f3995676427e0125ba98fd6341fa",
+      "tag_text": "肢端肥大症",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "5A60.0",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "acromegaly",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "克隆氏症",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:310ed51c346d60f2373aece1f524d692a135c5970a90ae1a02a61a9e342a6321",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:310ed51c346d60f2373aece1f524d692a135c5970a90ae1a02a61a9e342a6321",
+      "tag_text": "克隆氏症",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "DD70",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "Crohn disease",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "惡性貧血",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:96caacbe9330c80d0b0f7d261b2bf1cfe1b252af24e30de061661ec8e6402dcf",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:96caacbe9330c80d0b0f7d261b2bf1cfe1b252af24e30de061661ec8e6402dcf",
+      "tag_text": "惡性貧血",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "3A01.30",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "pernicious anaemia",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "生長激素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:9b5ae3619fa23568323624c379fac3d9461df5099f0b02263890aa1946cc11f0",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:9b5ae3619fa23568323624c379fac3d9461df5099f0b02263890aa1946cc11f0",
+      "tag_text": "生長激素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "H01AC01",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "靜脈血栓",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:21e5b9e087b7977d93331e87d9bba5e50c55f41b5ff998836f78d6c29ed00247",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:21e5b9e087b7977d93331e87d9bba5e50c55f41b5ff998836f78d6c29ed00247",
+      "tag_text": "靜脈血栓",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "BD72",
+            "confidence": 0.9,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "venous thromboembolism",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "TPN",
+      "entity_type": "abbreviation",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:fe2ec4935a32e3ed2b5f11232cbb748dd920c5c451eafee708c0cc1b07ec8c93",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:fe2ec4935a32e3ed2b5f11232cbb748dd920c5c451eafee708c0cc1b07ec8c93",
+      "tag_text": "TPN",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B05BA10",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "VTE",
+      "entity_type": "abbreviation",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:71c5df7e6f2a4895d275e2a715a90d2caee5bd6f10f819858959db2dd9e6cd79",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:71c5df7e6f2a4895d275e2a715a90d2caee5bd6f10f819858959db2dd9e6cd79",
+      "tag_text": "VTE",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "BD72",
+            "confidence": 0.9,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "venous thromboembolism",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "白血病",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:cf1e6812a467ba477448bd54f20d2e5a7116876d86b275c041ae4e1c63246e94",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:cf1e6812a467ba477448bd54f20d2e5a7116876d86b275c041ae4e1c63246e94",
+      "tag_text": "白血病",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "2B33.4",
+            "confidence": 0.6,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "leukaemia",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "糖尿病",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7da3ae75c4b73d5163a3ec3cded328aaa646c29f17e5aa2abc37c360690a0655",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:7da3ae75c4b73d5163a3ec3cded328aaa646c29f17e5aa2abc37c360690a0655",
+      "tag_text": "糖尿病",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "5A14",
+            "confidence": 0.65,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "diabetes mellitus",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "結核病",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:992668666a60fe8b2512e731fa55b0fd9062eac3edf73d48756e3259fd7ea101",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:992668666a60fe8b2512e731fa55b0fd9062eac3edf73d48756e3259fd7ea101",
+      "tag_text": "結核病",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "1B1Z",
+            "confidence": 0.6,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "tuberculosis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "血友病",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:c071fc32b6a7d7d9a2e8eb82a2fa363acd1e62b862f651c6875923e9204c646c",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:c071fc32b6a7d7d9a2e8eb82a2fa363acd1e62b862f651c6875923e9204c646c",
+      "tag_text": "血友病",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "3B10.0",
+            "confidence": 0.75,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          },
+          {
+            "candidate_rank": 2,
+            "code": "3B11.0",
+            "confidence": 0.75,
+            "display_note": "Candidate relation; human review pending.",
+            "mapping_status": "candidate"
+          }
+        ],
+        "lookup_query": "haemophilia",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "乾癬",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2debd2e19ef167643183ea584e5bb9483b0956523573df31b1d1fa5937046ecf",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:2debd2e19ef167643183ea584e5bb9483b0956523573df31b1d1fa5937046ecf",
+      "tag_text": "乾癬",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [
+          {
+            "candidate_rank": 1,
+            "code": "EA90",
+            "confidence": 0.98,
+            "display_note": "Agent-selected relation.",
+            "mapping_status": "agent_selected"
+          }
+        ],
+        "lookup_query": "psoriasis",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "癌症",
+      "entity_type": "disease",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:caabdd0988ea0f86817437766aead80ed990aadb49b6131d4b12769fdd0afd20",
+      "resolution_status": "official_lookup_only",
+      "tag_id": "semantic-tag:caabdd0988ea0f86817437766aead80ed990aadb49b6131d4b12769fdd0afd20",
+      "tag_text": "癌症",
+      "tag_type": "disease",
+      "terminology": {
+        "codes": [],
+        "lookup_query": "malignant neoplasm",
+        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
+        "private_pg_mapping": true,
+        "public_export": "code_only_no_icd_content",
+        "release": "2026-01",
+        "system": "ICD-11"
+      }
+    }
+  ],
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "111/3",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "111/1/1",
+          "111/3/1"
+        ]
+      },
       "edge_id": "clause-edge:d080e8c8d0cb2a3bb348bb54ae334896a628dd41574e1b433612f5ff117add66",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace",
+            "width_variant"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "10.於醫院內完成調配之靜脈營養輸液"
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "(TPN)"
+              "side": "old",
+              "text": "(TPN)，可攜回使用。"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "，或不需調配之靜脈營養輸液"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "，可攜回使用。"
-            },
-            {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": "（"
             },
             {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "85/10/1、93/12/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": "）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "10.於醫院內完成調配之靜脈營養輸液(TPN)，"
+            },
+            {
               "kind": "added",
+              "side": "new",
+              "text": "或不需調配之靜脈營養輸液，"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "可攜回使用。"
+            },
+            {
+              "kind": "ignored",
               "side": "new",
               "text": "("
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "85/10/1、93/12/1"
-            },
-            {
-              "kind": "removed",
-              "side": "old",
-              "text": "）"
             },
             {
               "kind": "added",
               "side": "new",
-              "text": "、111/1/1)"
+              "text": "、111/1/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": ")"
             }
           ],
           "new_text": "10.於醫院內完成調配之靜脈營養輸液(TPN)，或不需調配之靜脈營養輸液，可攜回使用。(85/10/1、93/12/1、111/1/1)",
-          "old_text": "10.於醫院內完成調配之靜脈營養輸液 (TPN)，可攜回使用。（85/10/1、93/12/1）"
+          "old_text": "10.於醫院內完成調配之靜脈營養輸液 (TPN)，可攜回使用。（85/10/1、93/12/1）",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "本版新增",
+          "display_note": "下一版新增",
           "hunk_order": 1,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "added",
@@ -438,7 +2266,8 @@
             }
           ],
           "new_text": "26.Fondaparinux（如Arixtra）用於靜脈血栓高危險病患，接受人工髖或膝關節置換術或再置換術後，預防其術後之靜脈血栓(VTE)。（111/3/1)",
-          "old_text": null
+          "old_text": null,
+          "source_change_kind": "added"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -480,6 +2309,19 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "109/12",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "109/2/1",
+          "109/6/1",
+          "109/10/1",
+          "109/12/1",
+          "109/12/1",
+          "109/12/1"
+        ]
+      },
       "edge_id": "clause-edge:f2016f3ab15e5d4e70043f122cc7fd2ab82eea416e70969919ebbc23a633e020",
       "hunks": [
         {
@@ -487,25 +2329,46 @@
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "1."
             },
             {
               "kind": "removed",
               "side": "old",
-              "text": "Insulin"
+              "text": "I"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "nsulin。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "1."
             },
             {
               "kind": "added",
               "side": "new",
-              "text": "治療糖尿病之insulin及GLP-1受體促效劑"
+              "text": "治療糖尿病之i"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
+              "text": "nsulin"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "及GLP-1受體促效劑"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
               "text": "。"
             },
             {
@@ -515,48 +2378,20 @@
             }
           ],
           "new_text": "1.治療糖尿病之insulin及GLP-1受體促效劑。(109/12/1)",
-          "old_text": "1.Insulin。"
+          "old_text": "1.Insulin。",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 1,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "凝血因子、繞徑治療藥物、第十三"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "之一"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "等"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "）及申報費用時上傳"
+              "side": "old",
+              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳"
             },
             {
               "kind": "removed",
@@ -564,13 +2399,8 @@
               "text": "「全民健康保險血友病患者使用第八、第九凝血因子在家"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "上述"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "治療紀錄表"
             },
             {
@@ -580,8 +2410,53 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1"
+              "side": "old",
+              "text": "電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "凝血因子、繞徑治療藥物、第十三"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "之一"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "等"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "）及申報費用時上傳"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "上述"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "治療紀錄表電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1"
             },
             {
               "kind": "added",
@@ -590,22 +2465,24 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": ")"
             }
           ],
           "new_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子、繞徑治療藥物、第十三凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八之一─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄等）及申報費用時上傳上述治療紀錄表電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1、109/2/1)",
-          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)"
+          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 2,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "13.抗精神病長效針劑（至多攜回"
             },
             {
@@ -614,13 +2491,23 @@
               "text": "一"
             },
             {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "個月）。（87/4/1）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "13.抗精神病長效針劑（至多攜回"
+            },
+            {
               "kind": "added",
               "side": "new",
               "text": "三"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "個月）。（87/4/1"
             },
             {
@@ -630,33 +2517,27 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "）"
             }
           ],
           "new_text": "13.抗精神病長效針劑（至多攜回三個月）。（87/4/1、109/6/1）",
-          "old_text": "13.抗精神病長效針劑（至多攜回一個月）。（87/4/1）"
+          "old_text": "13.抗精神病長效針劑（至多攜回一個月）。（87/4/1）",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 3,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "19.類風濕關節炎"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "病患使用etanercept"
+              "side": "old",
+              "text": "19.類風濕關節炎病患使用etanercept"
             },
             {
               "kind": "removed",
@@ -664,24 +2545,9 @@
               "text": "；"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "、"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
-              "text": "adalimumab"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下"
-            },
-            {
-              "kind": "unchanged",
-              "side": "both",
-              "text": "注射劑，"
+              "side": "old",
+              "text": "adalimumab注射劑，"
             },
             {
               "kind": "removed",
@@ -689,13 +2555,8 @@
               "text": "需個案"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "經"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "事前審查核准後，"
             },
             {
@@ -705,18 +2566,18 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "在醫師指導下，至多可攜回四週之使用量。(93/8/1"
+              "side": "old",
+              "text": "在醫師指導下，至多可攜回四週之使用量。(93/8/1)"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "、109/10/1"
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": ")\n20."
+              "side": "old",
+              "text": "20."
             },
             {
               "kind": "removed",
@@ -725,23 +2586,38 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "("
+              "side": "old",
+              "text": "(10"
             },
             {
               "kind": "removed",
               "side": "old",
-              "text": "103/9/1"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "刪除) (109/12/1"
+              "text": "3"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": ")\n21."
+              "side": "old",
+              "text": "/"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "9"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "21."
             },
             {
               "kind": "removed",
@@ -750,32 +2626,158 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "("
+              "side": "old",
+              "text": "(10"
             },
             {
               "kind": "removed",
               "side": "old",
-              "text": "103/9/1"
-            },
-            {
-              "kind": "added",
-              "side": "new",
-              "text": "刪除"
+              "text": "3/"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": ")"
+              "side": "old",
+              "text": "9/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "19.類風濕關節炎"
             },
             {
               "kind": "added",
               "side": "new",
-              "text": " (109/12/1)"
+              "text": "、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "病患使用etanercept"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "adalimumab"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "注射劑，"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "經"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "事前審查核准後，在醫師指導下，至多可攜回四週之使用量。(93/8/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、109/10/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": ")"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "20."
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(刪除)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(10"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "9"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "/"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "12"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "21."
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(刪除)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(109/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "2/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": ")"
             }
           ],
           "new_text": "19.類風濕關節炎、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症病患使用etanercept、adalimumab、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下注射劑，經事前審查核准後，在醫師指導下，至多可攜回四週之使用量。(93/8/1、109/10/1)\n20.(刪除) (109/12/1)\n21.(刪除) (109/12/1)",
-          "old_text": "19.類風濕關節炎病患使用etanercept；adalimumab注射劑，需個案事前審查核准後，並在醫師指導下，至多可攜回四週之使用量。(93/8/1)\n20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)"
+          "old_text": "19.類風濕關節炎病患使用etanercept；adalimumab注射劑，需個案事前審查核准後，並在醫師指導下，至多可攜回四週之使用量。(93/8/1)\n20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -817,17 +2819,31 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "108/10",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "108/10/1"
+        ]
+      },
       "edge_id": "clause-edge:6bcaaabca8ff44c498cf197924205bea776d427c6cc9ffbbff2b1a93da5aa11e",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
+              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
               "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）"
             },
             {
@@ -837,7 +2853,7 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1"
             },
             {
@@ -847,12 +2863,13 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": ")"
             }
           ],
           "new_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)",
-          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)"
+          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -938,22 +2955,119 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "103/9",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "103/9/1",
+          "103/9/1",
+          "103/9/1",
+          "103/9/1",
+          "103/9/1",
+          "103/9/1"
+        ]
+      },
       "edge_id": "clause-edge:0f7d65bfb2625ddcacc2693baeca9c8a6fd85da0dd7453ab1d07aabae8c56c71",
       "hunks": [
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "本版新增",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "added",
               "side": "new",
-              "text": "20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)\n22.含teriparatide成分注射劑。(103/9/1)\n23.含interferon beta-1a 成分注射劑。(103/9/1)\n24.含interferon beta-1b成分注射劑。(103/9/1)\n25.含glatiramer成分注射劑。(103/9/1)"
+              "text": "20.含exenatide成分注射劑。(103/9/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "21.含liraglutide成分注射劑。(103/9/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "22.含teriparatide成分注射劑。(103/9/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "23.含interferon"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "beta-1a"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "成分注射劑。(103/9/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "24.含interferon"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "beta-1b成分注射劑。(103/9/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "25.含glatiramer成分注射劑。(103/9/1)"
             }
           ],
           "new_text": "20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)\n22.含teriparatide成分注射劑。(103/9/1)\n23.含interferon beta-1a 成分注射劑。(103/9/1)\n24.含interferon beta-1b成分注射劑。(103/9/1)\n25.含glatiramer成分注射劑。(103/9/1)",
-          "old_text": null
+          "old_text": null,
+          "source_change_kind": "added"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -1039,88 +3153,167 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:eb9dc430856fb10313eeac7c02dee1c98405be27a5ebbf33df2869eb4b499de1",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "1."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "Insulin"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "。"
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "\n2."
+              "side": "old",
+              "text": "2."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "CAPD使用之透析液"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "。"
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "\n3."
+              "side": "old",
+              "text": "3."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "CAPD使用之抗生素及抗凝血劑（至多攜回二週）"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "。"
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "\n4."
+              "side": "old",
+              "text": "4."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "Desferrioxamine（如 Desferal）"
+              "side": "old",
+              "text": "Desferrioxamine（如"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "Desferal）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "1.Insulin"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "2.CAPD使用之透析液"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "3.CAPD使用之抗生素及抗凝血劑（至多攜回二週）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "4.Desferrioxamine（如"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "Desferal）"
             },
             {
               "kind": "added",
@@ -1129,48 +3322,92 @@
             }
           ],
           "new_text": "1.Insulin。\n2.CAPD使用之透析液。\n3.CAPD使用之抗生素及抗凝血劑（至多攜回二週）。\n4.Desferrioxamine（如 Desferal）。",
-          "old_text": "1. Insulin\n2. CAPD使用之透析液\n3. CAPD使用之抗生素及抗凝血劑（至多攜回二週）\n4. Desferrioxamine（如 Desferal）"
+          "old_text": "1. Insulin\n2. CAPD使用之透析液\n3. CAPD使用之抗生素及抗凝血劑（至多攜回二週）\n4. Desferrioxamine（如 Desferal）",
+          "source_change_kind": "replaced"
         },
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 1,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "6."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "治療白血病使用之α-interferon（至多攜回二週）"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "。"
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "\n7."
+              "side": "old",
+              "text": "7."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "G-CSF (如filgrastim；lenograstim）(至多攜回六天）"
+              "side": "old",
+              "text": "G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(如filgrastim；lenograstim）(至多攜回六天）(98/11/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "6.治療白血病使用之α-interferon（至多攜回二週）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "7.G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(如filgrastim；lenograstim）(至多攜回六天）"
             },
             {
               "kind": "added",
@@ -1179,33 +3416,47 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "(98/11/1)"
             }
           ],
           "new_text": "6.治療白血病使用之α-interferon（至多攜回二週）。\n7.G-CSF (如filgrastim；lenograstim）(至多攜回六天）。(98/11/1)",
-          "old_text": "6. 治療白血病使用之α-interferon（至多攜回二週）\n7. G-CSF (如filgrastim；lenograstim）(至多攜回六天）(98/11/1)"
+          "old_text": "6. 治療白血病使用之α-interferon（至多攜回二週）\n7. G-CSF (如filgrastim；lenograstim）(至多攜回六天）(98/11/1)",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 2,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "16."
             },
             {
-              "kind": "removed",
+              "kind": "ignored",
               "side": "old",
               "text": " "
             },
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "罹患惡性貧血（pernicious anemia）及維"
+              "side": "old",
+              "text": "罹患惡性貧血（pernicious"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "anemia）及維"
             },
             {
               "kind": "removed",
@@ -1213,13 +3464,8 @@
               "text": "他命"
             },
             {
-              "kind": "added",
-              "side": "new",
-              "text": "生素"
-            },
-            {
               "kind": "unchanged",
-              "side": "both",
+              "side": "old",
               "text": "B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維"
             },
             {
@@ -1228,18 +3474,49 @@
               "text": "他命"
             },
             {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "16.罹患惡性貧血（pernicious"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "anemia）及維"
+            },
+            {
               "kind": "added",
               "side": "new",
               "text": "生素"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
+              "text": "B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "生素"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
               "text": "B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
             }
           ],
           "new_text": "16.罹患惡性貧血（pernicious anemia）及維生素B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維生素B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)",
-          "old_text": "16. 罹患惡性貧血（pernicious anemia）及維他命B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維他命B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
+          "old_text": "16. 罹患惡性貧血（pernicious anemia）及維他命B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維他命B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -1292,18 +3569,52 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "100/4",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "100/4/1"
+        ]
+      },
       "edge_id": "clause-edge:3360a64d0a1d350712c76055dfd1f0b356b5d48c26049e2bd8ccd029ce6572d4",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）"
+              "side": "old",
+              "text": "9."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "9."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）"
             },
             {
               "kind": "added",
@@ -1312,7 +3623,7 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "（86/9/1、92/5/1"
             },
             {
@@ -1322,12 +3633,13 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": ")"
             }
           ],
           "new_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)",
-          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)"
+          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -1380,6 +3692,14 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "99/11",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "99/11/1"
+        ]
+      },
       "edge_id": "clause-edge:f09929664b7d2dd321a6cee46e9954e988e2b997941374c27244b86086278f99",
       "hunks": [
         {
@@ -1387,16 +3707,107 @@
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過"
+              "side": "old",
+              "text": "15."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "Apomorphine"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "hydrochloride"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "10mg/ml（如Apo-Go"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過"
             },
             {
               "kind": "removed",
               "side": "old",
               "text": "15"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "支。（91/2/1）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "15."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "Apomorphine"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "hydrochloride"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "10mg/ml（如Apo-Go"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過"
             },
             {
               "kind": "added",
@@ -1405,7 +3816,7 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "支。（91/2/1"
             },
             {
@@ -1415,12 +3826,13 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "）"
             }
           ],
           "new_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過20支。（91/2/1、99/11/1）",
-          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -1462,18 +3874,53 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "98/11",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "98/9/1",
+          "98/11/1"
+        ]
+      },
       "edge_id": "clause-edge:3db07ea35fd2cd763226ea6081f85eb47cc802b680b690a43b55c447ebe4493e",
       "hunks": [
         {
-          "change_kind": "replaced",
+          "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "下一版新增",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp"
+              "side": "old",
+              "text": "5."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp）為原則）。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "5."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp"
             },
             {
               "kind": "added",
@@ -1482,7 +3929,7 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "）為原則）。"
             },
             {
@@ -1492,23 +3939,75 @@
             }
           ],
           "new_text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp、Mircera）為原則）。(98/9/1)",
-          "old_text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp）為原則）。"
+          "old_text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp）為原則）。",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 1,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回"
+              "side": "old",
+              "text": "7."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(如filgrastim；lenograstim）(至多攜回"
             },
             {
               "kind": "removed",
               "side": "old",
               "text": "三"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "天）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "7."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(如filgrastim；lenograstim）(至多攜回"
             },
             {
               "kind": "added",
@@ -1517,7 +4016,7 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "天）"
             },
             {
@@ -1527,18 +4026,50 @@
             }
           ],
           "new_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回六天）(98/11/1)",
-          "old_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回三天）"
+          "old_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回三天）",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 2,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "15. Apomorphine hydrochloride 10mg/ml（如"
+              "side": "old",
+              "text": "15."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "Apomorphine"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "hydrochloride"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "10mg/ml（如"
             },
             {
               "kind": "removed",
@@ -1546,18 +4077,69 @@
               "text": "Britaject"
             },
             {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "15."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "Apomorphine"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "hydrochloride"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "10mg/ml（如"
+            },
+            {
               "kind": "added",
               "side": "new",
               "text": "Apo-Go"
             },
             {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
               "kind": "unchanged",
-              "side": "both",
-              "text": " Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+              "side": "new",
+              "text": "Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
             }
           ],
           "new_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）",
-          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Britaject Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Britaject Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
@@ -1599,6 +4181,12 @@
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
       "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
       "edge_id": "clause-edge:729c2057693835a6cec342d424eb08988912843aa99a262597333da16042c87b",
       "hunks": [
         {
@@ -1606,46 +4194,129 @@
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 0,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "7. G-CSF (如"
+              "side": "old",
+              "text": "7."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(如filgrasti"
             },
             {
               "kind": "removed",
               "side": "old",
-              "text": "filgrastin"
+              "text": "n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "；lenograstim）(至多攜回三天）"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "7."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "G-CSF"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(如filgrasti"
             },
             {
               "kind": "added",
               "side": "new",
-              "text": "filgrastim"
+              "text": "m"
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "；lenograstim）(至多攜回三天）"
             }
           ],
           "new_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回三天）",
-          "old_text": "7. G-CSF (如filgrastin；lenograstim）(至多攜回三天）"
+          "old_text": "7. G-CSF (如filgrastin；lenograstim）(至多攜回三天）",
+          "source_change_kind": "replaced"
         },
         {
           "change_kind": "replaced",
           "context_label": "0.4",
           "display_note": "下一版改寫",
           "hunk_order": 1,
+          "ignored_change_classes": [],
           "inline_segments": [
             {
               "kind": "unchanged",
-              "side": "both",
-              "text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1"
+              "side": "old",
+              "text": "9."
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1"
             },
             {
               "kind": "removed",
               "side": "old",
               "text": "）("
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "92/5/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "9."
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1"
             },
             {
               "kind": "added",
@@ -1654,12 +4325,13 @@
             },
             {
               "kind": "unchanged",
-              "side": "both",
+              "side": "new",
               "text": "92/5/1)"
             }
           ],
           "new_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)",
-          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1）(92/5/1)"
+          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1）(92/5/1)",
+          "source_change_kind": "replaced"
         }
       ],
       "legal_predecessor_status": "not_claimed",
