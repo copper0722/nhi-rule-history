@@ -762,6 +762,7 @@ h1 {
   color: inherit;
   font-weight: 690;
   line-height: 1.24;
+  text-indent: 0;
   text-decoration: none;
   white-space: nowrap;
 }

@@ -103,7 +103,7 @@ function collectRichTextMatches(text) {
   }
   const markers = state.data?.condition_markers ?? [];
   for (const marker of markers) {
-    const pattern = new RegExp(escapeRegExp(marker.marker_text), "gu");
+    const pattern = new RegExp(escapeRegExp(marker.marker_text), "giu");
     for (const match of text.matchAll(pattern)) {
       if (
         marker.marker_text === "限" &&

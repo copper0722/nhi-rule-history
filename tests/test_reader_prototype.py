@@ -187,22 +187,31 @@ class ReaderPrototypeTests(unittest.TestCase):
             for marker in CLAUSE_04["condition_markers"]
             if marker["semantic_role"] == "quantity"
         }
-        self.assertEqual(quantity_markers, {"15支", "20支"})
+        self.assertEqual(
+            quantity_markers,
+            {"15支", "20支", "20,000U", "100mcg"},
+        )
         self.assertNotIn("需要", marker_texts)
         self.assertNotIn("應", marker_texts)
         self.assertNotIn("需", marker_texts)
+        self.assertNotIn("不超過", marker_texts)
         self.assertIn("semantic-tag--drug", CSS)
         self.assertIn("semantic-tag--disease", CSS)
         semantic_tag_css = CSS[
             CSS.index(".semantic-tag {") : CSS.index(".semantic-tag--drug")
         ]
         self.assertIn("vertical-align: baseline;", semantic_tag_css)
+        self.assertIn("text-indent: 0;", semantic_tag_css)
         self.assertIn("white-space: nowrap;", semantic_tag_css)
         self.assertNotIn(".semantic-tag small", CSS)
         self.assertIn("condition-term--prohibition", CSS)
         self.assertIn("isEmbeddedLatinToken", SCRIPT)
         self.assertIn("semanticLinkLabel", SCRIPT)
         self.assertNotIn("terminologyLabel", SCRIPT)
+        self.assertIn(
+            'new RegExp(escapeRegExp(marker.marker_text), "giu")',
+            SCRIPT,
+        )
         self.assertIn("condition-term--logical", CSS)
         self.assertIn("condition-term--duration", CSS)
         self.assertIn("condition-term--quantity", CSS)

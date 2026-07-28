@@ -34,7 +34,7 @@
   semantic diff presentation v2 忽略 Unicode 空白、單引號與全／半形；
   純新增不產生虛構的「下一版刪除」。81 個語意標籤含 61 個藥名／藥物類別
   與 20 個疾病詞，另有 70 筆 ATC 關聯、21 筆 code-only ICD-11 關聯、
-  23 個條件詞規則及 1 筆 agent 歷史摘要。疾病 code 分成
+  24 個條件詞規則及 1 筆 agent 歷史摘要。疾病 code 分成
   `agent_selected` 與 `candidate`，候選在 UI 明列待人工確認；WHO 標題、
   URI、定義與參考快照不進 Git。
   Reader enrichment v4 新增 `apomorphine → N04BC07` 完整詞索引，並禁止
@@ -46,6 +46,10 @@
   顯示 `二週`、`六天`、`一個月`、`每週`等 `duration` 標記；`應`也不再
   單獨變色。變更數量 `15支`、`20支`以同 schema 的 `quantity` 角色顯示，
   單字 `限` 遇到複合詞 `上限`時排除。
+  Reader enrichment v10 另把上限式中的 `20,000U` 與同句替代值
+  `100mcg` 程式化存為 `quantity`；`不超過`維持普通文字。條列段落的負
+  `text-indent` 不再被行內語意連結繼承，避免「治療」與「糖尿病」等
+  相鄰文字發生字形重疊；正式頁面尚待本輪部署後核對。
   語意連結採 `coding-able` 門檻：有已驗證 ATC／ICD-11 關係才上連結。
   因此 CAPD 維持純文字；透析液、抗生素、抗凝血劑、第八／第九／第十三
   凝血因子、繞徑治療藥物等已補入。過廣且無單一 code 的「癌症」不再產生

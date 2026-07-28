@@ -38,7 +38,7 @@ from nhi_rule_history.edition_history import (
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
 DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
-READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v8"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v10"
 NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
 ICD11_CODING_TOOL_URL = (
     "https://icd.who.int/ct/icd11_mms/en/2026-01"
@@ -249,7 +249,6 @@ CHAPTER_04_CONDITION_MARKERS: tuple[tuple[str, str], ...] = (
     ("需個案事前報准", "prior_authorization"),
     ("需敘明理由", "requirement"),
     ("不得超過", "prohibition"),
-    ("不超過", "maximum"),
     ("為限", "maximum"),
     ("方得", "restriction"),
     ("不得", "prohibition"),
@@ -268,10 +267,16 @@ DURATION_MARKER_PATTERN = re.compile(
     r"(?![\d/])"
 )
 
-QUANTITY_MARKER_PATTERN = re.compile(
+QUANTITY_LIMIT_EXPRESSION_PATTERN = re.compile(
+    r"(?:不得|不)超過[^。；\n]{0,160}"
+)
+
+QUANTITY_VALUE_PATTERN = re.compile(
     r"(?<![\d/])"
-    r"(?:\d+|[零〇○一二三四五六七八九十百千兩]+)支"
-    r"(?![\d/])"
+    r"(?:\d+(?:,\d{3})*|[零〇○一二三四五六七八九十百千兩]+)"
+    r"\s*(?:mcg|μg|IU|U|支)"
+    r"(?![\w/])",
+    re.IGNORECASE,
 )
 
 CHAPTER_04_AGENT_SUMMARY = """\
@@ -2093,8 +2098,29 @@ def rebuild_reader_enrichment(
                     "programmatic_quantity_plus_time_unit_across_clause_history"
                 ),
             )
+        quantity_by_normalized: dict[str, str] = {}
+        for limit_expression in QUANTITY_LIMIT_EXPRESSION_PATTERN.finditer(
+            condition_source_text
+        ):
+            for quantity_match in QUANTITY_VALUE_PATTERN.finditer(
+                limit_expression.group(0)
+            ):
+                marker_text = re.sub(
+                    r"(?i)(mcg|μg|iu|u)$",
+                    lambda match: {
+                        "mcg": "mcg",
+                        "μg": "μg",
+                        "iu": "IU",
+                        "u": "U",
+                    }[match.group(1).lower()],
+                    quantity_match.group(0),
+                )
+                quantity_by_normalized.setdefault(
+                    _normalized_keyword(marker_text),
+                    marker_text,
+                )
         quantity_markers = sorted(
-            set(QUANTITY_MARKER_PATTERN.findall(condition_source_text)),
+            quantity_by_normalized.values(),
             key=lambda value: (-len(value), value),
         )
         for marker_text in quantity_markers:
@@ -2102,7 +2128,7 @@ def rebuild_reader_enrichment(
                 marker_text,
                 "quantity",
                 selection=(
-                    "programmatic_number_plus_count_unit_across_clause_history"
+                    "programmatic_value_plus_unit_within_limit_expression"
                 ),
             )
 
@@ -2114,7 +2140,10 @@ def rebuild_reader_enrichment(
         "disease_tags": list(CHAPTER_04_DISEASE_TAGS),
         "condition_markers": list(CHAPTER_04_CONDITION_MARKERS),
         "duration_marker_pattern": DURATION_MARKER_PATTERN.pattern,
-        "quantity_marker_pattern": QUANTITY_MARKER_PATTERN.pattern,
+        "quantity_limit_expression_pattern": (
+            QUANTITY_LIMIT_EXPRESSION_PATTERN.pattern
+        ),
+        "quantity_value_pattern": QUANTITY_VALUE_PATTERN.pattern,
         "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
     }
     input_sha256 = _sha256_text(_canonical_json(input_payload))

@@ -791,3 +791,28 @@
   the newly admitted terms are linked. Opening `透析液` displayed ATC `B05D`.
   Deterministic PG replay was byte-identical, and the complete test suite
   passed 432 tests with seven intentional skips.
+
+## 2026-07-28 — hanging-indent overlap and limit-value emphasis
+
+- Browser measurement identified the apparent `治療` / `糖尿病` collision as
+  inherited hanging indentation, not an overlapping anchor box. A list
+  paragraph's `text-indent: -1.9em` propagated into each inline-block semantic
+  link and shifted its glyph content about 26 pixels left. Semantic links now
+  reset `text-indent: 0`; the ordinary inter-term spacing remains unchanged.
+- Condition extraction now treats numeric value-plus-unit tokens inside a
+  `不得超過` or `不超過` expression as `quantity`. The source spelling and
+  punctuation are preserved, so `20,000U` and the alternative `100mcg` are
+  highlighted while `不超過` itself is not. Matching is case-insensitive for
+  Latin units, but rendering preserves the exact source text.
+- Reader enrichment v9 was an intermediate sealed receipt and was superseded
+  before publication. Final v10 run
+  `ac9ffa26-7d9c-5b17-ab98-39ebcb74a72f` stores 24 condition markers; its
+  output SHA-256 is
+  `ea0b01a10d2c538e1828ae351224cbc461f5276dd400f73b99bd2181f0127472`.
+  The reader `0.4.json` SHA-256 is
+  `0284f2f466d9911091f9d61c455c1dfd3b018d265dbd72f3a1c72f463a0bb6a7`.
+  The portable SQLite projection passed integrity and foreign-key checks with
+  SHA-256
+  `8819bbcd6ef924437778c3ff00ce60bd17f92bcd2a8ebeae215a8210c34f12e6`.
+  A deterministic replay returned the same sealed run and byte-identical
+  reader and SQLite hashes. Twenty-three focused reader/export tests passed.

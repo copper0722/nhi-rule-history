@@ -30,9 +30,19 @@
       "semantic_role": "prior_authorization"
     },
     {
+      "marker_id": "condition-marker:198239d2c106c26cb39b92c9f66fb90411a92fbe3ed49c2b8b25e7fc2cec14ba",
+      "marker_text": "20,000U",
+      "semantic_role": "quantity"
+    },
+    {
       "marker_id": "condition-marker:0c9186a338f5281b26bb233d2ec44aa10957174e3bd04aca1ab45a7452445534",
       "marker_text": "需個案事前報准",
       "semantic_role": "prior_authorization"
+    },
+    {
+      "marker_id": "condition-marker:7a693b982a49c3c1baf2c4a4c460533b2d68c1fc5cf0bf99ace97bb69306c899",
+      "marker_text": "100mcg",
+      "semantic_role": "quantity"
     },
     {
       "marker_id": "condition-marker:7ae5c385e7a59f7aa24ad298910175c07d3cbdfd7142fc181be0ddfcf522f3e9",
@@ -63,11 +73,6 @@
       "marker_id": "condition-marker:83dd1b0c42e74dad40b28165dfe36a60a43cfa22fc0f4bc25879c68ed8da6615",
       "marker_text": "三個月",
       "semantic_role": "duration"
-    },
-    {
-      "marker_id": "condition-marker:92f9d6d061e100cf4b0b2780576ee1b68e0c977ebbe22aed9f6a1a80f2423a55",
-      "marker_text": "不超過",
-      "semantic_role": "maximum"
     },
     {
       "marker_id": "condition-marker:630d1229e38891cd0661a399adccdba9a433c761e7c0ec991e5f4ca88ac0bf2a",

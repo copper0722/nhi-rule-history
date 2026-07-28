@@ -60,7 +60,7 @@ class Chapter00ClauseExportTests(unittest.TestCase):
                 "chapter": 1,
                 "clause": 12,
                 "agent_history_summary": 1,
-                "clause_condition_marker": 23,
+                "clause_condition_marker": 24,
                 "clause_diff_hunk": 26,
                 "clause_semantic_tag": 81,
                 "clause_semantic_tag_atc": 70,
@@ -222,7 +222,7 @@ class Chapter00ClauseExportTests(unittest.TestCase):
         )
         self.assertEqual(diff_run["hunk_count"], 26)
         self.assertEqual(enrichment["semantic_tag_count"], 81)
-        self.assertEqual(enrichment["condition_marker_count"], 23)
+        self.assertEqual(enrichment["condition_marker_count"], 24)
 
     def test_icd11_codes_are_public_but_icd_content_stays_private(self) -> None:
         self.assertFalse(
