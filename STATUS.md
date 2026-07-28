@@ -46,7 +46,9 @@
 - GitHub Pages workflow 已建立並成功發布 `prototype/reader`：
   <https://copper0722.github.io/nhi-rule-history/?rule=0.4>。正式 URL 已核對
   HTTP 200、PG 投影載入、`99/11`、agent 摘要、ICD-11 code、純新增 diff
-  與零水平溢位；桌面與 390×844 手機 viewport 均已實測。
+  與零水平溢位；桌面與 390×844 手機 viewport 均已實測。最新正式部署
+  commit `4f491ec5` 已確認載入 reader enrichment v4，`apomorphine` 完整
+  對應 N04BC07，且 agent summary 內沒有錯誤的 morphine 子字串 tag。
 - 長條文導覽已改為響應式 reader controls：桌面同一列左側凍結條號／
   標題／本頁導覽，右側凍結「搜尋通則條文」；手機不占用頂端閱讀空間，
   改用底部浮動島。目錄以側滑抽屜顯示並隨閱讀位置標記目前章節，搜尋則
