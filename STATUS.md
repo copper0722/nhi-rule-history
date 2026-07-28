@@ -44,6 +44,10 @@
   <https://copper0722.github.io/nhi-rule-history/?rule=0.4>。正式 URL 已核對
   HTTP 200、PG 投影載入、`99/11`、agent 摘要、ICD-11 code、純新增 diff
   與零水平溢位；桌面與 390×844 手機 viewport 均已實測。
+- 長條文導覽已改為響應式 reader controls：桌面同一列左側凍結條號／
+  標題／本頁導覽，右側凍結「搜尋通則條文」；手機不占用頂端閱讀空間，
+  改用底部浮動島。目錄以側滑抽屜顯示並隨閱讀位置標記目前章節，搜尋則
+  展開為底部面板。搜尋結果不再把正文向下推。
 - ATC linkage 資料模型，以及 ICD-11 授權 fail-closed 邊界。
 - 重新確認 ATC 的官方來源鏈：INAE3000 是既有高頻 current lookup，
   IODE `A21030000I-E41001-001` 是可整批重建的每月 CSV。2026-07-27
@@ -63,9 +67,9 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 429 項 public tests
-  （422 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts 與
-  真實 PostgreSQL linkage transaction test）；
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 431 項 public tests
+  （424 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
+  響應式 reader controls 與真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
 - `raw-odt-v1` GitHub Release：14 個 ODT、49,709,507 bytes，下載檔名、

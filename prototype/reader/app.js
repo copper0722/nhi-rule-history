@@ -14,6 +14,16 @@ const els = {
   breadcrumbCode: document.querySelector("#breadcrumb-code"),
   clauseCode: document.querySelector("#clause-code"),
   pageTitle: document.querySelector("#page-title"),
+  dockClauseCode: document.querySelector("#dock-clause-code"),
+  dockPageTitle: document.querySelector("#dock-page-title"),
+  mobileIslandCode: document.querySelector("#mobile-island-code"),
+  mobileTocCode: document.querySelector("#mobile-toc-code"),
+  mobileTocToggle: document.querySelector("#mobile-toc-toggle"),
+  mobileTocClose: document.querySelector("#mobile-toc-close"),
+  mobileTocDrawer: document.querySelector("#mobile-toc-drawer"),
+  mobileSearchToggle: document.querySelector("#mobile-search-toggle"),
+  mobileSearchClose: document.querySelector("#mobile-search-close"),
+  mobileBackdrop: document.querySelector("#mobile-control-backdrop"),
   editionCount: document.querySelector("#edition-count"),
   versionCount: document.querySelector("#version-count"),
   scopeNote: document.querySelector("#scope-note p"),
@@ -24,6 +34,7 @@ const els = {
   transitionList: document.querySelector("#transition-list"),
   diffIgnorePolicy: document.querySelector("#diff-ignore-policy"),
   search: document.querySelector("#page-search"),
+  findBar: document.querySelector(".find-bar"),
   searchStatus: document.querySelector("#search-status"),
   clauseResults: document.querySelector("#clause-results"),
   print: document.querySelector("#print-button"),
@@ -302,6 +313,10 @@ function renderHeader() {
   els.breadcrumbCode.textContent = clause.canonical_code;
   els.clauseCode.textContent = clause.canonical_code;
   els.pageTitle.textContent = clause.display_title;
+  els.dockClauseCode.textContent = clause.canonical_code;
+  els.dockPageTitle.textContent = clause.display_title;
+  els.mobileIslandCode.textContent = clause.canonical_code;
+  els.mobileTocCode.textContent = clause.canonical_code;
   document.title = `${clause.canonical_code} ${clause.display_title}｜健保給付條文歷史`;
   els.editionCount.textContent = `${coverage.observed_edition_count} 份`;
   els.versionCount.textContent = `${coverage.version_state_count} 版`;
@@ -440,6 +455,104 @@ function renderSearchResults() {
     : `<p class="empty-state">目前通則條文沒有符合「${escapeHtml(state.query)}」的結果。</p>`;
 }
 
+let mobilePanel = null;
+let mobileReturnFocus = null;
+
+function setMobilePanel(nextPanel, { restoreFocus = true } = {}) {
+  const opening = nextPanel !== null;
+  if (opening && mobilePanel === null) {
+    mobileReturnFocus = document.activeElement;
+  }
+  mobilePanel = nextPanel;
+  const tocOpen = nextPanel === "toc";
+  const searchOpen = nextPanel === "search";
+
+  els.mobileTocDrawer.classList.toggle("mobile-toc-drawer--open", tocOpen);
+  els.mobileTocDrawer.setAttribute("aria-hidden", String(!tocOpen));
+  els.mobileTocDrawer.inert = !tocOpen;
+  els.mobileTocToggle.setAttribute("aria-expanded", String(tocOpen));
+  els.findBar.classList.toggle("find-bar--mobile-open", searchOpen);
+  els.mobileSearchToggle.setAttribute("aria-expanded", String(searchOpen));
+  els.mobileBackdrop.classList.toggle(
+    "mobile-control-backdrop--open",
+    opening,
+  );
+  els.mobileBackdrop.setAttribute("aria-hidden", String(!opening));
+  document.body.classList.toggle("mobile-panel-open", opening);
+
+  if (tocOpen) {
+    window.requestAnimationFrame(() => els.mobileTocClose.focus());
+  } else if (searchOpen) {
+    window.requestAnimationFrame(() => els.search.focus());
+  } else if (
+    restoreFocus &&
+    mobileReturnFocus instanceof HTMLElement &&
+    mobileReturnFocus.isConnected
+  ) {
+    mobileReturnFocus.focus();
+  }
+  if (!opening) mobileReturnFocus = null;
+}
+
+function initializeMobileTocScrollspy() {
+  const links = Array.from(
+    document.querySelectorAll("[data-mobile-toc-target]"),
+  );
+  const targetLinks = new Map(
+    links.map((link) => [link.dataset.mobileTocTarget, link]),
+  );
+  const sections = Array.from(targetLinks.keys())
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+  if (sections.length < 3) return;
+
+  function selectSection(id) {
+    for (const [target, link] of targetLinks) {
+      if (target === id) {
+        link.setAttribute("aria-current", "location");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  }
+
+  function selectFromScrollPosition() {
+    const readingLine = window.innerHeight * 0.28;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= readingLine) {
+        current = section;
+      } else {
+        break;
+      }
+    }
+    selectSection(current.id);
+  }
+
+  let scrollUpdatePending = false;
+  function requestScrollspyUpdate() {
+    if (scrollUpdatePending) return;
+    scrollUpdatePending = true;
+    window.requestAnimationFrame(() => {
+      selectFromScrollPosition();
+      scrollUpdatePending = false;
+    });
+  }
+
+  const observer = new IntersectionObserver(
+    () => requestScrollspyUpdate(),
+    {
+      rootMargin: "-18% 0px -68% 0px",
+      threshold: [0, 0.01],
+    },
+  );
+  for (const section of sections) observer.observe(section);
+  window.addEventListener("scroll", requestScrollspyUpdate, { passive: true });
+  window.addEventListener("resize", requestScrollspyUpdate);
+  window.addEventListener("hashchange", requestScrollspyUpdate);
+  selectFromScrollPosition();
+}
+
 function validateIndex(index) {
   return (
     index.schema === "nhi-rule-history/single-clause-index/v1" &&
@@ -525,6 +638,37 @@ els.search.addEventListener("input", (event) => {
   state.query = event.target.value.trim();
   renderSearchResults();
 });
+
+els.mobileTocToggle.addEventListener("click", () => {
+  setMobilePanel(mobilePanel === "toc" ? null : "toc");
+});
+
+els.mobileSearchToggle.addEventListener("click", () => {
+  setMobilePanel(mobilePanel === "search" ? null : "search");
+});
+
+els.mobileTocClose.addEventListener("click", () => setMobilePanel(null));
+els.mobileSearchClose.addEventListener("click", () => setMobilePanel(null));
+els.mobileBackdrop.addEventListener("click", () => setMobilePanel(null));
+
+for (const link of document.querySelectorAll("[data-mobile-toc-target]")) {
+  link.addEventListener("click", () => {
+    setMobilePanel(null, { restoreFocus: false });
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && mobilePanel !== null) {
+    event.preventDefault();
+    setMobilePanel(null);
+  }
+});
+
+window.matchMedia("(max-width: 700px)").addEventListener("change", (event) => {
+  if (!event.matches && mobilePanel !== null) setMobilePanel(null);
+});
+
+initializeMobileTocScrollspy();
 
 els.print.addEventListener("click", () => window.print());
 
