@@ -1,0 +1,66 @@
+{
+  "schema": "nhi-rule-history/inae3000-atc-linkage-audit/v1",
+  "observed_at": "2026-07-27T15:26:34Z",
+  "official_sources": {
+    "interactive_search_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01?type=1",
+    "catalog_url": "https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=111",
+    "dataset_identifier": "A21030000I-E41001",
+    "resource_id": "A21030000I-E41001-001",
+    "download_url": "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41001-001",
+    "declared_update_frequency": "monthly"
+  },
+  "live_official_csv": {
+    "byte_length": 96799113,
+    "sha256": "5abfec9bd0afb74f13cabca3402c2d6a0329b3436dd206f9dea83288a8b1d4a2",
+    "data_rows": 224455,
+    "distinct_nhi_drug_codes": 45124,
+    "rows_with_atc": 224455,
+    "distinct_atc_codes": 2244,
+    "rows_with_rule_section": 95703,
+    "rows_with_rule_url": 95520
+  },
+  "legacy_runtime_postgresql": {
+    "nhi_drugs": {
+      "rows": 45129,
+      "rows_with_atc": 45129,
+      "distinct_atc_codes": 2244
+    },
+    "nhi_drug_formulary": {
+      "rows": 224603,
+      "rows_with_atc": 224603,
+      "rows_with_rule_section": 95783,
+      "rows_with_rule_url": 95600,
+      "difference_from_live_csv_rows": 148
+    },
+    "inae3000_latest_fetch": {
+      "run_id": 20,
+      "status": "ok",
+      "show_type": "Y",
+      "started_at": "2026-07-27T14:06:34.469426+08:00",
+      "finished_at": "2026-07-27T14:07:37.298099+08:00",
+      "fetched_count": 14066
+    },
+    "inae3000_item_rule_links": {
+      "rows": 7498,
+      "distinct_nhi_drug_codes": 5895,
+      "resolved_article_rows": 6990,
+      "unresolved_article_rows": 508,
+      "distinct_resolved_articles": 498
+    },
+    "rule_article_atc_codes": {
+      "rows": 2025,
+      "distinct_articles": 587,
+      "distinct_atc_codes": 852,
+      "automatic_rows": 1708,
+      "curated_rows": 317
+    }
+  },
+  "conclusions": [
+    "The official CSV directly asserts product-to-ATC and product-to-rule-reference fields.",
+    "A rule-to-ATC result is a derived projection through supporting product rows; it is not evidence that a rule applies to the whole ATC class.",
+    "The legacy normalized formulary is not an exact snapshot of the current official CSV because it contains 148 additional rows.",
+    "The public rebuild must preserve immutable source snapshots and row-level provenance instead of relying on destructive upsert tables.",
+    "Existing runtime linkage is useful legacy evidence, but public ATC linkage remains uncertified until snapshot parity and rule-reference resolution pass."
+  ],
+  "canonical_history_written": false
+}

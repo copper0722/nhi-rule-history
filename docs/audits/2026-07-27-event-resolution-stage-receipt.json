@@ -1,0 +1,41 @@
+{
+  "schema": "nhi-rule-history/event-resolution-stage-public-receipt/v1",
+  "run_id": "8c720061-fce5-54cb-8604-3a1080e790e9",
+  "declared_cut": "2026-07-27",
+  "inputs": {
+    "annotation_source_run_id": "cca6580b-bc23-5b6b-a65b-69ffb1397a09",
+    "source_date_annotations": 6366,
+    "official_event_effect_candidates": 5,
+    "official_candidates_effective_from": "2026-08-01"
+  },
+  "resolver": {
+    "contract_version": "nhi-rule-history/event-resolution-stage/v1",
+    "version": "nhi-rule-history/exact-date-designation-resolver/1.0.1",
+    "exact_date_required": true,
+    "compatible_designation_required": true,
+    "both_source_locators_required": true,
+    "omitted_or_multiple_clause_effects_block_resolution": true
+  },
+  "counts": {
+    "resolved_candidate": 0,
+    "ambiguous": 0,
+    "no_match": 6360,
+    "invalid": 6,
+    "candidate_observations": 0,
+    "resolution_outcomes": 6366
+  },
+  "verification": {
+    "state": "sealed",
+    "fresh_connection_verified": true,
+    "input_fingerprint": "9acb51173a5c677b10208a7da4258a960d191f64096bcacca5b6b38662bb1c73",
+    "output_fingerprint": "506c89a668b7afc3df9da3fc3692a7df6990061d6d7bebd950dc22f1aba98c14",
+    "sealed_fingerprint": "55b37ec98e2e50994de48bfb9b14078f1f5305965c01a9b47559e4d284cb9473"
+  },
+  "claims": {
+    "annotation_recall_stage_complete": true,
+    "official_event_resolution_complete": false,
+    "canonical_history_written": false,
+    "complete_to_declared_cut": false
+  },
+  "interpretation": "The five staged notices all take effect after the legacy annotation source cut and therefore resolve none of the older markers. This is a truthful zero-match inventory, not evidence that the historical event universe is closed."
+}

@@ -1,0 +1,68 @@
+{
+  "schema": "nhi-rule-history/per-clause-history-completeness-scoreboard/v1",
+  "declared_cut": "2026-07-27",
+  "observed_at": "2026-07-27T13:01:41Z",
+  "scope": {
+    "legacy_current_articles": 1548,
+    "articles_with_valid_amendment_date_candidates": 983,
+    "articles_without_valid_amendment_date_candidates": 565
+  },
+  "date_candidate_ledger": {
+    "raw_slash_triplet_occurrences": 6366,
+    "valid_amendment_date_occurrences": 6360,
+    "terminal_non_date_dosage_occurrences": 6,
+    "unique_valid_dates": 323,
+    "article_date_pairs": 3080
+  },
+  "candidate_search_coverage": {
+    "native_typed_text_date_pairs": 2034,
+    "native_typed_text_joint_date_and_designation_pairs": 909,
+    "official_designation_pair_denominator": 3010,
+    "joint_pairs_with_unique_owning_document_candidate": 490,
+    "joint_pairs_with_ambiguous_owning_document_candidates": 419,
+    "joint_pairs_without_document_mapping": 0,
+    "meaning": "search candidates only"
+  },
+  "legal_resolution": {
+    "valid_date_occurrences_with_resolved_official_event_effect": 0,
+    "valid_date_occurrence_denominator": 6360,
+    "certified_complete_articles": 0,
+    "certified_complete_article_denominator": 1548,
+    "canonical_history_schema_exists": false,
+    "official_source_universe_closed": false,
+    "terminal_current_anchor_parity": "failed_33_of_639_designations"
+  },
+  "interpretation": {
+    "articles_without_date_markers_are_not_assumed_unchanged": true,
+    "candidate_cooccurrence_is_not_a_legal_link": true,
+    "zero_certified_complete_does_not_assert_every_article_has_a_missing_historical_version": true,
+    "per_clause_history_complete": false
+  },
+  "evidence": [
+    {
+      "path": "docs/audits/2026-07-27-live-stage-status-observation-3.json",
+      "sha256": "dc6d46d5d3b31cbb979406f20577522c6feb5dc640cc56a786d783d0e2d51994"
+    },
+    {
+      "path": "docs/audits/2026-07-27-invalid-date-candidate-adjudication.json",
+      "sha256": "12f26a0df2d3e5958db79ffedc84c4f8a03f781563881a08da1cbf8226bce456"
+    },
+    {
+      "path": "docs/audits/2026-07-27-history-marker-cross-format-preflight.json",
+      "sha256": "554c945c741a30ad867d8dbae0e76c2424d6bfd5dfe386df81c0f3c1c98bffcb"
+    },
+    {
+      "path": "docs/audits/2026-07-27-history-marker-document-candidate-preflight.json",
+      "sha256": "9c0642f644e50944ccf9d8e49ad02aa21ebd5714b585dc5273993790afc16179"
+    },
+    {
+      "path": "docs/audits/2026-07-27-nhi-fint-source-universe-reconciliation.json",
+      "sha256": "245d19ce10ee7231bf192fe65d25a9c2e95d11250ece6aa72f62fc6fc386b569"
+    },
+    {
+      "path": "docs/audits/2026-07-27-current-anchor-full-clause-parity.json",
+      "sha256": "394477137b43072e355258e878a14c79a8414bf9145d4fbaf4200aacdb826a8a"
+    }
+  ],
+  "statement": "No clause is currently certified complete to the declared cut. Date annotations provide an exact audit denominator for 983 articles, but the remaining 565 articles cannot be presumed unchanged merely because no valid date marker was observed."
+}

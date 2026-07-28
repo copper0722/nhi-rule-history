@@ -1,0 +1,137 @@
+{
+  "agent_history_summary": null,
+  "canonical_version_unit": "single_clause",
+  "chapter": {
+    "chapter_id": "chapter:general-principles",
+    "display_label": "通則",
+    "navigation_code": "chapter:00",
+    "navigation_code_origin": "project_assigned",
+    "source_designation_raw": "通則"
+  },
+  "clause": {
+    "canonical_code": "0.11",
+    "clause_id": "clause:general-principles:0.11",
+    "code_origin": "project_assigned",
+    "display_title": "給付規定中年齡用詞統一使用「以上」、「以下」、「未滿」文字，並以阿拉伯數字呈現，定義如下(11…",
+    "identity_basis": "Project code mapped to a contiguous top-level Chinese ordinal with text continuity across the declared official edition set.",
+    "identity_status": "verified_within_declared_edition_set",
+    "ordinal_number": 11
+  },
+  "condition_markers": [],
+  "coverage": {
+    "declared_edition_count": 15,
+    "declared_edition_set_complete": true,
+    "first_observed_order": 14,
+    "gap_reasons": [
+      {
+        "code": "OFFICIAL_SOURCE_UNIVERSE_OPEN",
+        "meaning": "The declared cumulative-edition set does not prove that every legal amendment event has been found."
+      },
+      {
+        "code": "LEGAL_EFFECTIVE_DATES_UNVERIFIED",
+        "meaning": "Edition labels and in-text date annotations are not silently treated as legal effective dates."
+      }
+    ],
+    "last_observed_order": 14,
+    "legal_history_complete": false,
+    "observed_edition_count": 1,
+    "observed_presence_contiguous": true,
+    "official_source_universe_closed": false,
+    "status": "complete_for_declared_source_edition_observations",
+    "unique_comparison_text_count": 1,
+    "version_edge_count": 0,
+    "version_state_count": 1
+  },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "latest": {
+    "clause_version_id": "clause-version:dfcde3f3741f7e3b2afcfe7adbb685a6717d78c7acb47ef974a5445e1cc1bb3f",
+    "date_annotations": [
+      {
+        "date_value": "2022-02-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "111/2/1"
+      }
+    ],
+    "display_title": "給付規定中年齡用詞統一使用「以上」、「以下」、「未滿」文字，並以阿拉伯數字呈現，定義如下(11…",
+    "full_text_blocks": [
+      {
+        "block_kind": "paragraph",
+        "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.11"
+        ],
+        "text": "十一、給付規定中年齡用詞統一使用「以上」、「以下」、「未滿」文字，並以阿拉伯數字呈現，定義如下(111/2/1)："
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.11"
+        ],
+        "text": "（一）○歲以上(包含○歲當日)。"
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.11"
+        ],
+        "text": "（二）○歲以下(包含○歲當日)。"
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.11"
+        ],
+        "text": "（三）○歲至未滿○歲(未滿○歲係不包含○歲當日)。"
+      }
+    ],
+    "legal_effective_status": "not_claimed",
+    "observed_editions": [
+      {
+        "chronology_order": 14,
+        "edition_label": "通則(113.05.28更新)",
+        "observation_id": "clause-observation:bcd08b0bc6a5bfd30e0e0867e4c143c658705ae585683390cf4e184957ae0c67",
+        "source": {
+          "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "十一、"
+      }
+    ],
+    "state_order": 0
+  },
+  "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
+  "transitions": []
+}

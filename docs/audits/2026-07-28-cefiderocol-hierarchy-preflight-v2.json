@@ -1,0 +1,71 @@
+{
+  "schema": "nhi-rule-history/hierarchy-preflight-public-receipt/v1",
+  "audit_date": "2026-07-28",
+  "work_item_id": "cf546edf-7979-5ef8-8dec-7c80e538cd59",
+  "subject_scope": "cefiderocol/Fetroja reimbursement notice",
+  "input_binding": {
+    "old_terminal_job_fingerprint": "a92eb67003b9f8653761e702193b0bf98d77b2598eff9305f2fad9ace4cd70ca",
+    "old_terminal_suitability_schema": "nhi-rule-history/worker-suitability/v1",
+    "old_terminal_suitability_sha256": "ade733009363672b8695262cc6d894ef0a5d45dc75f4c42c8f24843cbbfd255d",
+    "manifest_sha256": "11625f3ed3f45dc1af5e81da9a2f1aa38ef5e57578a893a787a2d91c3c624067",
+    "prompt_sha256": "fc1fe5d4882a43baf48595742604e6501fa5cd7ac3ea8f19316fb8651d66b46b",
+    "source_blocks_sha256": "b2563a8882a301c7bfbdccfb53257dc486410ec6e5edaa7a8ca0eba64089567c"
+  },
+  "implementation_binding": {
+    "worker_job_fingerprint_domain": "nhi-rule-history/worker-job-fingerprint/v4",
+    "worker_suitability_schema": "nhi-rule-history/worker-suitability/v2",
+    "workers_py_sha256": "7c5eabb9389daecd8370163dcf6dab439faa056e86e01ce0fa4cfbb9754a1ce3",
+    "worker_contract_test_sha256": "6176653331ae96902a36d49914129ab5471d54d0229e0ff5f2a2390bcae5e803",
+    "new_job_fingerprint": "5cece6ef62529dac09e3aab23747de035daab185512e58e0aac6f9fdb090b2ea"
+  },
+  "hierarchy_contract": {
+    "collapse_permitted_only_when": [
+      "exactly one maximal dotted-numeric designation exists",
+      "every other designation is a dot-boundary ancestor of that leaf",
+      "the leaf occurs in a top-level comparison row",
+      "each ancestor has no top-level row or occurs only in a leaf row"
+    ],
+    "parallel_leaves_remain_partition_required": true,
+    "ancestor_with_independent_row_remains_partition_required": true,
+    "general_multi_rule_partitioning_implemented": false
+  },
+  "actual_sealed_packet_preflight": {
+    "decision": "suitable",
+    "reason_codes": [],
+    "designation_candidates": [
+      "10.3",
+      "10.3.8"
+    ],
+    "effective_designation_candidates": [
+      "10.3.8"
+    ],
+    "collapsed_parent_designations": [
+      "10.3"
+    ],
+    "source_blocks": 15,
+    "source_text_bytes": 968,
+    "prompt_bytes": 13023,
+    "suitability_sha256": "3d2f902adaa406519203435bf3215832180722c17c9d1087ba5fba6c8850d890",
+    "worker_calls": 0
+  },
+  "verification": {
+    "focused_tests_run": 10,
+    "focused_tests_passed": 10,
+    "independent_review_verdict": "SHIP",
+    "independent_review_c_h_m_l": "0/0/0/2",
+    "independent_low_findings_remediated": 2
+  },
+  "state_and_claim_limits": {
+    "old_terminal_row_or_receipt_mutated": false,
+    "new_recovery_generation_created": false,
+    "worker_invoked": false,
+    "model_ability_assessed": false,
+    "candidate_created": false,
+    "canonical_history_written": false,
+    "direct_predecessor_admitted": false,
+    "anchor_replay_completed": false,
+    "per_rule_history_completed": false,
+    "source_universe_closed": false
+  },
+  "status": "hierarchy_preflight_patch_verified_recovery_not_started"
+}

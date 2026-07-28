@@ -1,0 +1,81 @@
+{
+  "schema": "nhi-rule-history/historical-events-exact-phrase-capture-public-receipt/v1",
+  "scope": {
+    "query_start": "1996-01-01",
+    "query_end": "2020-12-31",
+    "capture_cut": "2026-07-27",
+    "query": "藥品給付規定",
+    "query_mode": "exact_phrase_bounded_baseline",
+    "source_plan_sha256": "37e62cf470d712e506051a779c1f0848edca1a6e6c382a6d495402cbbf213799"
+  },
+  "discovery": {
+    "status": "passed",
+    "independent_passes": 2,
+    "resource_count_per_pass": 2120,
+    "official_detail_pages": 942,
+    "official_attachments": 1178,
+    "expected_rows": 942,
+    "fetched_rows": 942,
+    "missing_from_pass_b": 0,
+    "new_in_pass_b": 0,
+    "resource_key_set_sha256": "9fd0310310a2605b85a6018f9dc634557c02ca112639f55eaa020a430c68635f",
+    "parity_receipt": "docs/audits/2026-07-27-historical-events-exact-phrase-discovery-parity.json"
+  },
+  "accepted_acquisition": {
+    "run_id": "c94220d4-3d06-4b05-8047-f833e41eebc1",
+    "state": "sealed",
+    "resources": 2120,
+    "artifacts": 2120,
+    "artifact_bytes": 91694925,
+    "issues": 0,
+    "same_url_different_bytes": 0,
+    "raw_manifest_sha256": "f3b573fa73bcaa85c2c5eb9c08bebffb565ca4c5d29d610b4b80b605b1c1cd25",
+    "sealed_fingerprint": "924e67907ee45d24b3791973d2191703a4e76faa71db0a2885bc6e2d126e3658",
+    "media_type_counts": {
+      "text/html": 942,
+      "application/pdf": 431,
+      "application/x-ole-storage": 347,
+      "application/vnd.oasis.opendocument.text": 240,
+      "application/vnd.oasis.opendocument.spreadsheet": 147,
+      "image/jpeg": 9,
+      "image/gif": 3,
+      "image/tiff": 1
+    }
+  },
+  "accepted_structural_stage": {
+    "parse_run_id": "c9328039-7093-4f8a-b7eb-84d0ed245760",
+    "state": "sealed",
+    "declared_odt_artifacts": 240,
+    "parsed_odt_artifacts": 240,
+    "structural_blocks": 13995,
+    "occurrence_candidates": 676,
+    "parse_issues": 301,
+    "blocking_issues": 0,
+    "structural_manifest_sha256": "1532099fbc06df73b7b7e3603df9a8cea1e64f2b7607f4402511e16401596d8b",
+    "sealed_fingerprint": "a9c609af6d0bfece790d6c62bad16cdf2f658decbe71772a0a2d91f466a291c2"
+  },
+  "superseded_stage_evidence": {
+    "acquisition_run_id": "0d90db33-85bc-49a9-8cd2-c4eae149e523",
+    "parse_run_id": "7d9d1d08-c54d-49f8-b0ee-b17919a36c36",
+    "reason_code": "IMAGE_MAGIC_TYPES_MISCLASSIFIED_AS_DECLARED_HTML",
+    "immutable_rows_retained": true,
+    "release_input": false
+  },
+  "open_gaps": {
+    "image_attachments_requiring_ocr_or_visual_transcription": 13,
+    "ole_attachments_requiring_typed_parser": 347,
+    "pdf_attachments_requiring_deterministic_text_table_parser": 431,
+    "synonymous_queries_not_yet_run": true,
+    "nhi_listing_discrepancy_not_yet_closed": true,
+    "pre_1999_exact_phrase_records": 0,
+    "official_event_effect_resolution_complete": false
+  },
+  "claims": {
+    "raw_bytes_acquired_for_bounded_exact_phrase_set": true,
+    "odt_structural_stage_complete_for_bounded_set": true,
+    "official_source_universe_closed": false,
+    "legal_effective_dates_inferred": false,
+    "canonical_history_written": false,
+    "per_clause_history_complete": false
+  }
+}

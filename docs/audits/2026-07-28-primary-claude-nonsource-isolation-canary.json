@@ -1,0 +1,64 @@
+{
+  "capability_profile": {
+    "cli_help_flags": "passed",
+    "disable_slash_commands": true,
+    "mcp_config": "strict_empty",
+    "no_browser": true,
+    "no_session_persistence": true,
+    "permission_mode": "dontAsk",
+    "safe_mode": true,
+    "tools": "empty"
+  },
+  "claims": {
+    "actual_resolved_model_observed": false,
+    "custom_context_zero_event_verified": false,
+    "official_source_canary_authorized": false,
+    "repair_hold_removal_authorized": false,
+    "successful_inference": false,
+    "tool_or_mcp_zero_event_verified": false
+  },
+  "execution": {
+    "cleanup_incomplete": false,
+    "elapsed_ms": 2245,
+    "error_line_bytes": 121,
+    "error_line_sha256": "a8cf786d77ebfebb4a0efbb6af06f483b158134eef03fe16d40e130df304a4c6",
+    "new_orphan_processes": 0,
+    "remote_stderr_bytes": 449,
+    "return_code": 1,
+    "stderr_bytes": 1094,
+    "stdout_bytes": 0,
+    "term_sent": false,
+    "timeout_triggered": false
+  },
+  "filesystem_observation": {
+    "hooks_or_skills_files_created_or_modified": 0,
+    "plugin_area_files_modified": 5,
+    "plugin_area_interpretation": "ambiguous_startup_bookkeeping_or_concurrent_process_activity",
+    "session_or_transcript_files_created": 0
+  },
+  "identity": {
+    "cli": "Claude Code",
+    "cli_version": "2.1.220",
+    "public_worker_schema_sha256": "e87e344bdf558e7ad038a9a26602928ff966b5208a2af72ba0337683b9c8ebd5",
+    "requested_model_alias": "sonnet",
+    "resolved_model_identity": null,
+    "route_observation": "routing-observation-incomplete",
+    "wrapper_sha256": "4d7d751e704a97bd4fb883db56446191c365228e8694648ed089a5fbb481e9ae"
+  },
+  "observed_on": "2026-07-28",
+  "prompt": {
+    "bytes": 592,
+    "content_class": "synthetic_non_source",
+    "sha256": "adbbcdc40a57163bdd23c5d8cb028f6b3fda0d4348cefed0936fec027e45460d",
+    "transport": "stdin_only"
+  },
+  "route_environment": {
+    "custom_anthropic_endpoint_or_model_configured": false,
+    "foundry_configured": false,
+    "managed_bedrock_configured": false,
+    "managed_vertex_configured": false,
+    "provider_route_conclusion": "not_observed_due_to_failed_inference"
+  },
+  "schema": "nhi-rule-history/primary-claude-nonsource-isolation-canary/v1",
+  "statement": "The synthetic isolation canary failed before a successful inference. Configuration-level isolation checks passed, but actual model resolution and event-level zero-tool, zero-MCP, zero-custom-context, and zero-plugin execution were not proven."
+}

@@ -5,18 +5,159 @@ title_en: Taiwan NHI Drug Reimbursement Rule History
 status: in_progress
 risk_class: R3
 privacy: public
-last_verified_date: "2026-07-27"
+last_verified_date: "2026-07-28"
+
+latest_verification:
+  legacy_tests_passed: 70
+  legacy_tests_skipped: 1
+  public_tests_run: 429
+  public_tests_passed: 422
+  public_tests_skipped: 7
+  public_tree_gate: passed
+  sqlite_integrity_check: passed
+  live_nhi_drug_linkage_fetch: passed
 
 public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
   source_manifests: tracked_in_git
-  normalized_jsonl: planned
-  sqlite_snapshot: planned_release_asset
+  bounded_acquisition_manifest: data/manifests/mohw-fint-2021-2026-v2
+  normalized_jsonl: chapter_00_single_clause_exported_legal_history_planned
+  stage_v1_release: prepared_not_published
+  stage_v2_release: prepared_partial_evidence_bundle_not_published
+  sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
+  reader_prototype: prototype/reader/index.html
+  reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
   parser_version: nhi-rule-history-occurrence-extract/1.1.0
+  acquisition_version: nhi-rule-history/0.2.0
+  structural_parser_version: nhi-rule-history-generic-odt/2.0.0
+
+methodology_audit:
+  architecture: C_PLUS_BOUNDED_DUAL_TRACK
+  post_implementation_disposition: ACCEPT_COMMIT_PUSH
+  final_pro_response_sha256: 350f4ded0e53b550f4689acc1d3051deffa9ada999f5e70a724bb32d48ddb42c
+  public_release_authorized: false
+
+legacy_history_annotation_audit:
+  audit_date: "2026-07-27"
+  disposition: legacy_history_not_complete
+  machine_readable_report: docs/audits/2026-07-27-legacy-history-date-annotation-audit.json
+  counts:
+    rule_articles: 1548
+    rule_article_versions: 3691
+    version_rows_without_effective_date: 78
+    version_rows_without_source_publication: 3112
+    duplicate_rule_effective_date_groups: 84
+    articles_with_date_annotations: 980
+    annotation_vs_legacy_version_date_set_mismatch: 980
+    articles_with_identical_text_at_multiple_dates: 1332
+  exact_marker_denominator_reconciliation:
+    narrow_pattern_articles: 980
+    expanded_parser_articles: 983
+    raw_slash_triplet_occurrences: 6366
+    valid_amendment_date_occurrences: 6360
+    terminal_non_date_dosage_occurrences: 6
+    expanded_only_articles: 3
+    receipt: docs/audits/2026-07-27-date-marker-denominator-reconciliation.json
+    invalid_candidate_adjudication_receipt: docs/audits/2026-07-27-invalid-date-candidate-adjudication.json
+  chapter_zero_contract:
+    source_designation_raw: 通則
+    navigation_code: "chapter:00"
+    code_origin: project_assigned
+    reader_display_label: 通則
+
+chapter_zero_template:
+  status: complete_single_clause_projection_for_declared_official_edition_set
+  canonical_version_unit: single_clause
+  authority:
+    system: PostgreSQL
+    source_container_schema: nhi_rule_history_edition
+    clause_version_schema: nhi_rule_history_clause
+    sole_writable_authority: true
+    jsonl_role: public_read_only_interchange
+    sqlite_role: portable_read_only_projection
+    reader_json_role: disposable_frontend_projection
+  source_edition_container:
+    role: upstream_source_provenance_not_canonical_clause_version
+    run_id: b1a3aed6-7dff-563a-a1eb-4c5454a960b0
+    source_set_sha256: cfe3bfad6f146207d74ca3163f071b9238ed2900c1dd924bb7163a5f06548b57
+    output_sha256: 6a7cb637048c4422dbc9df8462df724cb76c14ad0c479fafff75b724f1303081
+    source_editions: 15
+  sealed_import:
+    run_id: 3873fcbc-a2e1-5ac4-9b2c-64ab3f1da9b9
+    source_set_sha256: 537a2aaf4e47987d053da35e10c2cfd58e4b36c760c9dc1ba41ca878b6156034
+    output_sha256: 4eb242934844c106d4bc40ae21ab870990530b42b0f609c50b2217d7c55265e8
+    extractor_version: chapter-00-single-clause-extractor/v1
+    diff_version: chapter-00-single-clause-diff/v1
+    idempotent_replay: passed_same_sealed_import
+  counts:
+    chapters: 1
+    clauses: 12
+    source_edition_observations: 152
+    clause_versions: 29
+    clause_version_blocks: 318
+    clause_version_dates: 261
+    clause_version_edges: 17
+    diff_hunks: 26
+    coverage_assessments: 12
+  clause_chain_examples:
+    "0.2":
+      source_observations: 15
+      text_versions: 1
+      version_edges: 0
+    "0.4":
+      source_observations: 15
+      text_versions: 10
+      version_edges: 9
+  comparison_contract:
+    same_clause_only: true
+    adjacency_basis: adjacent_distinct_text_state_across_official_editions
+    legal_predecessor_status: not_claimed
+  semantic_diff_presentation:
+    run_id: a2ebd8e5-bf91-5794-a974-b7128907cbf4
+    algorithm_version: chapter-00-semantic-diff-presentation/v2
+    ignored_change_classes:
+      - whitespace
+      - single_quote
+      - width_variant
+    pure_addition_has_fake_old_side: false
+  reader_enrichment:
+    run_id: 76eb6518-7900-5ccd-9994-5b6e85bba1a1
+    generator_version: chapter-00-reader-enrichment/v3
+    semantic_tags: 65
+    atc_code_relations: 50
+    icd11_code_only_relations: 21
+    condition_markers: 14
+    agent_history_summaries: 1
+    icd11_public_fields:
+      - code
+      - candidate_rank
+      - mapping_status
+      - confidence
+    icd11_private_fields:
+      - title
+      - uri
+      - definition
+      - reference_snapshot
+    reader_example_sha256: 694acad1796844ccc8d8557bbae26e6986b1524fe8235a708b36480da77cbd5e
+    sqlite_projection_sha256: 35eecae8c91564702745e89d6c648c469a099a1e0b4728cb9780e854f3bf905e
+    browser_desktop_check: passed_no_horizontal_overflow
+    browser_mobile_390x844_check: passed_no_horizontal_overflow
+  claim_limits:
+    official_source_universe_closed: false
+    legal_history_complete: false
+    changes_full_legal_history_scoreboard: false
+  public_artifacts:
+    source_container_jsonl_manifest: data/templates/chapter-00/manifest.json
+    clause_jsonl_manifest: data/templates/chapter-00-clauses/manifest.json
+    sqlite_schema: database/clause-sqlite-schema.sql
+    reader_index: prototype/reader/data/clauses/index.json
+    reader_example: prototype/reader/data/clauses/0.4.json
+    reader_page: prototype/reader/index.html
+    methodology: docs/chapter-00-template.md
 
 accepted_stage:
   disposition: accepted_stage_only
@@ -36,6 +177,373 @@ accepted_stage:
     nonblocking_stage_issues: 1667
     blocking_stage_issues: 0
 
+accepted_acquisition_v2:
+  disposition: accepted_bounded_acquisition_only
+  scope: mohw_fint_exact_phrase_2021-01-01_to_2026-07-27
+  run_id: 51189ce2-ce51-461c-bd96-c59a526f6065
+  discovery_pass_b_run_id: 935a6721-d38b-4bed-be05-c985afe46389
+  resource_key_set_sha256: a9cef7abddcc7c2301363957bbc054259a0cb7f6dac6d8d52c5c4064b54496a7
+  raw_manifest_sha256: 4000c186385760d879fd77c04c08f39523243bfc43396cec474471650efa96b2
+  sealed_fingerprint: 49d42031a5402ebd11efece60196804a654fc1d218ce41f82d2000de0702ed2e
+  counts:
+    detail_pages: 366
+    attachments: 1353
+    resources: 1719
+    unique_artifacts: 1712
+    artifact_bytes: 85642128
+    acquisition_issues: 0
+  notice_bundle_materialization:
+    disposition: accepted_bounded_source_local_bundles_only
+    source_plan: sources/source-plan-post109-exact-phrase.json
+    source_plan_sha256: 92fbe30822de67535c5ad91285bbd8f68fd78a63e9156f279f83685c673a42d3
+    batch_id: 2d55d7e1af6732dc2461e0e30bd949361444855508a942e20104f16444b8a7f0
+    batch_fingerprint: a8160ba80e40815ddfd4a971b5e4a9bebd99d61df680c8faafbb5a154dd3a37e
+    index_sha256: 634958e5819376a1f6926780acbfbc25d22a770d30f1249549ecb75b0092e312
+    counts:
+      official_documents: 366
+      declared_attachments: 1353
+      resources: 1719
+      unique_raw_artifact_bytes: 85642128
+      materialized_artifact_byte_occurrences: 86038585
+    offline_verification: passed
+    byte_identical_replay: passed
+    receipt: docs/audits/2026-07-27-post109-notice-bundle-materialization-receipt.json
+
+accepted_structural_v2:
+  disposition: accepted_source_occurrence_stage_only
+  parse_run_id: d60dcfb2-2bd1-4c3e-8baf-5ad998b01f54
+  acquisition_run_id: 51189ce2-ce51-461c-bd96-c59a526f6065
+  input_fingerprint: f5bc309653355feca32ec8db40ecbf1d4c8c95f5f1116b848763ebcb1640c6b3
+  sealed_fingerprint: 6ff571a5551753dbb94483675b43c6d89bf6e6baadc7a3deaa4d3109414cc2d2
+  counts:
+    odt_resources: 360
+    unique_odt_artifacts: 358
+    structural_blocks: 31377
+    occurrence_candidates: 1228
+    nonblocking_parse_issues: 547
+    blocking_parse_issues: 0
+
+accepted_current_anchor_capture:
+  disposition: accepted_acquisition_and_source_occurrence_stage_only
+  scope: nhi_current_whole_and_chapters_as_observed_2026-07-27
+  acquisition_run_id: 06fbf976-fa8c-4f7a-b682-c3e94f9bf23e
+  structural_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
+  resource_key_set_sha256: ce67b046d91e82bd4248522f4c50fec675c08c43334843b1226592d481b51d05
+  acquisition_sealed_fingerprint: fef17d808245d739c81774e0dfbd428e53b23eb92cb247280c2a82b2cc8c3451
+  structural_sealed_fingerprint: 9e868c7d2e8a7acf5440571a833365ae669bf79ce947cfbba25ac0da669065a3
+  counts:
+    resources: 268
+    unique_artifacts: 267
+    artifact_bytes: 57999120
+    odt_artifacts: 92
+    structural_blocks: 44504
+    occurrence_candidates: 1322
+    blocking_issues: 0
+  whole_chapter_clause_parity: failed_33_discrepancies_open
+
+accepted_nhi_listing_capture:
+  disposition: accepted_bounded_unfiltered_listing_and_detail_attachment_discovery
+  scope: nhi_lp_3258_as_observed_2026_07_27
+  source_plan_sha256: 33d954b51dc781e114409dca71c2fcaa2a73aaa80666662a741be2049fa29b28
+  resource_key_set_sha256: e9c5d3a74f8595b67da35b6f47eb3fb71f2f14de20f65072c5e5f6cccadceb44
+  resource_jsonl_sha256: 059bd09fcd96d91d6478883a643e48c151e218a7623fed90d877e0bf68fb9c01
+  counts:
+    declared_pages: 43
+    observed_pages_per_pass: 43
+    declared_rows: 858
+    detail_resources: 858
+    pass_count: 2
+    detail_html_artifacts_per_pass: 858
+    attachment_occurrences_per_pass: 2400
+    canonical_attachment_urls_per_pass: 2400
+    zero_attachment_details_per_pass: 5
+    max_attachments_per_detail: 20
+  listing_date_range:
+    - "111-09-06"
+    - "115-07-24"
+  detail_pages_expanded: true
+  attachment_url_discovery_cross_pass_parity: passed
+  attachment_bytes_acquisition: passed_and_pg_stage_sealed
+  attachment_acquisition:
+    run_id: 56416cad-5760-5301-9724-846338b9b8b2
+    resources: 2400
+    unique_artifacts: 2396
+    artifact_bytes: 476139573
+    issues: 0
+    pg_stage_state: sealed
+    sealed_fingerprint: 882b84dcd57984024cfcc8e2398e7ce31cb6650d207d4921727541a4722870f0
+  official_source_universe_closed: false
+  receipts:
+    listing_index: docs/audits/2026-07-27-nhi-listing-discovery-parity.json
+    detail_expansion_pass_a: docs/audits/2026-07-27-nhi-listing-detail-expansion-pass-a.json
+    detail_cross_pass_parity: docs/audits/2026-07-27-nhi-listing-detail-expansion-cross-pass-parity.json
+    attachment_acquisition: docs/audits/2026-07-27-nhi-listing-attachment-acquisition-receipt.json
+  fint_exact_phrase_grouped_reconciliation:
+    status: passed_discrepancy_inventory_source_universe_open
+    nhi_detail_records: 858
+    nhi_normalized_document_number_keys: 847
+    fint_detail_records: 366
+    fint_normalized_document_number_keys: 365
+    intersection_keys: 217
+    nhi_only_keys: 630
+    fint_only_keys: 148
+    union_keys: 995
+    ambiguous_join_keys: 7
+    one_to_one_join_safe: false
+    receipt: docs/audits/2026-07-27-nhi-fint-source-universe-reconciliation.json
+
+accepted_historical_exact_phrase_capture:
+  disposition: accepted_bounded_raw_and_odt_stage_only
+  scope: mohw_fint_exact_phrase_1996_01_01_through_2020_12_31
+  source_plan_sha256: 37e62cf470d712e506051a779c1f0848edca1a6e6c382a6d495402cbbf213799
+  resource_key_set_sha256: 9fd0310310a2605b85a6018f9dc634557c02ca112639f55eaa020a430c68635f
+  acquisition_run_id: c94220d4-3d06-4b05-8047-f833e41eebc1
+  structural_parse_run_id: c9328039-7093-4f8a-b7eb-84d0ed245760
+  acquisition_sealed_fingerprint: 924e67907ee45d24b3791973d2191703a4e76faa71db0a2885bc6e2d126e3658
+  structural_sealed_fingerprint: a9c609af6d0bfece790d6c62bad16cdf2f658decbe71772a0a2d91f466a291c2
+  counts:
+    official_detail_pages: 942
+    official_attachments: 1178
+    resources: 2120
+    unique_artifacts: 2120
+    artifact_bytes: 91694925
+    odt_artifacts: 240
+    structural_blocks: 13995
+    occurrence_candidates: 676
+    blocking_issues: 0
+  non_odt_extraction:
+    pdf:
+      declared_artifacts: 431
+      text_geometry_extracted_artifacts: 431
+      pages: 845
+      words: 58981
+      zero_word_pages_needing_ocr_or_visual_review: 7
+      blocking_failures: 0
+      receipt: docs/audits/2026-07-27-pdf-source-extraction-receipt.json
+    ole:
+      declared_artifacts: 347
+      parsed_artifacts: 347
+      word_candidate_artifacts: 328
+      excel_candidate_artifacts: 19
+      typed_extracted_artifacts: 344
+      needs_image_ocr_or_visual_review_artifacts: 3
+      visual_review_pages: 5
+      cfb_streams: 2153
+      word_paragraphs: 28649
+      word_tables: 515
+      word_cells: 11658
+      excel_sheets: 21
+      excel_cells: 511
+      receipt: docs/audits/2026-07-27-historical-ole-extraction-receipt.json
+    ods:
+      declared_artifacts: 147
+      parsed_artifacts: 147
+      sheets: 179
+      physical_rows: 950
+      physical_cells: 6521
+      logical_cells_preserved_as_ranges: 1431364960256
+      unsupported_physical_cells: 0
+      receipt: docs/audits/2026-07-27-historical-ods-extraction-receipt.json
+    images:
+      jpeg_artifacts: 9
+      gif_artifacts: 3
+      tiff_artifacts: 1
+      parsed_artifacts: 13
+      rendered_frames: 13
+      ocr_nonempty_observations: 13
+      ocr_text_characters: 11959
+      human_verified_observations: 0
+      needs_visual_review_frames: 13
+      receipt: docs/audits/2026-07-27-historical-image-extraction-receipt.json
+    status: all_declared_types_extracted_cross_format_candidate_matcher_passed_visual_review_open
+    cross_format_marker_candidate_preflight:
+      status: candidate_coverage_only
+      article_date_pairs: 3080
+      native_date_candidate_pairs: 2034
+      native_incremental_over_odt: 137
+      official_designation_pairs: 3010
+      native_date_and_designation_same_artifact_pairs: 909
+      native_joint_incremental_over_odt: 83
+      ocr_authoritative_text_observations: 0
+      receipt: docs/audits/2026-07-27-history-marker-cross-format-preflight.json
+      locator_ledger: docs/audits/2026-07-27-history-marker-cross-format-evidence.jsonl
+  receipt: docs/audits/2026-07-27-historical-events-exact-phrase-capture-receipt.json
+  notice_bundle_materialization:
+    disposition: accepted_bounded_source_local_bundles_only
+    batch_id: b711ed964babdcfde57756517b259b8f85195b0c5fae0cae0419f0dc678f8778
+    batch_fingerprint: 0d38ab99acd58e7f6cf87dd1745cc839df2a6051935a1b834db44205ed5127bc
+    index_sha256: bc87fe6477fe0b212c56689aa878292cab629ad3135bd94c0c4248ff8c8d5b98
+    counts:
+      official_documents: 942
+      declared_attachments: 1178
+      resources: 2120
+      artifact_bytes: 91694925
+    offline_verification: passed
+    byte_identical_replay: passed
+    receipt: docs/audits/2026-07-27-historical-notice-bundle-materialization-receipt.json
+
+superseded_audit_runs:
+  - run_id: 43ecabc6-64c6-4f30-80ec-ecebe25ea361
+    immutable: true
+    release_eligible: false
+    default_selector_eligible: false
+    superseded_by: 51189ce2-ce51-461c-bd96-c59a526f6065
+    supersession_reason_code: RESOURCE_IDENTITY_INCLUDED_QUERY_LOCATOR
+    reason: >
+      pass-B audit proved RowNo and parent attachment ordinal were unstable
+      acquisition identifiers; retained immutable as audit evidence only
+
+machine_status:
+  branch_gate: READY_FOR_COMMIT_PRO_METHOD_ACCEPTED_LIVE_AND_RELEASE_BLOCKED
+  worker_recovery_post_audit:
+    decision: ACCEPT_R2_STAGE_ONLY
+    counts:
+      critical: 0
+      high: 0
+      medium: 1
+      low: 2
+    official_source_canary_authorized: true
+    repair_hold_removal_authorized: true
+    repair_hold_scope: parser_runtime_only
+    blocking_evidence: terminal_recovery_and_general_multi_rule_partition_open
+    nonsource_isolation_canary:
+      status: routing_observation_incomplete
+      observed_on: "2026-07-28"
+      synthetic_stdin_only: true
+      successful_inference: false
+      return_code: 1
+      stdout_bytes: 0
+      actual_resolved_model_observed: false
+      zero_tool_mcp_custom_context_event_verified: false
+      plugin_filesystem_activity_zero_verified: false
+      official_source_canary_authorized: false
+      repair_hold_removal_authorized: false
+      receipt: docs/audits/2026-07-28-primary-claude-nonsource-isolation-canary.json
+    nonsource_isolation_canary_success:
+      status: passed_resolved_first_party_allowlisted
+      observed_at: "2026-07-27T18:37:42Z"
+      synthetic_stdin_only: true
+      successful_inference: true
+      return_code: 0
+      stdout_bytes: 373
+      actual_resolved_model_observed: true
+      resolved_model_identity: claude-sonnet-5
+      resolved_provider: firstParty
+      zero_tool_mcp_custom_context_event_verified: true
+      isolated_orphan_processes: 0
+      isolated_runtime_directories: 0
+      official_source_canary_authorized: true
+      repair_hold_removal_authorized: false
+      receipt: docs/audits/2026-07-28-primary-claude-nonsource-isolation-canary-success.json
+    official_source_canary:
+      status: partition_required_safe_terminal
+      work_item_id: cf546edf-7979-5ef8-8dec-7c80e538cd59
+      subject: cefiderocol_Fetroja
+      current_queue_state: partition_required
+      update_bundle_id: 4664185ecf5a642776ebe7985f18be516b5910b0d9a71f1a3717c352ae669a44
+      update_bundle_fingerprint: fa5a2c9410735374947a50c56afd992ff9fb5641a03eb8a6611ca633f1fc55ae
+      resources: 6
+      declared_attachments: 4
+      corpus_source_uid: gov_健保審字第1150055418號
+      corpus_manifest_sha256: a345cdeb869a09d4af105b21c2a118458e5c0d82d74426519ec74e7ff168b75b
+      corpus_registration_verified: true
+      model_calls: 0
+      model_ability_assessed: false
+      terminal_partition_reason: MULTI_RULE_DOCUMENT
+      hierarchical_designations_observed:
+        - "10.3"
+        - "10.3.8"
+      observed_reference_number_raw: 健保審字第1150055418號。
+      observed_announcement_paragraphs: 2
+      repair_manifest_version: "1.3"
+      repair_normalization_rule: nhi-reference-number-normalization/1.1.0
+      actual_bundle_replay: passed
+      independent_repair_review: ship_c_h_m_l_0_0_0_0
+      live_registrar_migration_applied: true
+      post_canary_audit: docs/audits/2026-07-28-cefiderocol-official-source-canary-post-audit.json
+      parser_runtime_repair_hold_removed: true
+      hierarchy_preflight_v2:
+        status: verified_recovery_not_started
+        schema: nhi-rule-history/worker-suitability/v2
+        fingerprint_domain: nhi-rule-history/worker-job-fingerprint/v4
+        raw_designations:
+          - "10.3"
+          - "10.3.8"
+        effective_designation: "10.3.8"
+        collapsed_parent_designations:
+          - "10.3"
+        decision: suitable
+        worker_calls: 0
+        independent_review: ship_c_h_m_l_0_0_0_2_lows_remediated
+        receipt: docs/audits/2026-07-28-cefiderocol-hierarchy-preflight-v2.json
+      old_terminal_receipt_mutated: false
+      recovery_generation_created: false
+      general_multi_rule_partitioner_gap_open: true
+      source_universe_hold_open: true
+      legal_history_completeness_hold_open: true
+  nhi_rule_history_v2: BOUNDED_FINT_ACQUISITION_AND_SOURCE_LOCAL_ODT_STAGE_PREPARED_NOT_PUBLISHED
+  v2_acquisition_stage: VERIFIED_BOUNDED
+  v2_structural_stage: VERIFIED_SOURCE_LOCAL
+  v2_public_jsonl: PREPARED_PARTIAL
+  v2_public_sqlite: OPEN
+  v2_portable_dataset_release: BLOCKED
+  source_universe_closed: false
+  legal_history_complete: false
+  live_update_queue_observation:
+    observed_at: "2026-07-28T04:36:17+08:00"
+    total_work_items: 21
+    state_counts:
+      failed_terminal: 2
+      ignored_non_rule: 8
+      partition_required: 2
+      staged_needs_review: 9
+    candidate_state_counts:
+      needs_review: 9
+    cefiderocol_work_generation_rows: 0
+    canonical_legal_history_schema_exists: false
+  live_stage_observation:
+    observed_at: "2026-07-28"
+    source_date_annotations: 6366
+    unresolved_source_date_annotations: 6366
+    resolved_event_candidates: 0
+    valid_date_resolution_denominator: 6360
+    terminal_non_date_candidates: 6
+    candidate_proposals_needs_review: 9
+    update_queue:
+      total: 21
+      selected: 0
+      acquired: 1
+      corpus_registered: 0
+      staged_needs_review: 9
+      failed_terminal: 2
+      ignored_non_rule: 8
+      partition_required: 1
+    canonical_history_schema_exists: false
+    receipt: docs/audits/2026-07-28-cefiderocol-official-source-canary-post-audit.json
+    worker_recovery_v2:
+      migration_live_applied: true
+      migration_receipt: docs/audits/2026-07-28-update-queue-recovery-v2-live-migration.json
+      legacy_terminal_receipts: 2
+      legacy_failure_evidence_rows: 2
+      legacy_failure_attempt_evidence_rows: 4
+      fabricated_legacy_worker_attempt_rows: 0
+      method: append_only_hash_bound_legacy_admission_before_generation_2
+      legacy_attempt_id_scheme: sha256_hex_v1
+      legacy_attempt_id_origin: immutable_worker_attempt_jsonl
+      admission_verifier_identity_bound: true
+      authorized_generation_2_rows: 2
+      partition_required_generation_2_rows: 2
+      model_calls: 0
+      execution_jobs_created: 0
+      candidate_rows_created: 0
+      source_bundle_claims_created: 0
+      recovery_route_attempt_rows: 0
+      terminal_receipt_identity:
+        binds_work_item: true
+        binds_generation: true
+        binds_transition_id: true
+      recovery_receipt: docs/audits/2026-07-28-update-queue-legacy-recovery-g2.json
+
 gates:
   public_repository:
     status: passed
@@ -51,13 +559,104 @@ gates:
   official_source_universe:
     status: open
   reproducible_update_runner:
-    status: open
+    status: stage_lane_live_canonical_promotion_blocked
+  mohw_fint_bounded_acquisition:
+    status: passed
+  post_109_structural_stage:
+    status: passed_bounded
   current_whole_chapter_parity:
-    status: open
+    status: full_clause_parity_failed_33_discrepancies_open
+    occurrence_preflight:
+      schema: nhi-rule-history/current-anchor-occurrence-parity-preflight/v1
+      whole_occurrences: 662
+      split_occurrences: 660
+      matched_occurrences: 655
+      whole_only_occurrences: 7
+      split_only_occurrences: 5
+      full_clause_text_compared: false
+      receipt: docs/audits/2026-07-27-current-anchor-occurrence-parity-preflight.json
+    full_clause_parity:
+      schema: nhi-rule-history/current-anchor-clause-parity/v1
+      whole_clauses: 639
+      split_clauses: 639
+      matched_clauses: 606
+      mismatched_designations: 33
+      leafmost_mismatched_designations: 19
+      reconstruction_blockers: 0
+      status: parity_failed
+      receipt: docs/audits/2026-07-27-current-anchor-full-clause-parity.json
+    leafmost_diff_classification:
+      version_or_date_bearing_content: 6
+      list_marker_structure: 6
+      punctuation_only: 6
+      trailing_supplement_layout: 1
+      canonical_side_selected: false
+      receipt: docs/audits/2026-07-27-current-anchor-leafmost-diff-classification.json
   official_event_effect_ledger:
     status: blocked
   evidence_backed_legal_dates:
     status: blocked
+  source_date_annotation_ledger:
+    status: raw_marker_backfill_complete_cross_format_candidate_preflight_resolution_0_of_6360_valid_dates
+    raw_slash_triplet_occurrences: 6366
+    valid_marker_occurrences: 6360
+    terminal_non_date_dosage_occurrences: 6
+    article_date_pairs: 3080
+    historical_odt_date_candidate_pairs: 1897
+    historical_odt_date_candidate_pair_coverage: 0.6159
+    official_designation_pairs: 3010
+    historical_odt_date_and_designation_same_artifact_pairs: 826
+    historical_odt_joint_candidate_pair_coverage: 0.2744
+    native_cross_format_date_candidate_pairs: 2034
+    native_cross_format_date_candidate_incremental_over_odt: 137
+    native_cross_format_date_and_designation_same_artifact_pairs: 909
+    native_cross_format_joint_incremental_over_odt: 83
+    ocr_authoritative_text_observations: 0
+    owning_official_document_candidate_preflight:
+      status: candidate_mapping_only
+      joint_pairs: 909
+      unique_document_candidate_pairs: 490
+      ambiguous_document_candidate_pairs: 419
+      candidate_count_range: [1, 11]
+      unmapped_joint_pairs: 0
+      distinct_official_document_candidates: 282
+      receipt: docs/audits/2026-07-27-history-marker-document-candidate-preflight.json
+      locator_ledger: docs/audits/2026-07-27-history-marker-document-candidate-evidence.jsonl
+    gap_work_queue:
+      status: prepared_pending_source_review
+      row_count: 3080
+      declared_cut: "2026-07-27"
+      canonical_write_authorized: false
+      priority_lanes:
+        unique_document_candidate: 490
+        ambiguous_document_candidates: 419
+        native_date_without_joint_document_candidate: 1125
+        marker_without_native_document_date_match: 1046
+      queue_sha256: 947dfd5a8ddbf29633ee9b7b0d945bd17b23f06c90f6a1e60c1af3a9ae606c57
+      queue: docs/audits/2026-07-27-history-gap-work-queue.jsonl
+      manifest: docs/audits/2026-07-27-history-gap-work-queue-manifest.json
+    project_navigation_pairs_not_evaluable_as_official_designations: 70
+    official_event_effect_resolved: 0
+    valid_event_resolution_denominator: 6360
+    invalid_candidate_adjudication: docs/audits/2026-07-27-invalid-date-candidate-adjudication.json
+    receipt: docs/audits/2026-07-27-history-marker-cross-format-preflight.json
+    locator_ledger: docs/audits/2026-07-27-history-marker-cross-format-evidence.jsonl
+  per_rule_history_coverage:
+    status: zero_of_1548_certified_complete
+    legacy_current_article_denominator: 1548
+    articles_with_valid_date_candidates: 983
+    articles_without_valid_date_candidates: 565
+    certified_complete_articles: 0
+    receipt: docs/audits/2026-07-27-per-clause-history-completeness-scoreboard.json
+    closure_canary:
+      status: source_effective_dates_located_legal_closure_zero
+      selected_units: 5
+      source_effective_dates_located: 5
+      event_effect_ledger_admissions: 0
+      legally_closed_units: 0
+      direct_predecessor_verified: 0
+      current_endpoint_equal: 5
+      receipt: docs/audits/2026-07-28-history-closure-canary-batch.md
   stable_rule_identity:
     status: blocked
   deterministic_event_replay:
@@ -65,31 +664,180 @@ gates:
   adjacent_source_mapped_diffs:
     status: blocked
   atc_linkage:
-    status: design_ready_data_pending
+    status: official_raw_fetch_and_portable_source_schema_ready_mapping_resolution_open
+    source_family:
+      interactive_search: NHI_INAE3000
+      interactive_reconciliation_frequency: weekly
+      public_rebuild_dataset: A21030000I-E41001
+      public_rebuild_resource: A21030000I-E41001-001
+      declared_update_frequency: monthly
+      direct_assertions:
+        - product_observation_to_atc_code
+        - product_observation_to_rule_reference
+      derived_assertion:
+        relation: resolved_rule_to_atc_code
+        requires_supporting_product_rows: true
+        publish_support_count: true
+    observed_snapshot:
+      observed_at: "2026-07-27T15:26:34Z"
+      byte_length: 96799113
+      sha256: 5abfec9bd0afb74f13cabca3402c2d6a0329b3436dd206f9dea83288a8b1d4a2
+      rows: 224455
+      distinct_nhi_drug_codes: 45124
+      distinct_atc_codes: 2244
+      rows_with_rule_url: 95520
+    current_api_observation:
+      observed_at: "2026-07-27T17:14:44Z"
+      source_url: https://info.nhi.gov.tw/INAE3000/INAE3000S01
+      api_url: https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/SQL0001
+      show_type: Y
+      reported_total_rows: 14066
+      receipt: docs/audits/2026-07-28-inae3000-live-api-observation.json
+    legacy_runtime_audit:
+      item_rule_links: 7498
+      resolved_article_rows: 6990
+      unresolved_article_rows: 508
+      rule_article_atc_rows: 2025
+      automatic_rows: 1708
+      curated_rows: 317
+      legacy_formulary_minus_live_snapshot_rows: 148
+    canonical_rule_atc_publication_authorized: false
+    receipt: docs/audits/2026-07-27-inae3000-atc-linkage-audit.json
   icd11_linkage:
-    status: blocked_pending_who_mapping_agreement
+    status: code_only_prototype_live_reusable_crosswalk_release_blocked
+    public_code_display: permitted_by_project_policy
+    full_icd_content_export: forbidden
+    reusable_crosswalk_release: blocked_pending_who_mapping_agreement
   postgresql_canonical_schema:
-    status: design_ready_not_applied
+    status: pro_method_audit_accepted_live_blocked_external_verifier_missing
+    live_applied: false
+    independent_review: docs/audits/2026-07-27-canonical-promotion-independent-review.md
+    independent_rereview: docs/audits/2026-07-27-canonical-promotion-independent-rereview.md
+    third_independent_rereview: docs/audits/2026-07-27-canonical-promotion-independent-rereview-2.md
+    sixth_independent_rereview: docs/audits/2026-07-27-canonical-promotion-independent-rereview-5.md
+    sixth_review_findings:
+      critical: 0
+      high: 1
+      medium: 1
+      low: 2
+    seventh_independent_rereview: docs/audits/2026-07-27-canonical-promotion-independent-rereview-6.md
+    seventh_review_findings:
+      critical: 0
+      high: 1
+      medium: 2
+      low: 2
+    eighth_independent_rereview: docs/audits/2026-07-27-canonical-promotion-independent-rereview-7.md
+    eighth_review_findings:
+      critical: 0
+      high: 0
+      medium: 1
+      low: 2
+    remediation:
+      policy: all_release_linked_odt_ods_pdf_observation_only_pending_external_verifier
+      focused_tests_passed: 42
+      public_tests_passed: 271
+      public_tests_skipped: 6
+      canonical_migration_sha256: ad74d170dcf4f869d86e9d0b15330cce22d7205a5abcd96b8bc452d6848ce027
+      promotion_migration_sha256: 63c68160da7c27717eca6440af0c2f3fc3c61184f216a635ec4cdf4e1c0aa41e
+      test_file_sha256: 61664b4f7e13f2e2a485fe092fd11baa173be62c9e45c3e6a2a86a8b6b871117
+    gpt_pro_method_audit:
+      status: accepted
+      decision: PRO_METHOD_AUDIT_ACCEPT
+      critical: 0
+      high: 0
+      medium: 1
+      low: 2
+      audited_state_fingerprint: 01ca0e0ccd10483744c830e025adb4441f8591ea8c9f2459e16b9c3b036dd29e
+      receipt: docs/audits/2026-07-27-gpt-pro-method-audit-receipt.json
+      summary: docs/audits/2026-07-27-gpt-pro-method-audit-summary.md
+      exact_response_gzip_base64: docs/audits/2026-07-27-gpt-pro-method-audit-response.txt.gz.b64
+      live_apply_authorized: false
+      publication_authorized: false
+      complete_history_claim_authorized: false
+    post_audit_low_remediation:
+      chapter_zero_reader_api_regression: implemented
+      conditional_metric_population_claim_limit_contract: implemented
   sqlite_portable_projection:
-    status: schema_ready_data_pending
+    status: v1_prepared_chapter_00_verified_v2_pending
+  v2_portable_dataset_release:
+    status: blocked
   normalized_public_dataset:
     status: blocked
+    chapter_zero_source_edition_container_projection: complete
+    chapter_zero_single_clause_projection: complete
   real_data_reader_api:
     status: blocked
+    chapter_zero_single_clause_static_projection: complete
   canonical_cutover:
     status: blocked
   complete_history_claim:
     status: blocked
 
 claims:
-  allowed_now: 14 份官方歷史 ODT 的受限來源 staging 已驗收
-  reader_safe_before_completion: 官方年度版本與已核實公告異動
+  allowed_now: >
+    14 份年度 ODT stage 與一個 MOHW FINT exact-query/date-window 的
+    bounded acquisition/source-local ODT stage，以及 NHI 現行整份／分章
+    raw/structural capture 已驗收；均非完整法律歷史
+  reader_safe_before_completion: 已取得的官方版本與已核實異動
   forbidden_now: 完整健保給付條文歷史已入庫
 
+methodology_v3:
+  status: canonical_method_defined_implementation_open
+  admin_ops_project_todo_id: 41
+  document: docs/agent-work-methodology.md
+  work_result_schema: contracts/history-closure-work-result-v3.schema.json
+  core_unit: stable_clause_candidate_x_direct_predecessor_edge_x_declared_source_cut
+  completion_claim: evidence_complete_to_declared_cut_for_enumerated_official_versions
+  notice_linkage:
+    required_for_transition_completion: false
+    coverage_reported_separately: true
+    absence_claim_allowed: false
+  superseded_execution_artifact:
+    schema: nhi-rule-history/history-gap-work-unit/v1
+    rows: 3080
+    disposition: retained_discovery_provenance_not_executable
+    reason: mandatory_official_event_identity_cannot_be_a_completion_gate
+  agent_dispatch:
+    status: paused_by_owner
+    paused_on: "2026-07-28"
+    scope: clause_history_agent_calls
+    deterministic_raw_acquisition_allowed: true
+    resume_requires:
+      - explicit_Copper_instruction
+      - v3_transition_evidence_schema_and_validator
+      - v3_queue_converter
+      - frozen_10_unit_pilot_packet
+      - NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED_true
+  source_selection:
+    primary_legal_update_lane: reimbursement_rule_rss_and_official_attachments
+    separate_drug_announcement_required: false
+    supplemental_search_only_for:
+      - missing_exact_product_or_ingredient_relation
+      - missing_item_code_atc_strength_or_price_period
+      - cross_source_discrepancy
+      - unresolved_effective_date_scope_or_full_sides
+  pilot_candidates:
+    - source_uid: gov_健保審字第1150055452號
+      work_item_id: cdaeef82-987e-5f11-ab15-708b6905f2d7
+      status: source_captured_partition_required_no_dispatch
+      effective_from_candidate: "2026-08-01"
+      source_designations:
+        - "9.138"
+        - "9.24"
+        - "9.29"
+        - "9.45"
+        - "9.80"
+        - "9.83"
+      evidence_roles:
+        - transition_evidence_candidate
+        - drug_rule_link_evidence
+      separate_drug_announcement_search_required: false
+
 current_work_package:
-  id: WP01
-  title: Close and publish the official source universe
+  id: M1
+  title: Implement the v3 transition-evidence work contract
   next_action: >
-    Enumerate, fetch, hash, and manifest all historical and current whole or
-    chapter releases, NHI listing/detail/attachment sources, official history
-    search, and parent-regulation cross-checks as immutable inputs.
+    Do not dispatch clause-history workers. Add an additive PostgreSQL/SQLite
+    transition-evidence schema with optional notice links, build a validator
+    and v1-to-v3 queue converter, then freeze 10 representative pilot packets
+    for owner review before any model-assisted scale-out.

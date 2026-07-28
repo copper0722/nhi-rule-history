@@ -1,0 +1,132 @@
+{
+  "canonical_version_unit": "single_clause",
+  "counts": {
+    "agent_history_summary": 1,
+    "chapter": 1,
+    "clause": 12,
+    "clause_condition_marker": 14,
+    "clause_diff_hunk": 26,
+    "clause_semantic_tag": 65,
+    "clause_semantic_tag_atc": 50,
+    "clause_semantic_tag_icd11_code": 21,
+    "clause_semantic_tag_icd11_lookup": 21,
+    "clause_version": 29,
+    "clause_version_block": 318,
+    "clause_version_date": 261,
+    "clause_version_edge": 17,
+    "clause_version_observation": 152,
+    "coverage_assessment": 12,
+    "diff_hunk_presentation": 26,
+    "diff_run": 1,
+    "import_run": 1,
+    "reader_enrichment_run": 1,
+    "source_edition": 15
+  },
+  "files": {
+    "agent_history_summary.jsonl": {
+      "bytes": 2423,
+      "rows": 1,
+      "sha256": "3f54517abc2afc753747c480a48f777f622aad54ea5670ffcfd46cda625cdbc8"
+    },
+    "chapter.jsonl": {
+      "bytes": 239,
+      "rows": 1,
+      "sha256": "8d7d41c4833f08734b6fb0337413ef42df0e6e41d5392e4276763c2a58f5e85a"
+    },
+    "clause.jsonl": {
+      "bytes": 5109,
+      "rows": 12,
+      "sha256": "4e58166a768dade3e8e558e2b6c62836163aa0fa6b5f1f8e10a142a6383c1f05"
+    },
+    "clause_condition_marker.jsonl": {
+      "bytes": 6072,
+      "rows": 14,
+      "sha256": "afcf37809a0d31e33c5a8a7a2e8714e5b17f92f82b564f21ebef85aadc6f3634"
+    },
+    "clause_diff_hunk.jsonl": {
+      "bytes": 41410,
+      "rows": 26,
+      "sha256": "b69bef25b468c91bb120e340b628e03cf7871c7a126421964ce0f509c44f7110"
+    },
+    "clause_semantic_tag.jsonl": {
+      "bytes": 37882,
+      "rows": 65,
+      "sha256": "bff23ed3a1280f5e08c88276a3ba3c50055b0bff234b1f5a7efe331aa5e9044a"
+    },
+    "clause_semantic_tag_atc.jsonl": {
+      "bytes": 19856,
+      "rows": 50,
+      "sha256": "514c027a02ca07f0935190f0d776e83fa3a950996e5d14d28fc5057c91dac7d2"
+    },
+    "clause_semantic_tag_icd11_code.jsonl": {
+      "bytes": 6056,
+      "rows": 21,
+      "sha256": "2d7fad483c63fd529ffab5dc0cae7de26d85acd1e4006b5b7e67a37994a836e4"
+    },
+    "clause_semantic_tag_icd11_lookup.jsonl": {
+      "bytes": 11678,
+      "rows": 21,
+      "sha256": "5b368837b86fd13272fe7a401282b7e0c7d82a7f45e7442340adcd9c766e811b"
+    },
+    "clause_version.jsonl": {
+      "bytes": 343566,
+      "rows": 29,
+      "sha256": "f34ac0133e3c1106b430fc22c87008d895f29e1beb2130e3e84e10499dbad6be"
+    },
+    "clause_version_block.jsonl": {
+      "bytes": 468515,
+      "rows": 318,
+      "sha256": "379dbb871e1aee7f2574373d125b7e1518707302a152f086935ce239287f35a7"
+    },
+    "clause_version_date.jsonl": {
+      "bytes": 219328,
+      "rows": 261,
+      "sha256": "0311be3befa9029f21ce8d3af6bc32f7ac6e7e087def918569ce703f09a9b5c8"
+    },
+    "clause_version_edge.jsonl": {
+      "bytes": 14185,
+      "rows": 17,
+      "sha256": "3b0eb09b940c5b3ae75bb0a556f3cecddbb0874b04b26fb3758126a3302f9766"
+    },
+    "clause_version_observation.jsonl": {
+      "bytes": 619229,
+      "rows": 152,
+      "sha256": "b4f8ce4245816beef99f8569ea182eef201f8c2c9bebb30345d0916585671c3e"
+    },
+    "coverage_assessment.jsonl": {
+      "bytes": 11525,
+      "rows": 12,
+      "sha256": "6971ec840fe8dfdefbafdf0f289c6cba6562473e2285a77310e0869745e8d06f"
+    },
+    "diff_hunk_presentation.jsonl": {
+      "bytes": 33706,
+      "rows": 26,
+      "sha256": "59eec7f518d975836b46166262116f8ad9917aee182aca32168eb3779285b7de"
+    },
+    "diff_run.jsonl": {
+      "bytes": 844,
+      "rows": 1,
+      "sha256": "cdd0de09d3113517ad5516b0a513e33d5d32d1c95381fbd8e247e4141a7634d8"
+    },
+    "import_run.jsonl": {
+      "bytes": 722,
+      "rows": 1,
+      "sha256": "133df0c49bda1fca17c7a226c9b9716edf4158df767a16564edb7632d77817b4"
+    },
+    "reader_enrichment_run.jsonl": {
+      "bytes": 613,
+      "rows": 1,
+      "sha256": "68c082fe234b848f08d8466886bd8bb014ec6fc23dacd71a2dbe175fc750c6d4"
+    },
+    "source_edition.jsonl": {
+      "bytes": 9866,
+      "rows": 15,
+      "sha256": "e83d4c4a7815be5df0768d83bab215c132f741451228feebacef6a40fc186051"
+    }
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "legal_history_complete": false,
+  "postgresql_is_authority": true,
+  "run_id": "3873fcbc-a2e1-5ac4-9b2c-64ab3f1da9b9",
+  "schema": "nhi-rule-history/clause-export/v1"
+}

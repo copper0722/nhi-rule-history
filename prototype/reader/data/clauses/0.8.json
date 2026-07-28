@@ -1,0 +1,912 @@
+{
+  "agent_history_summary": null,
+  "canonical_version_unit": "single_clause",
+  "chapter": {
+    "chapter_id": "chapter:general-principles",
+    "display_label": "通則",
+    "navigation_code": "chapter:00",
+    "navigation_code_origin": "project_assigned",
+    "source_designation_raw": "通則"
+  },
+  "clause": {
+    "canonical_code": "0.8",
+    "clause_id": "clause:general-principles:0.8",
+    "code_origin": "project_assigned",
+    "display_title": "內服液劑之使用原則",
+    "identity_basis": "Project code mapped to a contiguous top-level Chinese ordinal with text continuity across the declared official edition set.",
+    "identity_status": "verified_within_declared_edition_set",
+    "ordinal_number": 8
+  },
+  "condition_markers": [],
+  "coverage": {
+    "declared_edition_count": 15,
+    "declared_edition_set_complete": true,
+    "first_observed_order": 0,
+    "gap_reasons": [
+      {
+        "code": "OFFICIAL_SOURCE_UNIVERSE_OPEN",
+        "meaning": "The declared cumulative-edition set does not prove that every legal amendment event has been found."
+      },
+      {
+        "code": "LEGAL_EFFECTIVE_DATES_UNVERIFIED",
+        "meaning": "Edition labels and in-text date annotations are not silently treated as legal effective dates."
+      }
+    ],
+    "last_observed_order": 14,
+    "legal_history_complete": false,
+    "observed_edition_count": 15,
+    "observed_presence_contiguous": true,
+    "official_source_universe_closed": false,
+    "status": "complete_for_declared_source_edition_observations",
+    "unique_comparison_text_count": 4,
+    "version_edge_count": 3,
+    "version_state_count": 4
+  },
+  "diff_policy": {
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "ignored_change_policy": [
+      {
+        "code": "whitespace",
+        "label_zh": "空白字元",
+        "rule": "Unicode 空白不計為條文內容增刪。"
+      },
+      {
+        "code": "single_quote",
+        "label_zh": "單引號",
+        "rule": "半形、全形與彎引號形式的單引號不計為內容增刪。"
+      },
+      {
+        "code": "width_variant",
+        "label_zh": "全形／半形",
+        "rule": "Unicode NFKC 相等的全形與半形字元視為相同。"
+      }
+    ]
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "latest": {
+    "clause_version_id": "clause-version:889e883ffec70ee3f892efb2c75a14e90d8d3ea990698794256c3bfcc771e7a2",
+    "date_annotations": [
+      {
+        "date_value": "2005-11-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "94/11/1"
+      },
+      {
+        "date_value": "2008-03-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "97/3/1"
+      },
+      {
+        "date_value": "2008-03-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "97/3/1"
+      },
+      {
+        "date_value": "2008-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "97/12 /1"
+      },
+      {
+        "date_value": "2008-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "97/12/1"
+      },
+      {
+        "date_value": "2008-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "97/12/1"
+      }
+    ],
+    "display_title": "內服液劑之使用原則",
+    "full_text_blocks": [
+      {
+        "block_kind": "paragraph",
+        "block_order": 0,
+        "render_kind": "clause_heading",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
+        "text": "八、內服液劑之使用原則：(94/11/1、97/3/1、97/12 /1)"
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 1,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
+        "text": "（一）12歲(含)以下兒童得使用內服液劑(97/3/1)。"
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 2,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
+        "text": "（二）不適合服用固型製劑之病人，如施行管灌飲食等，得依病情需要使用內服液劑(97/12/1)。"
+      },
+      {
+        "block_kind": "paragraph",
+        "block_order": 3,
+        "render_kind": "subsection",
+        "structural_path": [
+          "chapter:00",
+          "0.8"
+        ],
+        "text": "（三）非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。"
+      }
+    ],
+    "legal_effective_status": "not_claimed",
+    "observed_editions": [
+      {
+        "chronology_order": 6,
+        "edition_label": "102年版",
+        "observation_id": "clause-observation:74fcc39aaa6dd06c179ce113a7982514aaedf0d31cfcc0bf54d003a91559141f",
+        "source": {
+          "artifact_sha256": "b69189fda8a059e627fdc4126167a6db418a5ce267f819b10a545798c0a82c5a",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7833-1babb23dbaf84410931bc879f5f514a6-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 7,
+        "edition_label": "103年版",
+        "observation_id": "clause-observation:9b4cfb7b72f3d6392dde8482bef355d8eb64a91847054c3f72a52fca9a5ea94a",
+        "source": {
+          "artifact_sha256": "42571d3a70ef778e797172b2c6b4dcc5648908ea574256c953fb184b24f1a484",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7828-abb8165dd0164c43be28d9256212b0b6-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 8,
+        "edition_label": "104年版",
+        "observation_id": "clause-observation:31044dddd6116613c807f4d55b68588b7deab408b71c009705c55eeaa5a1666e",
+        "source": {
+          "artifact_sha256": "e9f74a40efaf7b22f7d776ca77f67e449ab8f3d0c30d07dfc8fe88ad46fb95f1",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7824-07cfcf2c89344c0cbf12de97d274dba2-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 9,
+        "edition_label": "105年版",
+        "observation_id": "clause-observation:9c60f9408a223c4a056862e8f1353a4dbfa61940d65dcb51cffc0ebaadeb78c1",
+        "source": {
+          "artifact_sha256": "480ad7baf020b3fae4de08a2646c1013b5aac5271f41cd10693b49dc2fbadf2f",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7822-1872b68287384c62b241d6903ac46dc3-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 10,
+        "edition_label": "106年版",
+        "observation_id": "clause-observation:4e4a6fb4b27dbfeca37eb0454748a1e7d8cd8fe17ad36bcad20eabdfc664eb63",
+        "source": {
+          "artifact_sha256": "99c396ec2032200f9743a6f71221606f545dbc467034e3bdb0f83c43bc1984db",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7817-5906ec7cbf2a4d37ada2ca004ea495e2-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 11,
+        "edition_label": "107年版",
+        "observation_id": "clause-observation:e48d6bb2520ff2a19d7ddf51443e7587cb613e61f4b4c7f177c31b5e32900587",
+        "source": {
+          "artifact_sha256": "9c63eeeabbbb3b03219f326ed7e2661a4065ac7c7647e43d4614a2eee34ab0d7",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7815-c59ff8e29ea9476c93b2f8eaa3aa56da-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 12,
+        "edition_label": "108年版",
+        "observation_id": "clause-observation:db5f5e4e4683a21cc1bb3ff767905b1148a1e578311f7b76a5ad377996af4109",
+        "source": {
+          "artifact_sha256": "b1c1be7f2efccfdec29efd78201d0f11202f50e19eb4494565e5316a4e894eeb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7813-dd188ec1963b4820b7ac604dc1dcb2a4-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 13,
+        "edition_label": "109年版",
+        "observation_id": "clause-observation:e5b0c319503d1233deaf374dea9fe78fc5c9f7c07967b38fc47d2ca680598c92",
+        "source": {
+          "artifact_sha256": "d9db109b93b19a8c25f70de7033ce541752ab130f34e037dff28a912e8464f2c",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7811-bb61be1a675a476eb8d085c0c5d91c95-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      },
+      {
+        "chronology_order": 14,
+        "edition_label": "通則(113.05.28更新)",
+        "observation_id": "clause-observation:d5ffd973dd624b13cbd235a6d70cb095b93230ad8d974c698c90e2ddf0b64c5c",
+        "source": {
+          "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "八、"
+      }
+    ],
+    "state_order": 3
+  },
+  "schema": "nhi-rule-history/single-clause-reader/v1",
+  "semantic_tags": [],
+  "transitions": [
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "display_date": {
+        "basis": "source_edition_fallback",
+        "label": null,
+        "legal_effective_status": null,
+        "raw_values": []
+      },
+      "edge_id": "clause-edge:b4609d5d3503df19afcdfd8bd89bd09554703f79eab60666f5fcfd3cb225d2a9",
+      "hunks": [
+        {
+          "change_kind": "added",
+          "context_label": "0.8",
+          "display_note": "下一版新增",
+          "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "八、內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(94/11/1、97/3/1、97/12"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": ")"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、內服液劑之使用原則"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "："
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(94/11/1、97/3/1、97/12"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "/1)"
+            }
+          ],
+          "new_text": "八、內服液劑之使用原則：(94/11/1、97/3/1、97/12 /1)",
+          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1、97/12 /1 )",
+          "source_change_kind": "replaced"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:889e883ffec70ee3f892efb2c75a14e90d8d3ea990698794256c3bfcc771e7a2",
+        "observed_editions": [
+          {
+            "chronology_order": 6,
+            "edition_label": "102年版",
+            "observation_id": "clause-observation:74fcc39aaa6dd06c179ce113a7982514aaedf0d31cfcc0bf54d003a91559141f",
+            "source": {
+              "artifact_sha256": "b69189fda8a059e627fdc4126167a6db418a5ce267f819b10a545798c0a82c5a",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7833-1babb23dbaf84410931bc879f5f514a6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 7,
+            "edition_label": "103年版",
+            "observation_id": "clause-observation:9b4cfb7b72f3d6392dde8482bef355d8eb64a91847054c3f72a52fca9a5ea94a",
+            "source": {
+              "artifact_sha256": "42571d3a70ef778e797172b2c6b4dcc5648908ea574256c953fb184b24f1a484",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7828-abb8165dd0164c43be28d9256212b0b6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 8,
+            "edition_label": "104年版",
+            "observation_id": "clause-observation:31044dddd6116613c807f4d55b68588b7deab408b71c009705c55eeaa5a1666e",
+            "source": {
+              "artifact_sha256": "e9f74a40efaf7b22f7d776ca77f67e449ab8f3d0c30d07dfc8fe88ad46fb95f1",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7824-07cfcf2c89344c0cbf12de97d274dba2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 9,
+            "edition_label": "105年版",
+            "observation_id": "clause-observation:9c60f9408a223c4a056862e8f1353a4dbfa61940d65dcb51cffc0ebaadeb78c1",
+            "source": {
+              "artifact_sha256": "480ad7baf020b3fae4de08a2646c1013b5aac5271f41cd10693b49dc2fbadf2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7822-1872b68287384c62b241d6903ac46dc3-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 10,
+            "edition_label": "106年版",
+            "observation_id": "clause-observation:4e4a6fb4b27dbfeca37eb0454748a1e7d8cd8fe17ad36bcad20eabdfc664eb63",
+            "source": {
+              "artifact_sha256": "99c396ec2032200f9743a6f71221606f545dbc467034e3bdb0f83c43bc1984db",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7817-5906ec7cbf2a4d37ada2ca004ea495e2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 11,
+            "edition_label": "107年版",
+            "observation_id": "clause-observation:e48d6bb2520ff2a19d7ddf51443e7587cb613e61f4b4c7f177c31b5e32900587",
+            "source": {
+              "artifact_sha256": "9c63eeeabbbb3b03219f326ed7e2661a4065ac7c7647e43d4614a2eee34ab0d7",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7815-c59ff8e29ea9476c93b2f8eaa3aa56da-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 12,
+            "edition_label": "108年版",
+            "observation_id": "clause-observation:db5f5e4e4683a21cc1bb3ff767905b1148a1e578311f7b76a5ad377996af4109",
+            "source": {
+              "artifact_sha256": "b1c1be7f2efccfdec29efd78201d0f11202f50e19eb4494565e5316a4e894eeb",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7813-dd188ec1963b4820b7ac604dc1dcb2a4-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 13,
+            "edition_label": "109年版",
+            "observation_id": "clause-observation:e5b0c319503d1233deaf374dea9fe78fc5c9f7c07967b38fc47d2ca680598c92",
+            "source": {
+              "artifact_sha256": "d9db109b93b19a8c25f70de7033ce541752ab130f34e037dff28a912e8464f2c",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7811-bb61be1a675a476eb8d085c0c5d91c95-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 14,
+            "edition_label": "通則(113.05.28更新)",
+            "observation_id": "clause-observation:d5ffd973dd624b13cbd235a6d70cb095b93230ad8d974c698c90e2ddf0b64c5c",
+            "source": {
+              "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 3
+      },
+      "older": {
+        "clause_version_id": "clause-version:a72ef14b90b16957852b69a4487aab5e6eb9220fc9c57acba7a86072deab93f7",
+        "observed_editions": [
+          {
+            "chronology_order": 2,
+            "edition_label": "98年版",
+            "observation_id": "clause-observation:9be4f6742c40d017f0137393ac7aad8fe91b8b47c72553c7c3075efcbe9ea598",
+            "source": {
+              "artifact_sha256": "fda10dd235708edecf65994460c52fe3edbccf6b898df8bb5ea6ed5113571f2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7849-eb5b7313d7e44ef9935546d1bbf3730d-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 3,
+            "edition_label": "99年版",
+            "observation_id": "clause-observation:0ddf7aa07b35e27511f903970df558c876f8ebd7d272f20ab76a90c828f92e83",
+            "source": {
+              "artifact_sha256": "48bf32d52d989b29838b2ccd0bfd66d8576a6c7600a16cdad17f83a87935fc55",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7843-851c5c7b6c9f4e3db8cf4f827794ef7f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 4,
+            "edition_label": "100年版",
+            "observation_id": "clause-observation:51f58c815faf5c43d87d948c3224dd096c9a757d4e8f517db7502e6879173f83",
+            "source": {
+              "artifact_sha256": "5e3565b029b76fbd2abfd2e0d8535a001efe769221e6484fa948ef71e131ef7d",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7840-7f8ddaa876f7496b86fb5b63ca379f24-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 5,
+            "edition_label": "101年版",
+            "observation_id": "clause-observation:4de617a11ad74667ff2c2955b3abb4cba32e9b0f5e34c9aea29aa5320ac0f41a",
+            "source": {
+              "artifact_sha256": "d40ef13155abda9097a00d12c31c0d7f6b536fdb8855677634a0c2541dbf6c18",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7838-3d29193bb8564c0881ea626d94883e0f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 2
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "97/12",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "97/12 /1",
+          "97/12/1",
+          "97/12/1"
+        ]
+      },
+      "edge_id": "clause-edge:a73e16c0d3705698129856bfb6f9df638a37c76cb3d33aa37d9f9a549cc6fe94",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.8",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "八、內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(94/11/1、97/3/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(一)12歲(含)以下兒童得使用內服液劑。"
+            },
+            {
+              "kind": "ignored",
+              "side": "old",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "(二)施行管灌飲食等"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "不適合服用錠劑之病人"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "，得依病情需要使用內服液劑。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(94/11/1、97/3/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、97/12"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "/1"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": ")"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(一)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "12歲(含)以下兒童得使用內服液劑"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(97/3/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "(二)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "不適合服用固型製劑之病人，如"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "施行管灌飲食等，得依病情需要使用內服液劑"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(97/12/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(三)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。"
+            }
+          ],
+          "new_text": "八、內服液劑之使用原則 (94/11/1、97/3/1、97/12 /1 )\n(一) 12歲(含)以下兒童得使用內服液劑(97/3/1)。\n(二) 不適合服用固型製劑之病人，如施行管灌飲食等，得依病情需要使用內服液劑(97/12/1)。\n(三) 非為兒童或吞嚥困難患者所設計之內服液劑，得依病情需要使用(97/12/1)。",
+          "old_text": "八、內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下兒童得使用內服液劑。\n(二)施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。",
+          "source_change_kind": "replaced"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:a72ef14b90b16957852b69a4487aab5e6eb9220fc9c57acba7a86072deab93f7",
+        "observed_editions": [
+          {
+            "chronology_order": 2,
+            "edition_label": "98年版",
+            "observation_id": "clause-observation:9be4f6742c40d017f0137393ac7aad8fe91b8b47c72553c7c3075efcbe9ea598",
+            "source": {
+              "artifact_sha256": "fda10dd235708edecf65994460c52fe3edbccf6b898df8bb5ea6ed5113571f2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7849-eb5b7313d7e44ef9935546d1bbf3730d-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 3,
+            "edition_label": "99年版",
+            "observation_id": "clause-observation:0ddf7aa07b35e27511f903970df558c876f8ebd7d272f20ab76a90c828f92e83",
+            "source": {
+              "artifact_sha256": "48bf32d52d989b29838b2ccd0bfd66d8576a6c7600a16cdad17f83a87935fc55",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7843-851c5c7b6c9f4e3db8cf4f827794ef7f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 4,
+            "edition_label": "100年版",
+            "observation_id": "clause-observation:51f58c815faf5c43d87d948c3224dd096c9a757d4e8f517db7502e6879173f83",
+            "source": {
+              "artifact_sha256": "5e3565b029b76fbd2abfd2e0d8535a001efe769221e6484fa948ef71e131ef7d",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7840-7f8ddaa876f7496b86fb5b63ca379f24-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          },
+          {
+            "chronology_order": 5,
+            "edition_label": "101年版",
+            "observation_id": "clause-observation:4de617a11ad74667ff2c2955b3abb4cba32e9b0f5e34c9aea29aa5320ac0f41a",
+            "source": {
+              "artifact_sha256": "d40ef13155abda9097a00d12c31c0d7f6b536fdb8855677634a0c2541dbf6c18",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7838-3d29193bb8564c0881ea626d94883e0f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 2
+      },
+      "older": {
+        "clause_version_id": "clause-version:9fa65646a541d7e0abb178779c6fcf3d739139dc8d44012149928b2ea25c7846",
+        "observed_editions": [
+          {
+            "chronology_order": 1,
+            "edition_label": "97年9月版",
+            "observation_id": "clause-observation:78739f7f611bb0180a7118ac5e3a208568c5d116935b08558d001c9eb70405c5",
+            "source": {
+              "artifact_sha256": "6446d9f95d396a28db4ca012acaac514c8f17f257c8fcc120fedca888ce43b56",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7851-2068322ad3e54508a272c8a5bf3a8073-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 1
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "display_date": {
+        "basis": "new_text_date_annotation",
+        "label": "97/3",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_values": [
+          "97/3/1"
+        ]
+      },
+      "edge_id": "clause-edge:2a96d96259bc6effe8527e98f33fc73263218079edb75010bc4b0cb8b427595c",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.8",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "ignored_change_classes": [
+            "whitespace"
+          ],
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "八、"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "小"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "兒"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "科或"
+            },
+            {
+              "kind": "unchanged",
+              "side": "old",
+              "text": "施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "(94/11/1)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "八、"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "內服液劑之使用原則"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": " "
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(94/11/1、97/3/1)"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(一)12歲(含)以下"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "兒"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "童得使用內服液劑。"
+            },
+            {
+              "kind": "ignored",
+              "side": "new",
+              "text": "\n"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(二)"
+            },
+            {
+              "kind": "unchanged",
+              "side": "new",
+              "text": "施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。"
+            }
+          ],
+          "new_text": "八、內服液劑之使用原則 (94/11/1、97/3/1)\n(一)12歲(含)以下兒童得使用內服液劑。\n(二)施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。",
+          "old_text": "八、小兒科或施行管灌飲食等不適合服用錠劑之病人，得依病情需要使用內服液劑。(94/11/1)",
+          "source_change_kind": "replaced"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:9fa65646a541d7e0abb178779c6fcf3d739139dc8d44012149928b2ea25c7846",
+        "observed_editions": [
+          {
+            "chronology_order": 1,
+            "edition_label": "97年9月版",
+            "observation_id": "clause-observation:78739f7f611bb0180a7118ac5e3a208568c5d116935b08558d001c9eb70405c5",
+            "source": {
+              "artifact_sha256": "6446d9f95d396a28db4ca012acaac514c8f17f257c8fcc120fedca888ce43b56",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7851-2068322ad3e54508a272c8a5bf3a8073-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 1
+      },
+      "older": {
+        "clause_version_id": "clause-version:2698145186d3227e745f825166a7c0f02c1004a63d7742e47162de5cdb337cae",
+        "observed_editions": [
+          {
+            "chronology_order": 0,
+            "edition_label": "96年7月版",
+            "observation_id": "clause-observation:2d0429e1e1508ccd13abe757cb955548873f15b3ed67a04b0e2fde5f2b3af113",
+            "source": {
+              "artifact_sha256": "9d6212ca37442d5c07e6df2e601e8d5ac5c4a772c4e09ae985a005178205f9b7",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7853-cdb1d23f2363479888e32994d5b48fa5-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "八、"
+          }
+        ],
+        "state_order": 0
+      }
+    }
+  ]
+}

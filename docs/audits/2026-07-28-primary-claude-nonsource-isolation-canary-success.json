@@ -1,0 +1,132 @@
+{
+  "capability_profile": {
+    "disable_slash_commands": true,
+    "effort": "medium",
+    "max_budget_usd": 0.5,
+    "mcp_config": "strict_empty",
+    "no_browser": true,
+    "no_session_persistence": true,
+    "permission_mode": "dontAsk",
+    "prompt_suggestions": false,
+    "safe_mode": true,
+    "safe_mode_disabled_customization_classes": [
+      "CLAUDE.md",
+      "skills",
+      "plugins",
+      "hooks",
+      "MCP servers",
+      "custom commands",
+      "agents",
+      "output styles",
+      "workflows",
+      "custom themes"
+    ],
+    "tools": "empty"
+  },
+  "claims": {
+    "actual_resolved_model_observed": true,
+    "canonical_history_mutated": false,
+    "corpus_used_as_prompt_input": false,
+    "custom_context_sources": 0,
+    "mcp_servers": 0,
+    "official_source_canary_authorized": true,
+    "official_source_used_as_prompt_input": false,
+    "plugins_hooks_skills_loaded": 0,
+    "postgresql_accessed": false,
+    "repair_hold_removal_authorized": false,
+    "successful_inference": true,
+    "tool_or_mcp_zero_event_verified": true
+  },
+  "execution": {
+    "cleanup_incomplete": false,
+    "elapsed_ms": 13028,
+    "envelope_bytes": 2385,
+    "envelope_sha256": "e850d4b25917f40a9152ae62df46b0dd3274e29201e9f7813478906e1c4bbd79",
+    "inner_deadline_seconds": 300,
+    "inner_kill_after_seconds": 5,
+    "new_orphan_isolated_worker_processes": 0,
+    "outer_observation_deadline_seconds": 360,
+    "permission_denials": 0,
+    "process_group_cleanup": "passed",
+    "return_code": 0,
+    "stderr_bytes": 1678,
+    "stderr_sha256": "e78bf0d9b453918cd8bb8f980e64a859da53c944e461e514efbe069a332f1463",
+    "stdout_bytes": 373,
+    "stdout_sha256": "be9d757dbb23812f66249cb006211396a6d08df2ce544165f861e5995cc1fece",
+    "timeout_triggered": false
+  },
+  "filesystem_observation": {
+    "isolated_runtime_directories_remaining": 0,
+    "isolated_worker_processes_remaining": 0,
+    "persistent_worker_artifacts_on_cm1": 0,
+    "scope": "worker-owned runtime, session and transcript artifacts; unrelated pre-existing Claude processes are outside the canary",
+    "session_persistence_disabled": true
+  },
+  "identity": {
+    "auxiliary_models_observed": [
+      {
+        "canonical_model": "claude-haiku-4-5",
+        "input_tokens": 642,
+        "model_id": "claude-haiku-4-5-20251001",
+        "output_tokens": 13,
+        "provider": "firstParty",
+        "role": "auxiliary"
+      }
+    ],
+    "cli": "Claude Code",
+    "cli_version": "2.1.220",
+    "private_runtime_commit": "370ea4eb08740336ba51ff0c3300911ebbd964db",
+    "public_worker_schema_sha256": "e87e344bdf558e7ad038a9a26602928ff966b5208a2af72ba0337683b9c8ebd5",
+    "requested_model_alias": "sonnet",
+    "resolved_model_identity": "claude-sonnet-5",
+    "resolved_model_input_tokens": 4,
+    "resolved_model_output_tokens": 585,
+    "resolved_provider": "firstParty",
+    "route_observation": "resolved_first_party_allowlisted",
+    "transport_schema_sha256": "31743345fdc327bfdcda89825da5fe84fa97f5b45feb70a74f8b57732c6ce6dc"
+  },
+  "isolation_attestation": {
+    "envelope_helper_sha256": "2ee7129241c4e6479061527e71cee64f206067f80230bc8b92b2f3ab89939c57",
+    "managed_settings": {
+      "auto_compact_enabled": true,
+      "gid": 80,
+      "keys": [
+        "autoCompactEnabled"
+      ],
+      "mode": "-rw-r--r--",
+      "sha256": "a65ea9453a644295233b6100280aa58bdc1e8ff6cdc3517ea587b558014ac304",
+      "status": "present_allowlisted",
+      "uid": 0
+    },
+    "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+    },
+    "test_suite": {
+      "resource_warnings_as_errors": true,
+      "tests_passed": 44
+    },
+    "wrapper_sha256": "1c6099ec3f74515ea2a672ac345383b2c6bb0fcd1b8d2ff5e7ac0db5d00e7a0e"
+  },
+  "observed_at": "2026-07-27T18:37:42Z",
+  "prompt": {
+    "bytes": 534,
+    "content_class": "synthetic_non_source",
+    "sha256": "6c1f62363566df6cde35f285b4b4792ac7128cb1a8d3aec6cd77d0195de4d928",
+    "transport": "stdin_only"
+  },
+  "proposal": {
+    "document_flags_all_false": true,
+    "effect_candidates": 0,
+    "model_assessment": "no_relevant_rule",
+    "proposal_bytes": 373,
+    "proposal_sha256": "be9d757dbb23812f66249cb006211396a6d08df2ce544165f861e5995cc1fece",
+    "reason_codes": [
+      "synthetic_non_source_canary"
+    ],
+    "schema": "nhi-rule-history/agent-source-proposal/v2",
+    "temporal_evidence": 0
+  },
+  "schema": "nhi-rule-history/primary-claude-nonsource-isolation-canary/v2",
+  "statement": "The second synthetic isolation canary completed through the bounded primary route. The exact selected model resolved to first-party claude-sonnet-5, external server-tool counts and permission denials were zero, installed safe mode excluded every custom-context class, no official source, corpus or PostgreSQL input was admitted, and no isolated worker process or runtime artifact remained. This authorizes one stage-only official-source canary; it does not authorize repair-hold removal or canonical history mutation."
+}

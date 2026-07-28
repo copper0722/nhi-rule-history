@@ -1,0 +1,24 @@
+{
+  "schema": "nhi-rule-history/source-plan/v2",
+  "capture_cut": "2026-07-27",
+  "allowed_hosts": [
+    "www.nhi.gov.tw"
+  ],
+  "adapters": [
+    {
+      "id": "nhi-amendment-listing-3258-2026-07-27",
+      "kind": "nhi_3258",
+      "enabled": true,
+      "base_url": "https://www.nhi.gov.tw/ch/lp-3258-1.html",
+      "max_pages": 100,
+      "implementation_status": "implemented_deterministic_discovery",
+      "notes": "Unfiltered listing enumeration; detail-page relevance and legal semantics are downstream decisions."
+    }
+  ],
+  "excluded_semantics": [
+    "listing_date_as_legal_effective_date",
+    "stable_rule_identity",
+    "rule_lineage",
+    "predecessor_diff"
+  ]
+}

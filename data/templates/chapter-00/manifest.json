@@ -1,0 +1,71 @@
+{
+  "counts": {
+    "coverage_assessment": 1,
+    "diff_hunk": 26,
+    "import_run": 1,
+    "rule": 1,
+    "rule_block": 743,
+    "rule_version": 15,
+    "rule_version_date": 523,
+    "source_document": 16,
+    "version_edge": 14,
+    "version_source": 16
+  },
+  "files": {
+    "coverage_assessment.jsonl": {
+      "bytes": 864,
+      "rows": 1,
+      "sha256": "17f3b484babb9400561ff6e35bf6c2f850c1fb095fe15d01b7ddf135b2e88f1f"
+    },
+    "diff_hunk.jsonl": {
+      "bytes": 43303,
+      "rows": 26,
+      "sha256": "6660f5e45ba3529c63b978998a3b52241a72136fb55586d6b415ad8f46e82285"
+    },
+    "import_run.jsonl": {
+      "bytes": 825,
+      "rows": 1,
+      "sha256": "87538592afc0ecc3f006898179935d948f88f44771329ed2160c18d0999989a3"
+    },
+    "rule.jsonl": {
+      "bytes": 285,
+      "rows": 1,
+      "sha256": "3b0edbcc47fd567981d082d8925f3a05a3b0e9f673a2fdc90160542eec21d930"
+    },
+    "rule_block.jsonl": {
+      "bytes": 856545,
+      "rows": 743,
+      "sha256": "a704ac2e911d471ec8ae88b786f9937c612d1719ebc23d39d595e8c695b46434"
+    },
+    "rule_version.jsonl": {
+      "bytes": 419179,
+      "rows": 15,
+      "sha256": "9f2aae6f89fbed5023a578a136e9a67f21f9ae4b4f988654ed15756a693a6165"
+    },
+    "rule_version_date.jsonl": {
+      "bytes": 360756,
+      "rows": 523,
+      "sha256": "46915485866e99ac4a065e8e6ef9ac63bafb02f065e48dcb6e0caddb32f43d11"
+    },
+    "source_document.jsonl": {
+      "bytes": 17094,
+      "rows": 16,
+      "sha256": "522055b5327d792c171151fde01c63c8192f24415d02f6a3c72fa0597061f709"
+    },
+    "version_edge.jsonl": {
+      "bytes": 10612,
+      "rows": 14,
+      "sha256": "1f21f5d83d836413bdb37ceea25f5f4d8f23210f70fc794e2e283385536b8e1b"
+    },
+    "version_source.jsonl": {
+      "bytes": 11439,
+      "rows": 16,
+      "sha256": "51a796c9c69c3e7356bbee8446f5ecbc11767a865809c767144aee2c996c891d"
+    }
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_edition",
+  "legal_history_complete": false,
+  "postgresql_is_authority": true,
+  "rule_id": "rule:general-principles",
+  "schema": "nhi-rule-history/edition-export/v1"
+}

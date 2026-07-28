@@ -1,0 +1,43 @@
+{
+  "schema": "nhi-rule-history/gpt-pro-method-audit-receipt/v1",
+  "conversation_url": "https://chatgpt.com/g/g-p-6a565eaa0c1881919cbb74e5a346f1b4-agentic-workflow/c/6a65f423-bb1c-83ee-8800-c8883cf9dbb7?tab=chats",
+  "browser_backend": "official_in_app_browser",
+  "visible_mode_control": "Pro",
+  "submitted_at": "2026-07-27T13:29:47.699Z",
+  "completed_at": "2026-07-27T13:37:52.571Z",
+  "prompt": {
+    "path": "docs/audits/2026-07-27-gpt-pro-method-audit-prompt.md",
+    "source_utf8_sha256": "5adc2cfee7f598a5bfc6d2010216f3f102e094b52ec5e4a3521b4e3a67ff47a3",
+    "source_character_count": 5533,
+    "ui_normalized_inner_text_sha256": "f133001f2f2ef55cfe3899c744ce28040577259469736e58ce344662d76b620b",
+    "ui_normalized_character_count": 5644
+  },
+  "audited_state_fingerprint": "01ca0e0ccd10483744c830e025adb4441f8591ea8c9f2459e16b9c3b036dd29e",
+  "response": {
+    "exact_utf8_sha256": "d523b809fcd4d76e36beb6e47c22bfd88e02e00c1719f557f7bf47080ae2cfc9",
+    "exact_character_count": 8669,
+    "exact_byte_count": 12543,
+    "gzip_base64_path": "docs/audits/2026-07-27-gpt-pro-method-audit-response.txt.gz.b64",
+    "gzip_byte_count": 6604,
+    "gzip_sha256": "8f8b1e1c9e01bf7606adb07d37d8f2d9537b9c1bb38106ed746e960c2d3fcb8a",
+    "gzip_base64_character_count": 8808
+  },
+  "decision": {
+    "pro_method_audit": "ACCEPT",
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 2,
+    "canonical_live_apply": "BLOCKED",
+    "legal_history_complete": false,
+    "publication_authorized": false,
+    "medium_finding": "NO_GOVERNED_POSITIVE_FULL_DOCUMENT_VERIFIER_AND_ADMISSION_PATH"
+  },
+  "claims": {
+    "pro_is_advisory_only": true,
+    "live_apply_authorized": false,
+    "publication_authorized": false,
+    "complete_history_claim_authorized": false
+  },
+  "statement": "The exact response is preserved as deterministic gzip bytes encoded in base64. Decode base64, gunzip, and verify exact_utf8_sha256 before use."
+}

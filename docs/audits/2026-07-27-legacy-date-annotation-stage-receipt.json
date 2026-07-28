@@ -1,0 +1,45 @@
+{
+  "schema": "nhi-rule-history/legacy-date-annotation-stage-public-receipt/v1",
+  "run_id": "cca6580b-bc23-5b6b-a65b-69ffb1397a09",
+  "declared_cut": "2026-07-27",
+  "input": {
+    "role": "legacy_current_text_discovery_input",
+    "article_count": 1548
+  },
+  "extractor": {
+    "version": "nhi-rule-history/roc-date-marker-extractor/1.0.0",
+    "offset_unit": "zero_based_unicode_code_point",
+    "end_offset": "exclusive",
+    "slash_forms": [
+      "/",
+      "／"
+    ],
+    "resolution_default": "unresolved_event"
+  },
+  "counts": {
+    "article_observations": 1548,
+    "articles_with_markers": 983,
+    "date_annotations": 6366,
+    "normalized_iso_candidates": 6360,
+    "unique_normalized_iso_dates": 323,
+    "earliest_normalized_iso_date": "1996-01-01",
+    "latest_normalized_iso_date": "2026-07-01",
+    "invalid_calendar_candidates": 6,
+    "unresolved_annotations": 6366,
+    "coverage_projection_rows": 1548
+  },
+  "verification": {
+    "state": "sealed",
+    "replay_verified": true,
+    "sealed_fingerprint": "06a51e52023e230de74bd80b2ffe4992e0ce051216737c9f66745ab5f330d7f6",
+    "append_only_stage": true,
+    "fresh_connection_verified": true
+  },
+  "claims": {
+    "source_markers_preserved": true,
+    "official_event_resolution_complete": false,
+    "adjacent_snapshots_complete": false,
+    "canonical_history_written": false,
+    "complete_to_declared_cut": false
+  }
+}

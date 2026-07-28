@@ -15,17 +15,20 @@ Required attribution:
 This is compatible with the attribution requirement in Taiwan's Government
 Open Data Licence, Version 1.0.
 
-## Official NHI source material
+## Official NHI and MOHW source material
 
 Official source files remain attributable to the National Health Insurance
-Administration. The NHI website's open-data declaration permits reproduction,
-adaptation, public transmission, and sublicensing with attribution. Official
+Administration or the Ministry of Health and Welfare. Their website open-data
+declarations permit reproduction, adaptation, public transmission, and
+sublicensing with attribution within the copyright-protected scope. Official
 logos, trademarks, third-party material, and any specially restricted item are
-not relicensed by this repository.
+not relicensed by this repository; an artifact carrying a special restriction
+is excluded from a public binary release until separately adjudicated.
 
 References:
 
 - [NHI open-data declaration](https://www.nhi.gov.tw/ch/cp-4379-5d212-3280-1.html)
+- [MOHW open-data declaration](https://www.mohw.gov.tw/cp-81-155-1.html)
 - [Taiwan Government Open Data Licence, Version 1.0](https://data.gov.tw/license)
 
 The project preserves official bytes unchanged, stores checksums and source
@@ -56,9 +59,18 @@ ICD-11 is licensed by WHO under CC BY-ND 3.0 IGO. WHO's terms state that
 mapping or producing crosswalks between other classifications or terminologies
 and ICD-11 requires a separate written agreement.
 
-Therefore this repository publishes the linkage schema, indication source
-spans, API integration code, and empty examples, but no populated NHI-to-ICD-11
-crosswalk until the required agreement is documented.
+The public reader prototype may display an individual alphanumeric ICD-11 code
+beside a project-authored disease tag, together with an explicit
+`agent_selected` or `candidate` review state. These code-only relations are
+not passwords or secret data, but they are excluded from this repository's
+CC BY 4.0 data grant and are not represented as a WHO-authorized reusable
+crosswalk dataset.
+
+The repository does not publish WHO titles, URIs, definitions, hierarchy,
+indexes, or a reference snapshot. Those fields remain private PostgreSQL
+data. Because WHO separately regulates mappings and crosswalks, a stable
+reusable NHI-to-ICD-11 mapping release remains blocked until the required
+agreement is documented.
 
 References:
 

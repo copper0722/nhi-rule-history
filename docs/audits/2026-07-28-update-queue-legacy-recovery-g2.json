@@ -1,0 +1,159 @@
+{
+  "claims": {
+    "automatic_retry": false,
+    "canonical_history_mutated": false,
+    "candidate_rows_created": 0,
+    "execution_jobs_created": 0,
+    "fabricated_legacy_worker_attempt_rows": 0,
+    "legacy_failure_receipts_rewritten": false,
+    "model_calls": 0,
+    "new_source_bundle_claims": 0,
+    "recovery_generations_terminal": 2,
+    "route_attempt_rows_created": 0
+  },
+  "code_identity": {
+    "public_commit": "63ed8543b59042852ea7e4839c5880bbd89af5ea",
+    "recovery_verifier_diff_sha256": "dd27f72a8e9a8a930a020e78dcfe2a4e2c198b72c5050a50479c9b00bde1b5a7",
+    "worker_schema_sha256": "e87e344bdf558e7ad038a9a26602928ff966b5208a2af72ba0337683b9c8ebd5"
+  },
+  "items": [
+    {
+      "authorization": {
+        "authorization_id": "55233698-9c8c-576c-a0bd-6ce6a523a404",
+        "decision_basis_id": "pro-post-audit-v2-g2-ritux-lenalidomide",
+        "fingerprint": "c33cd493d582a00c3426c6d6ffbfbe1f6f862e44b5136bfe4cddfebbbe544ec6",
+        "generation": 2,
+        "initial_transition_id": "96fb272e-58af-5254-9546-4796df8475c3",
+        "new_method_version": "nhi-rule-history-source-proposal/2.0.0",
+        "new_semantic_prompt_fingerprint": "c8787efd3aa630b4a9321f7c0dd15570ea0b9175e1e46f3e9077d4f111ec6906",
+        "prior_method_version": "nhi-rule-history-source-proposal/1.1.0",
+        "prior_semantic_prompt_fingerprint": "fa59c46de2711ca9121c4ff3d64687b8d03b2c1b2b75ce683b0f7a8a66795db3",
+        "replayed": false
+      },
+      "classification": {
+        "candidate_created": false,
+        "classification_method": "deterministic_preflight",
+        "execution_job_created": false,
+        "partition_reason_codes": [
+          "CROSS_ROW_DEPENDENCY",
+          "MULTI_RULE_DOCUMENT",
+          "OMITTED_TEXT_PRESENT"
+        ],
+        "partition_receipt_relative_path": "candidates/8b1c20598020615d0e4fb2f1e5815ff46e737187d9eb9682e7b64f48ec7968c1/partition-receipt.json",
+        "partition_receipt_sha256": "2274f2b956fdb6f790d4a8ab52c6d80e75a07ee7ee2e68407e9de5e9f5de3e22",
+        "process_exit": 0,
+        "prompt_sha256": "c8787efd3aa630b4a9321f7c0dd15570ea0b9175e1e46f3e9077d4f111ec6906",
+        "source_bundle_claim_created": false,
+        "suitability_sha256": "a2236bcb0a29f064d4f8fb3aa278b9ebc0c2b9f0c131028a93c98f7d12a8da34",
+        "worker_attempt_count": 0,
+        "worker_calls": 0,
+        "worker_job_fingerprint": "8b1c20598020615d0e4fb2f1e5815ff46e737187d9eb9682e7b64f48ec7968c1"
+      },
+      "legacy_admission": {
+        "admission_id": "55015015-fa0a-5aff-9008-d1aa0e4ec06c",
+        "admission_payload_sha256": "8ee6bbe703673f4651a561dd8e941d10eea392f0c4c47df22bc26231753ff0d1",
+        "attempt_id_origin": "immutable_worker_attempt_jsonl",
+        "attempt_id_scheme": "sha256_hex_v1",
+        "attempt_record_sha256s": {
+          "fallback": "e86ccbac702c7bd531817d68d75db5590baa56e346f1d44511aa93c3cc111807",
+          "primary": "c060b7c74b42735eda4e92f33adf471cd3f71dd4641a52014211479c2a9521da"
+        },
+        "attempts_sha256": "941e021d08c5f1a333a9443432763f871de57ae653e477bf577d250ab156900d",
+        "failure_receipt_sha256": "0a52aab5868fd91a62fe45b59b13668ab38279ae5d700fbd3a814f162a28abbd",
+        "idempotent_replay_passed": true,
+        "terminal_evidence_sha256": "1682cb69400a71efa1bc90acb75a0ce8482d688b5388eaad8c98c2e8abbeaa84",
+        "terminal_transition_id": "73d38b57-00d2-5868-8f4b-a32a70c65fee"
+      },
+      "source_bundle_uid": "a3608855529dcafabea0c8a2e0e61847c697585f4d4ae2e9b66017b6a522e98a",
+      "source_manifest_sha256": "6118c6e837cbf456192c54d9503d69ed702fe379384aceff1fab234c033810fe",
+      "terminal_transition": {
+        "fingerprint": "9c08b09eff0823eb6a2f7373c1e1c2e39ff073f70eafd710b2c979d55cd3d8c3",
+        "replayed": true,
+        "state": "partition_required",
+        "transition_id": "88f47c3d-5c4c-5716-8798-ea96f168e0f4",
+        "transition_seq": 2
+      },
+      "work_item_id": "a72ca045-30c6-59ec-93fb-168009a4ab3c"
+    },
+    {
+      "authorization": {
+        "authorization_id": "86f534b4-fa19-57e1-8b05-6ac1a50bb5db",
+        "decision_basis_id": "pro-post-audit-v2-g2-dostarlimab",
+        "fingerprint": "3b21739f2499ab81cfa9610f27108579b62fd2cf5b15435646ce9102ad01be75",
+        "generation": 2,
+        "initial_transition_id": "6d28eec2-ce77-587b-9e23-b9a00beef7de",
+        "new_method_version": "nhi-rule-history-source-proposal/2.0.0",
+        "new_semantic_prompt_fingerprint": "a52096e9d820714c5f52568b14e8f4139959e339fd2ee88d31a7e7df1f79cff4",
+        "prior_method_version": "nhi-rule-history-source-proposal/1.1.0",
+        "prior_semantic_prompt_fingerprint": "219c4b3014ea8304a3b552e782d1cc7b1d4647b45165afc78a32bd07f7866fd2",
+        "replayed": false
+      },
+      "classification": {
+        "candidate_created": false,
+        "classification_method": "deterministic_preflight",
+        "execution_job_created": false,
+        "partition_reason_codes": [
+          "CROSS_ROW_DEPENDENCY",
+          "MULTI_RULE_DOCUMENT",
+          "NESTED_TABLE_STRUCTURE",
+          "OMITTED_TEXT_PRESENT",
+          "PROMPT_BUDGET_EXCEEDED",
+          "SOURCE_BLOCK_COUNT_EXCEEDED"
+        ],
+        "partition_receipt_relative_path": "candidates/cbf88b3cf2dcc6f5a370eae9158e5d7161d807d8929e8321bf49c5d304ea7bed/partition-receipt.json",
+        "partition_receipt_sha256": "f9e87e74c5e65f0aa713875ae7dc104173ccf0598513c463977397d5c153655d",
+        "process_exit": 0,
+        "prompt_sha256": "a52096e9d820714c5f52568b14e8f4139959e339fd2ee88d31a7e7df1f79cff4",
+        "source_bundle_claim_created": false,
+        "suitability_sha256": "a7af56d50f3c6a5daaabf580d0631332d742075d80548548c4a6221fb8cac15e",
+        "worker_attempt_count": 0,
+        "worker_calls": 0,
+        "worker_job_fingerprint": "cbf88b3cf2dcc6f5a370eae9158e5d7161d807d8929e8321bf49c5d304ea7bed"
+      },
+      "legacy_admission": {
+        "admission_id": "c9621001-a954-5914-83ff-a531409ca4e6",
+        "admission_payload_sha256": "c9415c702c19eec50a569883a6e359bc88a0ff6466116080f7eb7fdd4c6a420e",
+        "attempt_id_origin": "immutable_worker_attempt_jsonl",
+        "attempt_id_scheme": "sha256_hex_v1",
+        "attempt_record_sha256s": {
+          "fallback": "dfe02515d7b4b231ae585a415677fe923c9ce21802e8015b968fcf7a92a6a1fb",
+          "primary": "075ae639a067ce2add65a46c40b68ebe224b9d0a4aee2287a7a809047112b5e6"
+        },
+        "attempts_sha256": "ab05eebadd2ab719c8a2cfca97a7280ea70df42deaf1090d985c9080bc26e492",
+        "failure_receipt_sha256": "3592f2e02a6064f50c720e4c66372ad1261d0be25f64b24dfdcfb507ab8d7830",
+        "idempotent_replay_passed": true,
+        "terminal_evidence_sha256": "4c5f62c88defb94e036d27984251c80c3e9cb62b87be27ab7e99bc9c8805a63c",
+        "terminal_transition_id": "b1db5682-0c47-54d7-8e05-afcfd09dcbce"
+      },
+      "source_bundle_uid": "f45d6e548f58cc7ebe7777eef0ecbbefa38a27eed830ca649bab47c6187491a0",
+      "source_manifest_sha256": "e3891dc064b64608eb80e603594a74e337139d2ab5d5af337e808bb73aa54f3a",
+      "terminal_transition": {
+        "fingerprint": "39ec96adef984f503bc9f3d226558e2c2e270095b3c8424aa94d78f6facd1e01",
+        "replayed": true,
+        "state": "partition_required",
+        "transition_id": "12b4bf05-0de6-57f9-8290-7504428e9949",
+        "transition_seq": 2
+      },
+      "work_item_id": "b466ade1-e3cc-569a-942a-76cfcdd9df05"
+    }
+  ],
+  "post_operation_read_only_verification": {
+    "candidate_proposals": 9,
+    "canonical_history_schema_exists": false,
+    "legacy_failure_attempt_evidence_rows": 4,
+    "legacy_failure_evidence_rows": 2,
+    "legacy_queue_rows": 21,
+    "legacy_transition_fingerprint": "e5ffa80327c6bfb27662dc3cec955694f2b0a907678a4a5a2701a3eb9741b63f",
+    "legacy_transition_rows": 88,
+    "legacy_work_item_attempt_fingerprint": "568f3f1e3b2bd043cf5fadfb440a3b4c6779065edd657fe990d87ffb5e0740fa",
+    "legacy_work_item_attempt_rows": 61,
+    "observed_at": "2026-07-27T17:51:00.966030Z",
+    "ops_worker_attempt_rows": 13,
+    "recovery_authorization_rows": 2,
+    "recovery_generation_rows": 2,
+    "recovery_generation_transition_rows": 4,
+    "recovery_route_attempt_rows": 0
+  },
+  "schema": "nhi-rule-history/update-queue-legacy-recovery-g2-receipt/v1",
+  "statement": "The two old failed-terminal filesystem receipts were admitted without rewriting history, then each authorized generation 2 was deterministically classified as partition_required with zero model execution."
+}

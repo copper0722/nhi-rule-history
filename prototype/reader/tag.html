@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="健保給付條文內的藥品與疾病語意標籤。"
+    />
+    <title>條文關鍵字｜健保給付條文歷史</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="tag-page">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="./?rule=0.4">
+          <span class="brand__mark" aria-hidden="true">給</span>
+          <span>
+            <strong>健保給付條文</strong>
+            <small>條文語意標籤</small>
+          </span>
+        </a>
+        <span class="prototype-badge">PG tag system</span>
+      </div>
+    </header>
+
+    <main class="tag-main">
+      <a id="tag-back" class="tag-back" href="./?rule=0.4">← 回到條文</a>
+      <article id="tag-card" class="tag-card" aria-live="polite">
+        <div class="skeleton"></div>
+        <div class="skeleton skeleton--short"></div>
+      </article>
+      <div id="tag-error" class="load-error" hidden role="alert">
+        找不到這個條文標籤。
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2026 王介立醫師. 內容轉載請註明來源並連結原文。</p>
+      <p>
+        ATC 僅輸出本條使用到的 NHI 映射；ICD-11 crosswalk 保留於私有
+        PostgreSQL，不打包進公開靜態資料。
+      </p>
+    </footer>
+
+    <script src="./tag.js" defer></script>
+  </body>
+</html>
