@@ -14,12 +14,15 @@ project state, gap tracking, and acceptance evidence.
 
 ## Canonical boundaries
 
-- Git owns public code, contracts, source manifests, normalized data releases,
-  tests, project state, and audit evidence.
-- A PostgreSQL deployment may own mutable build state. It is an implementation,
-  not a requirement for downstream users.
-- Released SQLite files are immutable portable projections, never the mutable
-  build authority.
+- PostgreSQL is the sole writable authority for normalized rule content,
+  source-observed dates, version relationships, diff annotations, linkage, and
+  build state.
+- Git owns public code, contracts, source manifests, deterministic PostgreSQL
+  migrations/importers/exporters, read-only JSONL releases, tests, project
+  state, and audit evidence.
+- Released JSONL and SQLite files are immutable portable projections of a
+  sealed PostgreSQL import. They support public reuse without requiring
+  PostgreSQL, but are never accepted as upstream edit surfaces.
 - Official source binaries are distributed as checksum-addressed GitHub Release
   assets. They are not committed repeatedly into Git history.
 - Historical `tw_drug.rule_*` installations are legacy discovery inputs only.

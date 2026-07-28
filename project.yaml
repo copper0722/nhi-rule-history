@@ -10,8 +10,8 @@ last_verified_date: "2026-07-28"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 350
-  public_tests_passed: 343
+  public_tests_run: 415
+  public_tests_passed: 408
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -21,10 +21,10 @@ public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
   source_manifests: tracked_in_git
   bounded_acquisition_manifest: data/manifests/mohw-fint-2021-2026-v2
-  normalized_jsonl: legal_history_planned
+  normalized_jsonl: chapter_00_edition_exported_legal_history_planned
   stage_v1_release: prepared_not_published
   stage_v2_release: prepared_partial_evidence_bundle_not_published
-  sqlite_snapshot: v1_prepared_v2_pending
+  sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
   reader_prototype: prototype/reader/index.html
 
@@ -67,6 +67,54 @@ legacy_history_annotation_audit:
     navigation_code: "chapter:00"
     code_origin: project_assigned
     reader_display_label: 通則
+
+chapter_zero_template:
+  status: complete_for_declared_official_edition_set
+  authority:
+    system: PostgreSQL
+    schema: nhi_rule_history_edition
+    sole_writable_authority: true
+    jsonl_role: public_read_only_interchange
+    sqlite_role: portable_read_only_projection
+    reader_json_role: disposable_frontend_projection
+  sealed_import:
+    run_id: b1a3aed6-7dff-563a-a1eb-4c5454a960b0
+    source_set_sha256: cfe3bfad6f146207d74ca3163f071b9238ed2900c1dd924bb7163a5f06548b57
+    output_sha256: 6a7cb637048c4422dbc9df8462df724cb76c14ad0c479fafff75b724f1303081
+    extractor_version: chapter-00-edition-extractor/v1
+    diff_version: chapter-00-reader-diff/v1.1
+    idempotent_replay: passed_same_sealed_import
+  counts:
+    rules: 1
+    source_documents: 16
+    rule_versions: 15
+    version_sources: 16
+    rule_version_dates: 523
+    rule_blocks: 743
+    version_edges: 14
+    diff_hunks: 26
+    coverage_assessments: 1
+  declared_edition_chain:
+    declared_versions: 15
+    observed_versions: 15
+    expected_edges: 14
+    observed_edges: 14
+    complete: true
+    adjacency_basis: adjacent_official_edition
+    legal_predecessor_status: not_claimed
+  current_anchor:
+    primary_label: 通則(113.05.28更新)
+    whole_document_cross_check: format_only_difference
+  claim_limits:
+    official_source_universe_closed: false
+    legal_history_complete: false
+    changes_full_legal_history_scoreboard: false
+  public_artifacts:
+    jsonl_manifest: data/templates/chapter-00/manifest.json
+    sqlite_schema: database/edition-sqlite-schema.sql
+    reader_projection: prototype/reader/data/chapter-00-reader.json
+    reader_page: prototype/reader/index.html
+    methodology: docs/chapter-00-template.md
 
 accepted_stage:
   disposition: accepted_stage_only
@@ -664,13 +712,15 @@ gates:
       chapter_zero_reader_api_regression: implemented
       conditional_metric_population_claim_limit_contract: implemented
   sqlite_portable_projection:
-    status: v1_prepared_v2_pending
+    status: v1_prepared_chapter_00_verified_v2_pending
   v2_portable_dataset_release:
     status: blocked
   normalized_public_dataset:
     status: blocked
+    chapter_zero_source_edition_projection: complete
   real_data_reader_api:
     status: blocked
+    chapter_zero_static_projection: complete
   canonical_cutover:
     status: blocked
   complete_history_claim:

@@ -16,14 +16,17 @@ official pages
   -> structural parse + source occurrences
   -> transition evidence ledger
   -> optional official-notice linkage
-  -> stable rule identity + version snapshots
-  -> adjacent comparisons + diffs
-  -> normalized JSONL
-  -> PostgreSQL build / SQLite portable release / API
+  -> PostgreSQL stable identity + version snapshots
+  -> PostgreSQL adjacent comparisons + diffs
+  -> sealed PostgreSQL import
+       -> normalized JSONL public interchange
+       -> SQLite portable release
+       -> API / reader projections
 ```
 
 每一層都保留輸入 hash、程式版本、輸出 fingerprint 與 issue ledger。下游不得
-跳過上游 gate。
+跳過上游 gate。PostgreSQL 是唯一可寫 authority；JSONL、SQLite 與前端不得
+回寫或各自維護第二份條文。
 
 ## WP01：來源枚舉與取得
 

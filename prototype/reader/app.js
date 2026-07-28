@@ -1,221 +1,266 @@
-const currentRule = `
-  <p>
-    <mark>單獨使用於具有 FLT3 突變的復發性或難治性急性骨髓性白血病
-    (R/R AML)</mark> 且計畫進行造血幹細胞移植的成年病人，限移植前使用：
-  </p>
-  <ol>
-    <li>
-      每位病人限給付 6 個療程。病人須至少接受過一次含 anthracycline
-      藥物的化學治療。
-    </li>
-    <li>
-      須經事前審查核准後使用，初次申請時須檢附：
-      <ol>
-        <li>相關病歷資料。</li>
-        <li>
-          完整之造血幹細胞移植計畫，並詳細記載確認捐贈者名單及移植前調適治療等資料。
-          需由具訓練血液及骨髓移植醫師能力之醫院申請，並由完成血液及骨髓移植訓練之醫師確認移植計畫。
-        </li>
-        <li>
-          染色體檢驗報告，若為 unfavorable karyotype（包含 complex
-          karyotype、-5、-5q、-7、-7q、除 t(9;11) 外的 11q23
-          abnormalities、inv(3)、(3;3)、t(6;9) 以及 t(9;22) 等）則不予給付。
-        </li>
-        <li>
-          檢附之 FLT3 突變檢測結果報告，需符合全民健康保險藥品給付規定之通則十二。
-        </li>
-      </ol>
-    </li>
-    <li>
-      每次申請為二個療程；續申請次二個療程時須檢附達到 PR、CRi 或 CR
-      的證明方可續用。申請劑量以每日 120 mg 為上限。
-    </li>
-  </ol>
-`;
-
-const announcedRule = `
-  <p>
-    <mark>單獨使用於具有 FLT3 突變的復發性或難治性急性骨髓性白血病
-    (R/R AML)</mark>，限用於：
-  </p>
-  <ol>
-    <li>
-      計畫進行造血幹細胞移植的成人病人，移植前使用，每位病人限給付 6
-      個療程。病人須至少接受過一次含 anthracycline 藥物的化學治療。
-    </li>
-  </ol>
-  <div class="legal-section" data-change="add">
-    <p class="change-note">＋ 本版新增 · 移植後維持治療</p>
-    <ol start="2">
-      <li>
-        移植後的維持治療，病人移植前需曾使用 gilteritinib 至少 1
-        個療程，移植後 30 天內未發生疾病惡化，且至少達到複合完全緩解
-        （Composite CR）方可繼續申請使用。
-      </li>
-    </ol>
-  </div>
-  <div class="legal-section" data-change="add">
-    <p class="change-note">↔ 本版改寫 · 每次申請改為 3 個療程</p>
-    <p>
-      須經事前審查核准後使用，每次申請為 3 個療程，每個療程為 1 個月，
-      申請劑量以每日 120 mg 為上限：
-    </p>
-  </div>
-  <ol>
-    <li>
-      移植前使用之病人需檢附：
-      <ol>
-        <li>初次申請：相關病歷資料。</li>
-        <li>
-          完整之造血幹細胞移植計畫，並詳細記載確認捐贈者名單及移植前調適治療等資料。
-          需由具訓練血液及骨髓移植醫師能力之醫院申請，並由完成血液及骨髓移植訓練之醫師確認移植計畫。
-        </li>
-        <li>
-          染色體檢驗報告，若為 unfavorable karyotype（包含 complex
-          karyotype、-5、-5q、-7、-7q、除 t(9;11) 外的 11q23
-          abnormalities、inv(3)、(3;3)、t(6;9) 以及 t(9;22) 等）則不予給付。
-        </li>
-        <li>
-          申請續用次 3 個療程時須檢附達到 PR、CRi 或 CR 的證明方可續用。
-        </li>
-      </ol>
-    </li>
-  </ol>
-  <div class="legal-section" data-change="add">
-    <p class="change-note">＋ 本版新增 · 移植後申請文件</p>
-    <ol start="2">
-      <li>
-        移植後使用於維持治療之病人需檢附：
-        <ol>
-          <li>初次申請：相關病理與病歷資料、使用 gilteritinib 的用藥紀錄。</li>
-          <li>
-            申請續用：療效評估資料證明無疾病復發；3 個月內微量殘留病灶
-            （MRD）檢驗報告。若 MRD 為陽性得繼續使用；若為陰性得續用並再觀察
-            3 個療程，如再次評估仍為陰性，則停止使用。
-          </li>
-        </ol>
-      </li>
-    </ol>
-  </div>
-  <p>
-    檢附之 FLT3 突變檢測結果報告，需符合全民健康保險藥品給付規定之通則十二。
-  </p>
-`;
+const DATA_URL = "./data/chapter-00-reader.json";
 
 const state = {
-  version: "current",
+  data: null,
+  query: "",
+  changedOnly: false,
 };
 
 const els = {
-  ruleText: document.querySelector("#current-rule-text"),
-  dateLabel: document.querySelector("#current-date-label"),
-  statusPill: document.querySelector("#current-status-pill"),
-  eyebrow: document.querySelector("#current-version-eyebrow"),
-  title: document.querySelector("#current-version-title"),
-  status: document.querySelector("#version-status"),
-  currentButton: document.querySelector("#show-current"),
-  announcedButton: document.querySelector("#show-announced"),
-  noticeButton: document.querySelector("#notice-show-announced"),
-  oldFullButton: document.querySelector("#show-old-full"),
-  newFullButton: document.querySelector("#show-new-full"),
-  search: document.querySelector("#rule-search"),
-  results: document.querySelector("#search-results"),
-  print: document.querySelector(".print-button"),
+  editionCount: document.querySelector("#edition-count"),
+  edgeCount: document.querySelector("#edge-count"),
+  scopeNote: document.querySelector("#scope-note p"),
+  latestMeta: document.querySelector("#latest-meta"),
+  latestText: document.querySelector("#latest-text"),
+  transitionList: document.querySelector("#transition-list"),
+  search: document.querySelector("#page-search"),
+  searchStatus: document.querySelector("#search-status"),
+  changedOnly: document.querySelector("#changed-only"),
+  print: document.querySelector("#print-button"),
+  loadError: document.querySelector("#load-error"),
 };
 
-function setVersion(version, shouldScroll = false) {
-  state.version = version;
-  const announced = version === "announced";
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-  els.ruleText.innerHTML = announced ? announcedRule : currentRule;
-  els.dateLabel.textContent = announced ? "2026.08.01 起" : "2024.06.01 起";
-  els.eyebrow.textContent = announced ? "最新公告版本" : "目前有效版本";
-  els.title.textContent = announced
-    ? "給付條文全文（尚未生效）"
-    : "給付條文全文";
-  els.status.textContent = announced
-    ? "這是已公告、將於 2026 年 8 月 1 日生效的版本；今天尚不適用。"
-    : "今天適用 2024 年 6 月 1 日版；另有一版已公告、將於 2026 年 8 月 1 日生效。";
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-  els.statusPill.textContent = announced ? "尚未生效" : "今天適用";
-  els.statusPill.classList.toggle("status-pill--current", !announced);
-  els.statusPill.classList.toggle("status-pill--future", announced);
+function highlightSearch(value) {
+  const text = escapeHtml(value);
+  if (!state.query) return text;
+  const pattern = new RegExp(`(${escapeRegExp(state.query)})`, "giu");
+  return text.replace(pattern, '<mark class="search-hit">$1</mark>');
+}
 
-  els.currentButton.classList.toggle("is-active", !announced);
-  els.announcedButton.classList.toggle("is-active", announced);
-  els.currentButton.setAttribute("aria-pressed", String(!announced));
-  els.announcedButton.setAttribute("aria-pressed", String(announced));
+function containsQuery(...values) {
+  if (!state.query) return true;
+  return values.some((value) =>
+    String(value || "").toLocaleLowerCase().includes(state.query.toLocaleLowerCase()),
+  );
+}
 
-  if (shouldScroll) {
-    document
-      .querySelector("#current-version")
-      .scrollIntoView({ behavior: "smooth", block: "start" });
+function dateRoleLabel(date) {
+  if (date.role === "official_update_date") return "官方更新標示";
+  return "官方年度版";
+}
+
+function sourceLink(url, label = "官方 ODT") {
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ↗</a>`;
+}
+
+function renderLatest() {
+  const latest = state.data.latest;
+  els.latestMeta.innerHTML = `
+    <p class="edition-meta__role">${dateRoleLabel(latest.date)}</p>
+    <strong>${escapeHtml(latest.label)}</strong>
+    <time datetime="${escapeHtml(latest.date.date_value)}">${escapeHtml(latest.date.date_value)}</time>
+    <span class="date-caution">不是自動推定的法律生效日</span>
+    ${sourceLink(latest.source.official_url)}
+  `;
+
+  let matchCount = 0;
+  els.latestText.innerHTML = latest.full_text_blocks
+    .map((block) => {
+      const match = containsQuery(block.text);
+      if (state.query && match) matchCount += 1;
+      const path = block.structural_path.at(-1);
+      const className = path ? "rule-paragraph rule-paragraph--section" : "rule-paragraph";
+      return `<p class="${className}" data-search-match="${String(match)}">${highlightSearch(block.text)}</p>`;
+    })
+    .join("");
+  return matchCount;
+}
+
+function inlineSide(segments, side, fallback) {
+  if (!segments?.length) return highlightSearch(fallback || "");
+  const visible = segments.filter((segment) => {
+    if (segment.side === "both") return true;
+    return side === "old" ? segment.side === "old" : segment.side === "new";
+  });
+  if (!visible.length) return highlightSearch(fallback || "");
+  return visible
+    .map((segment) => {
+      const content = highlightSearch(segment.text);
+      const changed =
+        (side === "old" && segment.kind === "removed") ||
+        (side === "new" && segment.kind === "added");
+      if (!changed) return content;
+      return side === "old"
+        ? `<del class="inline-change inline-change--old">${content}</del>`
+        : `<ins class="inline-change inline-change--new">${content}</ins>`;
+    })
+    .join("");
+}
+
+function renderHunk(hunk) {
+  const matches = containsQuery(
+    hunk.context_label,
+    hunk.old_text,
+    hunk.new_text,
+  );
+  if (state.query && !matches) return "";
+
+  const oldBlock = hunk.old_text
+    ? `
+      <div class="diff-side diff-side--old">
+        <div class="diff-label"><span aria-hidden="true">−</span> 前一版移除</div>
+        <p>${inlineSide(hunk.inline_segments, "old", hunk.old_text)}</p>
+      </div>`
+    : "";
+  const newBlock = hunk.new_text
+    ? `
+      <div class="diff-side diff-side--new">
+        <div class="diff-label"><span aria-hidden="true">＋</span> 本版新增</div>
+        <p>${inlineSide(hunk.inline_segments, "new", hunk.new_text)}</p>
+      </div>`
+    : "";
+
+  return `
+    <section class="diff-hunk" data-search-match="${String(matches)}">
+      <p class="diff-context">${highlightSearch(hunk.context_label)}</p>
+      ${oldBlock}
+      ${newBlock}
+    </section>
+  `;
+}
+
+function renderTransition(transition) {
+  const hunkHtml = transition.hunks.map(renderHunk).filter(Boolean);
+  const hasChanges = transition.hunks.length > 0;
+  const visibleForFilter = !state.changedOnly || hasChanges;
+  const visibleForSearch =
+    !state.query ||
+    hunkHtml.length > 0 ||
+    containsQuery(transition.newer.label, transition.older.label);
+  if (!visibleForFilter || !visibleForSearch) return "";
+
+  let body;
+  if (hunkHtml.length > 0) {
+    body = hunkHtml.join("");
+  } else if (state.query && hasChanges) {
+    return "";
+  } else {
+    body = `
+      <div class="no-change">
+        <span aria-hidden="true">＝</span>
+        <p>
+          <strong>未觀察到實質文字變更</strong>
+          <span>正規化後全文相同；此版本仍保留在完整時間序列中。</span>
+        </p>
+      </div>`;
+  }
+
+  return `
+    <article class="edition-row transition-row" data-has-changes="${String(hasChanges)}">
+      <aside class="edition-meta">
+        <p class="edition-meta__role">${dateRoleLabel(transition.newer.date)}</p>
+        <strong>${highlightSearch(transition.newer.label)}</strong>
+        <time datetime="${escapeHtml(transition.newer.date.date_value)}">${escapeHtml(transition.newer.date.date_value)}</time>
+        <span class="compare-label">相較 ${highlightSearch(transition.older.label)}</span>
+        <div class="source-pair">
+          ${sourceLink(transition.older.source_url, "前一版")}
+          ${sourceLink(transition.newer.source_url, "本版")}
+        </div>
+      </aside>
+      <div class="edition-content">
+        ${body}
+        <p class="edge-caution">
+          這是相鄰官方累積版本的文字比較；不宣稱兩者之間沒有其他法律事件。
+        </p>
+      </div>
+    </article>
+  `;
+}
+
+function renderHistory() {
+  const html = state.data.transitions.map(renderTransition).filter(Boolean);
+  els.transitionList.innerHTML =
+    html.length > 0
+      ? html.join("")
+      : `<p class="empty-state">沒有符合目前搜尋／篩選條件的歷史變更。</p>`;
+  return html.length;
+}
+
+function render() {
+  if (!state.data) return;
+  const latestMatches = renderLatest();
+  const visibleTransitions = renderHistory();
+  if (state.query) {
+    els.searchStatus.textContent =
+      `最新版命中 ${latestMatches} 段；歷史顯示 ${visibleTransitions} 個版本。`;
+  } else {
+    els.searchStatus.textContent = "";
   }
 }
 
-function updateSearch() {
-  const term = els.search.value.trim().toLowerCase();
-  const isMatch = [
-    "gilteritinib",
-    "xospata",
-    "flt3",
-    "急性骨髓",
-    "白血病",
-  ].some((candidate) => candidate.includes(term) || term.includes(candidate));
-
-  els.results.hidden = term.length === 0 || !isMatch;
-  els.search.setAttribute(
-    "aria-expanded",
-    String(term.length > 0 && isMatch),
-  );
-
-  const reason = document.querySelector(".match-reason");
-  if (term.includes("xospata")) reason.textContent = "商品名相符";
-  else if (term.includes("白血病") || term.includes("flt3"))
-    reason.textContent = "適應症相符";
-  else reason.textContent = "成分名相符";
+function renderHeader() {
+  const coverage = state.data.coverage;
+  els.editionCount.textContent = `${coverage.loaded_edition_count} 版`;
+  els.edgeCount.textContent = `${coverage.adjacent_edge_count} 組`;
+  els.scopeNote.innerHTML = `
+    已完整載入明列的 <strong>${coverage.loaded_edition_count}</strong> 個官方累積版本，
+    並建立 <strong>${coverage.adjacent_edge_count}</strong> 組相鄰版本 diff。
+    這是「已宣告官方版本集」的完整對照，不代表官方公告來源宇宙已封閉，
+    也不把版本標示日期偷換成法律生效日。
+  `;
 }
 
-els.currentButton.addEventListener("click", () => setVersion("current"));
-els.announcedButton.addEventListener("click", () => setVersion("announced"));
-els.noticeButton.addEventListener("click", () =>
-  setVersion("announced", true),
-);
-els.oldFullButton.addEventListener("click", () => setVersion("current", true));
-els.newFullButton.addEventListener("click", () =>
-  setVersion("announced", true),
-);
-els.search.addEventListener("input", updateSearch);
+async function load() {
+  try {
+    const response = await fetch(DATA_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (
+      data.schema !== "nhi-rule-history/reader-projection/v1" ||
+      data.generated_from !== "PostgreSQL nhi_rule_history_edition" ||
+      data.rule.display_label !== "通則" ||
+      data.rule.navigation_code_origin !== "project_assigned"
+    ) {
+      throw new Error("reader projection contract mismatch");
+    }
+    state.data = data;
+    renderHeader();
+    render();
+    const allowedHashTargets = new Set(["#latest", "#history", "#method"]);
+    if (allowedHashTargets.has(window.location.hash)) {
+      window.requestAnimationFrame(() => {
+        document.querySelector(window.location.hash)?.scrollIntoView();
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    els.loadError.hidden = false;
+    els.latestText.innerHTML = "";
+    els.transitionList.innerHTML = "";
+  }
+}
+
+els.search.addEventListener("input", (event) => {
+  state.query = event.target.value.trim();
+  render();
+});
+
+els.changedOnly.addEventListener("change", (event) => {
+  state.changedOnly = event.target.checked;
+  render();
+});
+
 els.print.addEventListener("click", () => window.print());
 
 document.addEventListener("keydown", (event) => {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
     event.preventDefault();
     els.search.focus();
     els.search.select();
   }
 });
 
-const navLinks = [...document.querySelectorAll(".section-nav a")];
-const sections = navLinks
-  .map((link) => document.querySelector(link.getAttribute("href")))
-  .filter(Boolean);
-
-const observer = new IntersectionObserver(
-  (entries) => {
-    const visible = entries
-      .filter((entry) => entry.isIntersecting)
-      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-    if (!visible) return;
-    navLinks.forEach((link) => {
-      link.classList.toggle(
-        "is-active",
-        link.getAttribute("href") === `#${visible.target.id}`,
-      );
-    });
-  },
-  { rootMargin: "-28% 0px -60% 0px", threshold: [0.01, 0.2] },
-);
-
-sections.forEach((section) => observer.observe(section));
-setVersion("current");
+load();

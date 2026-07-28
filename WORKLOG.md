@@ -535,3 +535,53 @@
   `partition_required`、9 `staged_needs_review`；9/9 proposals 均為
   `needs_review`。cefiderocol 尚無 `work_generation` row，canonical
   legal-history schema 仍不存在。
+
+## 2026-07-28 — `通則` PG-first reader template
+
+- Copper 明確修正資料邊界：PostgreSQL 是條文、日期角色、版本關係與 diff
+  註記的唯一可寫 authority；JSONL 是 GitHub 公開交換媒介，SQLite 是供
+  沒有 PostgreSQL 的使用者使用的可攜投影，前端 JSON 也是可拋棄 projection。
+  已同步更新 repo Law、資料庫文件與 reader contract，禁止 JSONL／SQLite／
+  frontend-only upstream edits。
+- 新增 `nhi_rule_history_edition` 正規化 schema、rollback、SQLite 對稱
+  schema 與 deterministic importer/exporter。資料來自 sealed 的 14 份年度
+  ODT stage，加上 current chapter ODT；current whole ODT 作獨立 cross-check。
+  `通則` 由 exact heading 起算，歷史 whole file 在 `第1章`／`第1節` 前
+  截止，current chapter file 可至 EOF；raw block、source order 與 locator
+  均保留，soft-wrap normalization 不覆蓋 raw text。
+- 第一個 live import 發現 edge identity contract 錯誤：只用 old/new content
+  hashes 產生 ID，三個相同文字的 edition transitions 發生碰撞，14 條預期
+  edges 只留下 11 列。只 rollback 本輪新 schema，未動任何 source stage；
+  edge identity 改為同時包含 old/new version IDs，diff version 升為
+  `chapter-00-reader-diff/v1.1`，並在 sealing 前新增 exact identity-set 與
+  count parity gate。
+- clean rebuild 封存為 import
+  `b1a3aed6-7dff-563a-a1eb-4c5454a960b0`：
+  source-set SHA-256
+  `cfe3bfad6f146207d74ca3163f071b9238ed2900c1dd924bb7163a5f06548b57`，
+  output SHA-256
+  `6a7cb637048c4422dbc9df8462df724cb76c14ad0c479fafff75b724f1303081`。
+  實庫為 1 rule、16 source documents、15 versions、16 version-source
+  links、523 date facts、743 blocks、14 edges、26 hunks、1 coverage row。
+  schema migration 與 importer 均 idempotent replay；第二次 import 回傳
+  same sealed run。
+- 宣告版本序列已達 15/15 versions 與 14/14 edges；五個版本 transition
+  沒有實質文字變化，仍保留並在 UI 顯示「未觀察到實質文字變更」。
+  `official_source_universe_closed=false`、`legal_history_complete=false`；
+  所有 edge 都是 `adjacent_official_edition`、
+  `legal_predecessor_status=not_claimed`、`crosses_known_gap=true`。這不改變
+  全庫法律歷史 scoreboard 0/1,548。
+- PG 回讀已輸出 10-table JSONL manifest；15/14/26 等各表 counts 與
+  per-file SHA-256 固定。JSONL→SQLite replay 通過 exact count parity、
+  `foreign_key_check` 與 `integrity_check`。reader JSON 為 87,911 bytes，
+  SHA-256
+  `1a20778b373e9896688f6f996d1ddcccb1fa9d96496c85c5bc387d4375a62032`。
+- reader 已改為 PG projection：最新版全文置頂、歷史只顯示相鄰累積版本
+  diff、桌面兩欄、手機堆疊、紅色「前一版移除」、綠色「本版新增」、黃色
+  搜尋命中、changed-only filter、zero-change editions、官方來源連結、
+  reduced-motion 與 print rules。頁面只顯示官方 `通則`；`chapter:00`
+  保留為 project-assigned navigation metadata。
+- 本輪未呼叫 Claude、Grok、Gemini 或其他條文整理模型；既有 dispatch
+  pause 與 legal canonical promotion hold 均未變更。
+- 完整 repo regression 為 70 legacy tests（1 skip）與 415 public tests
+  （408 passed、7 skip）；`通則` 專項 13/13 包含於 public suite。

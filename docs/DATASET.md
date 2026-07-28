@@ -12,6 +12,10 @@ exact sealed PostgreSQL run:
 - the SQLite file contains the same logical rows and enforced foreign keys;
 - a storage-independent typed-row SHA-256 proves JSONL/SQLite parity.
 
+PostgreSQL is the upstream authority. “Canonical JSONL” below describes the
+deterministic byte serialization of a public export, not a second writable
+database or a correction surface.
+
 This release makes the already accepted 14-ODT source-occurrence stage reusable.
 It does **not** turn those rows into normalized legal clauses.
 

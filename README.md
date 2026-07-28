@@ -4,8 +4,9 @@
 [![repository: public](https://img.shields.io/badge/repository-public-brightgreen)](https://github.com/copper0722/nhi-rule-history)
 
 這是一個公共資料工程專案：從健保署官方整份檔、公告頁與附件，重建每一條
-藥品給付規定的版本、生效時間、來源、前後關係與文字差異，並提供 PostgreSQL、
-JSONL 與 SQLite 可攜資料。
+藥品給付規定的版本、生效時間、來源、前後關係與文字差異。PostgreSQL 是
+唯一可寫的結構化權威；GitHub 提供 JSONL 公開交換檔，並可轉成 SQLite
+供沒有 PostgreSQL 的使用者使用。
 
 ## 目前狀態
 
@@ -16,7 +17,15 @@ deterministic raw acquisition 可保留；在 v3 transition-evidence schema、
 queue converter、validator 與 10-unit pilot 完成前，不重新啟動 agent
 量產。
 
-現有成果分成兩個互不冒充的受限 staging：
+第一個 PG-first 可閱讀模板已完成：官方 `通則` 在宣告的 15 份累積版本
+集合中有 15 個完整 snapshot、14 條相鄰版本比較邊與 26 組實質 diff；
+最新版全文置頂，歷史列只顯示相較下一份累積版本的變更。JSONL、SQLite 與
+前端 JSON 均從同一個 sealed PostgreSQL import 程式化產生。這只證明
+**宣告版本集合的序列完整**，不證明官方來源宇宙封閉或法律事件史完整。
+詳見 [`通則` 方法學](docs/chapter-00-template.md)與
+[reader template](prototype/reader/index.html)。
+
+其餘全庫工作仍分成互不冒充的受限 staging：
 
 | 項目 | v1 年度整份檔 | 歷史公告 exact phrase | post-109 公告 exact phrase |
 |---|---:|---:|---:|
@@ -28,7 +37,7 @@ queue converter、validator 與 10-unit pilot 完成前，不重新啟動 agent
 | 結構區塊 | 213,512 | 13,995 | 31,377 |
 | 條文編號出現候選 | 9,303 | 676 | 1,228 |
 | staging 阻斷錯誤 | 0 | 0 | 0 |
-| 正式法律歷史 | 尚未建立 | 尚未建立 | 尚未建立 |
+| 正式法律歷史 | 尚未建立；僅 `通則` 累積版本模板 | 尚未建立 | 尚未建立 |
 
 `9,303` 與 `1,228` 都不是唯一條文數或版本數。v2 ODT 多為「修訂後／原
 給付規定」對照表；兩欄的文字已 lossless 入 stage，但尚未把欄位提升成法律
@@ -101,9 +110,16 @@ annotation stage；event resolver 已把其中 6 筆終結判為非日期劑量�
 沒有日期註記者也不能在來源宇宙尚未封閉時反推「從未修正」。詳見
 [逐條完整性 scoreboard](docs/audits/2026-07-27-per-clause-history-completeness-scoreboard.json)。
 
+這裡的「canonical schema 尚不存在」專指通過外部文件驗證與法律
+transition promotion 的 `nhi_rule_history` schema。`通則` 使用的
+`nhi_rule_history_edition` 已在 PostgreSQL 中正規化並封存，但它明確只
+承載 source-observed cumulative editions。
+
 ## Repo 的重點
 
 - [資料取得與更新 workflow](docs/workflow.md)
+- [`通則` PG-first 模板與更新方法](docs/chapter-00-template.md)
+- [單頁歷史的讀者體驗契約](docs/reader-experience.md)
 - [逐條文歷史工作的 agent 方法學（v3）](docs/agent-work-methodology.md)
 - [v2 方法學與日期完整性檢核](docs/methodology-v2.md)
 - [逐條歷史重建計畫](docs/history-rebuild-plan.md)
@@ -124,7 +140,8 @@ raw artifacts 合計約 169 MiB。單檔沒有超過 GitHub 的 100 MiB Git 上�
 
 本專案採兩層策略：
 
-1. Git 追蹤 source manifest、normalized JSONL、schema、程式與小型樣本。
+1. Git 追蹤 source manifest、由 sealed PostgreSQL 匯出的 normalized
+   JSONL、schema、程式與小型樣本。
 2. 不變的官方 DOC／ODT／PDF／ODS 與 SQLite snapshot 放 GitHub Releases；
    每個 release asset 可到 2 GiB，且不會讓每次 clone 背負全部 binary history。
 
@@ -147,6 +164,12 @@ assets 比較耐久。v2 的公開 source manifest 已放在
 ```bash
 make test
 sqlite3 /tmp/nhi-rule-history.db < database/sqlite-schema.sql
+
+PYTHONPATH=src python3 tools/rebuild_chapter00.py \
+  --dsn "$DATABASE_URL" \
+  --jsonl-dir data/templates/chapter-00 \
+  --reader-json prototype/reader/data/chapter-00-reader.json \
+  --sqlite-output /tmp/nhi-rule-history-chapter-00.sqlite
 
 PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
   --plan sources/source-plan-v2.json --run-dir build/pass-a \

@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="健保藥品給付條文單頁歷史閱讀器互動原型"
+      content="健保藥品給付規定「通則」完整官方版本對照；最新版全文在上，歷史只顯示相鄰版本變更。"
     />
-    <title>Gilteritinib 給付條文歷史｜閱讀器原型</title>
+    <title>通則｜健保給付條文歷史</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <a class="skip-link" href="#rule-content">跳到條文內容</a>
+    <a class="skip-link" href="#latest">跳到最新版全文</a>
 
     <header class="site-header">
       <div class="site-header__inner">
@@ -19,363 +19,169 @@
           <span class="brand__mark" aria-hidden="true">給</span>
           <span>
             <strong>健保給付條文</strong>
-            <small>單頁歷史閱讀器</small>
+            <small>一頁看懂現行內容與歷史變化</small>
           </span>
         </a>
-        <span class="prototype-badge">體驗原型</span>
+        <span class="prototype-badge">PG 驅動 template</span>
       </div>
     </header>
 
     <main id="top">
-      <section class="search-shell" aria-labelledby="search-title">
-        <div class="search-copy">
-          <p class="eyebrow">不用背條號</p>
-          <h1 id="search-title">找藥名、商品名或適應症</h1>
-          <p>例如：Xospata、gilteritinib、FLT3、急性骨髓性白血病</p>
+      <section class="hero" aria-labelledby="page-title">
+        <nav class="breadcrumbs" aria-label="條文位置">
+          藥品給付規定 <span aria-hidden="true">›</span> 通則
+        </nav>
+        <div class="hero__grid">
+          <div>
+            <p class="eyebrow">官方累積版本歷史</p>
+            <h1 id="page-title">通則</h1>
+            <p class="hero__lead">
+              先讀最新全文；往下只看每個官方版本相較前一版改了什麼。
+              不必在多份長文件之間來回找字。
+            </p>
+          </div>
+          <div class="hero__receipt" aria-label="資料範圍">
+            <p>資料由 PostgreSQL 程式化投影</p>
+            <dl>
+              <div>
+                <dt>官方版本</dt>
+                <dd id="edition-count">—</dd>
+              </div>
+              <div>
+                <dt>相鄰對照</dt>
+                <dd id="edge-count">—</dd>
+              </div>
+            </dl>
+          </div>
         </div>
 
+        <div class="scope-note" id="scope-note" role="note">
+          <span class="scope-note__icon" aria-hidden="true">i</span>
+          <p>正在讀取 PG projection…</p>
+        </div>
+      </section>
+
+      <section class="find-bar" aria-labelledby="find-title">
+        <div>
+          <label id="find-title" for="page-search">在通則中找內容</label>
+          <p>例如：insulin、GLP-1、生物標記、內服液劑</p>
+        </div>
         <div class="search-box">
-          <label class="sr-only" for="rule-search">搜尋給付條文</label>
-          <span class="search-box__icon" aria-hidden="true">⌕</span>
+          <span aria-hidden="true">⌕</span>
           <input
-            id="rule-search"
+            id="page-search"
             type="search"
             autocomplete="off"
-            value="Gilteritinib"
-            placeholder="搜尋藥名、商品名或適應症"
-            aria-controls="search-results"
-            aria-expanded="true"
+            placeholder="輸入藥名、檢查或條件"
           />
           <kbd>⌘ K</kbd>
         </div>
-
-        <div id="search-results" class="search-results" role="listbox">
-          <button
-            class="search-result is-selected"
-            type="button"
-            role="option"
-            aria-selected="true"
-          >
-            <span>
-              <strong>Gilteritinib</strong>
-              <small>Xospata · FLT3 突變急性骨髓性白血病</small>
-            </span>
-            <span class="match-reason">成分名相符</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="rule-hero" aria-labelledby="rule-title">
-        <nav class="breadcrumbs" aria-label="條文位置">
-          抗癌瘤藥物 <span aria-hidden="true">›</span> 第 9 節
-          <span aria-hidden="true">›</span> 9.99
-        </nav>
-        <div class="rule-heading">
-          <div>
-            <p class="eyebrow">9.99 · Tyrosine kinase inhibitor</p>
-            <h2 id="rule-title">Gilteritinib <span>（如 Xospata）</span></h2>
-            <div class="term-chips" aria-label="可搜尋的相關詞">
-              <span>成分名：gilteritinib</span>
-              <span>商品名：Xospata</span>
-              <span>適應症：FLT3 突變 R/R AML</span>
-            </div>
-          </div>
-          <a class="source-link" href="#sources">查看官方來源 ↓</a>
-        </div>
+        <p id="search-status" class="search-status" aria-live="polite"></p>
       </section>
 
       <nav class="section-nav" aria-label="本頁導覽">
-        <a class="is-active" href="#rule-content">完整條文</a>
-        <a href="#history">歷史異動 <span>1</span></a>
-        <a href="#sources">官方來源</a>
+        <a href="#latest">最新版全文</a>
+        <a href="#history">歷史變更</a>
+        <a href="#method">資料說明</a>
       </nav>
 
-      <section
-        id="rule-content"
-        class="version-switcher"
-        aria-labelledby="version-switcher-title"
-      >
-        <div>
-          <p class="eyebrow" id="version-switcher-title">先確認你正在看哪一版</p>
-          <p id="version-status" class="version-status" aria-live="polite"></p>
-        </div>
-        <div class="segmented" role="group" aria-label="選擇條文版本">
-          <button
-            id="show-current"
-            class="is-active"
-            type="button"
-            aria-pressed="true"
-          >
-            今天適用
-          </button>
-          <button id="show-announced" type="button" aria-pressed="false">
-            最新公告
-            <span>8/1 生效</span>
-          </button>
-        </div>
-      </section>
-
-      <div id="future-notice" class="notice" role="status">
-        <span class="notice__icon" aria-hidden="true">i</span>
-        <div>
-          <strong>已公告下一版，2026 年 8 月 1 日生效</strong>
-          <p>
-            今天仍以 2024 年 6 月 1 日版為準。你可以先看新全文，也可以直接看
-            <a href="#transition-2026">這次改了什麼</a>。
-          </p>
-        </div>
-        <button id="notice-show-announced" type="button">看 8/1 新全文</button>
+      <div id="load-error" class="load-error" hidden role="alert">
+        無法讀取 PG 產生的資料投影。請以本機 HTTP server 開啟 prototype，
+        並確認 <code>data/chapter-00-reader.json</code> 存在。
       </div>
 
-      <section
-        id="current-version"
-        class="timeline-row timeline-row--current"
-        aria-labelledby="current-version-title"
-      >
-        <div class="timeline-date">
-          <span class="timeline-dot" aria-hidden="true"></span>
-          <p class="date-label" id="current-date-label">2024.06.01 起</p>
-          <span class="status-pill status-pill--current" id="current-status-pill">
-            今天適用
-          </span>
+      <section id="latest" class="section-shell" aria-labelledby="latest-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">目前官方分章頁提供的版本</p>
+            <h2 id="latest-title">最新版全文</h2>
+          </div>
+          <button id="print-button" class="text-button" type="button">
+            列印本頁
+          </button>
         </div>
 
-        <article class="version-card">
-          <header class="version-card__header">
-            <div>
-              <p class="eyebrow" id="current-version-eyebrow">目前有效版本</p>
-              <h3 id="current-version-title">給付條文全文</h3>
+        <article class="edition-row edition-row--latest">
+          <aside class="edition-meta" id="latest-meta">
+            <div class="skeleton skeleton--meta"></div>
+          </aside>
+          <div class="edition-content">
+            <div class="current-banner">
+              <span aria-hidden="true">✓</span>
+              <p>
+                <strong>完整呈現</strong>
+                <span>這一列不是摘要，也不是只有異動段落。</span>
+              </p>
             </div>
-            <div class="version-actions">
-              <button class="quiet-button print-button" type="button">列印</button>
-              <a
-                class="quiet-button"
-                href="https://www.nhi.gov.tw/ch/cp-20273-b2f8c-3258-1.html"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                官方公告 ↗
-              </a>
+            <div id="latest-text" class="rule-text" aria-live="polite">
+              <div class="skeleton"></div>
+              <div class="skeleton"></div>
+              <div class="skeleton skeleton--short"></div>
             </div>
-          </header>
-
-          <div class="reading-key" aria-label="條文標示說明">
-            <span><i class="key-dot key-dot--add"></i>相較前版新增或改寫</span>
-            <span><i class="key-dot key-dot--search"></i>你的搜尋詞</span>
           </div>
-
-          <div id="current-rule-text" class="legal-text" aria-live="polite"></div>
         </article>
       </section>
 
-      <section id="history" class="history" aria-labelledby="history-title">
-        <div class="history-heading">
+      <section id="history" class="section-shell" aria-labelledby="history-title">
+        <div class="section-heading section-heading--history">
           <div>
-            <p class="eyebrow">版本沿革</p>
-            <h2 id="history-title">每一列只回答：下一版改了什麼？</h2>
+            <p class="eyebrow">每一版只和前一個官方版本相比</p>
+            <h2 id="history-title">歷史變更</h2>
+            <p>紅色是前一版有、這一版不再有；綠色是這一版新增的文字。</p>
           </div>
-          <p>
-            未變更的長文自動收起；所有 diff 都只比較直接相鄰兩版。
-          </p>
+          <label class="toggle">
+            <input id="changed-only" type="checkbox" />
+            <span>只看有文字變更的版本</span>
+          </label>
         </div>
 
-        <section
-          id="transition-2026"
-          class="timeline-row timeline-row--history"
-          aria-labelledby="transition-2026-title"
-        >
-          <div class="timeline-date">
-            <span class="timeline-dot" aria-hidden="true"></span>
-            <p class="date-label">2024.06.01</p>
-            <p class="date-until">至 2026.08.01 前</p>
-            <span class="status-pill">前一版本</span>
-          </div>
+        <div class="legend" aria-label="變更圖例">
+          <span><i class="legend__mark legend__mark--old">−</i> 前一版移除</span>
+          <span><i class="legend__mark legend__mark--new">＋</i> 本版新增</span>
+          <span><i class="legend__mark legend__mark--search">●</i> 搜尋命中</span>
+        </div>
 
-          <article class="diff-card">
-            <header class="diff-card__header">
-              <div>
-                <p class="eyebrow">2026.08.01 的下一版異動</p>
-                <h3 id="transition-2026-title">新增移植後維持治療；申請週期改為 3 個療程</h3>
-              </div>
-              <span class="change-count">3 組變更</span>
-            </header>
-
-            <div class="change-summary" aria-label="異動摘要">
-              <span><b>＋</b> 2 段新增</span>
-              <span><b>↔</b> 1 段改寫</span>
-              <span><b>−</b> 1 段由新文字取代</span>
-            </div>
-
-            <details class="unchanged-context">
-              <summary>省略 4 段未變更內容</summary>
-              <p>
-                包含 FLT3 突變條件、每日 120 mg 上限、移植計畫文件，以及
-                unfavorable karyotype 不予給付規定。
-              </p>
-            </details>
-
-            <section class="diff-hunk" aria-labelledby="hunk-scope">
-              <p class="hunk-path">適用對象 › 移植前／移植後</p>
-              <h4 id="hunk-scope">給付範圍從移植前擴至移植後維持治療</h4>
-
-              <div class="diff-line diff-line--remove">
-                <span class="diff-label">
-                  <b aria-hidden="true">−</b>
-                  下一版刪除
-                </span>
-                <p>
-                  <del>
-                    限單獨使用於具有 FLT3 突變的復發性或難治性急性骨髓性白血病
-                    (R/R AML) 且計畫進行造血幹細胞移植的成年病人，限移植前使用。
-                  </del>
-                </p>
-              </div>
-
-              <div class="replacement-arrow" aria-label="改寫為">改寫為 ↓</div>
-
-              <div class="diff-line diff-line--add">
-                <span class="diff-label">
-                  <b aria-hidden="true">＋</b>
-                  下一版新增
-                </span>
-                <p>
-                  <ins>
-                    單獨使用於具有 FLT3 突變的復發性或難治性急性骨髓性白血病
-                    (R/R AML)，限用於：
-                  </ins>
-                </p>
-                <ol>
-                  <li>計畫進行造血幹細胞移植的成人病人，移植前使用。</li>
-                  <li class="inline-focus">
-                    移植後的維持治療；病人移植前需曾使用 gilteritinib
-                    至少一個療程，且符合移植後病況條件。
-                  </li>
-                </ol>
-              </div>
-            </section>
-
-            <section class="diff-hunk" aria-labelledby="hunk-cycle">
-              <p class="hunk-path">事前審查 › 每次申請療程</p>
-              <h4 id="hunk-cycle">每次申請由 2 個療程改為 3 個療程</h4>
-              <div class="word-diff" aria-label="句內改寫">
-                <p>
-                  每次申請為
-                  <del><span class="sr-only">刪除：</span>二</del>
-                  <ins><span class="sr-only">新增：</span>3</ins>
-                  個療程；續申請次
-                  <del><span class="sr-only">刪除：</span>二</del>
-                  <ins><span class="sr-only">新增：</span>3</ins>
-                  個療程時，須檢附達到 PR、CRi 或 CR 的證明方可續用。
-                </p>
-              </div>
-            </section>
-
-            <section class="diff-hunk" aria-labelledby="hunk-documents">
-              <p class="hunk-path">事前審查 › 移植後維持治療</p>
-              <h4 id="hunk-documents">新增移植後申請與續用文件</h4>
-              <div class="diff-line diff-line--add">
-                <span class="diff-label">
-                  <b aria-hidden="true">＋</b>
-                  下一版新增
-                </span>
-                <ul>
-                  <li>初次申請：相關病理與病歷資料、gilteritinib 用藥紀錄。</li>
-                  <li>續用：無疾病復發的療效評估資料。</li>
-                  <li>續用：3 個月內微量殘留病灶（MRD）檢驗報告。</li>
-                </ul>
-              </div>
-            </section>
-
-            <footer class="diff-card__footer">
-              <a
-                href="https://www.nhi.gov.tw/ch/dl-100543-c9d73a25335b4d42814a86104e985078-1.odt"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                下載官方修訂對照表（ODT）↗
-              </a>
-              <button id="show-old-full" class="quiet-button" type="button">
-                看 2024 版全文
-              </button>
-              <button id="show-new-full" class="quiet-button" type="button">
-                看 2026 版全文
-              </button>
-            </footer>
-          </article>
-        </section>
-
-        <section class="timeline-row timeline-row--history">
-          <div class="timeline-date">
-            <span class="timeline-dot" aria-hidden="true"></span>
-            <p class="date-label">2023.06.01</p>
-            <p class="date-until">至 2024.06.01 前</p>
-            <span class="status-pill status-pill--review">待核實</span>
-          </div>
-
-          <article class="diff-card diff-card--unresolved">
-            <div>
-              <span class="unresolved-icon" aria-hidden="true">?</span>
-            </div>
-            <div>
-              <p class="eyebrow">相鄰版本關係尚未通過證據審查</p>
-              <h3>目前不產生推測性的 diff</h3>
-              <p>
-                找到兩份相似條文，不代表它們一定互為前後版。待直接來源與版本關係核實後，
-                這裡才會顯示「下一版改了什麼」。
-              </p>
-              <a
-                href="https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?RowNo=49&amp;endDate=20231231&amp;starDate=20230101&amp;type=etype_&amp;valid=3"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                先看已取得的 2023 官方公告 ↗
-              </a>
-            </div>
-          </article>
-        </section>
+        <div id="transition-list" class="transition-list" aria-live="polite">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
       </section>
 
-      <section id="sources" class="sources" aria-labelledby="sources-title">
+      <section id="method" class="method-card" aria-labelledby="method-title">
         <div>
-          <p class="eyebrow">來源與資料狀態</p>
-          <h2 id="sources-title">每一個變更都回到官方原文</h2>
+          <p class="eyebrow">完整，但不過度宣稱</p>
+          <h2 id="method-title">這裡的「完整歷史」指什麼？</h2>
         </div>
-        <ol>
-          <li>
-            <a
-              href="https://www.nhi.gov.tw/ch/cp-20273-b2f8c-3258-1.html"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              健保署，健保審字第 1150055419 號（2026-07-15）
-            </a>
-            <span>公告修訂 Gilteritinib 給付規定；2026-08-01 生效。</span>
-          </li>
-          <li>
-            <a
-              href="https://www.nhi.gov.tw/ch/dl-100543-c9d73a25335b4d42814a86104e985078-1.odt"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              「藥品給付規定」修訂對照表（ODT）
-            </a>
-            <span>此原型的 2024→2026 相鄰變更來源。</span>
-          </li>
-        </ol>
-        <p class="prototype-note">
-          這是互動與資訊架構原型，不代表完整歷史庫已完成。待官方版本關係、
-          生效日與逐段來源通過驗收後，才會接上公開資料 API。
-        </p>
+        <div class="method-card__body">
+          <p>
+            本頁完整納入專案明列的 14 份官方年度 ODT，以及目前官方分章
+            ODT；每份都有全文快照，所有相鄰官方版本都有程式化 diff。
+          </p>
+          <p>
+            年度版名稱與「113.05.28 更新」是來源標示，不自動等同法律
+            生效日。官方公告來源宇宙仍未證明封閉，所以本頁不宣稱每一次
+            法律修正事件都已找到；紅綠差異代表累積版本之間的文字差異。
+          </p>
+          <details>
+            <summary>查看資料流與可攜格式</summary>
+            <p>
+              PostgreSQL 是唯一主資料；GitHub JSONL、離線 SQLite 與本頁
+              JSON 都由同一組 PG rows 產生，輸出時核對逐表筆數、SHA-256
+              與外鍵。
+            </p>
+            <p>
+              <code>chapter:00</code> 只是專案排序碼。官方原始名稱與讀者
+              顯示都固定為「通則」，不是官方「第 0 章」。
+            </p>
+          </details>
+        </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <p>© 2026 王介立醫師. 內容轉載請註明來源並連結原文。</p>
-      <p>
-        本網站內容由作者審閱定稿；部分初稿整理、排版或校對流程使用自動化工具輔助。所有醫學論述以作者最終審閱版本為準。
-      </p>
+    <footer>
+      <p>Prototype · 資料截至頁面所列官方來源版本</p>
     </footer>
 
-    <script src="./app.js"></script>
+    <script src="./app.js" defer></script>
   </body>
 </html>

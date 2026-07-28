@@ -1,36 +1,54 @@
 # Database structure and portability
 
-## One logical model, three formats
+## One authority, three usable formats
 
 ```text
-normalized JSONL  <->  PostgreSQL build model
-        |
-        +----------->  SQLite portable snapshot
+official sources -> PostgreSQL (sole writable authority)
+                              |
+                              +-> JSONL public interchange
+                              +-> SQLite portable snapshot
+                              +-> reader/API projections
 ```
 
-- PostgreSQL is suitable for crawling, curation, replay, validation, and
-  concurrent builds.
-- JSONL is the canonical public interchange format for a released dataset.
-- SQLite is an immutable, searchable projection built from that JSONL.
+- PostgreSQL owns every normalized fact and relationship: source documents,
+  rule identity, versions, date roles, blocks, predecessor comparisons, diff
+  annotations, linkages, and sealed import receipts.
+- JSONL is the canonical **public interchange** for a released PostgreSQL
+  projection. It is convenient for GitHub, language-independent tooling, and
+  users who do not operate PostgreSQL.
+- SQLite is an immutable, searchable portable projection generated from the
+  same JSONL export.
 
-No SQLite-only edit is accepted upstream. A correction changes source evidence
-or normalized JSONL, then rebuilds both databases.
+No JSONL-, SQLite-, or frontend-only edit is accepted upstream. A correction
+changes source evidence or normalized rows in PostgreSQL through a
+deterministic importer/migration, seals a new import, and regenerates every
+projection.
 
 ## Staging schemas now in use
 
-The future legal-history model below is **not** populated yet. Current PG has
-three isolated evidence stages:
+The verified legal-history promotion model remains **unpopulated**. PostgreSQL
+currently has isolated evidence stages plus one normalized cumulative-edition
+model used by the `通則` reader template:
 
 | PG schema | Purpose | Current sealed scope |
 |---|---|---|
 | `tw_drug_history_stage` | v1 annual ODT source occurrences | 14 releases, 213,512 blocks |
 | `tw_drug_history_acq_stage` | v2 discovery/fetch/raw evidence | 1,719 resources, 1,712 artifacts |
 | `tw_drug_history_structural_stage` | v2 ODT blocks/occurrences/issues | 31,377 / 1,228 / 547 |
+| `nhi_rule_history_edition` | normalized source-observed cumulative editions | `通則`: 15 versions, 14 adjacent-edition edges, 26 change hunks |
 
-None of these schemas contains a promoted legal effective date, stable rule
-identity, current status, predecessor edge, or diff. Their migrations and
-rollbacks are under [../pg/migrations](../pg/migrations); loaders are under
-[../src/nhi_rule_history/pg](../src/nhi_rule_history/pg).
+`nhi_rule_history_edition` does contain a stable project rule identity,
+source-observed edition sequence, full snapshots, typed date observations,
+adjacent-edition comparison edges, and deterministic diffs. It intentionally
+does **not** claim that an edition date is a legal effective date or that two
+adjacent captured editions are direct legal predecessors. Every edge records
+`legal_predecessor_status=not_claimed`, and coverage records that the official
+source universe is open.
+
+Migrations and rollbacks are under
+[../pg/migrations](../pg/migrations). The `通則` import/export entry point is
+[../tools/rebuild_chapter00.py](../tools/rebuild_chapter00.py), backed by
+[../src/nhi_rule_history/edition_history.py](../src/nhi_rule_history/edition_history.py).
 
 Continuous-update migrations are applied in filename order. The additive
 `2026-07-27_nhi_rule_history_update_ops_observation_lease_fix.sql` migration
@@ -48,6 +66,11 @@ SQLite snapshot and proved storage-independent JSONL↔SQLite typed-row parity.
 The v2 raw/structural release is presently JSONL.zst plus checksummed raw
 tar.zst; its equivalent SQLite exporter remains an explicit gap.
 
+The `通則` template separately exports ten normalized tables as JSONL. Its
+manifest contains row counts, byte sizes, and SHA-256 checksums. Replaying those
+files into the edition SQLite schema has passed foreign-key and integrity
+checks with exact table-count parity.
+
 ## Core groups
 
 | Group | Tables |
@@ -63,12 +86,27 @@ tar.zst; its equivalent SQLite exporter remains an explicit gap.
 | Audit | `build_run`, `build_issue` |
 | Search | `search_document`, optional SQLite FTS5 projection |
 
+The cumulative-edition template uses a narrower normalized group:
+
+| Group | Tables |
+|---|---|
+| Import | `import_run`, `coverage_assessment` |
+| Source | `source_document` |
+| Identity/version | `rule`, `rule_version`, `version_source` |
+| Dates | `rule_version_date` |
+| Text | `rule_block` |
+| Comparison | `version_edge`, `diff_hunk` |
+
 ## Files
 
 - [postgresql-schema.sql](postgresql-schema.sql): canonical build schema.
 - [sqlite-schema.sql](sqlite-schema.sql): portable logical projection.
 - [sqlite-fts.sql](sqlite-fts.sql): optional reader-search index.
 - [../tools/build_sqlite.py](../tools/build_sqlite.py): JSONL-to-SQLite builder.
+- [../pg/migrations/2026-07-28_nhi_rule_history_edition_v1.sql](../pg/migrations/2026-07-28_nhi_rule_history_edition_v1.sql):
+  normalized PostgreSQL cumulative-edition schema.
+- [edition-sqlite-schema.sql](edition-sqlite-schema.sql): portable schema for
+  the cumulative-edition JSONL export.
 
 ## Conversion
 
@@ -82,6 +120,22 @@ python3 tools/build_sqlite.py \
 
 The builder rejects unknown columns, enables foreign keys, loads tables in
 dependency order, and runs `foreign_key_check` plus `integrity_check`.
+
+For the `通則` template, the full PG-first rebuild is:
+
+```bash
+PYTHONPATH=src python3 tools/rebuild_chapter00.py \
+  --dsn "$DATABASE_URL" \
+  --jsonl-dir data/templates/chapter-00 \
+  --reader-json prototype/reader/data/chapter-00-reader.json \
+  --sqlite-output /tmp/nhi-rule-history-chapter-00.sqlite
+```
+
+The importer first verifies source-stage fingerprints, writes one normalized
+PostgreSQL transaction, seals the import with table counts and an output hash,
+then reads the sealed rows back to produce JSONL, SQLite, and reader JSON. A
+replay of the same source set returns the existing sealed import instead of
+creating a competing history.
 
 ## Portability rules
 
