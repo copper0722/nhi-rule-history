@@ -1,0 +1,78 @@
+{
+  "canonical_version_unit": "single_clause",
+  "counts": {
+    "chapter": 1,
+    "clause": 12,
+    "clause_diff_hunk": 26,
+    "clause_version": 29,
+    "clause_version_block": 318,
+    "clause_version_date": 261,
+    "clause_version_edge": 17,
+    "clause_version_observation": 152,
+    "coverage_assessment": 12,
+    "import_run": 1,
+    "source_edition": 15
+  },
+  "files": {
+    "chapter.jsonl": {
+      "bytes": 239,
+      "rows": 1,
+      "sha256": "8d7d41c4833f08734b6fb0337413ef42df0e6e41d5392e4276763c2a58f5e85a"
+    },
+    "clause.jsonl": {
+      "bytes": 5109,
+      "rows": 12,
+      "sha256": "4e58166a768dade3e8e558e2b6c62836163aa0fa6b5f1f8e10a142a6383c1f05"
+    },
+    "clause_diff_hunk.jsonl": {
+      "bytes": 41410,
+      "rows": 26,
+      "sha256": "b69bef25b468c91bb120e340b628e03cf7871c7a126421964ce0f509c44f7110"
+    },
+    "clause_version.jsonl": {
+      "bytes": 343566,
+      "rows": 29,
+      "sha256": "f34ac0133e3c1106b430fc22c87008d895f29e1beb2130e3e84e10499dbad6be"
+    },
+    "clause_version_block.jsonl": {
+      "bytes": 468515,
+      "rows": 318,
+      "sha256": "379dbb871e1aee7f2574373d125b7e1518707302a152f086935ce239287f35a7"
+    },
+    "clause_version_date.jsonl": {
+      "bytes": 219328,
+      "rows": 261,
+      "sha256": "0311be3befa9029f21ce8d3af6bc32f7ac6e7e087def918569ce703f09a9b5c8"
+    },
+    "clause_version_edge.jsonl": {
+      "bytes": 14185,
+      "rows": 17,
+      "sha256": "3b0eb09b940c5b3ae75bb0a556f3cecddbb0874b04b26fb3758126a3302f9766"
+    },
+    "clause_version_observation.jsonl": {
+      "bytes": 619229,
+      "rows": 152,
+      "sha256": "b4f8ce4245816beef99f8569ea182eef201f8c2c9bebb30345d0916585671c3e"
+    },
+    "coverage_assessment.jsonl": {
+      "bytes": 11525,
+      "rows": 12,
+      "sha256": "6971ec840fe8dfdefbafdf0f289c6cba6562473e2285a77310e0869745e8d06f"
+    },
+    "import_run.jsonl": {
+      "bytes": 722,
+      "rows": 1,
+      "sha256": "133df0c49bda1fca17c7a226c9b9716edf4158df767a16564edb7632d77817b4"
+    },
+    "source_edition.jsonl": {
+      "bytes": 9866,
+      "rows": 15,
+      "sha256": "e83d4c4a7815be5df0768d83bab215c132f741451228feebacef6a40fc186051"
+    }
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "legal_history_complete": false,
+  "postgresql_is_authority": true,
+  "run_id": "3873fcbc-a2e1-5ac4-9b2c-64ab3f1da9b9",
+  "schema": "nhi-rule-history/clause-export/v1"
+}

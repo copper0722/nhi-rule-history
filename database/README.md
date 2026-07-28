@@ -27,28 +27,31 @@ projection.
 ## Staging schemas now in use
 
 The verified legal-history promotion model remains **unpopulated**. PostgreSQL
-currently has isolated evidence stages plus one normalized cumulative-edition
-model used by the `通則` reader template:
+currently has isolated evidence stages plus a two-layer normalized `通則`
+model:
 
 | PG schema | Purpose | Current sealed scope |
 |---|---|---|
 | `tw_drug_history_stage` | v1 annual ODT source occurrences | 14 releases, 213,512 blocks |
 | `tw_drug_history_acq_stage` | v2 discovery/fetch/raw evidence | 1,719 resources, 1,712 artifacts |
 | `tw_drug_history_structural_stage` | v2 ODT blocks/occurrences/issues | 31,377 / 1,228 / 547 |
-| `nhi_rule_history_edition` | normalized source-observed cumulative editions | `通則`: 15 versions, 14 adjacent-edition edges, 26 change hunks |
+| `nhi_rule_history_edition` | complete source-edition containers | `通則`: 15 cumulative editions |
+| `nhi_rule_history_clause` | canonical single-clause source-observed version chains | 12 clauses, 152 observations, 29 text states, 17 edges, 26 hunks |
 
-`nhi_rule_history_edition` does contain a stable project rule identity,
-source-observed edition sequence, full snapshots, typed date observations,
-adjacent-edition comparison edges, and deterministic diffs. It intentionally
-does **not** claim that an edition date is a legal effective date or that two
-adjacent captured editions are direct legal predecessors. Every edge records
-`legal_predecessor_status=not_claimed`, and coverage records that the official
-source universe is open.
+`nhi_rule_history_edition` is upstream provenance, not the canonical version
+unit shown to readers. `nhi_rule_history_clause` gives every top-level clause
+its own text states, observations, blocks, dates, edges and diffs. It
+intentionally does **not** claim that an edition or in-text date is a legal
+effective date, or that adjacent captured text states are direct legal
+predecessors. Every edge records `legal_predecessor_status=not_claimed`, and
+coverage records that the official source universe is open.
 
 Migrations and rollbacks are under
-[../pg/migrations](../pg/migrations). The `通則` import/export entry point is
-[../tools/rebuild_chapter00.py](../tools/rebuild_chapter00.py), backed by
-[../src/nhi_rule_history/edition_history.py](../src/nhi_rule_history/edition_history.py).
+[../pg/migrations](../pg/migrations). The single-clause `通則` import/export
+entry point is
+[../tools/rebuild_chapter00_clauses.py](../tools/rebuild_chapter00_clauses.py),
+backed by
+[../src/nhi_rule_history/clause_history.py](../src/nhi_rule_history/clause_history.py).
 
 Continuous-update migrations are applied in filename order. The additive
 `2026-07-27_nhi_rule_history_update_ops_observation_lease_fix.sql` migration
@@ -66,10 +69,10 @@ SQLite snapshot and proved storage-independent JSONL↔SQLite typed-row parity.
 The v2 raw/structural release is presently JSONL.zst plus checksummed raw
 tar.zst; its equivalent SQLite exporter remains an explicit gap.
 
-The `通則` template separately exports ten normalized tables as JSONL. Its
-manifest contains row counts, byte sizes, and SHA-256 checksums. Replaying those
-files into the edition SQLite schema has passed foreign-key and integrity
-checks with exact table-count parity.
+The `通則` reader template separately exports the single-clause normalized
+tables as JSONL. Its manifest contains row counts, byte sizes and SHA-256
+checksums. Replaying those files into the clause SQLite schema has passed
+foreign-key and integrity checks with exact table-count parity.
 
 ## Core groups
 
@@ -86,16 +89,17 @@ checks with exact table-count parity.
 | Audit | `build_run`, `build_issue` |
 | Search | `search_document`, optional SQLite FTS5 projection |
 
-The cumulative-edition template uses a narrower normalized group:
+The reader-facing single-clause template uses this normalized group:
 
 | Group | Tables |
 |---|---|
 | Import | `import_run`, `coverage_assessment` |
-| Source | `source_document` |
-| Identity/version | `rule`, `rule_version`, `version_source` |
-| Dates | `rule_version_date` |
-| Text | `rule_block` |
-| Comparison | `version_edge`, `diff_hunk` |
+| Source | `source_edition` in public projection; PG FK to edition `rule_version` |
+| Identity | `chapter`, `clause` |
+| Version/observation | `clause_version`, `clause_version_observation` |
+| Dates | `clause_version_date` |
+| Text | `clause_version_block` |
+| Comparison | `clause_version_edge`, `clause_diff_hunk` |
 
 ## Files
 
@@ -104,9 +108,13 @@ The cumulative-edition template uses a narrower normalized group:
 - [sqlite-fts.sql](sqlite-fts.sql): optional reader-search index.
 - [../tools/build_sqlite.py](../tools/build_sqlite.py): JSONL-to-SQLite builder.
 - [../pg/migrations/2026-07-28_nhi_rule_history_edition_v1.sql](../pg/migrations/2026-07-28_nhi_rule_history_edition_v1.sql):
-  normalized PostgreSQL cumulative-edition schema.
+  source-edition container schema.
 - [edition-sqlite-schema.sql](edition-sqlite-schema.sql): portable schema for
-  the cumulative-edition JSONL export.
+  the source-edition JSONL export.
+- [../pg/migrations/2026-07-28_nhi_rule_history_clause_v1.sql](../pg/migrations/2026-07-28_nhi_rule_history_clause_v1.sql):
+  additive PostgreSQL single-clause version schema.
+- [clause-sqlite-schema.sql](clause-sqlite-schema.sql): portable schema for the
+  canonical single-clause JSONL projection.
 
 ## Conversion
 
@@ -124,18 +132,19 @@ dependency order, and runs `foreign_key_check` plus `integrity_check`.
 For the `通則` template, the full PG-first rebuild is:
 
 ```bash
-PYTHONPATH=src python3 tools/rebuild_chapter00.py \
+PYTHONPATH=src python3 tools/rebuild_chapter00_clauses.py \
   --dsn "$DATABASE_URL" \
-  --jsonl-dir data/templates/chapter-00 \
-  --reader-json prototype/reader/data/chapter-00-reader.json \
-  --sqlite-output /tmp/nhi-rule-history-chapter-00.sqlite
+  --jsonl-dir data/templates/chapter-00-clauses \
+  --reader-dir prototype/reader/data/clauses \
+  --sqlite-output /tmp/nhi-rule-history-chapter-00-clauses.sqlite
 ```
 
-The importer first verifies source-stage fingerprints, writes one normalized
-PostgreSQL transaction, seals the import with table counts and an output hash,
-then reads the sealed rows back to produce JSONL, SQLite, and reader JSON. A
-replay of the same source set returns the existing sealed import instead of
-creating a competing history.
+The importer verifies the sealed edition source set, segments each edition into
+top-level clauses, collapses only consecutive equivalent text observations,
+writes one normalized PostgreSQL transaction and seals it with table counts
+and an output hash. It then reads the sealed rows back to produce JSONL,
+SQLite, and one reader JSON per clause. A replay of the same source set returns
+the existing sealed import instead of creating a competing history.
 
 ## Portability rules
 

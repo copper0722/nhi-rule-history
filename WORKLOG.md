@@ -585,3 +585,41 @@
   pause 與 legal canonical promotion hold 均未變更。
 - 完整 repo regression 為 70 legacy tests（1 skip）與 415 public tests
   （408 passed、7 skip）；`通則` 專項 13/13 包含於 public suite。
+
+## 2026-07-28 — canonical unit correction: one clause
+
+- Copper rejected the whole-`通則` version unit and confirmed that one
+  top-level clause must own one independent history page and version chain.
+  The earlier `nhi_rule_history_edition` import is retained unchanged as source
+  provenance, but is explicitly reclassified as a source-edition container.
+- Added additive PostgreSQL schema `nhi_rule_history_clause` and exact rollback.
+  Every source edition is deterministically segmented at top-level Chinese
+  ordinals into project codes `0.1–0.12`. Each annual occurrence is retained in
+  `clause_version_observation`; consecutive comparison-equivalent observations
+  collapse to one `clause_version`.
+- Live sealed clause import
+  `3873fcbc-a2e1-5ac4-9b2c-64ab3f1da9b9` has source-set SHA-256
+  `537a2aaf4e47987d053da35e10c2cfd58e4b36c760c9dc1ba41ca878b6156034`
+  and output SHA-256
+  `4eb242934844c106d4bc40ae21ab870990530b42b0f609c50b2217d7c55265e8`.
+  Counts: 12 clauses, 152 source observations, 29 text states, 318 blocks,
+  261 in-text date facts, 17 same-clause edges, 26 hunks and 12 coverage rows.
+- Clause `0.2` demonstrates observation/version separation: 15 annual
+  observations, one text state and no edge. Clause `0.4` has 15 observations,
+  ten text states and nine edges. Every edge stays within one clause and uses
+  `legal_predecessor_status=not_claimed`.
+- Generated a public clause JSONL manifest, portable SQLite schema and
+  `index.json` plus 12 per-clause reader projections. JSONL→SQLite passed exact
+  count parity, foreign-key and integrity checks; replay returned the same
+  sealed import and byte-identical SQLite output.
+- Reworked the reader to `?rule=0.x`: the selected clause's newest full text is
+  displayed once; history shows only that clause's stored hunks against its
+  next distinct text state. Search spans the 12-clause index and navigates to a
+  single-clause page. No browser-side version collapse or diff calculation is
+  allowed.
+- No Claude, Grok, Gemini or other rule-cleaning model was called. Legal-event
+  completeness remains false and the existing dispatch pause remains in force.
+- Final regression passed: 70 legacy tests with one environment skip and 423
+  public tests with seven skips. Playwright verified `0.4` desktop and mobile,
+  global search routing `生物標記` to `0.12`, `0.2` zero-transition behavior,
+  external-link safety, and zero horizontal overflow.

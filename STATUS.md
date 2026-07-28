@@ -21,14 +21,15 @@
 - 14 份 ODT、213,512 個結構區塊、9,303 個候選的封存 run。
 - v1 八表 deterministic JSONL／SQLite exporter；完整 empirical export
   通過 typed-row parity，release assets 已準備但尚未發布。
-- `通則` PG-first 累積版本模板已完成：`nhi_rule_history_edition` 是唯一
-  可寫 authority，sealed import 包含 1 條 rule、16 份 source documents、
-  15 個完整 versions、523 個 typed date facts、743 個 logical blocks、
-  14 條 adjacent-official-edition edges 與 26 組 change hunks。宣告的
-  15-version／14-edge chain 完整；JSONL、SQLite 與 reader JSON 均由該
-  import 重建並通過 count/hash、foreign-key、integrity 與 idempotent
-  replay。`official_source_universe_closed=false`、
-  `legal_history_complete=false`，不改變全庫法律歷史 0/1,548 的結論。
+- `通則` PG-first 模板已改成正確的單條文版本模型：
+  `nhi_rule_history_edition` 只保存 15 份來源版容器；
+  `nhi_rule_history_clause` 以 `0.1–0.12` 各自保存版本鏈。sealed import
+  含 12 條文、152 筆來源版 observation、29 個不同文字 states、318 個
+  blocks、261 個文內日期 facts、17 條 same-clause edges 與 26 組 hunks。
+  JSONL、SQLite 與 12 份 reader JSON 均由該 import 重建並通過 count/hash、
+  foreign-key、integrity 與 idempotent replay。
+  `official_source_universe_closed=false`、`legal_history_complete=false`，
+  不改變全庫法律歷史 0/1,548 的結論。
 - ATC linkage 資料模型，以及 ICD-11 授權 fail-closed 邊界。
 - 重新確認 ATC 的官方來源鏈：INAE3000 是既有高頻 current lookup，
   IODE `A21030000I-E41001-001` 是可整批重建的每月 CSV。2026-07-27
@@ -48,8 +49,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 415 項 public tests
-  （408 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts 與
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 423 項 public tests
+  （416 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts 與
   真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
@@ -262,11 +263,12 @@
   `8.2.16` 的分章檔包含 115/8/1 future-effective 版本，是不能把「最新
   公布」直接當「今日生效」的實例。分類未選 canonical side，whole↔chapter
   gate 仍 open。
-- 已完成 PG-driven `通則` 一頁式 reader template：最新版全文置頂，歷史
-  紀錄只顯示與下一份 captured official edition 的 diff；零實質變更版本
-  仍保留。兩欄桌面、手機堆疊、紅綠文字標籤、獨立黃色搜尋提示與官方來源
-  連結均已驗證。頁面讀取的是 sealed PG projection，不含手寫條文或
-  browser-side diff；尚未接付費站正式 API／route。
+- 已完成 PG-driven 單條文 reader template：`?rule=0.4` 只顯示 `0.4`
+  最新全文及其 9 組歷史 diff；`0.2` 的 15 份相同來源觀察則正確折疊為
+  1 個文字版本、0 組 diff。全域搜尋從 12 條 index 依藥名／條件選路。
+  兩欄桌面、手機堆疊、紅綠文字標籤與官方來源連結均由 sealed PG
+  projection 產生，不含手寫條文或 browser-side diff；尚未接付費站正式
+  API／route。
 
 ## 尚未完成
 
@@ -297,8 +299,9 @@
   不能當 v3 completion gate，也不能推論舊公告不存在。
 - 穩定條文身分、條號重用、split／merge／move／restore／correction。
 - cumulative anchor event replay。
-- 全庫經法律證據驗證的 direct-predecessor diff；`通則` 已完成的 14 條
-  source-edition diffs 明確不冒充法律 direct-predecessor edges。
+- 全庫經法律證據驗證的 direct-predecessor diff；`通則` 已完成的 17 條
+  same-clause source-observed text-state diffs 明確不冒充法律
+  direct-predecessor edges。
 - ATC raw acquisition 與 portable schema 已可重跑，但 public normalized
   linkage release 尚未產生；legacy formulary 比同日官方 CSV 多 148 列，
   508 個品項→條文 edges 未解析，rule→ATC 仍只允許標示為
@@ -325,7 +328,7 @@
   regression：`chapter:00` 永不呈現為官方「第 0 章」，每個 coverage
   numerator 必須連同 population、exclusions 與 claim limit。
 - 全庫 normalized public clause dataset 與 SQLite snapshot；`通則` 的
-  10-table JSONL 與 SQLite projection 已完成。
+  12-clause JSONL 與 SQLite projection 已完成。
 - v2 acquisition/structural 的 typed-row JSONL↔SQLite projection。
 - v2 clean-room rebuild 與 final-commit code-hash binding。
 - 付費站正式真實資料 API／讀者 route；`通則` 靜態 PG projection template

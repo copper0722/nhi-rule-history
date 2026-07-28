@@ -6,99 +6,129 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HTML = (ROOT / "prototype" / "reader" / "index.html").read_text(
-    encoding="utf-8"
+READER = ROOT / "prototype" / "reader"
+HTML = (READER / "index.html").read_text(encoding="utf-8")
+SCRIPT = (READER / "app.js").read_text(encoding="utf-8")
+CSS = (READER / "styles.css").read_text(encoding="utf-8")
+INDEX = json.loads(
+    (READER / "data" / "clauses" / "index.json").read_text(encoding="utf-8")
 )
-SCRIPT = (ROOT / "prototype" / "reader" / "app.js").read_text(
-    encoding="utf-8"
+CLAUSE_04 = json.loads(
+    (READER / "data" / "clauses" / "0.4.json").read_text(encoding="utf-8")
 )
-CSS = (ROOT / "prototype" / "reader" / "styles.css").read_text(
-    encoding="utf-8"
-)
-DATA = json.loads(
-    (
-        ROOT
-        / "prototype"
-        / "reader"
-        / "data"
-        / "chapter-00-reader.json"
-    ).read_text(encoding="utf-8")
-)
-READER_CONTRACT = (ROOT / "docs" / "reader-experience.md").read_text(
-    encoding="utf-8"
+CLAUSE_02 = json.loads(
+    (READER / "data" / "clauses" / "0.2.json").read_text(encoding="utf-8")
 )
 
 
 class ReaderPrototypeTests(unittest.TestCase):
-    def test_pg_projection_drives_latest_full_text_and_all_edges(self) -> None:
+    def test_index_routes_to_one_clause_per_page(self) -> None:
         self.assertEqual(
-            DATA["generated_from"],
-            "PostgreSQL nhi_rule_history_edition",
+            INDEX["schema"],
+            "nhi-rule-history/single-clause-index/v1",
         )
-        self.assertEqual(DATA["coverage"]["loaded_edition_count"], 15)
-        self.assertEqual(DATA["coverage"]["adjacent_edge_count"], 14)
-        self.assertEqual(len(DATA["transitions"]), 14)
-        self.assertGreaterEqual(len(DATA["latest"]["full_text_blocks"]), 50)
-        self.assertIn("最新版全文", HTML)
-        self.assertIn("歷史變更", HTML)
-        self.assertIn("DATA_URL", SCRIPT)
-        self.assertNotIn("const currentRule", SCRIPT)
+        self.assertEqual(
+            INDEX["generated_from"],
+            "PostgreSQL nhi_rule_history_clause",
+        )
+        self.assertEqual(INDEX["canonical_version_unit"], "single_clause")
+        self.assertEqual(INDEX["default_clause_code"], "0.4")
+        self.assertEqual(
+            [clause["canonical_code"] for clause in INDEX["clauses"]],
+            [f"0.{number}" for number in range(1, 13)],
+        )
+        self.assertIn('get("rule")', SCRIPT)
+        self.assertIn("INDEX_URL", SCRIPT)
+        self.assertNotIn("./data/chapter-00-reader.json", SCRIPT)
 
-    def test_reader_surface_uses_tongze_not_official_chapter_zero(self) -> None:
-        self.assertEqual(DATA["rule"]["display_label"], "通則")
-        self.assertEqual(DATA["rule"]["source_designation_raw"], "通則")
-        self.assertEqual(DATA["rule"]["navigation_code"], "chapter:00")
+    def test_clause_04_is_the_only_full_text_on_its_page(self) -> None:
         self.assertEqual(
-            DATA["rule"]["navigation_code_origin"],
-            "project_assigned",
+            CLAUSE_04["schema"],
+            "nhi-rule-history/single-clause-reader/v1",
         )
-        self.assertIn("<h1 id=\"page-title\">通則</h1>", HTML)
-        self.assertIn("不是官方「第 0 章」", HTML)
+        self.assertEqual(CLAUSE_04["clause"]["canonical_code"], "0.4")
+        self.assertEqual(
+            CLAUSE_04["clause"]["display_title"],
+            "注射藥品之使用原則",
+        )
+        self.assertEqual(CLAUSE_04["coverage"]["observed_edition_count"], 15)
+        self.assertEqual(CLAUSE_04["coverage"]["version_state_count"], 10)
+        self.assertEqual(CLAUSE_04["coverage"]["version_edge_count"], 9)
+        self.assertEqual(len(CLAUSE_04["transitions"]), 9)
+        latest_blocks = [
+            block["text"] for block in CLAUSE_04["latest"]["full_text_blocks"]
+        ]
+        self.assertTrue(latest_blocks[0].startswith("四、"))
+        self.assertFalse(any(block.startswith("五、") for block in latest_blocks))
+        self.assertIn("本條最新版全文", HTML)
+        self.assertIn("本條歷史變更", HTML)
 
-    def test_dates_and_legal_scope_are_not_overclaimed(self) -> None:
-        self.assertEqual(
-            DATA["latest"]["date"]["role"],
-            "official_update_date",
-        )
-        self.assertEqual(
-            DATA["latest"]["date"]["legal_effective_status"],
-            "not_claimed",
-        )
-        self.assertFalse(DATA["coverage"]["official_source_universe_closed"])
-        self.assertFalse(DATA["coverage"]["legal_history_complete"])
-        self.assertTrue(DATA["coverage"]["edition_set_complete"])
-        self.assertIn("不是自動推定的法律生效日", SCRIPT)
-        self.assertIn("相鄰官方累積版本", SCRIPT)
+    def test_unchanged_annual_observations_do_not_make_fake_versions(self) -> None:
+        self.assertEqual(CLAUSE_02["coverage"]["observed_edition_count"], 15)
+        self.assertEqual(CLAUSE_02["coverage"]["version_state_count"], 1)
+        self.assertEqual(CLAUSE_02["coverage"]["version_edge_count"], 0)
+        self.assertEqual(len(CLAUSE_02["latest"]["observed_editions"]), 15)
+        self.assertEqual(CLAUSE_02["transitions"], [])
+        self.assertIn("未改字的年度版本只作來源觀察", HTML)
 
-    def test_change_and_search_highlights_use_distinct_channels(self) -> None:
-        kinds = {
-            hunk["change_kind"]
-            for transition in DATA["transitions"]
-            for hunk in transition["hunks"]
-        }
-        self.assertIn("added", kinds)
-        self.assertIn("replaced", kinds)
+    def test_diff_is_only_between_versions_of_the_selected_clause(self) -> None:
+        for transition in CLAUSE_04["transitions"]:
+            self.assertGreaterEqual(len(transition["hunks"]), 1)
+            self.assertEqual(
+                transition["adjacency_basis"],
+                "adjacent_distinct_text_state_across_official_editions",
+            )
+            self.assertEqual(
+                transition["legal_predecessor_status"],
+                "not_claimed",
+            )
+        self.assertIn("下一版刪除", SCRIPT)
+        self.assertIn("下一版新增", SCRIPT)
         self.assertIn("diff-side--old", SCRIPT)
         self.assertIn("diff-side--new", SCRIPT)
-        self.assertIn("search-hit", SCRIPT)
-        self.assertIn("--search: #ffe47b", CSS)
         self.assertIn(".inline-change--old", CSS)
         self.assertIn(".inline-change--new", CSS)
+
+    def test_search_is_global_across_clause_index(self) -> None:
+        insulin = [
+            clause
+            for clause in INDEX["clauses"]
+            if "insulin" in clause["search_text"]
+        ]
+        biomarker = [
+            clause
+            for clause in INDEX["clauses"]
+            if "生物標記" in clause["search_text"]
+        ]
+        self.assertEqual([row["canonical_code"] for row in insulin], ["0.4"])
+        self.assertEqual([row["canonical_code"] for row in biomarker], ["0.12"])
+        self.assertIn("clause-results", HTML)
+        self.assertIn("normalizedSearch(clause.search_text)", SCRIPT)
+        self.assertIn(".clause-result", CSS)
+
+    def test_navigation_codes_and_legal_scope_are_not_overclaimed(self) -> None:
+        self.assertEqual(CLAUSE_04["chapter"]["display_label"], "通則")
+        self.assertEqual(
+            CLAUSE_04["chapter"]["navigation_code_origin"],
+            "project_assigned",
+        )
+        self.assertEqual(
+            CLAUSE_04["clause"]["code_origin"],
+            "project_assigned",
+        )
+        self.assertFalse(CLAUSE_04["coverage"]["official_source_universe_closed"])
+        self.assertFalse(CLAUSE_04["coverage"]["legal_history_complete"])
+        self.assertIn("整章是來源；單一條文才是版本", HTML)
+        self.assertIn("未宣稱兩份來源之間沒有其他公告", SCRIPT)
 
     def test_mobile_reduced_motion_and_accessibility_rules_exist(self) -> None:
         self.assertIn("@media (max-width: 820px)", CSS)
         self.assertIn("@media (max-width: 560px)", CSS)
         self.assertIn("@media (prefers-reduced-motion: reduce)", CSS)
-        self.assertIn("aria-live=\"polite\"", HTML)
-        self.assertIn("role=\"alert\"", HTML)
-        self.assertIn("target=\"_blank\"", SCRIPT)
+        self.assertIn('aria-live="polite"', HTML)
+        self.assertIn('role="alert"', HTML)
+        self.assertIn('target="_blank"', SCRIPT)
         self.assertIn('rel="noopener noreferrer"', SCRIPT)
-
-    def test_reader_contract_keeps_project_navigation_provenance(self) -> None:
-        self.assertIn('"source_designation_raw": "通則"', READER_CONTRACT)
-        self.assertIn('"reader_display_label": "通則"', READER_CONTRACT)
-        self.assertIn('"navigation_code": "chapter:00"', READER_CONTRACT)
-        self.assertIn('"code_origin": "project_assigned"', READER_CONTRACT)
 
 
 if __name__ == "__main__":

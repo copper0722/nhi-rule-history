@@ -5,51 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="健保藥品給付規定「通則」完整官方版本對照；最新版全文在上，歷史只顯示相鄰版本變更。"
+      content="健保藥品給付規定單一條文歷史；最新版全文在上，舊版只顯示與下一文字版本的差異。"
     />
-    <title>通則｜健保給付條文歷史</title>
+    <title>0.4 注射藥品之使用原則｜健保給付條文歷史</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <a class="skip-link" href="#latest">跳到最新版全文</a>
+    <a class="skip-link" href="#latest">跳到本條最新版全文</a>
 
     <header class="site-header">
       <div class="site-header__inner">
-        <a class="brand" href="#top" aria-label="回到頁首">
+        <a class="brand" href="./" aria-label="回到通則條文首頁">
           <span class="brand__mark" aria-hidden="true">給</span>
           <span>
             <strong>健保給付條文</strong>
-            <small>一頁看懂現行內容與歷史變化</small>
+            <small>一條文一頁：全文、版本與差異</small>
           </span>
         </a>
-        <span class="prototype-badge">PG 驅動 template</span>
+        <span class="prototype-badge">PG 單一條文 template</span>
       </div>
     </header>
 
     <main id="top">
       <section class="hero" aria-labelledby="page-title">
         <nav class="breadcrumbs" aria-label="條文位置">
-          藥品給付規定 <span aria-hidden="true">›</span> 通則
+          藥品給付規定 <span aria-hidden="true">›</span>
+          <span id="chapter-label">通則</span>
+          <span aria-hidden="true">›</span>
+          <span id="breadcrumb-code">0.4</span>
         </nav>
         <div class="hero__grid">
           <div>
-            <p class="eyebrow">官方累積版本歷史</p>
-            <h1 id="page-title">通則</h1>
+            <p class="eyebrow">單一條文版本歷史</p>
+            <p class="clause-code" id="clause-code">0.4</p>
+            <h1 id="page-title">注射藥品之使用原則</h1>
             <p class="hero__lead">
-              先讀最新全文；往下只看每個官方版本相較前一版改了什麼。
-              不必在多份長文件之間來回找字。
+              上方只顯示這一條的最新全文；往下每一列，只說明這一條相較
+              自己的前一個文字版本改了什麼。
             </p>
           </div>
-          <div class="hero__receipt" aria-label="資料範圍">
-            <p>資料由 PostgreSQL 程式化投影</p>
+          <div class="hero__receipt" aria-label="本條資料範圍">
+            <p>資料由 PostgreSQL 單一條文投影</p>
             <dl>
               <div>
-                <dt>官方版本</dt>
+                <dt>官方版本觀察</dt>
                 <dd id="edition-count">—</dd>
               </div>
               <div>
-                <dt>相鄰對照</dt>
-                <dd id="edge-count">—</dd>
+                <dt>文字版本</dt>
+                <dd id="version-count">—</dd>
               </div>
             </dl>
           </div>
@@ -57,13 +61,13 @@
 
         <div class="scope-note" id="scope-note" role="note">
           <span class="scope-note__icon" aria-hidden="true">i</span>
-          <p>正在讀取 PG projection…</p>
+          <p>正在讀取單一條文 PG projection…</p>
         </div>
       </section>
 
       <section class="find-bar" aria-labelledby="find-title">
         <div>
-          <label id="find-title" for="page-search">在通則中找內容</label>
+          <label id="find-title" for="page-search">搜尋通則的條文</label>
           <p>例如：insulin、GLP-1、生物標記、內服液劑</p>
         </div>
         <div class="search-box">
@@ -72,32 +76,39 @@
             id="page-search"
             type="search"
             autocomplete="off"
-            placeholder="輸入藥名、檢查或條件"
+            placeholder="輸入藥名、檢查或給付條件"
           />
           <kbd>⌘ K</kbd>
         </div>
         <p id="search-status" class="search-status" aria-live="polite"></p>
+        <div
+          id="clause-results"
+          class="clause-results"
+          aria-live="polite"
+          hidden
+        ></div>
       </section>
 
       <nav class="section-nav" aria-label="本頁導覽">
-        <a href="#latest">最新版全文</a>
-        <a href="#history">歷史變更</a>
+        <a href="#latest">本條最新版</a>
+        <a href="#history">本條歷史變更</a>
         <a href="#method">資料說明</a>
       </nav>
 
       <div id="load-error" class="load-error" hidden role="alert">
-        無法讀取 PG 產生的資料投影。請以本機 HTTP server 開啟 prototype，
-        並確認 <code>data/chapter-00-reader.json</code> 存在。
+        無法讀取 PG 產生的單一條文投影。請以本機 HTTP server 開啟
+        prototype，並確認 <code>data/clauses/index.json</code> 與各條文
+        JSON 存在。
       </div>
 
       <section id="latest" class="section-shell" aria-labelledby="latest-title">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">目前官方分章頁提供的版本</p>
-            <h2 id="latest-title">最新版全文</h2>
+            <p class="eyebrow">目前官方分章頁觀察到的文字</p>
+            <h2 id="latest-title">本條最新版全文</h2>
           </div>
           <button id="print-button" class="text-button" type="button">
-            列印本頁
+            列印本條
           </button>
         </div>
 
@@ -109,8 +120,8 @@
             <div class="current-banner">
               <span aria-hidden="true">✓</span>
               <p>
-                <strong>完整呈現</strong>
-                <span>這一列不是摘要，也不是只有異動段落。</span>
+                <strong>單一條文完整全文</strong>
+                <span>不是整章，也不是摘要或只有異動段落。</span>
               </p>
             </div>
             <div id="latest-text" class="rule-text" aria-live="polite">
@@ -125,20 +136,18 @@
       <section id="history" class="section-shell" aria-labelledby="history-title">
         <div class="section-heading section-heading--history">
           <div>
-            <p class="eyebrow">每一版只和前一個官方版本相比</p>
-            <h2 id="history-title">歷史變更</h2>
-            <p>紅色是前一版有、這一版不再有；綠色是這一版新增的文字。</p>
+            <p class="eyebrow">只比較同一條文的相鄰文字狀態</p>
+            <h2 id="history-title">本條歷史變更</h2>
+            <p>
+              紅色是舊文字在下一版被移除；綠色是下一版新增的文字。
+              未改字的年度版本只作來源觀察，不製造重複版本。
+            </p>
           </div>
-          <label class="toggle">
-            <input id="changed-only" type="checkbox" />
-            <span>只看有文字變更的版本</span>
-          </label>
         </div>
 
         <div class="legend" aria-label="變更圖例">
-          <span><i class="legend__mark legend__mark--old">−</i> 前一版移除</span>
-          <span><i class="legend__mark legend__mark--new">＋</i> 本版新增</span>
-          <span><i class="legend__mark legend__mark--search">●</i> 搜尋命中</span>
+          <span><i class="legend__mark legend__mark--old">−</i> 下一版移除</span>
+          <span><i class="legend__mark legend__mark--new">＋</i> 下一版新增</span>
         </div>
 
         <div id="transition-list" class="transition-list" aria-live="polite">
@@ -149,29 +158,30 @@
 
       <section id="method" class="method-card" aria-labelledby="method-title">
         <div>
-          <p class="eyebrow">完整，但不過度宣稱</p>
-          <h2 id="method-title">這裡的「完整歷史」指什麼？</h2>
+          <p class="eyebrow">版本單位已正規化</p>
+          <h2 id="method-title">整章是來源；單一條文才是版本</h2>
         </div>
         <div class="method-card__body">
           <p>
-            本頁完整納入專案明列的 14 份官方年度 ODT，以及目前官方分章
-            ODT；每份都有全文快照，所有相鄰官方版本都有程式化 diff。
+            15 份「通則」累積版本仍完整保留在 PostgreSQL，角色是來源容器。
+            系統再把每份來源切成專案條文 0.1–0.12；每一條各自保存全文、
+            年度觀察、文字版本、前一文字版本 edge 與 diff。
           </p>
           <p>
-            年度版名稱與「113.05.28 更新」是來源標示，不自動等同法律
-            生效日。官方公告來源宇宙仍未證明封閉，所以本頁不宣稱每一次
-            法律修正事件都已找到；紅綠差異代表累積版本之間的文字差異。
+            同一條文若連續多年文字相同，只會有一個條文版本，但每一份年度
+            來源仍保留 observation。來源版名與條文內日期不自動等同法律
+            生效日；法律事件史仍須另外驗證。
           </p>
           <details>
             <summary>查看資料流與可攜格式</summary>
             <p>
-              PostgreSQL 是唯一主資料；GitHub JSONL、離線 SQLite 與本頁
-              JSON 都由同一組 PG rows 產生，輸出時核對逐表筆數、SHA-256
-              與外鍵。
+              PostgreSQL <code>nhi_rule_history_clause</code> 是唯一可寫主
+              資料。GitHub JSONL、離線 SQLite 與每條文 reader JSON 都由
+              同一個 sealed import 單向產生。
             </p>
             <p>
-              <code>chapter:00</code> 只是專案排序碼。官方原始名稱與讀者
-              顯示都固定為「通則」，不是官方「第 0 章」。
+              <code>0.4</code> 與 <code>chapter:00</code> 都是專案導航碼；
+              官方來源原名仍是「通則」及「四、」，不冒充官方條號。
             </p>
           </details>
         </div>
@@ -179,7 +189,10 @@
     </main>
 
     <footer>
-      <p>Prototype · 資料截至頁面所列官方來源版本</p>
+      <p>© 2026 王介立醫師. 內容轉載請註明來源並連結原文。</p>
+      <p>
+        本網站內容由作者審閱定稿；部分初稿整理、排版或校對流程使用自動化工具輔助。所有醫學論述以作者最終審閱版本為準。
+      </p>
     </footer>
 
     <script src="./app.js" defer></script>

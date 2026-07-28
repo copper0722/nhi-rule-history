@@ -163,6 +163,12 @@ canonical history。
 - `rule_identity` 使用永久 ID。
 - 官方「通則」以 project navigation code `chapter:00` 排序；`00` 必須標記
   `project_assigned`，讀者顯示仍為「通則」，不稱「第 0 章」。
+- 整份章節或年度檔是 source-edition container，不是條文版本。先以
+  top-level ordinal 切成 `0.1–0.12`，再讓每個單一條文各自建立
+  observation、text state、edge 與 diff。
+- 連續來源版本的同一條若 comparison text 相同，只建立一個
+  `clause_version`；每份來源仍各保留一筆
+  `clause_version_observation`。文字曾改變後又恢復時，恢復後是新的 state。
 - `rule_designation` 保存條號、標題與有效區間。
 - 相同條號不保證同一條文。
 - split／merge／number reuse／restore／correction 必須有 curation decision。

@@ -1,0 +1,90 @@
+{
+  "canonical_version_unit": "single_clause",
+  "chapter": {
+    "chapter_id": "chapter:general-principles",
+    "display_label": "通則",
+    "navigation_code": "chapter:00",
+    "navigation_code_origin": "project_assigned",
+    "source_designation_raw": "通則"
+  },
+  "clause": {
+    "canonical_code": "0.12",
+    "clause_id": "clause:general-principles:0.12",
+    "code_origin": "project_assigned",
+    "display_title": "藥物給付規定所列需檢附生物標記檢測結果報告者，其報告須符合下列任一條件（113/6/1）",
+    "identity_basis": "Project code mapped to a contiguous top-level Chinese ordinal with text continuity across the declared official edition set.",
+    "identity_status": "verified_within_declared_edition_set",
+    "ordinal_number": 12
+  },
+  "coverage": {
+    "declared_edition_count": 15,
+    "declared_edition_set_complete": true,
+    "first_observed_order": 14,
+    "gap_reasons": [
+      {
+        "code": "OFFICIAL_SOURCE_UNIVERSE_OPEN",
+        "meaning": "The declared cumulative-edition set does not prove that every legal amendment event has been found."
+      },
+      {
+        "code": "LEGAL_EFFECTIVE_DATES_UNVERIFIED",
+        "meaning": "Edition labels and in-text date annotations are not silently treated as legal effective dates."
+      }
+    ],
+    "last_observed_order": 14,
+    "legal_history_complete": false,
+    "observed_edition_count": 1,
+    "observed_presence_contiguous": true,
+    "official_source_universe_closed": false,
+    "status": "complete_for_declared_source_edition_observations",
+    "unique_comparison_text_count": 1,
+    "version_edge_count": 0,
+    "version_state_count": 1
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "latest": {
+    "clause_version_id": "clause-version:918ffc500a0a7d7b3102d8b6164823c022d2ca0924ce37f3b44885445f249b53",
+    "date_annotations": [
+      {
+        "date_value": "2024-06-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "113/6/1"
+      }
+    ],
+    "display_title": "藥物給付規定所列需檢附生物標記檢測結果報告者，其報告須符合下列任一條件（113/6/1）",
+    "full_text_blocks": [
+      {
+        "block_order": 0,
+        "text": "十二、藥物給付規定所列需檢附生物標記檢測結果報告者，其報告須符合下列任一條件（113/6/1）："
+      },
+      {
+        "block_order": 1,
+        "text": "（一）符合全民健康保險醫療服務給付項目及支付標準規定。"
+      },
+      {
+        "block_order": 2,
+        "text": "（二）使用經衛生福利部許可之伴隨式診斷用體外診斷醫療器材檢測（IVD）。"
+      },
+      {
+        "block_order": 3,
+        "text": "（三）經衛生福利部核定之實驗室開發檢測施行計畫表列醫療機構之認證實驗室執行，且技術項目符合核定之分析標的。"
+      }
+    ],
+    "legal_effective_status": "not_claimed",
+    "observed_editions": [
+      {
+        "chronology_order": 14,
+        "edition_label": "通則(113.05.28更新)",
+        "observation_id": "clause-observation:03feabab8f2d4e3af60cf678b8ccf6e21f3567e5986aed2c4a239922d15a526c",
+        "source": {
+          "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "十二、"
+      }
+    ],
+    "state_order": 0
+  },
+  "schema": "nhi-rule-history/single-clause-reader/v1",
+  "transitions": []
+}

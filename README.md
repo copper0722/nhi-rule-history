@@ -17,11 +17,14 @@ deterministic raw acquisition 可保留；在 v3 transition-evidence schema、
 queue converter、validator 與 10-unit pilot 完成前，不重新啟動 agent
 量產。
 
-第一個 PG-first 可閱讀模板已完成：官方 `通則` 在宣告的 15 份累積版本
-集合中有 15 個完整 snapshot、14 條相鄰版本比較邊與 26 組實質 diff；
-最新版全文置頂，歷史列只顯示相較下一份累積版本的變更。JSONL、SQLite 與
-前端 JSON 均從同一個 sealed PostgreSQL import 程式化產生。這只證明
-**宣告版本集合的序列完整**，不證明官方來源宇宙封閉或法律事件史完整。
+第一個 PG-first 可閱讀模板已完成：15 份官方 `通則` 累積版本先作為來源
+容器，再確定性切成 12 個專案條文 `0.1–0.12`。**一個條文才是一條獨立
+version chain**：目前共有 152 筆來源觀察、29 個不同文字狀態、17 條
+單條文相鄰文字邊與 26 組 diff。最新版只顯示所選條文全文；歷史列只顯示
+該條相較下一個文字狀態的變更。JSONL、SQLite 與每條文前端 JSON 均從同一
+個 sealed PostgreSQL import 程式化產生。這只證明
+**宣告來源版本集合內的條文觀察與文字狀態完整**，不證明官方來源宇宙封閉
+或法律事件史完整。
 詳見 [`通則` 方法學](docs/chapter-00-template.md)與
 [reader template](prototype/reader/index.html)。
 
@@ -111,9 +114,10 @@ annotation stage；event resolver 已把其中 6 筆終結判為非日期劑量�
 [逐條完整性 scoreboard](docs/audits/2026-07-27-per-clause-history-completeness-scoreboard.json)。
 
 這裡的「canonical schema 尚不存在」專指通過外部文件驗證與法律
-transition promotion 的 `nhi_rule_history` schema。`通則` 使用的
-`nhi_rule_history_edition` 已在 PostgreSQL 中正規化並封存，但它明確只
-承載 source-observed cumulative editions。
+transition promotion 的 `nhi_rule_history` schema。`通則` 的
+`nhi_rule_history_edition` 只承載 source-observed cumulative editions；
+`nhi_rule_history_clause` 則承載每個單一條文的 source-observed 文字版本與
+diff。兩者都不冒充已驗證法律事件史。
 
 ## Repo 的重點
 
@@ -165,11 +169,11 @@ assets 比較耐久。v2 的公開 source manifest 已放在
 make test
 sqlite3 /tmp/nhi-rule-history.db < database/sqlite-schema.sql
 
-PYTHONPATH=src python3 tools/rebuild_chapter00.py \
+PYTHONPATH=src python3 tools/rebuild_chapter00_clauses.py \
   --dsn "$DATABASE_URL" \
-  --jsonl-dir data/templates/chapter-00 \
-  --reader-json prototype/reader/data/chapter-00-reader.json \
-  --sqlite-output /tmp/nhi-rule-history-chapter-00.sqlite
+  --jsonl-dir data/templates/chapter-00-clauses \
+  --reader-dir prototype/reader/data/clauses \
+  --sqlite-output /tmp/nhi-rule-history-chapter-00-clauses.sqlite
 
 PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
   --plan sources/source-plan-v2.json --run-dir build/pass-a \

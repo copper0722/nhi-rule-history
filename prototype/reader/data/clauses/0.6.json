@@ -1,0 +1,226 @@
+{
+  "canonical_version_unit": "single_clause",
+  "chapter": {
+    "chapter_id": "chapter:general-principles",
+    "display_label": "通則",
+    "navigation_code": "chapter:00",
+    "navigation_code_origin": "project_assigned",
+    "source_designation_raw": "通則"
+  },
+  "clause": {
+    "canonical_code": "0.6",
+    "clause_id": "clause:general-principles:0.6",
+    "code_origin": "project_assigned",
+    "display_title": "維生素、荷爾蒙及白蛋白製劑等類藥品之使用，門診以附表三-A及三-B所列醫治病症，住院以特殊病症…",
+    "identity_basis": "Project code mapped to a contiguous top-level Chinese ordinal with text continuity across the declared official edition set.",
+    "identity_status": "verified_within_declared_edition_set",
+    "ordinal_number": 6
+  },
+  "coverage": {
+    "declared_edition_count": 15,
+    "declared_edition_set_complete": true,
+    "first_observed_order": 0,
+    "gap_reasons": [
+      {
+        "code": "OFFICIAL_SOURCE_UNIVERSE_OPEN",
+        "meaning": "The declared cumulative-edition set does not prove that every legal amendment event has been found."
+      },
+      {
+        "code": "LEGAL_EFFECTIVE_DATES_UNVERIFIED",
+        "meaning": "Edition labels and in-text date annotations are not silently treated as legal effective dates."
+      }
+    ],
+    "last_observed_order": 14,
+    "legal_history_complete": false,
+    "observed_edition_count": 15,
+    "observed_presence_contiguous": true,
+    "official_source_universe_closed": false,
+    "status": "complete_for_declared_source_edition_observations",
+    "unique_comparison_text_count": 1,
+    "version_edge_count": 0,
+    "version_state_count": 1
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "latest": {
+    "clause_version_id": "clause-version:6826b09db9eef375e7e15dabdedc713dd1670fe1b65c09415876388dd4e89ad9",
+    "date_annotations": [],
+    "display_title": "維生素、荷爾蒙及白蛋白製劑等類藥品之使用，門診以附表三-A及三-B所列醫治病症，住院以特殊病症…",
+    "full_text_blocks": [
+      {
+        "block_order": 0,
+        "text": "六、維生素、荷爾蒙及白蛋白製劑等類藥品之使用，門診以附表三-A及三-B所列醫治病症，住院以特殊病症或施行大手術後必須積極治療者為原則，凡作一般營養補給者，不予給付。"
+      }
+    ],
+    "legal_effective_status": "not_claimed",
+    "observed_editions": [
+      {
+        "chronology_order": 0,
+        "edition_label": "96年7月版",
+        "observation_id": "clause-observation:72e4d7b63f76635721f575d774071d836c77a1a9d281d05f141d217293d94496",
+        "source": {
+          "artifact_sha256": "9d6212ca37442d5c07e6df2e601e8d5ac5c4a772c4e09ae985a005178205f9b7",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7853-cdb1d23f2363479888e32994d5b48fa5-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 1,
+        "edition_label": "97年9月版",
+        "observation_id": "clause-observation:912f0b1c4507f708580afde99874d5316a28d0e5bb78003dfcc97ce5d2fdd056",
+        "source": {
+          "artifact_sha256": "6446d9f95d396a28db4ca012acaac514c8f17f257c8fcc120fedca888ce43b56",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7851-2068322ad3e54508a272c8a5bf3a8073-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 2,
+        "edition_label": "98年版",
+        "observation_id": "clause-observation:d74be7dfbe04c1b1bacf5c5a438061119c9a0d00187af732a6b82080dc91c989",
+        "source": {
+          "artifact_sha256": "fda10dd235708edecf65994460c52fe3edbccf6b898df8bb5ea6ed5113571f2f",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7849-eb5b7313d7e44ef9935546d1bbf3730d-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 3,
+        "edition_label": "99年版",
+        "observation_id": "clause-observation:5e438f52cc83772be0ab401a9393295365fb9a2306ca5a47f6bf585974b634f5",
+        "source": {
+          "artifact_sha256": "48bf32d52d989b29838b2ccd0bfd66d8576a6c7600a16cdad17f83a87935fc55",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7843-851c5c7b6c9f4e3db8cf4f827794ef7f-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 4,
+        "edition_label": "100年版",
+        "observation_id": "clause-observation:04373ec5103278b22337d27a6c167881aaae3314c4954c64a886b01464b5d2f2",
+        "source": {
+          "artifact_sha256": "5e3565b029b76fbd2abfd2e0d8535a001efe769221e6484fa948ef71e131ef7d",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7840-7f8ddaa876f7496b86fb5b63ca379f24-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 5,
+        "edition_label": "101年版",
+        "observation_id": "clause-observation:8fd6233381440cec2597498248b2d3921128fb36f77c9050b6dbcd45a731d25c",
+        "source": {
+          "artifact_sha256": "d40ef13155abda9097a00d12c31c0d7f6b536fdb8855677634a0c2541dbf6c18",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7838-3d29193bb8564c0881ea626d94883e0f-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 6,
+        "edition_label": "102年版",
+        "observation_id": "clause-observation:fa29b576bffc8cff4c344d3953a3f295a11f5e2624a0bedabb99a32b920bbac5",
+        "source": {
+          "artifact_sha256": "b69189fda8a059e627fdc4126167a6db418a5ce267f819b10a545798c0a82c5a",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7833-1babb23dbaf84410931bc879f5f514a6-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 7,
+        "edition_label": "103年版",
+        "observation_id": "clause-observation:280db10db3abbd7a6d98c4214f3fb01cd104d0778676baf21b648a064dce189f",
+        "source": {
+          "artifact_sha256": "42571d3a70ef778e797172b2c6b4dcc5648908ea574256c953fb184b24f1a484",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7828-abb8165dd0164c43be28d9256212b0b6-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 8,
+        "edition_label": "104年版",
+        "observation_id": "clause-observation:08d8ef46053665c5503800cfe54d5f41377a336809f0a16143b4236e544610fb",
+        "source": {
+          "artifact_sha256": "e9f74a40efaf7b22f7d776ca77f67e449ab8f3d0c30d07dfc8fe88ad46fb95f1",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7824-07cfcf2c89344c0cbf12de97d274dba2-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 9,
+        "edition_label": "105年版",
+        "observation_id": "clause-observation:7035e54d3eba96b53c8df856ef62bdc804a9160ea80428d01be9c94f7a3d6e79",
+        "source": {
+          "artifact_sha256": "480ad7baf020b3fae4de08a2646c1013b5aac5271f41cd10693b49dc2fbadf2f",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7822-1872b68287384c62b241d6903ac46dc3-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 10,
+        "edition_label": "106年版",
+        "observation_id": "clause-observation:548e92533c861c67d32a3e55caf5d35f6445c2c1164b66f7d0df3503590a2427",
+        "source": {
+          "artifact_sha256": "99c396ec2032200f9743a6f71221606f545dbc467034e3bdb0f83c43bc1984db",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7817-5906ec7cbf2a4d37ada2ca004ea495e2-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 11,
+        "edition_label": "107年版",
+        "observation_id": "clause-observation:17b4278a9bc186f6ed9931221a95683b136f078945ac0f09064010d8d2c08430",
+        "source": {
+          "artifact_sha256": "9c63eeeabbbb3b03219f326ed7e2661a4065ac7c7647e43d4614a2eee34ab0d7",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7815-c59ff8e29ea9476c93b2f8eaa3aa56da-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 12,
+        "edition_label": "108年版",
+        "observation_id": "clause-observation:f55c6aa1b4a9b9ca3cd71f833a171c328e7b37c3c818ab1712a50bdce915a5bb",
+        "source": {
+          "artifact_sha256": "b1c1be7f2efccfdec29efd78201d0f11202f50e19eb4494565e5316a4e894eeb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7813-dd188ec1963b4820b7ac604dc1dcb2a4-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 13,
+        "edition_label": "109年版",
+        "observation_id": "clause-observation:ce536cdf2604383e8a5b69dab2f6a90b5333cf90f16d85cf0c4811cad24c5f0c",
+        "source": {
+          "artifact_sha256": "d9db109b93b19a8c25f70de7033ce541752ab130f34e037dff28a912e8464f2c",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-7811-bb61be1a675a476eb8d085c0c5d91c95-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      },
+      {
+        "chronology_order": 14,
+        "edition_label": "通則(113.05.28更新)",
+        "observation_id": "clause-observation:6e149570a75cb33580b39fe5f9e3d7b3532fdc90cf2c617d7f78b989d060e81f",
+        "source": {
+          "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "六、"
+      }
+    ],
+    "state_order": 0
+  },
+  "schema": "nhi-rule-history/single-clause-reader/v1",
+  "transitions": []
+}

@@ -1,0 +1,1702 @@
+{
+  "canonical_version_unit": "single_clause",
+  "chapter": {
+    "chapter_id": "chapter:general-principles",
+    "display_label": "通則",
+    "navigation_code": "chapter:00",
+    "navigation_code_origin": "project_assigned",
+    "source_designation_raw": "通則"
+  },
+  "clause": {
+    "canonical_code": "0.4",
+    "clause_id": "clause:general-principles:0.4",
+    "code_origin": "project_assigned",
+    "display_title": "注射藥品之使用原則",
+    "identity_basis": "Project code mapped to a contiguous top-level Chinese ordinal with text continuity across the declared official edition set.",
+    "identity_status": "verified_within_declared_edition_set",
+    "ordinal_number": 4
+  },
+  "coverage": {
+    "declared_edition_count": 15,
+    "declared_edition_set_complete": true,
+    "first_observed_order": 0,
+    "gap_reasons": [
+      {
+        "code": "OFFICIAL_SOURCE_UNIVERSE_OPEN",
+        "meaning": "The declared cumulative-edition set does not prove that every legal amendment event has been found."
+      },
+      {
+        "code": "LEGAL_EFFECTIVE_DATES_UNVERIFIED",
+        "meaning": "Edition labels and in-text date annotations are not silently treated as legal effective dates."
+      }
+    ],
+    "last_observed_order": 14,
+    "legal_history_complete": false,
+    "observed_edition_count": 15,
+    "observed_presence_contiguous": true,
+    "official_source_universe_closed": false,
+    "status": "complete_for_declared_source_edition_observations",
+    "unique_comparison_text_count": 10,
+    "version_edge_count": 9,
+    "version_state_count": 10
+  },
+  "generated_from": "PostgreSQL nhi_rule_history_clause",
+  "latest": {
+    "clause_version_id": "clause-version:1e6d5c731d0dc596477de4ee5d13947c79f432bc5a533ba0bdb59cc0b53c0c35",
+    "date_annotations": [
+      {
+        "date_value": "1996-10-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "85/10/1"
+      },
+      {
+        "date_value": "1996-10-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "85/10/1"
+      },
+      {
+        "date_value": "1997-01-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "86/1/1"
+      },
+      {
+        "date_value": "1997-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "86/9/1"
+      },
+      {
+        "date_value": "1997-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "86/9/1"
+      },
+      {
+        "date_value": "1998-04-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "87/4/1"
+      },
+      {
+        "date_value": "1999-06-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "88/6/1"
+      },
+      {
+        "date_value": "2000-07-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "89/7/1"
+      },
+      {
+        "date_value": "2001-11-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "90/11/1"
+      },
+      {
+        "date_value": "2002-02-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "91/2/1"
+      },
+      {
+        "date_value": "2002-04-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "91/4/1"
+      },
+      {
+        "date_value": "2002-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "91/12/1"
+      },
+      {
+        "date_value": "2003-05-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "92/5/1"
+      },
+      {
+        "date_value": "2003-10-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "92/10/1"
+      },
+      {
+        "date_value": "2004-08-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "93/8/1"
+      },
+      {
+        "date_value": "2004-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "93/12/1"
+      },
+      {
+        "date_value": "2004-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "93/12/1"
+      },
+      {
+        "date_value": "2009-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "98/9/1"
+      },
+      {
+        "date_value": "2009-11-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "98/11/1"
+      },
+      {
+        "date_value": "2010-11-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "99/11/1"
+      },
+      {
+        "date_value": "2011-04-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "100/4/1"
+      },
+      {
+        "date_value": "2014-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "103/9/1"
+      },
+      {
+        "date_value": "2014-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "103/9/1"
+      },
+      {
+        "date_value": "2014-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "103/9/1"
+      },
+      {
+        "date_value": "2014-09-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "103/9/1"
+      },
+      {
+        "date_value": "2019-10-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "108/10/1"
+      },
+      {
+        "date_value": "2020-02-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/2/1"
+      },
+      {
+        "date_value": "2020-06-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/6/1"
+      },
+      {
+        "date_value": "2020-10-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/10/1"
+      },
+      {
+        "date_value": "2020-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/12/1"
+      },
+      {
+        "date_value": "2020-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/12/1"
+      },
+      {
+        "date_value": "2020-12-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "109/12/1"
+      },
+      {
+        "date_value": "2022-01-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "111/1/1"
+      },
+      {
+        "date_value": "2022-03-01",
+        "legal_effective_status": "candidate_unresolved",
+        "raw_value": "111/3/1"
+      }
+    ],
+    "display_title": "注射藥品之使用原則",
+    "full_text_blocks": [
+      {
+        "block_order": 0,
+        "text": "四、注射藥品之使用原則："
+      },
+      {
+        "block_order": 1,
+        "text": "（一）注射藥品使用時機，應以經醫師診斷後，判斷病情需要且病人不能口服，或口服仍不能期待其有治療效果，記明於病歷表者，方得為之。(86/1/1)"
+      },
+      {
+        "block_order": 2,
+        "text": "（二）因病情需要，經醫師指導使用方法由病人持回注射之藥品包括："
+      },
+      {
+        "block_order": 3,
+        "text": "1.治療糖尿病之insulin及GLP-1受體促效劑。(109/12/1)"
+      },
+      {
+        "block_order": 4,
+        "text": "2.CAPD使用之透析液。"
+      },
+      {
+        "block_order": 5,
+        "text": "3.CAPD使用之抗生素及抗凝血劑（至多攜回二週）。"
+      },
+      {
+        "block_order": 6,
+        "text": "4.Desferrioxamine（如 Desferal）。"
+      },
+      {
+        "block_order": 7,
+        "text": "5.慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp、Mircera）為原則）。(98/9/1)"
+      },
+      {
+        "block_order": 8,
+        "text": "6.治療白血病使用之α-interferon（至多攜回二週）。"
+      },
+      {
+        "block_order": 9,
+        "text": "7.G-CSF (如filgrastim；lenograstim）(至多攜回六天）。(98/11/1)"
+      },
+      {
+        "block_order": 10,
+        "text": "8.生長激素 (human growth hormone)（至多攜回一個月）。"
+      },
+      {
+        "block_order": 11,
+        "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子、繞徑治療藥物、第十三凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八之一─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄等）及申報費用時上傳上述治療紀錄表電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1、109/2/1)"
+      },
+      {
+        "block_order": 12,
+        "text": "10.於醫院內完成調配之靜脈營養輸液(TPN)，或不需調配之靜脈營養輸液，可攜回使用。(85/10/1、93/12/1、111/1/1)"
+      },
+      {
+        "block_order": 13,
+        "text": "11.肢端肥大症病人使用之octreotide、lanreotide (如Sandostatin、Somatuline等) 至多攜回一個月，另octreotide (如Sandostatin等)需個案事前報准 (93/12/1)。lanreotide inj 30 mg (如Somatuline) 每次注射間隔兩週 (88/6/1)，octreotide LAR (如Sandostatin LAR Microspheres for Inj.) 每次注射間隔四週 (89/7/1)。"
+      },
+      {
+        "block_order": 14,
+        "text": "12.結核病病人持回之streptomycin、kanamycin及enviomycin注射劑（至多攜回二週）。（86/9/1）"
+      },
+      {
+        "block_order": 15,
+        "text": "13.抗精神病長效針劑（至多攜回三個月）。（87/4/1、109/6/1）"
+      },
+      {
+        "block_order": 16,
+        "text": "14.低分子量肝凝素注射劑：金屬瓣膜置換後之懷孕病患，可准予攜回低分子量肝凝素注射劑自行注射，但至多攜回兩週。（90/11/1）"
+      },
+      {
+        "block_order": 17,
+        "text": "15.Apomorphine hydrochloride 10mg/mL（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過20支。（91/2/1、99/11/1）"
+      },
+      {
+        "block_order": 18,
+        "text": "16.罹患惡性貧血（pernicious anemia）及維生素B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維生素B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
+      },
+      {
+        "block_order": 19,
+        "text": "17.患者初次使用aldesleukin (如Proleukin Inj) 治療期間（第一療程），應每週發藥，俾回診觀察是否有無嚴重之副作用發生。第一療程使用若未發生嚴重副作用，在第二療程以後可攜回兩週之處方量。(91/12/1)"
+      },
+      {
+        "block_order": 20,
+        "text": "18.慢性病毒性B型肝炎、慢性病毒性C型肝炎所使用之長效型干擾素或短效型干擾素，至多攜回四週之使用量。(92/10/1)"
+      },
+      {
+        "block_order": 21,
+        "text": "19.類風濕關節炎、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症病患使用etanercept、adalimumab、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下注射劑，經事前審查核准後，在醫師指導下，至多可攜回四週之使用量。(93/8/1、109/10/1)"
+      },
+      {
+        "block_order": 22,
+        "text": "20.(刪除) (109/12/1)"
+      },
+      {
+        "block_order": 23,
+        "text": "21.(刪除) (109/12/1)"
+      },
+      {
+        "block_order": 24,
+        "text": "22.含teriparatide成分注射劑。(103/9/1)"
+      },
+      {
+        "block_order": 25,
+        "text": "23.含interferon beta-1a 成分注射劑。(103/9/1)"
+      },
+      {
+        "block_order": 26,
+        "text": "24.含interferon beta-1b成分注射劑。(103/9/1)"
+      },
+      {
+        "block_order": 27,
+        "text": "25.含glatiramer成分注射劑。(103/9/1)"
+      },
+      {
+        "block_order": 28,
+        "text": "26.Fondaparinux（如Arixtra）用於靜脈血栓高危險病患，接受人工髖或膝關節置換術或再置換術後，預防其術後之靜脈血栓(VTE)。（111/3/1)"
+      },
+      {
+        "block_order": 29,
+        "text": "（三）電解質及營養靜脈補充輸液之使用，應說明理由並有明確需要，以積極治療為目的，始得為之。"
+      },
+      {
+        "block_order": 30,
+        "text": "（四）癌症病人使用之morphine及化學治療藥品，於院內經醫師或藥師完成調劑作業後，亦可由病人攜回使用。（85/10/1）"
+      }
+    ],
+    "legal_effective_status": "not_claimed",
+    "observed_editions": [
+      {
+        "chronology_order": 14,
+        "edition_label": "通則(113.05.28更新)",
+        "observation_id": "clause-observation:5d399c58d6deef35a96975a4534094bf9a9e6125b7bf71629ceade25c6ec1e91",
+        "source": {
+          "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+          "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+          "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+        },
+        "source_designation_raw": "四、"
+      }
+    ],
+    "state_order": 9
+  },
+  "schema": "nhi-rule-history/single-clause-reader/v1",
+  "transitions": [
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:d080e8c8d0cb2a3bb348bb54ae334896a628dd41574e1b433612f5ff117add66",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "10.於醫院內完成調配之靜脈營養輸液"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "(TPN)"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "，或不需調配之靜脈營養輸液"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "，可攜回使用。"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "（"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "("
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "85/10/1、93/12/1"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、111/1/1)"
+            }
+          ],
+          "new_text": "10.於醫院內完成調配之靜脈營養輸液(TPN)，或不需調配之靜脈營養輸液，可攜回使用。(85/10/1、93/12/1、111/1/1)",
+          "old_text": "10.於醫院內完成調配之靜脈營養輸液 (TPN)，可攜回使用。（85/10/1、93/12/1）"
+        },
+        {
+          "change_kind": "added",
+          "context_label": "0.4",
+          "display_note": "本版新增",
+          "hunk_order": 1,
+          "inline_segments": [
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "26.Fondaparinux（如Arixtra）用於靜脈血栓高危險病患，接受人工髖或膝關節置換術或再置換術後，預防其術後之靜脈血栓(VTE)。（111/3/1)"
+            }
+          ],
+          "new_text": "26.Fondaparinux（如Arixtra）用於靜脈血栓高危險病患，接受人工髖或膝關節置換術或再置換術後，預防其術後之靜脈血栓(VTE)。（111/3/1)",
+          "old_text": null
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:1e6d5c731d0dc596477de4ee5d13947c79f432bc5a533ba0bdb59cc0b53c0c35",
+        "observed_editions": [
+          {
+            "chronology_order": 14,
+            "edition_label": "通則(113.05.28更新)",
+            "observation_id": "clause-observation:5d399c58d6deef35a96975a4534094bf9a9e6125b7bf71629ceade25c6ec1e91",
+            "source": {
+              "artifact_sha256": "cc3691a8ba47ca61cad87a83eeffa9a07c93e29bad72050c36c38cf493f256cb",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-42495-97dcbc3d54654ff68a850811239eeaa1-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 9
+      },
+      "older": {
+        "clause_version_id": "clause-version:99b86094f6d6b566ef040661f1098111f92202877b291ca3df42a0651631eb90",
+        "observed_editions": [
+          {
+            "chronology_order": 13,
+            "edition_label": "109年版",
+            "observation_id": "clause-observation:3692e8d26ba25354c8955b40ad0ac92fe4f66cd0502ede031af2d12b051fd22c",
+            "source": {
+              "artifact_sha256": "d9db109b93b19a8c25f70de7033ce541752ab130f34e037dff28a912e8464f2c",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7811-bb61be1a675a476eb8d085c0c5d91c95-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 8
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:f2016f3ab15e5d4e70043f122cc7fd2ab82eea416e70969919ebbc23a633e020",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "1."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "Insulin"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "治療糖尿病之insulin及GLP-1受體促效劑"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "。"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(109/12/1)"
+            }
+          ],
+          "new_text": "1.治療糖尿病之insulin及GLP-1受體促效劑。(109/12/1)",
+          "old_text": "1.Insulin。"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 1,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "凝血因子、繞徑治療藥物、第十三"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "之一"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "等"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "）及申報費用時上傳"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "「全民健康保險血友病患者使用第八、第九凝血因子在家"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "上述"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "治療紀錄表"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "」"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、109/2/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")"
+            }
+          ],
+          "new_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子、繞徑治療藥物、第十三凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八之一─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄等）及申報費用時上傳上述治療紀錄表電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1、109/2/1)",
+          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 2,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "13.抗精神病長效針劑（至多攜回"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "一"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "三"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "個月）。（87/4/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、109/6/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "）"
+            }
+          ],
+          "new_text": "13.抗精神病長效針劑（至多攜回三個月）。（87/4/1、109/6/1）",
+          "old_text": "13.抗精神病長效針劑（至多攜回一個月）。（87/4/1）"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 3,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "19.類風濕關節炎"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "病患使用etanercept"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "；"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "adalimumab"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "注射劑，"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "需個案"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "經"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "事前審查核准後，"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "並"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "在醫師指導下，至多可攜回四週之使用量。(93/8/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、109/10/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")\n20."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "含exenatide成分注射劑。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "("
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "103/9/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "刪除) (109/12/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")\n21."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "含liraglutide成分注射劑。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "("
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "103/9/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "刪除"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": " (109/12/1)"
+            }
+          ],
+          "new_text": "19.類風濕關節炎、僵直性脊椎炎、乾癬、乾癬性周邊關節炎、乾癬性脊椎病變與克隆氏症病患使用etanercept、adalimumab、abatacept、tocilizumab、opinercept、certolizumab、brodalumab等生物製劑皮下注射劑，經事前審查核准後，在醫師指導下，至多可攜回四週之使用量。(93/8/1、109/10/1)\n20.(刪除) (109/12/1)\n21.(刪除) (109/12/1)",
+          "old_text": "19.類風濕關節炎病患使用etanercept；adalimumab注射劑，需個案事前審查核准後，並在醫師指導下，至多可攜回四週之使用量。(93/8/1)\n20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:99b86094f6d6b566ef040661f1098111f92202877b291ca3df42a0651631eb90",
+        "observed_editions": [
+          {
+            "chronology_order": 13,
+            "edition_label": "109年版",
+            "observation_id": "clause-observation:3692e8d26ba25354c8955b40ad0ac92fe4f66cd0502ede031af2d12b051fd22c",
+            "source": {
+              "artifact_sha256": "d9db109b93b19a8c25f70de7033ce541752ab130f34e037dff28a912e8464f2c",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7811-bb61be1a675a476eb8d085c0c5d91c95-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 8
+      },
+      "older": {
+        "clause_version_id": "clause-version:31466f0c34c3c4b16b1aa4628f7e8e4d675f53115de7ba24e96deac8067f2660",
+        "observed_editions": [
+          {
+            "chronology_order": 12,
+            "edition_label": "108年版",
+            "observation_id": "clause-observation:3058aebcd522c88286a395c1a723b35e30ae756c7c194a0c475cf9beb4f8ef54",
+            "source": {
+              "artifact_sha256": "b1c1be7f2efccfdec29efd78201d0f11202f50e19eb4494565e5316a4e894eeb",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7813-dd188ec1963b4820b7ac604dc1dcb2a4-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 7
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:6bcaaabca8ff44c498cf197924205bea776d427c6cc9ffbbff2b1a93da5aa11e",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、108/10/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")"
+            }
+          ],
+          "new_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）及申報費用時上傳「全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄表」電子檔。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1、108/10/1)",
+          "old_text": "9.門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:31466f0c34c3c4b16b1aa4628f7e8e4d675f53115de7ba24e96deac8067f2660",
+        "observed_editions": [
+          {
+            "chronology_order": 12,
+            "edition_label": "108年版",
+            "observation_id": "clause-observation:3058aebcd522c88286a395c1a723b35e30ae756c7c194a0c475cf9beb4f8ef54",
+            "source": {
+              "artifact_sha256": "b1c1be7f2efccfdec29efd78201d0f11202f50e19eb4494565e5316a4e894eeb",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7813-dd188ec1963b4820b7ac604dc1dcb2a4-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 7
+      },
+      "older": {
+        "clause_version_id": "clause-version:0b28aa35a1177c67857b8c1a1dad896c1b8d42ca07d5525e81bb835e40513022",
+        "observed_editions": [
+          {
+            "chronology_order": 7,
+            "edition_label": "103年版",
+            "observation_id": "clause-observation:ec448ffcfaa564b804527c330e652b57d300f9d97ee612e81047cc219c09cb6c",
+            "source": {
+              "artifact_sha256": "42571d3a70ef778e797172b2c6b4dcc5648908ea574256c953fb184b24f1a484",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7828-abb8165dd0164c43be28d9256212b0b6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 8,
+            "edition_label": "104年版",
+            "observation_id": "clause-observation:8890ea372bd8f607fa5431fcc409b2764871a4db7e60be3530d58f24157c84f5",
+            "source": {
+              "artifact_sha256": "e9f74a40efaf7b22f7d776ca77f67e449ab8f3d0c30d07dfc8fe88ad46fb95f1",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7824-07cfcf2c89344c0cbf12de97d274dba2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 9,
+            "edition_label": "105年版",
+            "observation_id": "clause-observation:0870c32e0b66933caece34bbcc4a5513ed90ab9e2e15cce874607c0e21f6ded5",
+            "source": {
+              "artifact_sha256": "480ad7baf020b3fae4de08a2646c1013b5aac5271f41cd10693b49dc2fbadf2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7822-1872b68287384c62b241d6903ac46dc3-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 10,
+            "edition_label": "106年版",
+            "observation_id": "clause-observation:ebdf122912953d8a3909a2b963b77da07e5f525c214fb83e34fcce028a680066",
+            "source": {
+              "artifact_sha256": "99c396ec2032200f9743a6f71221606f545dbc467034e3bdb0f83c43bc1984db",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7817-5906ec7cbf2a4d37ada2ca004ea495e2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 11,
+            "edition_label": "107年版",
+            "observation_id": "clause-observation:eeec369eff4fdd1b340526ec23dd293c9b579344762770a1156172d38f33b03a",
+            "source": {
+              "artifact_sha256": "9c63eeeabbbb3b03219f326ed7e2661a4065ac7c7647e43d4614a2eee34ab0d7",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7815-c59ff8e29ea9476c93b2f8eaa3aa56da-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 6
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:0f7d65bfb2625ddcacc2693baeca9c8a6fd85da0dd7453ab1d07aabae8c56c71",
+      "hunks": [
+        {
+          "change_kind": "added",
+          "context_label": "0.4",
+          "display_note": "本版新增",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)\n22.含teriparatide成分注射劑。(103/9/1)\n23.含interferon beta-1a 成分注射劑。(103/9/1)\n24.含interferon beta-1b成分注射劑。(103/9/1)\n25.含glatiramer成分注射劑。(103/9/1)"
+            }
+          ],
+          "new_text": "20.含exenatide成分注射劑。(103/9/1)\n21.含liraglutide成分注射劑。(103/9/1)\n22.含teriparatide成分注射劑。(103/9/1)\n23.含interferon beta-1a 成分注射劑。(103/9/1)\n24.含interferon beta-1b成分注射劑。(103/9/1)\n25.含glatiramer成分注射劑。(103/9/1)",
+          "old_text": null
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:0b28aa35a1177c67857b8c1a1dad896c1b8d42ca07d5525e81bb835e40513022",
+        "observed_editions": [
+          {
+            "chronology_order": 7,
+            "edition_label": "103年版",
+            "observation_id": "clause-observation:ec448ffcfaa564b804527c330e652b57d300f9d97ee612e81047cc219c09cb6c",
+            "source": {
+              "artifact_sha256": "42571d3a70ef778e797172b2c6b4dcc5648908ea574256c953fb184b24f1a484",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7828-abb8165dd0164c43be28d9256212b0b6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 8,
+            "edition_label": "104年版",
+            "observation_id": "clause-observation:8890ea372bd8f607fa5431fcc409b2764871a4db7e60be3530d58f24157c84f5",
+            "source": {
+              "artifact_sha256": "e9f74a40efaf7b22f7d776ca77f67e449ab8f3d0c30d07dfc8fe88ad46fb95f1",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7824-07cfcf2c89344c0cbf12de97d274dba2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 9,
+            "edition_label": "105年版",
+            "observation_id": "clause-observation:0870c32e0b66933caece34bbcc4a5513ed90ab9e2e15cce874607c0e21f6ded5",
+            "source": {
+              "artifact_sha256": "480ad7baf020b3fae4de08a2646c1013b5aac5271f41cd10693b49dc2fbadf2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7822-1872b68287384c62b241d6903ac46dc3-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 10,
+            "edition_label": "106年版",
+            "observation_id": "clause-observation:ebdf122912953d8a3909a2b963b77da07e5f525c214fb83e34fcce028a680066",
+            "source": {
+              "artifact_sha256": "99c396ec2032200f9743a6f71221606f545dbc467034e3bdb0f83c43bc1984db",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7817-5906ec7cbf2a4d37ada2ca004ea495e2-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 11,
+            "edition_label": "107年版",
+            "observation_id": "clause-observation:eeec369eff4fdd1b340526ec23dd293c9b579344762770a1156172d38f33b03a",
+            "source": {
+              "artifact_sha256": "9c63eeeabbbb3b03219f326ed7e2661a4065ac7c7647e43d4614a2eee34ab0d7",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7815-c59ff8e29ea9476c93b2f8eaa3aa56da-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 6
+      },
+      "older": {
+        "clause_version_id": "clause-version:27b1cee699b78596ee318b5e89d9648f6cb7753e08a9336d0af613e92c7e2fbb",
+        "observed_editions": [
+          {
+            "chronology_order": 6,
+            "edition_label": "102年版",
+            "observation_id": "clause-observation:6d69907b7eb52895954d4a1b19f8e87194f9d0355cb51d97f56f50d36a69acf6",
+            "source": {
+              "artifact_sha256": "b69189fda8a059e627fdc4126167a6db418a5ce267f819b10a545798c0a82c5a",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7833-1babb23dbaf84410931bc879f5f514a6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 5
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:eb9dc430856fb10313eeac7c02dee1c98405be27a5ebbf33df2869eb4b499de1",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "1."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "Insulin"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "\n2."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "CAPD使用之透析液"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "\n3."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "CAPD使用之抗生素及抗凝血劑（至多攜回二週）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "\n4."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "Desferrioxamine（如 Desferal）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            }
+          ],
+          "new_text": "1.Insulin。\n2.CAPD使用之透析液。\n3.CAPD使用之抗生素及抗凝血劑（至多攜回二週）。\n4.Desferrioxamine（如 Desferal）。",
+          "old_text": "1. Insulin\n2. CAPD使用之透析液\n3. CAPD使用之抗生素及抗凝血劑（至多攜回二週）\n4. Desferrioxamine（如 Desferal）"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 1,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "6."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "治療白血病使用之α-interferon（至多攜回二週）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "\n7."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "G-CSF (如filgrastim；lenograstim）(至多攜回六天）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "(98/11/1)"
+            }
+          ],
+          "new_text": "6.治療白血病使用之α-interferon（至多攜回二週）。\n7.G-CSF (如filgrastim；lenograstim）(至多攜回六天）。(98/11/1)",
+          "old_text": "6. 治療白血病使用之α-interferon（至多攜回二週）\n7. G-CSF (如filgrastim；lenograstim）(至多攜回六天）(98/11/1)"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 2,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "16."
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": " "
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "罹患惡性貧血（pernicious anemia）及維"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "他命"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "生素"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "他命"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "生素"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
+            }
+          ],
+          "new_text": "16.罹患惡性貧血（pernicious anemia）及維生素B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維生素B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)",
+          "old_text": "16. 罹患惡性貧血（pernicious anemia）及維他命B12缺乏病患，如不能口服者或口服不能吸收者，得攜回維他命B12注射劑，每次以一個月為限，且每三個月應追蹤一次。(91/4/1)"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:27b1cee699b78596ee318b5e89d9648f6cb7753e08a9336d0af613e92c7e2fbb",
+        "observed_editions": [
+          {
+            "chronology_order": 6,
+            "edition_label": "102年版",
+            "observation_id": "clause-observation:6d69907b7eb52895954d4a1b19f8e87194f9d0355cb51d97f56f50d36a69acf6",
+            "source": {
+              "artifact_sha256": "b69189fda8a059e627fdc4126167a6db418a5ce267f819b10a545798c0a82c5a",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7833-1babb23dbaf84410931bc879f5f514a6-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 5
+      },
+      "older": {
+        "clause_version_id": "clause-version:2a942326422aa43eaa691fd407d17c6fa527afa389551012fcf15ead9bff0c8c",
+        "observed_editions": [
+          {
+            "chronology_order": 4,
+            "edition_label": "100年版",
+            "observation_id": "clause-observation:e6220492792b96f32a42e59b196076807aff8cfa8a8e48b8e40c5412b359657b",
+            "source": {
+              "artifact_sha256": "5e3565b029b76fbd2abfd2e0d8535a001efe769221e6484fa948ef71e131ef7d",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7840-7f8ddaa876f7496b86fb5b63ca379f24-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 5,
+            "edition_label": "101年版",
+            "observation_id": "clause-observation:f3aea4f615f4b88abd3ba871f138ec54c4e4b6a1ea5cefa901b0fcc6294ca9da",
+            "source": {
+              "artifact_sha256": "d40ef13155abda9097a00d12c31c0d7f6b536fdb8855677634a0c2541dbf6c18",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7838-3d29193bb8564c0881ea626d94883e0f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 4
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:3360a64d0a1d350712c76055dfd1f0b356b5d48c26049e2bd8ccd029ce6572d4",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "（86/9/1、92/5/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、100/4/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": ")"
+            }
+          ],
+          "new_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）。醫療機構、醫師開立使用血液製劑時，應依血液製劑條例之規定辦理。（86/9/1、92/5/1、100/4/1)",
+          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:2a942326422aa43eaa691fd407d17c6fa527afa389551012fcf15ead9bff0c8c",
+        "observed_editions": [
+          {
+            "chronology_order": 4,
+            "edition_label": "100年版",
+            "observation_id": "clause-observation:e6220492792b96f32a42e59b196076807aff8cfa8a8e48b8e40c5412b359657b",
+            "source": {
+              "artifact_sha256": "5e3565b029b76fbd2abfd2e0d8535a001efe769221e6484fa948ef71e131ef7d",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7840-7f8ddaa876f7496b86fb5b63ca379f24-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          },
+          {
+            "chronology_order": 5,
+            "edition_label": "101年版",
+            "observation_id": "clause-observation:f3aea4f615f4b88abd3ba871f138ec54c4e4b6a1ea5cefa901b0fcc6294ca9da",
+            "source": {
+              "artifact_sha256": "d40ef13155abda9097a00d12c31c0d7f6b536fdb8855677634a0c2541dbf6c18",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7838-3d29193bb8564c0881ea626d94883e0f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 4
+      },
+      "older": {
+        "clause_version_id": "clause-version:e7a75f8f566f41cc619a29db0d8c61f04f694d411231b068fd72f4742e5dd773",
+        "observed_editions": [
+          {
+            "chronology_order": 3,
+            "edition_label": "99年版",
+            "observation_id": "clause-observation:dc306e1619f49a7bb419e576f6db684bf597105227ef98dcdc3a4dd8fb5049be",
+            "source": {
+              "artifact_sha256": "48bf32d52d989b29838b2ccd0bfd66d8576a6c7600a16cdad17f83a87935fc55",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7843-851c5c7b6c9f4e3db8cf4f827794ef7f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 3
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:f09929664b7d2dd321a6cee46e9954e988e2b997941374c27244b86086278f99",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "15"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "20"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "支。（91/2/1"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、99/11/1"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "）"
+            }
+          ],
+          "new_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過20支。（91/2/1、99/11/1）",
+          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:e7a75f8f566f41cc619a29db0d8c61f04f694d411231b068fd72f4742e5dd773",
+        "observed_editions": [
+          {
+            "chronology_order": 3,
+            "edition_label": "99年版",
+            "observation_id": "clause-observation:dc306e1619f49a7bb419e576f6db684bf597105227ef98dcdc3a4dd8fb5049be",
+            "source": {
+              "artifact_sha256": "48bf32d52d989b29838b2ccd0bfd66d8576a6c7600a16cdad17f83a87935fc55",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7843-851c5c7b6c9f4e3db8cf4f827794ef7f-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 3
+      },
+      "older": {
+        "clause_version_id": "clause-version:3c168f509f070e213d78c4e5de8dbf6e49f06808907e0dc3cb801b4fd021751d",
+        "observed_editions": [
+          {
+            "chronology_order": 2,
+            "edition_label": "98年版",
+            "observation_id": "clause-observation:c5c4534ba2d2fab694fafaa561453dd397ed0ce6c3712dcbef979b3860c946ec",
+            "source": {
+              "artifact_sha256": "fda10dd235708edecf65994460c52fe3edbccf6b898df8bb5ea6ed5113571f2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7849-eb5b7313d7e44ef9935546d1bbf3730d-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 2
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:3db07ea35fd2cd763226ea6081f85eb47cc802b680b690a43b55c447ebe4493e",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、Mircera"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "）為原則）。"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(98/9/1)"
+            }
+          ],
+          "new_text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp、Mircera）為原則）。(98/9/1)",
+          "old_text": "5. 慢性腎臟功能衰竭，使用紅血球生成素（至多攜回二週，如因特殊病情需要，需敘明理由，得以臨床實際需要方式給藥，惟一個月不超過20,000U（如Eprex、Recormon）或100mcg（如Aranesp）為原則）。"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 1,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "三"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "六"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "天）"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "(98/11/1)"
+            }
+          ],
+          "new_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回六天）(98/11/1)",
+          "old_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回三天）"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 2,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "15. Apomorphine hydrochloride 10mg/ml（如"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "Britaject"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "Apo-Go"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": " Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+            }
+          ],
+          "new_text": "15. Apomorphine hydrochloride 10mg/ml（如Apo-Go Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）",
+          "old_text": "15. Apomorphine hydrochloride 10mg/ml（如Britaject Pen）：限使用於巴金森氏病後期產生藥效波動（on-and-off）現象，且經使用其他治療方式無法改善之病患使用，每人每月使用量不得超過15支。（91/2/1）"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:3c168f509f070e213d78c4e5de8dbf6e49f06808907e0dc3cb801b4fd021751d",
+        "observed_editions": [
+          {
+            "chronology_order": 2,
+            "edition_label": "98年版",
+            "observation_id": "clause-observation:c5c4534ba2d2fab694fafaa561453dd397ed0ce6c3712dcbef979b3860c946ec",
+            "source": {
+              "artifact_sha256": "fda10dd235708edecf65994460c52fe3edbccf6b898df8bb5ea6ed5113571f2f",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7849-eb5b7313d7e44ef9935546d1bbf3730d-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 2
+      },
+      "older": {
+        "clause_version_id": "clause-version:f408838607d6536c8f04c92ecae15d25490fed8ef2c8acc5bc5c394429b41206",
+        "observed_editions": [
+          {
+            "chronology_order": 1,
+            "edition_label": "97年9月版",
+            "observation_id": "clause-observation:d66fec9ebd0af9d39702e48feb1142c8c1cb3703d7bd7277a1fc850b4e3ad371",
+            "source": {
+              "artifact_sha256": "6446d9f95d396a28db4ca012acaac514c8f17f257c8fcc120fedca888ce43b56",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7851-2068322ad3e54508a272c8a5bf3a8073-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 1
+      }
+    },
+    {
+      "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "crosses_known_gap": true,
+      "edge_id": "clause-edge:729c2057693835a6cec342d424eb08988912843aa99a262597333da16042c87b",
+      "hunks": [
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 0,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "7. G-CSF (如"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "filgrastin"
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "filgrastim"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "；lenograstim）(至多攜回三天）"
+            }
+          ],
+          "new_text": "7. G-CSF (如filgrastim；lenograstim）(至多攜回三天）",
+          "old_text": "7. G-CSF (如filgrastin；lenograstim）(至多攜回三天）"
+        },
+        {
+          "change_kind": "replaced",
+          "context_label": "0.4",
+          "display_note": "下一版改寫",
+          "hunk_order": 1,
+          "inline_segments": [
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1"
+            },
+            {
+              "kind": "removed",
+              "side": "old",
+              "text": "）("
+            },
+            {
+              "kind": "added",
+              "side": "new",
+              "text": "、"
+            },
+            {
+              "kind": "unchanged",
+              "side": "both",
+              "text": "92/5/1)"
+            }
+          ],
+          "new_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1、92/5/1)",
+          "old_text": "9. 門診之血友病人得攜回二~三劑量(至多攜回一個月)第八、第九凝血因子備用，繼續治療時，比照化療以「療程」方式處理，並查驗上次治療紀錄（如附表十八─全民健康保險血友病患者使用第八、第九凝血因子在家治療紀錄）（86/9/1）(92/5/1)"
+        }
+      ],
+      "legal_predecessor_status": "not_claimed",
+      "newer": {
+        "clause_version_id": "clause-version:f408838607d6536c8f04c92ecae15d25490fed8ef2c8acc5bc5c394429b41206",
+        "observed_editions": [
+          {
+            "chronology_order": 1,
+            "edition_label": "97年9月版",
+            "observation_id": "clause-observation:d66fec9ebd0af9d39702e48feb1142c8c1cb3703d7bd7277a1fc850b4e3ad371",
+            "source": {
+              "artifact_sha256": "6446d9f95d396a28db4ca012acaac514c8f17f257c8fcc120fedca888ce43b56",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7851-2068322ad3e54508a272c8a5bf3a8073-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 1
+      },
+      "older": {
+        "clause_version_id": "clause-version:1c359a7485119fd12e0d6a7f54757a86fa7bba6ba8faf668fe5491abc19c99be",
+        "observed_editions": [
+          {
+            "chronology_order": 0,
+            "edition_label": "96年7月版",
+            "observation_id": "clause-observation:e9e207e7c0efff43997620227f13f3e9562fa260edd6a51a9ef68f849b1551bb",
+            "source": {
+              "artifact_sha256": "9d6212ca37442d5c07e6df2e601e8d5ac5c4a772c4e09ae985a005178205f9b7",
+              "official_url": "https://www.nhi.gov.tw/ch/dl-7853-cdb1d23f2363479888e32994d5b48fa5-1.odt",
+              "source_page_url": "https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html"
+            },
+            "source_designation_raw": "四、"
+          }
+        ],
+        "state_order": 0
+      }
+    }
+  ]
+}

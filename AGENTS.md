@@ -17,6 +17,10 @@ project state, gap tracking, and acceptance evidence.
 - PostgreSQL is the sole writable authority for normalized rule content,
   source-observed dates, version relationships, diff annotations, linkage, and
   build state.
+- `nhi_rule_history_edition` is a source-edition container, not the canonical
+  rule-version unit. `nhi_rule_history_clause` owns one independent version
+  chain per single top-level clause. A whole chapter must never be presented as
+  one clause version.
 - Git owns public code, contracts, source manifests, deterministic PostgreSQL
   migrations/importers/exporters, read-only JSONL releases, tests, project
   state, and audit evidence.
