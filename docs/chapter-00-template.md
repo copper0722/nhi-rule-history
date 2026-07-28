@@ -70,13 +70,25 @@ The additive `nhi_rule_history_clause` schema contains:
 | `clause_diff_hunk` | stored removed/added/replaced segments |
 | `diff_run` / `diff_hunk_presentation` | sealed reader-facing semantic diff |
 | `reader_enrichment_run` | sealed semantic-tag and summary generator receipt |
-| `clause_semantic_tag` | exact drug, class, brand and disease terms |
+| `clause_semantic_tag` | exact drug, class, brand, disease and treatment terms |
 | `clause_semantic_tag_atc` | code-only ATC relations used by this clause |
 | `clause_semantic_tag_icd11_code` | public code-only relation and review state |
 | `clause_semantic_tag_icd11_private` | private title/URI/full mapping evidence |
+| `clause_semantic_tag_nhi_treatment` | current NHI medical-service payment codes |
 | `clause_condition_marker` | longest-first restriction/requirement lexicon |
+| `clause_condition_expression` | parsed comparator/value/unit/action formulas |
 | `agent_history_summary` | agent summary bound to the source diff hash |
 | `coverage_assessment` | per-clause denominator and claim limits |
+
+Sealed enrichment is database-owned evidence, not a mutable cache. PostgreSQL
+allows child inserts only while the parent run is `loading`, verifies all nine
+child-table counts on the single `loading → sealed` transition, and rejects all
+later parent or child updates, deletes and truncates. Nine enrichment child
+tables carry both row-DML and truncate guards; public ICD code rows and private
+ICD mapping rows have independent receipt counts. The forward/rollback
+migrations are exercised on disposable PostgreSQL; the live schema has a
+transactional fresh-seal probe and a separate adversarial mutation probe. Both
+probes leave no test rows behind.
 
 PostgreSQL is the only writable authority. JSONL, SQLite and reader JSON are
 generated read-only projections.
@@ -133,11 +145,12 @@ layer normalizes only for comparison:
 - straight, curly and full-width single quotes are equivalent;
 - NFKC-equivalent full-width and half-width characters are equivalent.
 
-Display text always comes from the exact stored clause text. If `ABC` becomes
-`ABCD`, the reader emits only `下一版新增 D`; it does not invent a red
-`下一版刪除 ABC` block. A true replacement may show both sides. A
-format-only difference remains auditable in PostgreSQL but is not shown as a
-substantive reader change.
+Display text always comes from the exact stored clause text. History rows are
+ordered newest first and use the displayed newer version as the grammatical
+subject. If `ABC` becomes `ABCD`, the reader emits only `本版新增 D`; it
+does not invent a red `本版刪除 ABC` block. A true replacement may show both
+sides. A format-only difference remains auditable in PostgreSQL but is not
+shown as a substantive reader change.
 
 ### Reader date label
 
@@ -164,22 +177,31 @@ The `0.4` prototype performs longest-match-first conditional rendering:
   page;
 - disease terms link to a local tag page, while ICD-11 codes likewise remain
   off the clause text and appear only on that tag page;
+- coded treatment terms link to the same local tag system. `CAPD` uses the
+  current NHI medical-service payment standard: `58011C` is the core service
+  relation and the directly related instruction, material and catheter-service
+  codes remain separate rows;
 - `agent_selected` codes are visually distinct from `candidate` codes;
 - broad terms with no defensible single code remain `待判讀`;
 - phrases such as `不得` and prior-authorization expressions are highlighted
   by semantic role; `且` and `或` share one logical-word style, while the
   subjective term `需要` and low-information `至多`／`應` are deliberately
   not emphasized;
-- duration expressions are programmatically extracted as quantity plus time
+- atomic duration expressions are programmatically extracted as quantity plus time
   unit or a recurring time unit across every stored version of the clause,
   then rendered with one `duration` style (for example `二週`, `六天`,
   `一個月`, `每週`);
-- count expressions relevant to a changed limit are extracted into the same
+- atomic count expressions relevant to a changed limit are extracted into the same
   marker schema with role `quantity` (currently `15支` and `20支`) and share
   the value-emphasis style with durations;
-- the single-character restriction marker `限` is suppressed inside the
-  compound `上限`, so the summary highlights the changed quantities rather
-  than coloring part of the label;
+- detected contiguous compound-condition expressions take precedence over
+  atomic markers. The
+  normalized row stores comparator, numeric value, unit, action, action count
+  and severity. `不超過20,000U`, `不得超過15支`,
+  `不得超過20支`, `一個月為限` and `每三個月應追蹤一次`
+  therefore each render as one critical-red expression. This does not yet
+  group an implicit alternative such as the later `或100mcg` into the same
+  parent expression;
 - parenthesized ROC dates use a smaller typographic level.
 
 Latin-script terms are matched at token boundaries, not as substrings inside a
@@ -188,13 +210,19 @@ codes and mapping status belong to the tag detail page rather than the clause
 reading surface.
 
 Semantic-link admission is `coding-able`, not merely “medical-looking”. A term
-must have a project-adjudicated ATC or ICD-11 relation before it becomes a
-link. The latest clause and every stored transition hunk are scanned, so
-historical-only ingredients and brands can be admitted. CAPD remains plain
-text because this prototype has no verified intervention-code system for it;
-`透析液`, `抗生素`, `抗凝血劑`, coagulation-factor classes and other
-ATC-addressable terms are linked. Broad `癌症` is not linked because no single
-defensible ICD-11 relation was selected.
+must have a project-adjudicated ATC, ICD-11 or NHI treatment-code relation
+before it becomes a link. The latest clause and every stored transition hunk
+are scanned, so historical-only ingredients and brands can be admitted.
+`CAPD` is linked through the NHI payment standard; `透析液`, `抗生素`,
+`抗凝血劑`, coagulation-factor classes and other ATC-addressable terms are
+linked. Broad `癌症` is not linked because no single defensible ICD-11 relation
+was selected.
+
+User-configurable condition visibility and colors are a future presentation
+feature. The browser may hide a parsed type or map it to a user-selected color,
+and may restore the project default palette. Settings must never rewrite PG
+expressions, severity, source text or diffs. The default remains all detected
+compound conditions visible in critical red.
 
 For long clauses, a frozen reader dock keeps the selected clause identity and
 global clause search visible while scrolling on desktop. At phone widths, the
@@ -236,9 +264,13 @@ seals the import, then reads it back to generate:
 - a portable SQLite snapshot with foreign-key and integrity checks;
 - `index.json` plus one reader JSON file per clause.
 
-Replaying the same source set returns the same sealed import and byte-identical
-SQLite projection. A new official source edition creates a new source-set
-identity; it cannot overwrite the earlier sealed receipt.
+Replaying the same source set returns the same sealed import. SQLite is
+byte-identical when rebuilt with the same SQLite library version; its header
+records the writer version, so a different library can change the file SHA
+without changing any row. The builder therefore also emits a
+runtime-independent logical SHA over the ordered JSONL table inputs plus the
+builder Python/SQLite versions. A new official source edition creates a new
+source-set identity; it cannot overwrite the earlier sealed receipt.
 
 ## Public artifacts
 

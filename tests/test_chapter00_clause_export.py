@@ -60,12 +60,14 @@ class Chapter00ClauseExportTests(unittest.TestCase):
                 "chapter": 1,
                 "clause": 12,
                 "agent_history_summary": 1,
-                "clause_condition_marker": 23,
+                "clause_condition_expression": 5,
+                "clause_condition_marker": 21,
                 "clause_diff_hunk": 26,
-                "clause_semantic_tag": 81,
+                "clause_semantic_tag": 82,
                 "clause_semantic_tag_atc": 70,
                 "clause_semantic_tag_icd11_code": 21,
                 "clause_semantic_tag_icd11_lookup": 20,
+                "clause_semantic_tag_nhi_treatment": 4,
                 "clause_version": 29,
                 "clause_version_block": 318,
                 "clause_version_date": 261,
@@ -195,6 +197,7 @@ class Chapter00ClauseExportTests(unittest.TestCase):
     def test_semantic_diff_does_not_invent_a_deleted_old_side(self) -> None:
         addition = semantic_diff_presentation("ABC", "ABCD")
         self.assertEqual(addition["semantic_change_kind"], "added")
+        self.assertEqual(addition["display_note"], "本版新增")
         self.assertFalse(
             any(
                 segment["kind"] == "removed"
@@ -221,8 +224,54 @@ class Chapter00ClauseExportTests(unittest.TestCase):
             READER_ENRICHMENT_VERSION,
         )
         self.assertEqual(diff_run["hunk_count"], 26)
-        self.assertEqual(enrichment["semantic_tag_count"], 81)
-        self.assertEqual(enrichment["condition_marker_count"], 23)
+        self.assertEqual(enrichment["semantic_tag_count"], 82)
+        self.assertEqual(enrichment["tag_icd11_code_count"], 21)
+        self.assertEqual(enrichment["tag_icd11_private_count"], 21)
+        self.assertEqual(enrichment["tag_nhi_treatment_count"], 4)
+        self.assertEqual(enrichment["condition_marker_count"], 21)
+        self.assertEqual(enrichment["condition_expression_count"], 5)
+
+    def test_treatment_codes_and_compound_conditions_are_normalized(self) -> None:
+        treatment_rows = read_jsonl("clause_semantic_tag_nhi_treatment")
+        self.assertEqual(
+            {row["treatment_code"] for row in treatment_rows},
+            {"58009B", "58010B", "58011C", "58012B"},
+        )
+        primary = next(row for row in treatment_rows if row["is_primary"])
+        self.assertEqual(primary["treatment_code"], "58011C")
+        self.assertEqual(primary["mapping_role"], "core_service")
+        self.assertEqual(
+            primary["source_dataset_identifier"],
+            "A21030000I-D20020",
+        )
+
+        expressions = read_jsonl("clause_condition_expression")
+        self.assertEqual(
+            {row["expression_text"] for row in expressions},
+            {
+                "不超過20,000U",
+                "不得超過15支",
+                "不得超過20支",
+                "一個月為限",
+                "每三個月應追蹤一次",
+            },
+        )
+        by_text = {row["expression_text"]: row for row in expressions}
+        self.assertEqual(
+            by_text["不超過20,000U"]["comparator"],
+            "less_than_or_equal",
+        )
+        self.assertEqual(
+            float(by_text["不超過20,000U"]["value_numeric"]),
+            20000,
+        )
+        self.assertEqual(
+            by_text["每三個月應追蹤一次"]["action_text"],
+            "追蹤",
+        )
+        self.assertTrue(
+            all(row["severity_level"] == "critical" for row in expressions)
+        )
 
     def test_icd11_codes_are_public_but_icd_content_stays_private(self) -> None:
         self.assertFalse(
@@ -249,6 +298,19 @@ class Chapter00ClauseExportTests(unittest.TestCase):
             )
             self.assertEqual(receipt["foreign_key_check"], "passed")
             self.assertEqual(receipt["integrity_check"], "passed")
+            self.assertEqual(
+                receipt["builder_sqlite_version"],
+                sqlite3.sqlite_version,
+            )
+            self.assertEqual(
+                receipt["byte_reproducibility_scope"],
+                "same_sqlite_library_version",
+            )
+            self.assertEqual(len(receipt["logical_sha256"]), 64)
+            self.assertEqual(
+                receipt["sqlite_header_writer_version"],
+                int.from_bytes(output.read_bytes()[96:100], "big"),
+            )
             conn = sqlite3.connect(output)
             try:
                 for table, expected in MANIFEST["counts"].items():

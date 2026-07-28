@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import sys
 import unicodedata
 import uuid
 from collections import defaultdict
@@ -37,9 +38,14 @@ from nhi_rule_history.edition_history import (
 
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
-DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
-READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v8"
+DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v3"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v14"
 NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+NHI_TREATMENT_DATASET_IDENTIFIER = "A21030000I-D20020"
+NHI_TREATMENT_SOURCE_URL = (
+    "https://info.nhi.gov.tw/api/iode0000s01/"
+    "Dataset?rId=A21030000I-D20020-002"
+)
 ICD11_CODING_TOOL_URL = (
     "https://icd.who.int/ct/icd11_mms/en/2026-01"
 )
@@ -244,19 +250,28 @@ CHAPTER_04_DISEASE_TAGS: tuple[dict[str, Any], ...] = (
     },
 )
 
+CHAPTER_04_TREATMENT_TAGS: tuple[dict[str, Any], ...] = (
+    {
+        "term": "CAPD",
+        "type": "treatment_modality",
+        "codes": (
+            ("58011C", "core_service"),
+            ("58009B", "related_service"),
+            ("58010B", "related_service"),
+            ("58012B", "related_service"),
+        ),
+    },
+)
+
 CHAPTER_04_CONDITION_MARKERS: tuple[tuple[str, str], ...] = (
     ("經事前審查核准後", "prior_authorization"),
     ("需個案事前報准", "prior_authorization"),
     ("需敘明理由", "requirement"),
     ("不得超過", "prohibition"),
-    ("不超過", "maximum"),
-    ("為限", "maximum"),
-    ("方得", "restriction"),
     ("不得", "prohibition"),
     ("且", "logical"),
     ("或", "logical"),
     ("惟", "exception"),
-    ("限", "restriction"),
 )
 
 DURATION_MARKER_PATTERN = re.compile(
@@ -268,10 +283,36 @@ DURATION_MARKER_PATTERN = re.compile(
     r"(?![\d/])"
 )
 
-QUANTITY_MARKER_PATTERN = re.compile(
+QUANTITY_LIMIT_EXPRESSION_PATTERN = re.compile(
+    r"(?:不得|不)超過[^。；\n]{0,160}"
+)
+
+QUANTITY_VALUE_PATTERN = re.compile(
     r"(?<![\d/])"
-    r"(?:\d+|[零〇○一二三四五六七八九十百千兩]+)支"
-    r"(?![\d/])"
+    r"(?:\d+(?:,\d{3})*|[零〇○一二三四五六七八九十百千兩]+)"
+    r"\s*(?:mcg|μg|IU|U|支)"
+    r"(?![\w/])",
+    re.IGNORECASE,
+)
+
+CONDITION_NUMBER_TOKEN = (
+    r"(?:\d+(?:,\d{3})*|[零〇○一二三四五六七八九十百千兩]+)"
+)
+COMPOUND_NUMERIC_UPPER_BOUND_PATTERN = re.compile(
+    rf"(?P<operator>不得超過|不超過)\s*"
+    rf"(?P<value>{CONDITION_NUMBER_TOKEN})\s*"
+    r"(?P<unit>mcg|μg|IU|U|支)",
+    re.IGNORECASE,
+)
+COMPOUND_DURATION_UPPER_BOUND_PATTERN = re.compile(
+    rf"(?P<value>{CONDITION_NUMBER_TOKEN})(?P<individual>個)?"
+    r"(?P<unit>小時|天|日|週|周|月|年)\s*(?P<operator>為限)"
+)
+COMPOUND_RECURRING_ACTION_PATTERN = re.compile(
+    rf"(?P<prefix>每)(?P<value>{CONDITION_NUMBER_TOKEN})"
+    r"(?P<individual>個)?(?P<unit>小時|天|日|週|周|月|年)"
+    rf"\s*(?P<operator>應)\s*(?P<action>追蹤)\s*"
+    rf"(?P<action_value>{CONDITION_NUMBER_TOKEN})(?P<action_unit>次)"
 )
 
 CHAPTER_04_AGENT_SUMMARY = """\
@@ -449,13 +490,13 @@ def semantic_diff_presentation(
     has_added = "added" in new_classes
     if has_removed and has_added:
         change_kind = "replaced"
-        display_note = "下一版改寫"
+        display_note = "本版改寫"
     elif has_removed:
         change_kind = "removed"
-        display_note = "下一版刪除"
+        display_note = "本版刪除"
     elif has_added:
         change_kind = "added"
-        display_note = "下一版新增"
+        display_note = "本版新增"
     else:
         change_kind = "format_only"
         display_note = "僅格式差異（已忽略）"
@@ -1669,6 +1710,62 @@ def _normalized_keyword(value: str) -> str:
     )
 
 
+def _condition_number(value: str) -> int:
+    normalized = unicodedata.normalize("NFKC", value).replace(",", "")
+    if normalized.isdigit():
+        return int(normalized)
+    digits = {
+        "零": 0,
+        "〇": 0,
+        "○": 0,
+        "一": 1,
+        "二": 2,
+        "兩": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+    }
+    units = {"十": 10, "百": 100, "千": 1000}
+    total = 0
+    current = 0
+    for char in normalized:
+        if char in digits:
+            current = digits[char]
+            continue
+        if char not in units:
+            raise ValueError(f"unsupported condition number: {value}")
+        unit = units[char]
+        total += (current or 1) * unit
+        current = 0
+    return total + current
+
+
+def _condition_unit(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    unit_map = {
+        "小時": "hour",
+        "天": "day",
+        "日": "day",
+        "週": "week",
+        "周": "week",
+        "月": "month",
+        "年": "year",
+        "u": "unit_u",
+        "iu": "unit_u",
+        "mcg": "microgram",
+        "μg": "microgram",
+        "支": "item",
+    }
+    try:
+        return unit_map[normalized]
+    except KeyError as error:
+        raise ValueError(f"unsupported condition unit: {value}") from error
+
+
 def rebuild_reader_enrichment(
     conn: psycopg.Connection[Any],
     *,
@@ -1864,6 +1961,116 @@ def rebuild_reader_enrichment(
                         "source_updated_at": ref_rows[code],
                         "source_url": NHI_DRUG_LOOKUP_URL,
                         "review_status": review_status,
+                    }
+                )
+
+        expected_treatment_codes = [
+            str(code)
+            for treatment in CHAPTER_04_TREATMENT_TAGS
+            for code, _mapping_role in treatment["codes"]
+        ]
+        cur.execute(
+            """
+            SELECT code, name, name_en, effective_date,
+                   resource_modified
+            FROM tw_health_open.nhi_payment_standard
+            WHERE code = ANY(%s)
+              AND end_date IS NULL
+            ORDER BY code
+            """,
+            (expected_treatment_codes,),
+        )
+        treatment_reference = {
+            str(row["code"]): dict(row) for row in cur.fetchall()
+        }
+        missing_treatment_codes = sorted(
+            set(expected_treatment_codes) - set(treatment_reference)
+        )
+        if missing_treatment_codes:
+            raise ValueError(
+                "NHI treatment codes absent from current payment standard: "
+                f"{missing_treatment_codes}"
+            )
+        nhi_treatment_rows: list[dict[str, Any]] = []
+        for treatment in CHAPTER_04_TREATMENT_TAGS:
+            term = str(treatment["term"])
+            normalized = _normalized_keyword(term)
+            if normalized not in normalized_semantic_source:
+                raise ValueError(
+                    "configured treatment tag absent from 0.4 history: "
+                    f"{term}"
+                )
+            tag_id = _stable_id(
+                "semantic-tag",
+                {
+                    "clause_id": clause_id,
+                    "tag_type": "treatment",
+                    "normalized_tag": normalized,
+                },
+            )
+            codes = tuple(treatment["codes"])
+            semantic_tag_rows.append(
+                {
+                    "enrichment_run_id": None,
+                    "tag_id": tag_id,
+                    "clause_id": clause_id,
+                    "tag_text": term,
+                    "normalized_tag": normalized,
+                    "display_text": term,
+                    "tag_type": "treatment",
+                    "entity_type": treatment["type"],
+                    "match_mode": "exact_case_insensitive",
+                    "resolution_status": (
+                        "multiple_nhi_treatment"
+                        if len(codes) > 1
+                        else "resolved_nhi_treatment"
+                    ),
+                    "provenance": {
+                        "selection": (
+                            "agent_curated_exact_term_from_clause_0.4"
+                        ),
+                        "code_system": (
+                            "nhi_medical_service_payment_standard"
+                        ),
+                        "validation_table": (
+                            "tw_health_open.nhi_payment_standard"
+                        ),
+                        "public_scope": (
+                            "direct_CAPD_service_codes_used_for_concept_link"
+                        ),
+                    },
+                }
+            )
+            for code, mapping_role in codes:
+                reference = treatment_reference[str(code)]
+                searchable_name = (
+                    f"{reference['name']} {reference['name_en'] or ''}"
+                )
+                if term.casefold() not in searchable_name.casefold():
+                    raise ValueError(
+                        f"NHI treatment code {code} lacks exact CAPD label"
+                    )
+                nhi_treatment_rows.append(
+                    {
+                        "enrichment_run_id": None,
+                        "tag_id": tag_id,
+                        "treatment_code": code,
+                        "is_primary": mapping_role == "core_service",
+                        "mapping_role": mapping_role,
+                        "mapping_basis": (
+                            "nhi_payment_standard_exact_name_and_clause_context"
+                        ),
+                        "name_zh": reference["name"],
+                        "name_en": reference["name_en"],
+                        "effective_date": reference["effective_date"],
+                        "source_resource_modified": reference[
+                            "resource_modified"
+                        ],
+                        "source_dataset_identifier": (
+                            NHI_TREATMENT_DATASET_IDENTIFIER
+                        ),
+                        "source_url": NHI_TREATMENT_SOURCE_URL,
+                        "review_status": "agent_verified",
                     }
                 )
 
@@ -2093,8 +2300,29 @@ def rebuild_reader_enrichment(
                     "programmatic_quantity_plus_time_unit_across_clause_history"
                 ),
             )
+        quantity_by_normalized: dict[str, str] = {}
+        for limit_expression in QUANTITY_LIMIT_EXPRESSION_PATTERN.finditer(
+            condition_source_text
+        ):
+            for quantity_match in QUANTITY_VALUE_PATTERN.finditer(
+                limit_expression.group(0)
+            ):
+                marker_text = re.sub(
+                    r"(?i)(mcg|μg|iu|u)$",
+                    lambda match: {
+                        "mcg": "mcg",
+                        "μg": "μg",
+                        "iu": "IU",
+                        "u": "U",
+                    }[match.group(1).lower()],
+                    quantity_match.group(0),
+                )
+                quantity_by_normalized.setdefault(
+                    _normalized_keyword(marker_text),
+                    marker_text,
+                )
         quantity_markers = sorted(
-            set(QUANTITY_MARKER_PATTERN.findall(condition_source_text)),
+            quantity_by_normalized.values(),
             key=lambda value: (-len(value), value),
         )
         for marker_text in quantity_markers:
@@ -2102,9 +2330,111 @@ def rebuild_reader_enrichment(
                 marker_text,
                 "quantity",
                 selection=(
-                    "programmatic_number_plus_count_unit_across_clause_history"
+                    "programmatic_value_plus_unit_within_limit_expression"
                 ),
             )
+
+        expression_rows_by_normalized: dict[str, dict[str, Any]] = {}
+
+        def append_expression(
+            match: re.Match[str],
+            *,
+            expression_type: str,
+            comparator: str,
+            parser_pattern_id: str,
+            operator_text: str,
+            action_text: str | None = None,
+            action_count: int | None = None,
+        ) -> None:
+            expression_text = match.group(0)
+            normalized_expression = _normalized_keyword(expression_text)
+            existing = expression_rows_by_normalized.get(
+                normalized_expression
+            )
+            if existing is not None:
+                existing["provenance"]["source_occurrence_count"] += 1
+                return
+            value_text = (
+                f"{match.group('value')}"
+                f"{match.groupdict().get('individual') or ''}"
+                f"{match.group('unit')}"
+            )
+            expression_rows_by_normalized[normalized_expression] = {
+                "enrichment_run_id": None,
+                "expression_id": _stable_id(
+                    "condition-expression",
+                    {
+                        "clause_id": clause_id,
+                        "normalized_expression": normalized_expression,
+                        "expression_type": expression_type,
+                    },
+                ),
+                "clause_id": clause_id,
+                "expression_text": expression_text,
+                "normalized_expression": normalized_expression,
+                "expression_type": expression_type,
+                "comparator": comparator,
+                "operator_text": operator_text,
+                "value_numeric": _condition_number(match.group("value")),
+                "unit_code": _condition_unit(match.group("unit")),
+                "value_text": value_text,
+                "action_text": action_text,
+                "action_count": action_count,
+                "severity_level": "critical",
+                "parser_pattern_id": parser_pattern_id,
+                "match_mode": "exact_longest_first",
+                "provenance": {
+                    "selection": (
+                        "programmatic_compound_condition_across_clause_history"
+                    ),
+                    "source_occurrence_count": 1,
+                    "rendering": (
+                        "whole_expression_precedes_atomic_condition_markers"
+                    ),
+                },
+            }
+
+        for match in COMPOUND_NUMERIC_UPPER_BOUND_PATTERN.finditer(
+            condition_source_text
+        ):
+            append_expression(
+                match,
+                expression_type="numeric_upper_bound",
+                comparator="less_than_or_equal",
+                parser_pattern_id="numeric-upper-bound/v1",
+                operator_text=match.group("operator"),
+            )
+        for match in COMPOUND_DURATION_UPPER_BOUND_PATTERN.finditer(
+            condition_source_text
+        ):
+            append_expression(
+                match,
+                expression_type="duration_upper_bound",
+                comparator="duration_cap",
+                parser_pattern_id="duration-upper-bound/v1",
+                operator_text=match.group("operator"),
+            )
+        for match in COMPOUND_RECURRING_ACTION_PATTERN.finditer(
+            condition_source_text
+        ):
+            append_expression(
+                match,
+                expression_type="recurring_action",
+                comparator="recurs_every",
+                parser_pattern_id="recurring-action/v1",
+                operator_text=match.group("operator"),
+                action_text=match.group("action"),
+                action_count=_condition_number(
+                    match.group("action_value")
+                ),
+            )
+        condition_expression_rows = sorted(
+            expression_rows_by_normalized.values(),
+            key=lambda row: (
+                -len(str(row["expression_text"])),
+                str(row["normalized_expression"]),
+            ),
+        )
 
     input_payload = {
         "clause_import_run_id": str(clause_import_run_id),
@@ -2112,9 +2442,22 @@ def rebuild_reader_enrichment(
         "generator_version": READER_ENRICHMENT_VERSION,
         "drug_keywords": list(CHAPTER_04_DRUG_KEYWORDS),
         "disease_tags": list(CHAPTER_04_DISEASE_TAGS),
+        "treatment_tags": list(CHAPTER_04_TREATMENT_TAGS),
         "condition_markers": list(CHAPTER_04_CONDITION_MARKERS),
         "duration_marker_pattern": DURATION_MARKER_PATTERN.pattern,
-        "quantity_marker_pattern": QUANTITY_MARKER_PATTERN.pattern,
+        "quantity_limit_expression_pattern": (
+            QUANTITY_LIMIT_EXPRESSION_PATTERN.pattern
+        ),
+        "quantity_value_pattern": QUANTITY_VALUE_PATTERN.pattern,
+        "compound_numeric_upper_bound_pattern": (
+            COMPOUND_NUMERIC_UPPER_BOUND_PATTERN.pattern
+        ),
+        "compound_duration_upper_bound_pattern": (
+            COMPOUND_DURATION_UPPER_BOUND_PATTERN.pattern
+        ),
+        "compound_recurring_action_pattern": (
+            COMPOUND_RECURRING_ACTION_PATTERN.pattern
+        ),
         "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
     }
     input_sha256 = _sha256_text(_canonical_json(input_payload))
@@ -2126,6 +2469,8 @@ def rebuild_reader_enrichment(
         row["enrichment_run_id"] = run_id
     for row in atc_rows:
         row["enrichment_run_id"] = run_id
+    for row in nhi_treatment_rows:
+        row["enrichment_run_id"] = run_id
     for row in public_icd_lookup_rows:
         row["enrichment_run_id"] = run_id
     for row in public_icd_code_rows:
@@ -2133,6 +2478,8 @@ def rebuild_reader_enrichment(
     for row in private_icd_rows:
         row["enrichment_run_id"] = run_id
     for row in condition_rows:
+        row["enrichment_run_id"] = run_id
+    for row in condition_expression_rows:
         row["enrichment_run_id"] = run_id
     summary_rows = [
         {
@@ -2159,10 +2506,12 @@ def rebuild_reader_enrichment(
     output_payload = {
         "semantic_tags": semantic_tag_rows,
         "tag_atc": atc_rows,
+        "tag_nhi_treatment": nhi_treatment_rows,
         "public_icd11_lookup": public_icd_lookup_rows,
         "public_icd11_codes": public_icd_code_rows,
         "private_icd11": private_icd_rows,
         "condition_markers": condition_rows,
+        "condition_expressions": condition_expression_rows,
         "summaries": summary_rows,
     }
     output_sha256 = _sha256_text(_canonical_json(output_payload))
@@ -2178,7 +2527,9 @@ def rebuild_reader_enrichment(
                 """
                 SELECT state, input_sha256, output_sha256,
                        semantic_tag_count, tag_atc_count,
-                       tag_icd11_lookup_count, condition_marker_count,
+                       tag_icd11_lookup_count, tag_icd11_code_count,
+                       tag_icd11_private_count, tag_nhi_treatment_count,
+                       condition_marker_count, condition_expression_count,
                        summary_count
                 FROM nhi_rule_history_clause.reader_enrichment_run
                 WHERE run_id = %s
@@ -2190,7 +2541,11 @@ def rebuild_reader_enrichment(
                 len(semantic_tag_rows),
                 len(atc_rows),
                 len(public_icd_lookup_rows),
+                len(public_icd_code_rows),
+                len(private_icd_rows),
+                len(nhi_treatment_rows),
                 len(condition_rows),
+                len(condition_expression_rows),
                 len(summary_rows),
             )
             if existing is not None:
@@ -2206,7 +2561,11 @@ def rebuild_reader_enrichment(
                     int(existing["semantic_tag_count"]),
                     int(existing["tag_atc_count"]),
                     int(existing["tag_icd11_lookup_count"]),
+                    int(existing["tag_icd11_code_count"]),
+                    int(existing["tag_icd11_private_count"]),
+                    int(existing["tag_nhi_treatment_count"]),
                     int(existing["condition_marker_count"]),
+                    int(existing["condition_expression_count"]),
                     int(existing["summary_count"]),
                 )
                 if actual_counts != expected_counts:
@@ -2223,7 +2582,13 @@ def rebuild_reader_enrichment(
                     "tag_icd11_lookup_count": len(
                         public_icd_lookup_rows
                     ),
+                    "tag_icd11_code_count": len(public_icd_code_rows),
+                    "tag_icd11_private_count": len(private_icd_rows),
+                    "tag_nhi_treatment_count": len(nhi_treatment_rows),
                     "condition_marker_count": len(condition_rows),
+                    "condition_expression_count": len(
+                        condition_expression_rows
+                    ),
                     "summary_count": len(summary_rows),
                 }
 
@@ -2257,6 +2622,11 @@ def rebuild_reader_enrichment(
             )
             _insert_many(
                 cur,
+                "clause_semantic_tag_nhi_treatment",
+                nhi_treatment_rows,
+            )
+            _insert_many(
+                cur,
                 "clause_semantic_tag_icd11_lookup",
                 public_icd_lookup_rows,
             )
@@ -2278,6 +2648,12 @@ def rebuild_reader_enrichment(
             )
             _insert_many(
                 cur,
+                "clause_condition_expression",
+                condition_expression_rows,
+                json_columns={"provenance"},
+            )
+            _insert_many(
+                cur,
                 "agent_history_summary",
                 summary_rows,
                 json_columns={"source_edge_ids"},
@@ -2290,7 +2666,11 @@ def rebuild_reader_enrichment(
                     semantic_tag_count = %s,
                     tag_atc_count = %s,
                     tag_icd11_lookup_count = %s,
+                    tag_icd11_code_count = %s,
+                    tag_icd11_private_count = %s,
+                    tag_nhi_treatment_count = %s,
                     condition_marker_count = %s,
+                    condition_expression_count = %s,
                     summary_count = %s,
                     sealed_at = %s
                 WHERE run_id = %s
@@ -2301,7 +2681,11 @@ def rebuild_reader_enrichment(
                     len(semantic_tag_rows),
                     len(atc_rows),
                     len(public_icd_lookup_rows),
+                    len(public_icd_code_rows),
+                    len(private_icd_rows),
+                    len(nhi_treatment_rows),
                     len(condition_rows),
+                    len(condition_expression_rows),
                     len(summary_rows),
                     datetime.now(timezone.utc),
                     run_id,
@@ -2318,9 +2702,13 @@ def rebuild_reader_enrichment(
         "semantic_tag_count": len(semantic_tag_rows),
         "tag_atc_count": len(atc_rows),
         "tag_icd11_lookup_count": len(public_icd_lookup_rows),
+        "tag_icd11_code_count": len(public_icd_code_rows),
+        "tag_icd11_private_count": len(private_icd_rows),
+        "tag_nhi_treatment_count": len(nhi_treatment_rows),
         "public_icd11_code_count": len(public_icd_code_rows),
         "private_icd11_row_count": len(private_icd_rows),
         "condition_marker_count": len(condition_rows),
+        "condition_expression_count": len(condition_expression_rows),
         "summary_count": len(summary_rows),
     }
 
@@ -2341,9 +2729,11 @@ EXPORT_TABLES = (
     "diff_hunk_presentation",
     "clause_semantic_tag",
     "clause_semantic_tag_atc",
+    "clause_semantic_tag_nhi_treatment",
     "clause_semantic_tag_icd11_lookup",
     "clause_semantic_tag_icd11_code",
     "clause_condition_marker",
+    "clause_condition_expression",
     "agent_history_summary",
     "coverage_assessment",
 )
@@ -2471,6 +2861,12 @@ def _export_rows(
             "WHERE clause_import_run_id = %s AND state = 'sealed' "
             "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
         ),
+        "clause_semantic_tag_nhi_treatment": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
         "clause_semantic_tag_icd11_lookup": (
             "enrichment_run_id = (SELECT run_id "
             "FROM nhi_rule_history_clause.reader_enrichment_run "
@@ -2484,6 +2880,12 @@ def _export_rows(
             "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
         ),
         "clause_condition_marker": (
+            "enrichment_run_id = (SELECT run_id "
+            "FROM nhi_rule_history_clause.reader_enrichment_run "
+            "WHERE clause_import_run_id = %s AND state = 'sealed' "
+            "ORDER BY sealed_at DESC, run_id DESC LIMIT 1)"
+        ),
+        "clause_condition_expression": (
             "enrichment_run_id = (SELECT run_id "
             "FROM nhi_rule_history_clause.reader_enrichment_run "
             "WHERE clause_import_run_id = %s AND state = 'sealed' "
@@ -2520,6 +2922,9 @@ def _export_rows(
         "clause_semantic_tag_atc": (
             "enrichment_run_id, tag_id, is_primary DESC, atc_code"
         ),
+        "clause_semantic_tag_nhi_treatment": (
+            "enrichment_run_id, tag_id, is_primary DESC, treatment_code"
+        ),
         "clause_semantic_tag_icd11_lookup": (
             "enrichment_run_id, tag_id"
         ),
@@ -2528,6 +2933,9 @@ def _export_rows(
         ),
         "clause_condition_marker": (
             "enrichment_run_id, clause_id, normalized_marker"
+        ),
+        "clause_condition_expression": (
+            "enrichment_run_id, clause_id, normalized_expression"
         ),
         "agent_history_summary": (
             "enrichment_run_id, clause_id, summary_id"
@@ -2659,6 +3067,10 @@ def reader_projections(
     for row in data["clause_semantic_tag_atc"]:
         if str(row["enrichment_run_id"]) == current_enrichment_run_id:
             atc_by_tag[str(row["tag_id"])].append(row)
+    treatment_codes_by_tag: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_semantic_tag_nhi_treatment"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            treatment_codes_by_tag[str(row["tag_id"])].append(row)
     icd_lookup_by_tag = {
         str(row["tag_id"]): row
         for row in data["clause_semantic_tag_icd11_lookup"]
@@ -2672,6 +3084,10 @@ def reader_projections(
     for row in data["clause_condition_marker"]:
         if str(row["enrichment_run_id"]) == current_enrichment_run_id:
             conditions_by_clause[str(row["clause_id"])].append(row)
+    expressions_by_clause: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in data["clause_condition_expression"]:
+        if str(row["enrichment_run_id"]) == current_enrichment_run_id:
+            expressions_by_clause[str(row["clause_id"])].append(row)
     summary_by_clause = {
         str(row["clause_id"]): row
         for row in data["agent_history_summary"]
@@ -2883,7 +3299,7 @@ def reader_projections(
                         )
                     ],
                 }
-            else:
+            elif tag["tag_type"] == "disease":
                 lookup = icd_lookup_by_tag[tag_id]
                 tag_payload["terminology"] = {
                     "system": "ICD-11",
@@ -2905,6 +3321,37 @@ def reader_projections(
                         for row in sorted(
                             icd_codes_by_tag.get(tag_id, []),
                             key=lambda row: int(row["candidate_rank"]),
+                        )
+                    ],
+                }
+            else:
+                tag_payload["terminology"] = {
+                    "system": "NHI_TREATMENT",
+                    "system_label": "健保醫療服務給付項目及支付標準",
+                    "dataset_identifier": (
+                        NHI_TREATMENT_DATASET_IDENTIFIER
+                    ),
+                    "codes": [
+                        {
+                            "code": row["treatment_code"],
+                            "is_primary": row["is_primary"],
+                            "mapping_role": row["mapping_role"],
+                            "mapping_basis": row["mapping_basis"],
+                            "name_zh": row["name_zh"],
+                            "name_en": row["name_en"],
+                            "effective_date": row["effective_date"],
+                            "source_resource_modified": row[
+                                "source_resource_modified"
+                            ],
+                            "review_status": row["review_status"],
+                            "source_url": row["source_url"],
+                        }
+                        for row in sorted(
+                            treatment_codes_by_tag[tag_id],
+                            key=lambda row: (
+                                not bool(row["is_primary"]),
+                                str(row["treatment_code"]),
+                            ),
                         )
                     ],
                 }
@@ -2997,6 +3444,33 @@ def reader_projections(
                     key=lambda row: (
                         -len(str(row["marker_text"])),
                         str(row["normalized_marker"]),
+                    ),
+                )
+            ],
+            "condition_expressions": [
+                {
+                    "expression_id": row["expression_id"],
+                    "expression_text": row["expression_text"],
+                    "expression_type": row["expression_type"],
+                    "comparator": row["comparator"],
+                    "operator_text": row["operator_text"],
+                    "value_numeric": float(row["value_numeric"]),
+                    "unit_code": row["unit_code"],
+                    "value_text": row["value_text"],
+                    "action_text": row["action_text"],
+                    "action_count": (
+                        None
+                        if row["action_count"] is None
+                        else float(row["action_count"])
+                    ),
+                    "severity_level": row["severity_level"],
+                    "parser_pattern_id": row["parser_pattern_id"],
+                }
+                for row in sorted(
+                    expressions_by_clause[clause_id],
+                    key=lambda row: (
+                        -len(str(row["expression_text"])),
+                        str(row["normalized_expression"]),
                     ),
                 )
             ],
@@ -3137,17 +3611,25 @@ def build_sqlite(
     output.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(output)
     counts: dict[str, int] = {}
+    logical_inputs: list[dict[str, Any]] = []
     try:
         conn.executescript(schema_path.read_text(encoding="utf-8"))
         conn.execute("BEGIN")
         for table in EXPORT_TABLES:
+            jsonl_path = jsonl_dir / f"{table}.jsonl"
+            jsonl_bytes = jsonl_path.read_bytes()
             rows = [
                 json.loads(line)
-                for line in (jsonl_dir / f"{table}.jsonl")
-                .read_text(encoding="utf-8")
-                .splitlines()
+                for line in jsonl_bytes.decode("utf-8").splitlines()
                 if line.strip()
             ]
+            logical_inputs.append(
+                {
+                    "table": table,
+                    "rows": len(rows),
+                    "jsonl_sha256": _sha256_bytes(jsonl_bytes),
+                }
+            )
             columns = {
                 str(row[1])
                 for row in conn.execute(f'PRAGMA table_info("{table}")')
@@ -3191,10 +3673,24 @@ def build_sqlite(
     finally:
         if output.exists():
             conn.close()
+    sqlite_bytes = output.read_bytes()
     return {
         "output": output.name,
         "bytes": output.stat().st_size,
-        "sha256": _sha256_bytes(output.read_bytes()),
+        "sha256": _sha256_bytes(sqlite_bytes),
+        "logical_sha256": _sha256_text(
+            _canonical_json(logical_inputs)
+        ),
+        "builder_python_version": (
+            f"{sys.version_info.major}.{sys.version_info.minor}."
+            f"{sys.version_info.micro}"
+        ),
+        "builder_sqlite_version": sqlite3.sqlite_version,
+        "sqlite_header_writer_version": int.from_bytes(
+            sqlite_bytes[96:100],
+            byteorder="big",
+        ),
+        "byte_reproducibility_scope": "same_sqlite_library_version",
         "counts": counts,
         "foreign_key_check": "passed",
         "integrity_check": "passed",

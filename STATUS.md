@@ -31,10 +31,12 @@
   `official_source_universe_closed=false`、`legal_history_complete=false`，
   不改變全庫法律歷史 0/1,548 的結論。
 - 第 `0.4` 條 reader enrichment 已在 PostgreSQL 封存：
-  semantic diff presentation v2 忽略 Unicode 空白、單引號與全／半形；
-  純新增不產生虛構的「下一版刪除」。81 個語意標籤含 61 個藥名／藥物類別
-  與 20 個疾病詞，另有 70 筆 ATC 關聯、21 筆 code-only ICD-11 關聯、
-  23 個條件詞規則及 1 筆 agent 歷史摘要。疾病 code 分成
+  semantic diff presentation v3 忽略 Unicode 空白、單引號與全／半形；
+  歷史列由最新版往前排列，以本列版本為主詞；純新增只顯示「本版新增」，
+  不產生虛構的「本版刪除」。82 個語意標籤含 61 個藥名／藥物類別、
+  20 個疾病詞與 1 個治療模式，另有 70 筆 ATC 關聯、21 筆 code-only
+  ICD-11 關聯、4 筆健保治療支付碼關聯、21 個條件詞規則、5 個複合條件及
+  1 筆 agent 歷史摘要。疾病 code 分成
   `agent_selected` 與 `candidate`，候選在 UI 明列待人工確認；WHO 標題、
   URI、定義與參考快照不進 Git。
   Reader enrichment v4 新增 `apomorphine → N04BC07` 完整詞索引，並禁止
@@ -44,12 +46,34 @@
   條件詞中 `且`、`或`同屬邏輯詞並共用樣式；`需要`因多屬主觀判斷，已從
   強調索引移除。`至多`因幾乎是本條常態也不再強調，改由 PG 程式化保存並
   顯示 `二週`、`六天`、`一個月`、`每週`等 `duration` 標記；`應`也不再
-  單獨變色。變更數量 `15支`、`20支`以同 schema 的 `quantity` 角色顯示，
-  單字 `限` 遇到複合詞 `上限`時排除。
-  語意連結採 `coding-able` 門檻：有已驗證 ATC／ICD-11 關係才上連結。
-  因此 CAPD 維持純文字；透析液、抗生素、抗凝血劑、第八／第九／第十三
-  凝血因子、繞徑治療藥物等已補入。過廣且無單一 code 的「癌症」不再產生
-  待判讀連結。
+  單獨變色。變更數量 `15支`、`20支`以同 schema 的 `quantity` 角色顯示。
+  Reader enrichment v14 將上限與頻次表達升格為正規化複合條件：
+  `不超過20,000U`、`不得超過15支`、`不得超過20支`、
+  `一個月為限`、`每三個月應追蹤一次`均保存比較子、數值、單位、動作、
+  次數與警示等級；每個已辨識的連續條件片段以最高警示紅色顯示。EPO 同句
+  的 `或100mcg` 仍是沿用前述比較子的替代值，尚未假裝成已完整解析的
+  disjunction；單獨的 `方得`、`限`與
+  `為限`不另行變色。條列段落的負
+  `text-indent` 不再被行內語意連結繼承，避免「治療」與「糖尿病」等
+  相鄰文字發生字形重疊；正式頁面尚待本輪部署後核對。
+  語意連結採 `coding-able` 門檻：有已驗證 ATC、ICD-11 或健保醫療服務
+  支付標準關係才上連結。CAPD 已建立 `NHI_TREATMENT` 關聯，核心現行處置
+  碼為 `58011C`，另列 3 個直接相關支付碼；透析液、抗生素、抗凝血劑、
+  第八／第九／第十三凝血因子、繞徑治療藥物等已補入。過廣且無單一 code
+  的「癌症」不再產生待判讀連結。使用者自訂條件顯示與顏色已列入未來
+  計畫；設定只改呈現，不改 PG 解析結果、條文或 diff。
+  SQLite 整檔 SHA 綁定 builder SQLite `3.50.4`；跨 SQLite `3.50.4`／
+  `3.53.4` 的檔案只差 header writer-version bytes，兩者 logical SHA
+  最新 logical SHA 為 `e230b714…4b11`，counts、foreign keys 與
+  integrity 皆相同。
+  v14 已在 live PG 加上 21 個不可竄改 triggers：封存前只允許 loading
+  子列寫入，封存時逐表核對 count，封存後 parent 與九類 child 的
+  INSERT／UPDATE／DELETE／TRUNCATE 均 fail closed。Disposable
+  forward/rollback tests、live adversarial probe、transactional
+  loading→sealed probe 與 migration 後 deterministic replay 均通過；
+  probe rows 已 rollback 為 0。v15 再新增 public ICD-code 與 private
+  ICD mapping 兩個 count 欄位，因此九類 child 均在 seal gate 精確核對；
+  最新兩者皆為 21。
 - `0.4` 的歷史主標籤已改由「下一版首次新出現的文內日期註記」程式化產生，
   例如 99 年版顯示 `99/11`；同時保留來源版名，並明示日期尚未認定為法律
   生效日。

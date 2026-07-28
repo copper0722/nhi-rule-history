@@ -791,3 +791,109 @@
   the newly admitted terms are linked. Opening `透析液` displayed ATC `B05D`.
   Deterministic PG replay was byte-identical, and the complete test suite
   passed 432 tests with seven intentional skips.
+
+## 2026-07-28 — hanging-indent overlap and limit-value emphasis
+
+- Browser measurement identified the apparent `治療` / `糖尿病` collision as
+  inherited hanging indentation, not an overlapping anchor box. A list
+  paragraph's `text-indent: -1.9em` propagated into each inline-block semantic
+  link and shifted its glyph content about 26 pixels left. Semantic links now
+  reset `text-indent: 0`; the ordinary inter-term spacing remains unchanged.
+- Condition extraction now treats numeric value-plus-unit tokens inside a
+  `不得超過` or `不超過` expression as `quantity`. The source spelling and
+  punctuation are preserved, so `20,000U` and the alternative `100mcg` are
+  highlighted while `不超過` itself is not. `方得`, `限`, and `為限` are also
+  omitted as low-information terms; the preceding logical structure and the
+  actual duration/quantity values carry the emphasis. Matching is
+  case-insensitive for Latin units, but rendering preserves the exact source
+  text.
+- Reader enrichment v9 through v11 were intermediate sealed receipts and were
+  superseded before publication. Final v12 run
+  `32700d24-3e92-59fd-b5b8-3adb04a9ef85` stores 21 condition markers; its
+  output SHA-256 is
+  `8c82dd905f72875746d0bb7029641e497a1eef3bed73356c8b8a2f2dd3133bff`.
+  The reader `0.4.json` SHA-256 is
+  `873855c26ad46587b644ae53d4976d2fc4ed4831247ac1c9d0352e14ae1e3bbb`.
+  The portable SQLite projection passed integrity and foreign-key checks with
+  SHA-256
+  `64645c8534c925554762e63944ebf2cc6d8d6b83656c2e448d1c413f8089bd1d`.
+  A deterministic replay returned the same sealed run and byte-identical
+  reader and SQLite hashes. Twenty-three focused reader/export tests passed.
+- 2026-07-28：依 Copper 指正，將 `coding-able` 從 ATC／ICD-11 擴為可驗證的
+  官方編碼系統。Fresh PG query 核對健保署「醫療服務給付項目及支付標準」
+  current rows；`CAPD` 建立 4 筆 `NHI_TREATMENT` 關聯，以 `58011C`
+  （腹膜透析追蹤處置費－CAPD）為核心，`58009B`、`58010B`、`58012B`
+  為直接相關支付碼。來源 dataset identifier 為
+  `A21030000I-D20020`，不是 ATC 或 ICD 的替代編碼。
+- 同輪將條件呈現由 value-only 升格為 PG-normalized compound expression。
+  v13 程式化找出 5 個 unique expressions：
+  `不超過20,000U`、`不得超過15支`、`不得超過20支`、
+  `一個月為限`、`每三個月應追蹤一次`。每列保存 comparator、numeric
+  value、unit、action、action count、parser pattern 與 critical severity；
+  reader 先匹配完整 expression，再匹配 atomic markers，避免一句條件被拆成
+  多色碎片。
+- Live migration
+  `2026-07-28_nhi_rule_history_clause_coded_treatment_compound_condition_v13`
+  已套用；sealed enrichment run
+  `3796f2bf-4848-5e03-8b4e-1ddebf808606`，output SHA-256
+  `f9c8efc2ccc3e53a0d41366f80021e42d8dd01c6c96600b18f65347cff917da9`。
+  Counts：82 semantic tags、70 ATC、20 ICD lookup、21 public ICD-code rows、
+  4 NHI treatment-code rows、21 atomic markers、5 compound expressions、
+  1 summary。Reader 0.4 SHA-256
+  `1c5e4a5574970ae6dc3e33b6a53d25a3ca27912e61231fcaa1cba5fe0cf991ec`；
+  SQLite SHA-256
+  `4c483a1d500eb692288bd91b92bf9c6e2f8c7fdd89e8edbddc1c779b1ae864ca`
+  並通過 foreign-key／integrity。獨立稽核以 system Python 3.14／SQLite
+  3.53.4 重建得到另一個整檔 SHA；逐 byte 比對證實只差 SQLite header
+  writer-version。Builder receipt 現明列 Python 3.11.15／SQLite 3.50.4
+  與 `byte_reproducibility_scope=same_sqlite_library_version`；兩個 runtime
+  的 logical SHA 均為
+  `3dfb85c27dd1087c4c19fb2bfacdbc5d616698b2bf86e9d9d53a46374a36f34e`，
+  counts、foreign keys 與 integrity 相同。
+- Copper 提出的「使用者可設定要顯示的條件與顏色」列入
+  `G-UI-SETTINGS-01`。未來設定是 presentation-only；PG 保存的解析、
+  severity、條文與 diff 不受使用者偏好影響。
+- 獨立稽核另指出 EPO 全句還含 `或100mcg` 這個沿用前述比較子的替代值。
+  v13 的完成單位明確縮限為 5 個可直接觀察的連續條件片段，不宣稱已解析
+  整個 OR formula；parent expression、ordered alternatives、connector 與
+  source spans 列入 `G-COND-ALT-01`。
+- 獨立稽核發現 sealed reader enrichment 原本只有應用程式慣例，live PG
+  的 parent 與 child tables 仍可被直接修改。新增 v14 additive migration：
+  loading run 才能新增 child row，`loading → sealed` 時由 PG 核對七個
+  宣告 count，sealed parent 不得再 UPDATE／DELETE，九類 child 不得再
+  INSERT／UPDATE／DELETE，parent 與 child TRUNCATE 亦 fail closed。
+- v14 專項 disposable PostgreSQL 測試完成 forward、rollback、fresh
+  loading→九類 child→sealed、count mismatch rejection，以及 sealed
+  parent／child adversarial operations；2/2 tests passed。Live migration
+  已套用並建立 21 個 user triggers。可重跑的
+  `database/verify-reader-enrichment-immutability.sql` 已證明所有 mutation
+  拒絕；`database/verify-reader-enrichment-fresh-seal.sql` 已在真實 schema
+  完成 fresh seal 後 rollback，probe rows 為 0。
+- Migration 後重播仍回傳既有 sealed v13 run
+  `3796f2bf-4848-5e03-8b4e-1ddebf808606`。JSONL、reader `0.4`、SQLite
+  的 SHA／logical SHA 及全部 counts 不變；foreign-key 與 integrity
+  再次通過。
+- 使用者自訂條件顯示與色彩仍列為未來前端設定，不在本輪硬編 UI。規格新增
+  `restore_default_palette`；預設是所有已辨識複合條件可見且以 critical
+  red 呈現，個人設定只改 presentation。
+- Copper 釐清歷史表的閱讀主詞：第一列必須是最新版，每一列都以該列
+  「本版」相較「前版」來描述。Reader 顯式依 newer `state_order` 反向排序，
+  第一列標示「最新版」；diff labels 改為「本版刪除／本版新增」，來源連結
+  改為「前版來源／本版來源」。純新增仍只顯示本版新增，不製造虛構的刪除側。
+- 因為 `display_note` 是 PG projection，不只改靜態字串：semantic diff
+  presentation 升至 v3 run
+  `20046b53-1608-5320-80e1-432c6efb5465`，26 個 presentation hunks 的
+  labels 已正規化為本版新增／刪除／改寫。Reader enrichment 隨新的 sealed
+  diff 重建為 v14 run `44640535-2f19-51d2-afcf-1572fea9be63`。
+- 獨立稽核指出 v14 seal gate 只核對七個既有 parent count，雖然九類 child
+  封存後都不可變，仍缺 public ICD-code 與 private ICD mapping 的封存
+  分母。v15 migration 已 live 補上 `tag_icd11_code_count=21` 與
+  `tag_icd11_private_count=21`，guard 現逐一核對九類 child。
+  Disposable migration/rollback、兩類 mismatch rejection、live mutation
+  probe、fresh seal rollback 與 deterministic replay 全部再通過。
+- 最新 reader `0.4` SHA-256 為
+  `65773b51ab5866dfcc2b809e4ad7b898bd8076630fcfc991c994d6b5d62f63d2`；
+  SQLite SHA-256 為
+  `95097aa5091824519fcc42efb2ba3c269e33315a46e6d3da61a25a4fea5ff2e0`，
+  logical SHA 為
+  `e230b714a1ec6e128898f9b8dd676997362ad4b9aa1a5d81b464ff4162a14b11`。

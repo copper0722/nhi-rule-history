@@ -80,7 +80,11 @@ function isEmbeddedLatinToken(text, start, end) {
 }
 
 function semanticLinkLabel(tag, matchedText) {
-  const relation = tag.tag_type === "disease" ? "疾病代碼關聯" : "藥品代碼關聯";
+  const relation = {
+    disease: "疾病代碼關聯",
+    drug: "藥品代碼關聯",
+    treatment: "健保治療給付代碼關聯",
+  }[tag.tag_type] ?? "代碼關聯";
   return `${matchedText}，查看${relation}`;
 }
 
@@ -101,16 +105,26 @@ function collectRichTextMatches(text) {
       });
     }
   }
+  const expressions = state.data?.condition_expressions ?? [];
+  for (const expression of expressions) {
+    const pattern = new RegExp(
+      escapeRegExp(expression.expression_text),
+      "giu",
+    );
+    for (const match of text.matchAll(pattern)) {
+      candidates.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        kind: "condition-expression",
+        priority: 50,
+        payload: expression,
+      });
+    }
+  }
   const markers = state.data?.condition_markers ?? [];
   for (const marker of markers) {
-    const pattern = new RegExp(escapeRegExp(marker.marker_text), "gu");
+    const pattern = new RegExp(escapeRegExp(marker.marker_text), "giu");
     for (const match of text.matchAll(pattern)) {
-      if (
-        marker.marker_text === "限" &&
-        text.slice(Math.max(0, match.index - 1), match.index + 1) === "上限"
-      ) {
-        continue;
-      }
       candidates.push({
         start: match.index,
         end: match.index + match[0].length,
@@ -209,6 +223,11 @@ function renderRichText(value, changedRanges = [], changeSide = null) {
       const tag = match.payload;
       output.push(
         `<a class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}" href="${escapeHtml(tag.internal_url)}" aria-label="${escapeHtml(semanticLinkLabel(tag, text.slice(match.start, match.end)))}"><span>${matchedText}</span></a>`,
+      );
+    } else if (match.kind === "condition-expression") {
+      const expression = match.payload;
+      output.push(
+        `<mark class="condition-expression condition-expression--${escapeHtml(expression.severity_level)}" title="複合條件：${escapeHtml(expression.expression_type)}">${matchedText}</mark>`,
       );
     } else if (match.kind === "condition") {
       const marker = match.payload;
@@ -314,14 +333,14 @@ function renderHunk(hunk) {
   const oldBlock = showOld && hunk.old_text
     ? `
       <div class="diff-side diff-side--old">
-        <div class="diff-label"><span aria-hidden="true">−</span> 下一版刪除</div>
+        <div class="diff-label"><span aria-hidden="true">−</span> 本版刪除</div>
         <p>${inlineSide(hunk.inline_segments, "old", hunk.old_text)}</p>
       </div>`
     : "";
   const newBlock = showNew && hunk.new_text
     ? `
       <div class="diff-side diff-side--new">
-        <div class="diff-label"><span aria-hidden="true">＋</span> 下一版新增</div>
+        <div class="diff-label"><span aria-hidden="true">＋</span> 本版新增</div>
         <p>${inlineSide(hunk.inline_segments, "new", hunk.new_text)}</p>
       </div>`
     : "";
@@ -335,7 +354,7 @@ function renderHunk(hunk) {
   `;
 }
 
-function renderTransition(transition) {
+function renderTransition(transition, rowIndex) {
   const olderRange = editionRange(transition.older.observed_editions);
   const newerRange = editionRange(transition.newer.observed_editions);
   const olderSource = editionSource(transition.older.observed_editions);
@@ -343,21 +362,26 @@ function renderTransition(transition) {
   const hunks = transition.hunks.map(renderHunk).join("");
   const dateLabel = transition.display_date?.label;
   const mainLabel = dateLabel || newerRange;
-  const labelRole = dateLabel ? "條文內變更日期" : "下一文字版本的來源觀察";
+  const labelRole = dateLabel ? "本版條文內日期" : "本版來源觀察";
   const dateCaution = dateLabel
     ? `<span class="date-caution">條文註記；尚未認定為法律生效日</span>`
     : "";
+  const latestBadge =
+    rowIndex === 0
+      ? `<span class="edition-meta__badge">最新版</span>`
+      : "";
 
   return `
     <article class="edition-row transition-row">
       <aside class="edition-meta">
+        ${latestBadge}
         <p class="edition-meta__role">${labelRole}</p>
         <strong>${escapeHtml(mainLabel)}</strong>
         ${dateCaution}
-        <span class="compare-label">來源觀察：${escapeHtml(olderRange)} → ${escapeHtml(newerRange)}</span>
+        <span class="compare-label">前版 → 本版：${escapeHtml(olderRange)} → ${escapeHtml(newerRange)}</span>
         <div class="source-pair">
-          ${sourceLink(olderSource?.source?.official_url, "舊版來源")}
-          ${sourceLink(newerSource?.source?.official_url, "下一版來源")}
+          ${sourceLink(olderSource?.source?.official_url, "前版來源")}
+          ${sourceLink(newerSource?.source?.official_url, "本版來源")}
         </div>
       </aside>
       <div class="edition-content">
@@ -478,7 +502,11 @@ function renderHistory() {
       </div>`;
     return;
   }
-  els.transitionList.innerHTML = state.data.transitions
+  const newestFirst = [...state.data.transitions].sort(
+    (left, right) =>
+      Number(right.newer.state_order) - Number(left.newer.state_order),
+  );
+  els.transitionList.innerHTML = newestFirst
     .map(renderTransition)
     .join("");
 }
@@ -622,7 +650,7 @@ function validateIndex(index) {
     index.generated_from === "PostgreSQL nhi_rule_history_clause" &&
     index.canonical_version_unit === "single_clause" &&
     index.diff_policy?.algorithm_version ===
-      "chapter-00-semantic-diff-presentation/v2" &&
+      "chapter-00-semantic-diff-presentation/v3" &&
     index.chapter.display_label === "通則" &&
     index.chapter.navigation_code_origin === "project_assigned" &&
     Array.isArray(index.clauses)
@@ -635,7 +663,7 @@ function validatePage(data, code) {
     data.generated_from === "PostgreSQL nhi_rule_history_clause" &&
     data.canonical_version_unit === "single_clause" &&
     data.diff_policy?.algorithm_version ===
-      "chapter-00-semantic-diff-presentation/v2" &&
+      "chapter-00-semantic-diff-presentation/v3" &&
     data.chapter.display_label === "通則" &&
     data.chapter.navigation_code_origin === "project_assigned" &&
     data.clause.code_origin === "project_assigned" &&

@@ -17,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 7
   },
+  "condition_expressions": [],
   "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
@@ -43,7 +44,7 @@
     "version_state_count": 2
   },
   "diff_policy": {
-    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v3",
     "ignored_change_policy": [
       {
         "code": "whitespace",
@@ -216,7 +217,7 @@
         {
           "change_kind": "removed",
           "context_label": "0.7",
-          "display_note": "下一版刪除",
+          "display_note": "本版刪除",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [

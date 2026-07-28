@@ -3,7 +3,7 @@
     "generation_method": "pure_agentic_from_structured_diff",
     "generator_id": "openai-codex",
     "review_status": "agent_generated_unreviewed",
-    "source_diff_sha256": "bf8e215cbab732ea3116bf8994dba357f5fa4b064f9daaa91a4ee4368659562f",
+    "source_diff_sha256": "c8b839d189a33997d49802235627dc13d446d68e33a855261b58d20780fde8f1",
     "summary_markdown": "歷次版本逐步擴大可由病人攜回的注射藥品範圍，調整可攜回天數與數量，並增加申報與紀錄要求。\n\n- **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。\n- **99/11**：apomorphine 每月上限由 15支提高為 20支。\n- **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。\n- **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。\n- **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。\n- **111/1–111/3**：靜脈營養輸液條件擴及不需調配的製劑，並新增 fondaparinux。\n\n日期取自新文字中首次出現的條文註記，用來幫助閱讀版本變化；尚未把它認定為經公告證實的法律生效日。"
   },
   "canonical_version_unit": "single_clause",
@@ -23,6 +23,78 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 4
   },
+  "condition_expressions": [
+    {
+      "action_count": null,
+      "action_text": null,
+      "comparator": "less_than_or_equal",
+      "expression_id": "condition-expression:5a213769b575f41fe7247f83e57e520f5fc1c5fc97173092efae90b37a5a89b5",
+      "expression_text": "不超過20,000U",
+      "expression_type": "numeric_upper_bound",
+      "operator_text": "不超過",
+      "parser_pattern_id": "numeric-upper-bound/v1",
+      "severity_level": "critical",
+      "unit_code": "unit_u",
+      "value_numeric": 20000.0,
+      "value_text": "20,000U"
+    },
+    {
+      "action_count": 1.0,
+      "action_text": "追蹤",
+      "comparator": "recurs_every",
+      "expression_id": "condition-expression:ed0c203f43b44cc79c9e2e88c08a020c7178f52a9b3a4f6d21d3dcfeb9c68128",
+      "expression_text": "每三個月應追蹤一次",
+      "expression_type": "recurring_action",
+      "operator_text": "應",
+      "parser_pattern_id": "recurring-action/v1",
+      "severity_level": "critical",
+      "unit_code": "month",
+      "value_numeric": 3.0,
+      "value_text": "三個月"
+    },
+    {
+      "action_count": null,
+      "action_text": null,
+      "comparator": "less_than_or_equal",
+      "expression_id": "condition-expression:efbd750f5f180316a10fafa52bf470d77cb8aae45d074e4093121046c3ce1316",
+      "expression_text": "不得超過15支",
+      "expression_type": "numeric_upper_bound",
+      "operator_text": "不得超過",
+      "parser_pattern_id": "numeric-upper-bound/v1",
+      "severity_level": "critical",
+      "unit_code": "item",
+      "value_numeric": 15.0,
+      "value_text": "15支"
+    },
+    {
+      "action_count": null,
+      "action_text": null,
+      "comparator": "less_than_or_equal",
+      "expression_id": "condition-expression:d2ebf3555dd21d86c9fa9193a38e6943734022b25dec33cc9212861ed4257da0",
+      "expression_text": "不得超過20支",
+      "expression_type": "numeric_upper_bound",
+      "operator_text": "不得超過",
+      "parser_pattern_id": "numeric-upper-bound/v1",
+      "severity_level": "critical",
+      "unit_code": "item",
+      "value_numeric": 20.0,
+      "value_text": "20支"
+    },
+    {
+      "action_count": null,
+      "action_text": null,
+      "comparator": "duration_cap",
+      "expression_id": "condition-expression:3668fa94a117570a3df327abc2e72e0a920d8faafca1bb88c469aa523b3d6cb9",
+      "expression_text": "一個月為限",
+      "expression_type": "duration_upper_bound",
+      "operator_text": "為限",
+      "parser_pattern_id": "duration-upper-bound/v1",
+      "severity_level": "critical",
+      "unit_code": "month",
+      "value_numeric": 1.0,
+      "value_text": "一個月"
+    }
+  ],
   "condition_markers": [
     {
       "marker_id": "condition-marker:3773e75a8369de66b7651d41967ec0b91cf7194bd0b9f4ea9c9cc561ee395c37",
@@ -30,9 +102,19 @@
       "semantic_role": "prior_authorization"
     },
     {
+      "marker_id": "condition-marker:198239d2c106c26cb39b92c9f66fb90411a92fbe3ed49c2b8b25e7fc2cec14ba",
+      "marker_text": "20,000U",
+      "semantic_role": "quantity"
+    },
+    {
       "marker_id": "condition-marker:0c9186a338f5281b26bb233d2ec44aa10957174e3bd04aca1ab45a7452445534",
       "marker_text": "需個案事前報准",
       "semantic_role": "prior_authorization"
+    },
+    {
+      "marker_id": "condition-marker:7a693b982a49c3c1baf2c4a4c460533b2d68c1fc5cf0bf99ace97bb69306c899",
+      "marker_text": "100mcg",
+      "semantic_role": "quantity"
     },
     {
       "marker_id": "condition-marker:7ae5c385e7a59f7aa24ad298910175c07d3cbdfd7142fc181be0ddfcf522f3e9",
@@ -65,11 +147,6 @@
       "semantic_role": "duration"
     },
     {
-      "marker_id": "condition-marker:92f9d6d061e100cf4b0b2780576ee1b68e0c977ebbe22aed9f6a1a80f2423a55",
-      "marker_text": "不超過",
-      "semantic_role": "maximum"
-    },
-    {
       "marker_id": "condition-marker:630d1229e38891cd0661a399adccdba9a433c761e7c0ec991e5f4ca88ac0bf2a",
       "marker_text": "三天",
       "semantic_role": "duration"
@@ -100,11 +177,6 @@
       "semantic_role": "duration"
     },
     {
-      "marker_id": "condition-marker:db0023fa014c9e55f1757b506eacf8e113914cbfbec9798b82a4b305ffc0bc14",
-      "marker_text": "方得",
-      "semantic_role": "restriction"
-    },
-    {
       "marker_id": "condition-marker:586c366e9cab899eadba0458319023c8de890c9036786827c8e270181d9efd3f",
       "marker_text": "每月",
       "semantic_role": "duration"
@@ -113,11 +185,6 @@
       "marker_id": "condition-marker:fc06c3f88179fd4ff6b2c21c0ff0c52c35e6d171dfb58b5bd0f21c60b79a9071",
       "marker_text": "每週",
       "semantic_role": "duration"
-    },
-    {
-      "marker_id": "condition-marker:725afd5879ffdf18551f6d8b62b63993dd9306ac05e8fb02e5b57ad41bb19059",
-      "marker_text": "為限",
-      "semantic_role": "maximum"
     },
     {
       "marker_id": "condition-marker:100bb629371bec6bde72d32fb94d6a6f6f46efdf023b518f9fa41b570aa00a6e",
@@ -133,11 +200,6 @@
       "marker_id": "condition-marker:fba99b10e3d704c846b5c61562ffd9d50fc62cbe60d8a44393896b148c1870d8",
       "marker_text": "或",
       "semantic_role": "logical"
-    },
-    {
-      "marker_id": "condition-marker:19e70aa6a8096881bf378ef53c2151700cd3254833056b0f596a819fb7bb7703",
-      "marker_text": "限",
-      "semantic_role": "restriction"
     }
   ],
   "coverage": {
@@ -165,7 +227,7 @@
     "version_state_count": 10
   },
   "diff_policy": {
-    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v3",
     "ignored_change_policy": [
       {
         "code": "whitespace",
@@ -2216,6 +2278,70 @@
       }
     },
     {
+      "display_text": "CAPD",
+      "entity_type": "treatment_modality",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:0e36d55a4168a054fdf9e6aa40c46d6db8c30bd6e8c0a51dd78ef5892ad334f5",
+      "resolution_status": "multiple_nhi_treatment",
+      "tag_id": "semantic-tag:0e36d55a4168a054fdf9e6aa40c46d6db8c30bd6e8c0a51dd78ef5892ad334f5",
+      "tag_text": "CAPD",
+      "tag_type": "treatment",
+      "terminology": {
+        "codes": [
+          {
+            "code": "58011C",
+            "effective_date": "2026-04-01",
+            "is_primary": true,
+            "mapping_basis": "nhi_payment_standard_exact_name_and_clause_context",
+            "mapping_role": "core_service",
+            "name_en": "Continuous ambulatory peritoneal dialysis, CAPD 3.Peritoneal Dialysis Follow up therapy (1)CAPD",
+            "name_zh": "連續性可攜帶式腹膜透析–3.腹膜透析追蹤處置費–(1)連續性可攜帶式腹膜透析",
+            "review_status": "agent_verified",
+            "source_resource_modified": "2026-07-03",
+            "source_url": "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D20020-002"
+          },
+          {
+            "code": "58009B",
+            "effective_date": "2019-09-01",
+            "is_primary": false,
+            "mapping_basis": "nhi_payment_standard_exact_name_and_clause_context",
+            "mapping_role": "related_service",
+            "name_en": "Continuous ambulatory peritoneal dialysis， CAPD - 1.CAPD instruction",
+            "name_zh": "連續性可攜帶式腹膜透析--1.初次CAPD病人指導費",
+            "review_status": "agent_verified",
+            "source_resource_modified": "2026-07-03",
+            "source_url": "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D20020-002"
+          },
+          {
+            "code": "58010B",
+            "effective_date": "2019-09-01",
+            "is_primary": false,
+            "mapping_basis": "nhi_payment_standard_exact_name_and_clause_context",
+            "mapping_role": "related_service",
+            "name_en": "Continuous ambulatory peritoneal dialysis, CAPD - 2.CAPD, single unit P.D. set transfer material fee",
+            "name_zh": "連續性可攜帶式腹膜透析--2.CAPD病人輸液連接管更換材料費",
+            "review_status": "agent_verified",
+            "source_resource_modified": "2026-07-03",
+            "source_url": "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D20020-002"
+          },
+          {
+            "code": "58012B",
+            "effective_date": "2018-12-01",
+            "is_primary": false,
+            "mapping_basis": "nhi_payment_standard_exact_name_and_clause_context",
+            "mapping_role": "related_service",
+            "name_en": "Continuous ambulatory peritoneal dialysis， CAPD 4.CAPD，Tenckhoff catheter implantation",
+            "name_zh": "連續性可攜帶式腹膜透析 － 4.連續性可攜帶式腹膜透析導管植入術。",
+            "review_status": "agent_verified",
+            "source_resource_modified": "2026-07-03",
+            "source_url": "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D20020-002"
+          }
+        ],
+        "dataset_identifier": "A21030000I-D20020",
+        "system": "NHI_TREATMENT",
+        "system_label": "健保醫療服務給付項目及支付標準"
+      }
+    },
+    {
       "display_text": "克隆氏症",
       "entity_type": "disease",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:310ed51c346d60f2373aece1f524d692a135c5970a90ae1a02a61a9e342a6321",
@@ -2580,7 +2706,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace",
@@ -2660,7 +2786,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 1,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -2732,7 +2858,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -2789,7 +2915,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 1,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -2881,7 +3007,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 2,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -2933,7 +3059,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 3,
           "ignored_change_classes": [
             "whitespace"
@@ -3237,7 +3363,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -3378,7 +3504,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace"
@@ -3569,7 +3695,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace"
@@ -3733,7 +3859,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 1,
           "ignored_change_classes": [
             "whitespace"
@@ -3832,7 +3958,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 2,
           "ignored_change_classes": [
             "whitespace"
@@ -3987,7 +4113,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4110,7 +4236,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4293,7 +4419,7 @@
         {
           "change_kind": "added",
           "context_label": "0.4",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4350,7 +4476,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 1,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4437,7 +4563,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 2,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4597,7 +4723,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 0,
           "ignored_change_classes": [],
           "inline_segments": [
@@ -4679,7 +4805,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.4",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 1,
           "ignored_change_classes": [],
           "inline_segments": [

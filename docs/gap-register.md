@@ -24,6 +24,8 @@
 | G-DATA-01 | normalized clause JSONL 未發布 | blocked | complete rule/version outputs |
 | G-SQLITE-01 | v1 SQLite snapshot 已準備；v2 尚缺 | partial | v1 typed parity passed；v2 row parity、integrity、checksum |
 | G-API-01 | reader API 未建立 | blocked | accepted read contract 與 canary |
+| G-UI-SETTINGS-01 | 使用者自訂條件顯示與顏色 | planned | 以 PG 已解析 `condition_expression` 為輸入，設定僅控制顯示類型與每類顏色；不得修改 PG 解析、嚴重度、條文或 diff |
+| G-COND-ALT-01 | 隱含比較子的替代值／析取群組尚未正規化 | planned | 例如 EPO 的 `不超過20,000U…或100mcg…為原則`；v13 只接受明確連續片段 `不超過20,000U`，不得宣稱已解析完整 OR 公式。後續須有 parent expression、ordered alternatives、connector 與 source spans |
 | G-RAW-01 | 14 ODT Release assets | passed | `raw-odt-v1`：14/14 name、size、SHA-256 parity |
 | G-RAW-02 | post-109 raw/structural assets | prepared_partial_evidence_bundle_not_published | v2 release manifest、eligibility receipt、zstd decompressed checksum；SQLite/portable contract 仍 open |
 | G-COMPLETE-01 | 完整歷史聲明未達 gate | blocked | completion contract 全部通過 |

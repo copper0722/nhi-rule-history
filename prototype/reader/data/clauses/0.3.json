@@ -17,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 3
   },
+  "condition_expressions": [],
   "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
@@ -43,7 +44,7 @@
     "version_state_count": 1
   },
   "diff_policy": {
-    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v3",
     "ignored_change_policy": [
       {
         "code": "whitespace",

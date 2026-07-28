@@ -17,6 +17,7 @@
     "identity_status": "verified_within_declared_edition_set",
     "ordinal_number": 8
   },
+  "condition_expressions": [],
   "condition_markers": [],
   "coverage": {
     "declared_edition_count": 15,
@@ -43,7 +44,7 @@
     "version_state_count": 4
   },
   "diff_policy": {
-    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v3",
     "ignored_change_policy": [
       {
         "code": "whitespace",
@@ -261,7 +262,7 @@
         {
           "change_kind": "added",
           "context_label": "0.8",
-          "display_note": "下一版新增",
+          "display_note": "本版新增",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace"
@@ -508,7 +509,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.8",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace"
@@ -775,7 +776,7 @@
         {
           "change_kind": "replaced",
           "context_label": "0.8",
-          "display_note": "下一版改寫",
+          "display_note": "本版改寫",
           "hunk_order": 0,
           "ignored_change_classes": [
             "whitespace"
