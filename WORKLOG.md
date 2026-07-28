@@ -683,3 +683,28 @@
   one `0.4` result for `insulin`. Desktop 1280×900 retained the 77 px sticky
   dock below the site header, hid the mobile island and had zero overflow.
   The complete public suite passed 431 tests with seven skips.
+- Copper's screenshot exposed two non-intentional inline-tag defects:
+  `apomorphine` was split into plain `apo` plus a false `morphine → N02AA01`
+  tag, and the flex tag could break between the term and code. Reader
+  enrichment v4 was sealed in PostgreSQL as run
+  `c3280b44-067f-5624-b661-bc1ec9959335`, adding the exact
+  `apomorphine → N04BC07` relation (66 semantic tags, 51 ATC relations).
+  The renderer now rejects Latin/Greek subword matches, emits no template
+  whitespace around inline links, and keeps each name+code tag atomic on one
+  baseline. The regenerated JSONL, reader projection and SQLite snapshot
+  passed 22 focused tests, SQLite integrity/foreign-key checks, and a 390×844
+  in-app Browser check with zero horizontal overflow.
+- A second identical PostgreSQL rebuild returned the same sealed v4 run and
+  reproduced byte-identical manifest and `0.4.json` hashes. The SQLite replay
+  also reproduced SHA-256
+  `e2b97e0744923bfcb5546ea0e907b1ceda9b6030270126637b2024b45292e369`
+  with integrity and foreign-key checks passed. A separate 320×800 browser
+  pass found zero horizontal overflow; the widest atomic tag remained within
+  the article column.
+- Independent read-only audit found no Critical, High or Medium issue. It
+  confirmed the latest PG run and exported hashes/counts, executed the boundary
+  cases directly, and scanned all 315 rendered text blocks: seven correct
+  apomorphine matches, one genuine morphine match and zero false morphine
+  matches. The audit's regression-test gap was closed with an executable Node
+  boundary test and selector-specific CSS assertions. Final public regression:
+  432 tests, 425 passed and seven environment skips.

@@ -924,6 +924,27 @@
       }
     },
     {
+      "display_text": "apomorphine",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:10c466f7a60197ba1b2094ca2a8c7deb91545b0bcb58ba61da7d977014c42c14",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:10c466f7a60197ba1b2094ca2a8c7deb91545b0bcb58ba61da7d977014c42c14",
+      "tag_text": "apomorphine",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N04BC07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "lenograstim",
       "entity_type": "ingredient",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:d00e15709595fb81d99a2e6f13279ee88199feabcc220d2403c9fb893e5d7850",

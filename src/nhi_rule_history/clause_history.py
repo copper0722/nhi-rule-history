@@ -38,7 +38,7 @@ from nhi_rule_history.edition_history import (
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
 DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
-READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v3"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v4"
 NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
 ICD11_CODING_TOOL_URL = (
     "https://icd.who.int/ct/icd11_mms/en/2026-01"
@@ -101,6 +101,7 @@ CHAPTER_04_DRUG_KEYWORDS: tuple[dict[str, Any], ...] = (
     {"term": "抗精神病長效針劑", "type": "drug_class", "atc": ("N05A",)},
     {"term": "低分子量肝凝素", "type": "drug_class", "atc": ("B01AB",)},
     {"term": "Apomorphine hydrochloride", "type": "ingredient", "atc": ("N04BC07",)},
+    {"term": "apomorphine", "type": "ingredient", "atc": ("N04BC07",)},
     {"term": "Apo-Go Pen", "type": "brand", "atc": ("N04BC07",)},
     {"term": "維生素B12注射劑", "type": "drug_class", "atc": ("B03BA01",)},
     {"term": "aldesleukin", "type": "ingredient", "atc": ("L03AC01",)},

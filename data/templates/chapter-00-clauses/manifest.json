@@ -6,8 +6,8 @@
     "clause": 12,
     "clause_condition_marker": 14,
     "clause_diff_hunk": 26,
-    "clause_semantic_tag": 65,
-    "clause_semantic_tag_atc": 50,
+    "clause_semantic_tag": 66,
+    "clause_semantic_tag_atc": 51,
     "clause_semantic_tag_icd11_code": 21,
     "clause_semantic_tag_icd11_lookup": 21,
     "clause_version": 29,
@@ -26,7 +26,7 @@
     "agent_history_summary.jsonl": {
       "bytes": 2423,
       "rows": 1,
-      "sha256": "3f54517abc2afc753747c480a48f777f622aad54ea5670ffcfd46cda625cdbc8"
+      "sha256": "f9d95653a2479a2b63f19705fb5349edad5d3ea63b2e1f69eb08c2a8fd0c4716"
     },
     "chapter.jsonl": {
       "bytes": 239,
@@ -41,7 +41,7 @@
     "clause_condition_marker.jsonl": {
       "bytes": 6072,
       "rows": 14,
-      "sha256": "afcf37809a0d31e33c5a8a7a2e8714e5b17f92f82b564f21ebef85aadc6f3634"
+      "sha256": "e0df18988f2daea709b57f99debc5fa6ce80c12d523ecbf3edfbb1a2a30cf189"
     },
     "clause_diff_hunk.jsonl": {
       "bytes": 41410,
@@ -49,24 +49,24 @@
       "sha256": "b69bef25b468c91bb120e340b628e03cf7871c7a126421964ce0f509c44f7110"
     },
     "clause_semantic_tag.jsonl": {
-      "bytes": 37882,
-      "rows": 65,
-      "sha256": "bff23ed3a1280f5e08c88276a3ba3c50055b0bff234b1f5a7efe331aa5e9044a"
+      "bytes": 38444,
+      "rows": 66,
+      "sha256": "3137b67d4964e0a722579c38f05011f0b4917ed89f3020bd6636c072a1103336"
     },
     "clause_semantic_tag_atc.jsonl": {
-      "bytes": 19856,
-      "rows": 50,
-      "sha256": "514c027a02ca07f0935190f0d776e83fa3a950996e5d14d28fc5057c91dac7d2"
+      "bytes": 20261,
+      "rows": 51,
+      "sha256": "ecdd4d7096f90c2142bf44fab0005ac8cb31600f0856036e0fa9cd01ef0e9f13"
     },
     "clause_semantic_tag_icd11_code.jsonl": {
       "bytes": 6056,
       "rows": 21,
-      "sha256": "2d7fad483c63fd529ffab5dc0cae7de26d85acd1e4006b5b7e67a37994a836e4"
+      "sha256": "49e426325da73f0d3ed9ee31ab5a22bfc9996f575e45302890e473a364b9db2e"
     },
     "clause_semantic_tag_icd11_lookup.jsonl": {
       "bytes": 11678,
       "rows": 21,
-      "sha256": "5b368837b86fd13272fe7a401282b7e0c7d82a7f45e7442340adcd9c766e811b"
+      "sha256": "cef420d0d7f21f907b74569aa2beea86ac6ea8a5d467c74d062702f86feb9e6a"
     },
     "clause_version.jsonl": {
       "bytes": 343566,
@@ -116,7 +116,7 @@
     "reader_enrichment_run.jsonl": {
       "bytes": 613,
       "rows": 1,
-      "sha256": "68c082fe234b848f08d8466886bd8bb014ec6fc23dacd71a2dbe175fc750c6d4"
+      "sha256": "8d0075d9d190c49ea4cb6d6773f4214ed73ff5b7e49ace87955ad465a4c065fb"
     },
     "source_edition.jsonl": {
       "bytes": 9866,

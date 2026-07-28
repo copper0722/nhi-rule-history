@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -108,11 +109,18 @@ class ReaderPrototypeTests(unittest.TestCase):
     def test_pg_semantic_tags_drive_atc_disease_and_condition_rendering(self) -> None:
         tags = CLAUSE_04["semantic_tags"]
         octreotide = next(tag for tag in tags if tag["tag_text"] == "octreotide")
+        apomorphine = next(
+            tag for tag in tags if tag["tag_text"] == "apomorphine"
+        )
         diabetes = next(tag for tag in tags if tag["tag_text"] == "糖尿病")
         self.assertEqual(octreotide["terminology"]["system"], "ATC")
         self.assertEqual(
             octreotide["terminology"]["codes"][0]["code"],
             "H01CB02",
+        )
+        self.assertEqual(
+            apomorphine["terminology"]["codes"][0]["code"],
+            "N04BC07",
         )
         self.assertEqual(diabetes["terminology"]["system"], "ICD-11")
         self.assertEqual(
@@ -137,11 +145,41 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertNotIn("需", marker_texts)
         self.assertIn("semantic-tag--drug", CSS)
         self.assertIn("semantic-tag--disease", CSS)
+        semantic_tag_css = CSS[
+            CSS.index(".semantic-tag {") : CSS.index(".semantic-tag small")
+        ]
+        self.assertIn("vertical-align: baseline;", semantic_tag_css)
+        self.assertIn("white-space: nowrap;", semantic_tag_css)
         self.assertIn("condition-term--prohibition", CSS)
+        self.assertIn("isEmbeddedLatinToken", SCRIPT)
         self.assertIn("ATC", TAG_SCRIPT)
         self.assertIn("已確認關聯", TAG_SCRIPT)
         self.assertIn("候選關聯", TAG_SCRIPT)
         self.assertIn("ICD-11", TAG_HTML)
+
+    def test_latin_token_boundary_guard_executes_expected_cases(self) -> None:
+        boundary_source = SCRIPT[
+            SCRIPT.index("const LATIN_TOKEN_CHARACTER")
+            : SCRIPT.index("function terminologyLabel")
+        ]
+        assertions = """
+const cases = [
+  [isEmbeddedLatinToken("apomorphine", 0, 11), false],
+  [isEmbeddedLatinToken("apomorphine", 3, 11), true],
+  [isEmbeddedLatinToken("xapomorphine", 1, 12), true],
+  [isEmbeddedLatinToken("apomorphineX", 0, 11), true],
+  [isEmbeddedLatinToken("（apomorphine）", 1, 12), false],
+];
+for (const [actual, expected] of cases) {
+  if (actual !== expected) process.exit(1);
+}
+"""
+        subprocess.run(
+            ["node", "-e", f"{boundary_source}\n{assertions}"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
     def test_agent_summary_and_structured_clause_rendering_are_present(self) -> None:
         summary = CLAUSE_04["agent_history_summary"]
