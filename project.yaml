@@ -16,6 +16,7 @@ latest_verification:
   public_tree_gate: passed
   sqlite_integrity_check: passed
   live_nhi_drug_linkage_fetch: passed
+  github_pages_reader: passed_http_200_and_browser_verified
 
 public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
@@ -28,6 +29,12 @@ public_outputs:
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
   reader_prototype: prototype/reader/index.html
   reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
+  reader_prototype_deployment:
+    status: live
+    workflow_run_id: 30327622935
+    merged_commit: 864a4516c7543e771fd0c9db77eb85e2b4cd14c1
+    http_status: 200
+    browser_verified: true
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
