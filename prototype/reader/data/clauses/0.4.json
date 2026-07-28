@@ -4,7 +4,7 @@
     "generator_id": "openai-codex",
     "review_status": "agent_generated_unreviewed",
     "source_diff_sha256": "bf8e215cbab732ea3116bf8994dba357f5fa4b064f9daaa91a4ee4368659562f",
-    "summary_markdown": "這一條的歷史變動不是反覆重寫全文，而是逐步擴大「哪些注射藥可讓病人攜回」、調整可攜回天數或數量，並增加申報與紀錄要求。\n\n- **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。\n- **99/11**：apomorphine 每月上限由 15 支提高為 20 支。\n- **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。\n- **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。\n- **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。\n- **111/1–111/3**：靜脈營養輸液條件擴及不需調配的製劑，並新增 fondaparinux。\n\n日期取自新文字中首次出現的條文註記，用來幫助閱讀版本變化；尚未把它認定為經公告證實的法律生效日。"
+    "summary_markdown": "歷次版本逐步擴大可由病人攜回的注射藥品範圍，調整可攜回天數與數量，並增加申報與紀錄要求。\n\n- **98/9–98/11**：紅血球生成素例示加入 Mircera；G-CSF 可攜回天數由三天改為六天；apomorphine 的例示商品名更新。\n- **99/11**：apomorphine 每月上限由 15支提高為 20支。\n- **100/4**：血友病用藥段落加入應依《血液製劑條例》辦理。\n- **103/9**：新增 exenatide、liraglutide、teriparatide、interferon beta-1a、interferon beta-1b 與 glatiramer 六項注射劑。\n- **108/10–109/12**：增加血友病居家治療紀錄上傳要求，擴大相關藥物；抗精神病長效針劑可攜回期間由一個月延長至三個月；生物製劑的適應症與品項範圍擴大；insulin 條目納入 GLP-1 受體促效劑，原 exenatide、liraglutide 獨立條目改標刪除。\n- **111/1–111/3**：靜脈營養輸液條件擴及不需調配的製劑，並新增 fondaparinux。\n\n日期取自新文字中首次出現的條文註記，用來幫助閱讀版本變化；尚未把它認定為經公告證實的法律生效日。"
   },
   "canonical_version_unit": "single_clause",
   "chapter": {
@@ -43,6 +43,16 @@
       "marker_id": "condition-marker:8ea01c8a0cdce03c676475d84707b1c79c541e6242935b226deba2061033c554",
       "marker_text": "不得超過",
       "semantic_role": "prohibition"
+    },
+    {
+      "marker_id": "condition-marker:0e31630c62de5d3f255fd84212276d880d017cd6a7cce06b30cdd55edb1c8d1e",
+      "marker_text": "15支",
+      "semantic_role": "quantity"
+    },
+    {
+      "marker_id": "condition-marker:70212870702d7674788d345cee70ece65c60a3d76b15d8df69e9cfe1ce4f2e67",
+      "marker_text": "20支",
+      "semantic_role": "quantity"
     },
     {
       "marker_id": "condition-marker:facd7545673b3839e23a2b8f67fc13e2985b415cd860065bd535b6e7b8657e39",
@@ -812,6 +822,27 @@
       }
     },
     {
+      "display_text": "Britaject Pen",
+      "entity_type": "brand",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:4e0e9e7f27c265d45c0857dd962e425d6305413f911bc53d2697afe0aff344f9",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:4e0e9e7f27c265d45c0857dd962e425d6305413f911bc53d2697afe0aff344f9",
+      "tag_text": "Britaject Pen",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "N04BC07",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "Proleukin Inj",
       "entity_type": "brand",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:36dfc39e3723019c2a0b52015e62345e2842ef7d573c9cd874068843580a8797",
@@ -938,6 +969,34 @@
       }
     },
     {
+      "display_text": "電解質及營養靜脈補充輸液",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2f8e901c4de6392691a5c821bedbd2bced6cd02a67d5129d4712cfada52912a8",
+      "resolution_status": "multiple_atc",
+      "tag_id": "semantic-tag:2f8e901c4de6392691a5c821bedbd2bced6cd02a67d5129d4712cfada52912a8",
+      "tag_text": "電解質及營養靜脈補充輸液",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B05BA",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "B05BB",
+            "is_primary": false,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "aldesleukin",
       "entity_type": "ingredient",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:7fc375d533b3bd0af41411cdb61278e9291a16caa3e699842bdfe5a10f11de7c",
@@ -991,6 +1050,27 @@
         "codes": [
           {
             "code": "L03AA10",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "liraglutide",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:26e9d11ba0884f4d9d852fe2131389920626750c66b9266ad81295b7a09a6d9f",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:26e9d11ba0884f4d9d852fe2131389920626750c66b9266ad81295b7a09a6d9f",
+      "tag_text": "liraglutide",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "A10BJ02",
             "is_primary": true,
             "mapping_basis": "nhi_atc_reference_plus_clause_context",
             "review_status": "agent_curated",
@@ -1169,6 +1249,27 @@
       }
     },
     {
+      "display_text": "filgrastin",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:caffa3b0520790953d31392d0ef74f46e6bba3069e9b58654935bf38c67a2e7e",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:caffa3b0520790953d31392d0ef74f46e6bba3069e9b58654935bf38c67a2e7e",
+      "tag_text": "filgrastin",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AA02",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "glatiramer",
       "entity_type": "ingredient",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:886dcef1653bab5633230585e73802d1f689ae166e826e0626e951c331e7e8be",
@@ -1316,6 +1417,27 @@
       }
     },
     {
+      "display_text": "exenatide",
+      "entity_type": "ingredient",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:eebb1d5db536c89e9c27eaf61d4a356c5349f77229298847ffa57b0d96ae2fc2",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:eebb1d5db536c89e9c27eaf61d4a356c5349f77229298847ffa57b0d96ae2fc2",
+      "tag_text": "exenatide",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "A10BJ01",
+            "is_primary": true,
+            "mapping_basis": "nhi_atc_reference_plus_clause_context",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "kanamycin",
       "entity_type": "ingredient",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:55e401ae83770b35c0adc94a0106043e4753b97c1219cca5bae389ecc0d4891d",
@@ -1386,6 +1508,55 @@
         "public_export": "code_only_no_icd_content",
         "release": "2026-01",
         "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "生物製劑皮下注射劑",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:c28dd0f535b023ce7bba11b2a5f407f87223691e9e2dc9d556b2bc47f586f4fc",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:c28dd0f535b023ce7bba11b2a5f407f87223691e9e2dc9d556b2bc47f586f4fc",
+      "tag_text": "生物製劑皮下注射劑",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L04",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "第八、第九凝血因子",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:01e139824acd8c0b2eba7704eada744ac425feddf42ca312e45d9f72f7d1f19b",
+      "resolution_status": "multiple_atc",
+      "tag_id": "semantic-tag:01e139824acd8c0b2eba7704eada744ac425feddf42ca312e45d9f72f7d1f19b",
+      "tag_text": "第八、第九凝血因子",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B02BD02",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "B02BD04",
+            "is_primary": false,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
       }
     },
     {
@@ -1745,6 +1916,27 @@
       }
     },
     {
+      "display_text": "第十三凝血因子",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:1f46cd856a4a586b25a92df767280f3b2aa298c549d3d0632fccc8cf64e6b48e",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:1f46cd856a4a586b25a92df767280f3b2aa298c549d3d0632fccc8cf64e6b48e",
+      "tag_text": "第十三凝血因子",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B02BD07",
+            "is_primary": true,
+            "mapping_basis": "nhi_product_name_atc_match",
+            "review_status": "agent_verified",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "僵直性脊椎炎",
       "entity_type": "disease",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:67e81147acbdb2734092da9453f7eb9b1bae855f4603e22ee0100345f3263c7c",
@@ -1771,6 +1963,48 @@
       }
     },
     {
+      "display_text": "化學治療藥品",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:a04e015f115e4654ca07779b6dd3aee4920a7793444d362a35f9f5681c9463a1",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:a04e015f115e4654ca07779b6dd3aee4920a7793444d362a35f9f5681c9463a1",
+      "tag_text": "化學治療藥品",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L01",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "短效型干擾素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:5a6a70e100e6b0221a7dee34054eb2daaedb81c304bb27b2c1ebb5eb4d6f2af5",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:5a6a70e100e6b0221a7dee34054eb2daaedb81c304bb27b2c1ebb5eb4d6f2af5",
+      "tag_text": "短效型干擾素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AB",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "紅血球生成素",
       "entity_type": "drug_class",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:358a52b87ae8b9897ba93229f33bbd8fe5c43d551374562c4b2e3f836ea28050",
@@ -1782,6 +2016,76 @@
         "codes": [
           {
             "code": "B03XA",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "繞徑治療藥物",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2d3a1a970c9fa3bf93594d90e30701f247e273e5bea5efaaf76f4f7d2b430edb",
+      "resolution_status": "multiple_atc",
+      "tag_id": "semantic-tag:2d3a1a970c9fa3bf93594d90e30701f247e273e5bea5efaaf76f4f7d2b430edb",
+      "tag_text": "繞徑治療藥物",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B02BD03",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          },
+          {
+            "code": "B02BD08",
+            "is_primary": false,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "長效型干擾素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:b49b72a33f243e430cb8418e5d904271423afac192afd62f48bc472f7022a502",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:b49b72a33f243e430cb8418e5d904271423afac192afd62f48bc472f7022a502",
+      "tag_text": "長效型干擾素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "L03AB",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
+      "display_text": "靜脈營養輸液",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:8f3ee101b04142079cb6fca2e7bf1b51c5f10e6408b810d8810be6b00738f414",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:8f3ee101b04142079cb6fca2e7bf1b51c5f10e6408b810d8810be6b00738f414",
+      "tag_text": "靜脈營養輸液",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B05BA",
             "is_primary": true,
             "mapping_basis": "nhi_rule_group_mapping",
             "review_status": "agent_curated",
@@ -1964,6 +2268,27 @@
       }
     },
     {
+      "display_text": "抗凝血劑",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:d136aa343464c689107e8eae501f4232ae3057f0924251cce32637e5a4b6e5bb",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:d136aa343464c689107e8eae501f4232ae3057f0924251cce32637e5a4b6e5bb",
+      "tag_text": "抗凝血劑",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B01AB",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "生長激素",
       "entity_type": "drug_class",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:9b5ae3619fa23568323624c379fac3d9461df5099f0b02263890aa1946cc11f0",
@@ -2055,6 +2380,27 @@
         "public_export": "code_only_no_icd_content",
         "release": "2026-01",
         "system": "ICD-11"
+      }
+    },
+    {
+      "display_text": "抗生素",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:1f261708e41f5a6d3dcb0d5c7edc85a5c6811c2f32feaec01d26ed27d9ca340c",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:1f261708e41f5a6d3dcb0d5c7edc85a5c6811c2f32feaec01d26ed27d9ca340c",
+      "tag_text": "抗生素",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "J01",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
       }
     },
     {
@@ -2169,6 +2515,27 @@
       }
     },
     {
+      "display_text": "透析液",
+      "entity_type": "drug_class",
+      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2f48913746638e5f74e60fe030056e6174cd680e0ef70d472e5ce72250cfeede",
+      "resolution_status": "resolved_atc",
+      "tag_id": "semantic-tag:2f48913746638e5f74e60fe030056e6174cd680e0ef70d472e5ce72250cfeede",
+      "tag_text": "透析液",
+      "tag_type": "drug",
+      "terminology": {
+        "codes": [
+          {
+            "code": "B05D",
+            "is_primary": true,
+            "mapping_basis": "nhi_rule_group_mapping",
+            "review_status": "agent_curated",
+            "source_url": "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
+          }
+        ],
+        "system": "ATC"
+      }
+    },
+    {
       "display_text": "乾癬",
       "entity_type": "disease",
       "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:2debd2e19ef167643183ea584e5bb9483b0956523573df31b1d1fa5937046ecf",
@@ -2187,24 +2554,6 @@
           }
         ],
         "lookup_query": "psoriasis",
-        "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
-        "private_pg_mapping": true,
-        "public_export": "code_only_no_icd_content",
-        "release": "2026-01",
-        "system": "ICD-11"
-      }
-    },
-    {
-      "display_text": "癌症",
-      "entity_type": "disease",
-      "internal_url": "./tag.html?rule=0.4&tag=semantic-tag:caabdd0988ea0f86817437766aead80ed990aadb49b6131d4b12769fdd0afd20",
-      "resolution_status": "official_lookup_only",
-      "tag_id": "semantic-tag:caabdd0988ea0f86817437766aead80ed990aadb49b6131d4b12769fdd0afd20",
-      "tag_text": "癌症",
-      "tag_type": "disease",
-      "terminology": {
-        "codes": [],
-        "lookup_query": "malignant neoplasm",
         "official_lookup_url": "https://icd.who.int/ct/icd11_mms/en/2026-01",
         "private_pg_mapping": true,
         "public_export": "code_only_no_icd_content",

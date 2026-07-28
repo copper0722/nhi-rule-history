@@ -753,17 +753,15 @@ h1 {
 }
 
 .semantic-tag {
-  margin: 0 0.08em;
-  padding: 0.05em 0.28em 0.09em;
+  margin: 0 0.1em;
+  padding: 0.03em 0.22em 0.07em;
   border: 1px solid transparent;
   border-radius: 0.42em;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3em;
+  display: inline-block;
   vertical-align: baseline;
   color: inherit;
-  font-weight: 720;
-  line-height: 1.18;
+  font-weight: 690;
+  line-height: 1.24;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -814,7 +812,8 @@ h1 {
   box-shadow: inset 0 -2px 0 #77a6dc;
 }
 
-.condition-term--duration {
+.condition-term--duration,
+.condition-term--quantity {
   color: #075d63;
   background: #dff5f2;
   box-shadow: inset 0 -2px 0 #4eb1aa;
@@ -919,16 +918,6 @@ h1 {
   margin: 0;
   color: var(--forest);
   font-size: 22px;
-}
-
-.agent-summary header > span {
-  padding: 4px 8px;
-  border-radius: 999px;
-  color: var(--muted);
-  background: #fff;
-  font-size: 11px;
-  font-weight: 760;
-  white-space: nowrap;
 }
 
 .agent-summary__body > p {

@@ -748,3 +748,46 @@
 - Deterministic replay returned the same sealed v5 run and byte-identical JSONL
   and reader projections. The complete public test suite passed: 432 tests,
   seven intentionally skipped.
+- Copper removed AI-coded framing from the history summary. The heading is now
+  exactly `歷史變更總覽（本節由生成式AI輸出）`; the redundant eyebrow and
+  `摘要不取代官方條文` badge are gone, and the opening sentence states the
+  observed change pattern directly without `先看懂` or `不是…而是…`.
+- Copper identified two remaining value-highlighting gaps. The renderer now
+  suppresses the one-character `限` marker inside `上限`. PG enrichment adds
+  a `quantity` role for `15支` and `20支`, sharing the value-emphasis style
+  with duration markers; the summary wording uses the canonical unspaced count
+  forms so `三天`, `六天`, `15支` and `20支` all pass through the same rich
+  renderer.
+- The summary-only v6 run was sealed as an intermediate receipt and superseded
+  before release by reader enrichment v7 run
+  `4f2d2eca-d51a-514a-aa7e-34380f72d148`. V7 stores 23 condition markers; its
+  output SHA-256 is
+  `9f865a24e3e8bb343436bd3d8b71d05b0600e216808325363b1ac6dfcc4b272e`.
+  The regenerated portable SQLite projection passed integrity and foreign-key
+  checks with SHA-256
+  `339159d8a817051a8d0233c72e12f5b4e75412f418d40355e241480e1804d7fa`.
+- Copper set `coding-able` as the semantic-link admission threshold. A complete
+  scan of the latest 0.4 text and every stored transition hunk added 16
+  ATC-addressable terms, including peritoneal dialytics, antibiotics, the
+  heparin group, coagulation factors VIII/IX/XIII, bypassing agents, parenteral
+  nutrition, interferon classes, antineoplastic agents, exenatide, liraglutide,
+  Britaject Pen and the historical `filgrastin` spelling alias. CAPD remains
+  plain because no verified intervention terminology is wired into this
+  prototype. Broad `癌症` lost its former pending link because no single
+  defensible ICD-11 mapping was admitted.
+- Reader enrichment v8 sealed as
+  `8ce108b2-d745-59a0-a36b-dae86d7f4de1`: 81 semantic tags, 70 ATC relations,
+  20 ICD lookup tags, 21 public ICD code relations and 23 condition markers.
+  Output SHA-256 is
+  `ebeb6ffbf53a26b0af51c9a0db85fdbad0c3edda62caf8a666478ea788d1731d`.
+  The regenerated SQLite projection passed integrity and foreign-key checks
+  with SHA-256
+  `bcd49aae2cb68ee943e94e0f2fb097c76b66f6017829570af68c861af60538a7`.
+- The history diff renderer now recognizes semantic terms against the complete
+  old/new side before nesting inline additions or deletions. In-app Browser
+  proved that `Britaject Pen` and historical `filgrastin` remain one ATC link
+  even when only part of the term changed. A 390×844 scan found zero tag-box
+  overlaps and zero horizontal overflow; CAPD and `癌症` have zero links, while
+  the newly admitted terms are linked. Opening `透析液` displayed ATC `B05D`.
+  Deterministic PG replay was byte-identical, and the complete test suite
+  passed 432 tests with seven intentional skips.

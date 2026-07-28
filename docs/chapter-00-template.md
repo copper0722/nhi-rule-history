@@ -32,10 +32,10 @@ The single-clause import is:
 | Same-clause version edges | 17 |
 | Diff hunks | 26 |
 | Semantic diff presentations | 26 |
-| Reader semantic tags | 65 |
-| ATC code relations | 50 |
+| Reader semantic tags | 81 |
+| ATC code relations | 70 |
 | ICD-11 code-only relations | 21 |
-| Condition marker rules | 14 |
+| Condition marker rules | 23 |
 | Agent history summaries | 1 |
 | Per-clause coverage assessments | 12 |
 
@@ -174,12 +174,27 @@ The `0.4` prototype performs longest-match-first conditional rendering:
   unit or a recurring time unit across every stored version of the clause,
   then rendered with one `duration` style (for example `二週`, `六天`,
   `一個月`, `每週`);
+- count expressions relevant to a changed limit are extracted into the same
+  marker schema with role `quantity` (currently `15支` and `20支`) and share
+  the value-emphasis style with durations;
+- the single-character restriction marker `限` is suppressed inside the
+  compound `上限`, so the summary highlights the changed quantities rather
+  than coloring part of the label;
 - parenthesized ROC dates use a smaller typographic level.
 
 Latin-script terms are matched at token boundaries, not as substrings inside a
 different drug name. The colored inline term is the entire link; terminology
 codes and mapping status belong to the tag detail page rather than the clause
 reading surface.
+
+Semantic-link admission is `coding-able`, not merely “medical-looking”. A term
+must have a project-adjudicated ATC or ICD-11 relation before it becomes a
+link. The latest clause and every stored transition hunk are scanned, so
+historical-only ingredients and brands can be admitted. CAPD remains plain
+text because this prototype has no verified intervention-code system for it;
+`透析液`, `抗生素`, `抗凝血劑`, coagulation-factor classes and other
+ATC-addressable terms are linked. Broad `癌症` is not linked because no single
+defensible ICD-11 relation was selected.
 
 For long clauses, a frozen reader dock keeps the selected clause identity and
 global clause search visible while scrolling on desktop. At phone widths, the
@@ -196,8 +211,10 @@ endorsement or as completed clinical coding advice.
 
 The `agent_history_summary` is generated from the sealed same-clause diff,
 stores the exact source edge IDs and diff hash, and appears immediately above
-the history. Its `agent_generated_unreviewed` state stays visible; it never
-replaces official clause text.
+the history under the exact heading
+`歷史變更總覽（本節由生成式AI輸出）`. Its
+`agent_generated_unreviewed` state stays visible; it never replaces official
+clause text.
 
 ## Rebuild
 

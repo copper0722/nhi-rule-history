@@ -372,7 +372,7 @@ CREATE TABLE clause_condition_marker (
   semantic_role TEXT NOT NULL CHECK (
     semantic_role IN (
       'restriction', 'maximum', 'prohibition', 'requirement',
-      'conjunction', 'logical', 'duration', 'exception',
+      'conjunction', 'logical', 'duration', 'quantity', 'exception',
       'prior_authorization'
     )
   ),
