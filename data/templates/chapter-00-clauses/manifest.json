@@ -4,12 +4,14 @@
     "agent_history_summary": 1,
     "chapter": 1,
     "clause": 12,
-    "clause_condition_marker": 24,
+    "clause_condition_expression": 5,
+    "clause_condition_marker": 21,
     "clause_diff_hunk": 26,
-    "clause_semantic_tag": 81,
+    "clause_semantic_tag": 82,
     "clause_semantic_tag_atc": 70,
     "clause_semantic_tag_icd11_code": 21,
     "clause_semantic_tag_icd11_lookup": 20,
+    "clause_semantic_tag_nhi_treatment": 4,
     "clause_version": 29,
     "clause_version_block": 318,
     "clause_version_date": 261,
@@ -26,7 +28,7 @@
     "agent_history_summary.jsonl": {
       "bytes": 2376,
       "rows": 1,
-      "sha256": "9b7a0069dc452bf607d72d70ed203dc5ad1425fc5481e05afe441da608a63bcd"
+      "sha256": "01b93eddb55363548904e606d5f0de4d3dbb79d0997a53b865b74bed723f88ee"
     },
     "chapter.jsonl": {
       "bytes": 239,
@@ -38,10 +40,15 @@
       "rows": 12,
       "sha256": "4e58166a768dade3e8e558e2b6c62836163aa0fa6b5f1f8e10a142a6383c1f05"
     },
+    "clause_condition_expression.jsonl": {
+      "bytes": 3901,
+      "rows": 5,
+      "sha256": "4defe7e726391cc461fdb0fd7fefd888d62271983ddf9b44a487d4eceab46d9d"
+    },
     "clause_condition_marker.jsonl": {
-      "bytes": 10436,
-      "rows": 24,
-      "sha256": "90189156e7a7632cb6f8a730ed25d7277d6d9c723c92b9fb362eae437baac6bb"
+      "bytes": 9162,
+      "rows": 21,
+      "sha256": "1696deb6dca7fe91e913cdbbc20ce426a79fcf9537946e15cd95c7d954cf5321"
     },
     "clause_diff_hunk.jsonl": {
       "bytes": 41410,
@@ -49,24 +56,29 @@
       "sha256": "b69bef25b468c91bb120e340b628e03cf7871c7a126421964ce0f509c44f7110"
     },
     "clause_semantic_tag.jsonl": {
-      "bytes": 49997,
-      "rows": 81,
-      "sha256": "e678304417ac3e5d87d9dcc5cabbe76bc00c3066139a0eca22b914196106ef48"
+      "bytes": 50641,
+      "rows": 82,
+      "sha256": "99d4d946c7ed97a04c41050ffd07ed70176b7e12e26cba6949fa498b36296316"
     },
     "clause_semantic_tag_atc.jsonl": {
       "bytes": 27702,
       "rows": 70,
-      "sha256": "2763846e8d0e2f5ce56abe748244bcb85156d51a9a174c8062615005fa26e96b"
+      "sha256": "f605a52e672f2af7b5f56eca4ce0d2a050b5a6d7deacaa0bf21e29521e72e8f3"
     },
     "clause_semantic_tag_icd11_code.jsonl": {
       "bytes": 6056,
       "rows": 21,
-      "sha256": "af20324e78fc9f043239ff383738e5be45adfead4fb395d126eb6733ce076ea8"
+      "sha256": "9f6c531f41aa9dbd57dfc4593112b89dfc33e3a54f3cb0b8a748ff0e8d827467"
     },
     "clause_semantic_tag_icd11_lookup.jsonl": {
       "bytes": 11121,
       "rows": 20,
-      "sha256": "6ba0bc0a43be8a6828ddbad8a519369cdf1c638df2370ed131d5ba546eefda58"
+      "sha256": "0ab9a206bb7d660133a0db6944281d37d84ddf3f5f3cd4009d6a7358b6854044"
+    },
+    "clause_semantic_tag_nhi_treatment.jsonl": {
+      "bytes": 2937,
+      "rows": 4,
+      "sha256": "c28fe3b2efb646d8af014b98c34c0a78cdc6dcc14e3d4bbdece93d73765d5595"
     },
     "clause_version.jsonl": {
       "bytes": 343566,
@@ -99,14 +111,14 @@
       "sha256": "6971ec840fe8dfdefbafdf0f289c6cba6562473e2285a77310e0869745e8d06f"
     },
     "diff_hunk_presentation.jsonl": {
-      "bytes": 33706,
+      "bytes": 33628,
       "rows": 26,
-      "sha256": "59eec7f518d975836b46166262116f8ad9917aee182aca32168eb3779285b7de"
+      "sha256": "962a05ee6f72587d3106a81b1efa17183b110ddfaf29616f27bee29e26c7b1dc"
     },
     "diff_run.jsonl": {
       "bytes": 844,
       "rows": 1,
-      "sha256": "cdd0de09d3113517ad5516b0a513e33d5d32d1c95381fbd8e247e4141a7634d8"
+      "sha256": "e77b8b006686fb6ceb6dbf33bcfb03e85cd79537520286a22c70951a52e3355a"
     },
     "import_run.jsonl": {
       "bytes": 722,
@@ -114,9 +126,9 @@
       "sha256": "133df0c49bda1fca17c7a226c9b9716edf4158df767a16564edb7632d77817b4"
     },
     "reader_enrichment_run.jsonl": {
-      "bytes": 614,
+      "bytes": 728,
       "rows": 1,
-      "sha256": "16191143f349541c955c2247aa2424f8e217f86fa78c3521a201bc228b4ed991"
+      "sha256": "a73b19f1f95c75df57fe51c9e508c0b742cb4e1d991b2cc3044a05f511cf3398"
     },
     "source_edition.jsonl": {
       "bytes": 9866,

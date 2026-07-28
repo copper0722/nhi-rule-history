@@ -89,6 +89,49 @@ function renderDisease(tag) {
   `;
 }
 
+function renderTreatment(tag) {
+  const terminology = tag.terminology;
+  const codes = terminology.codes ?? [];
+  return `
+    <p class="tag-system">${escapeHtml(terminology.system_label)}</p>
+    <div class="tag-code-list">
+      ${codes
+        .map(
+          (item) => `
+            <div class="tag-code">
+              <strong>${escapeHtml(item.code)}</strong>
+              <span>${item.is_primary ? "核心現行處置碼" : "相關支付碼"}</span>
+              <small>${escapeHtml(item.name_zh)}</small>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+    <p class="tag-explanation">
+      同一治療概念可對應不同申報服務；本頁以 CAPD 追蹤處置碼為核心，並列出直接相關的現行支付碼。
+    </p>
+    ${
+      codes[0]?.source_url
+        ? `<a class="action-button action-button--primary" href="${escapeHtml(codes[0].source_url)}" target="_blank" rel="noopener noreferrer">開啟健保署支付標準資料 ↗</a>`
+        : ""
+    }
+  `;
+}
+
+function tagTypeLabel(tagType) {
+  return {
+    drug: "藥品標籤",
+    disease: "疾病標籤",
+    treatment: "治療標籤",
+  }[tagType] ?? "條文標籤";
+}
+
+function renderTerminology(tag) {
+  if (tag.tag_type === "drug") return renderDrug(tag);
+  if (tag.tag_type === "disease") return renderDisease(tag);
+  return renderTreatment(tag);
+}
+
 async function loadTag() {
   const { rule, tag: tagId } = parameters();
   const card = document.querySelector("#tag-card");
@@ -106,14 +149,14 @@ async function loadTag() {
     if (!tag) throw new Error("tag not found");
     document.title = `${tag.display_text}｜條文關鍵字`;
     card.innerHTML = `
-      <p class="eyebrow">${tag.tag_type === "drug" ? "藥品標籤" : "疾病標籤"}</p>
+      <p class="eyebrow">${tagTypeLabel(tag.tag_type)}</p>
       <h1>${escapeHtml(tag.display_text)}</h1>
       <p class="tag-context">
         出現在 ${escapeHtml(data.clause.canonical_code)}
         ${escapeHtml(data.clause.display_title)}
       </p>
       <section class="tag-terminology">
-        ${tag.tag_type === "drug" ? renderDrug(tag) : renderDisease(tag)}
+        ${renderTerminology(tag)}
       </section>
     `;
   } catch (loadError) {

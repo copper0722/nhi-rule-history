@@ -141,7 +141,7 @@
   ],
   "default_clause_code": "0.4",
   "diff_policy": {
-    "algorithm_version": "chapter-00-semantic-diff-presentation/v2",
+    "algorithm_version": "chapter-00-semantic-diff-presentation/v3",
     "ignored_change_policy": [
       {
         "code": "whitespace",

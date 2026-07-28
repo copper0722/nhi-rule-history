@@ -128,6 +128,11 @@ python3 tools/build_sqlite.py \
 
 The builder rejects unknown columns, enables foreign keys, loads tables in
 dependency order, and runs `foreign_key_check` plus `integrity_check`.
+Its receipt reports both the SQLite-file SHA and a logical SHA over the ordered
+JSONL inputs. The file header includes the SQLite writer version, so byte-level
+reproducibility is scoped to the same SQLite library version; cross-version
+verification uses the logical SHA, exact table counts, foreign keys and
+integrity result.
 
 For the `通則` template, the full PG-first rebuild is:
 
@@ -145,6 +150,21 @@ writes one normalized PostgreSQL transaction and seals it with table counts
 and an output hash. It then reads the sealed rows back to produce JSONL,
 SQLite, and one reader JSON per clause. A replay of the same source set returns
 the existing sealed import instead of creating a competing history.
+
+Reader-enrichment immutability can be rechecked against a PostgreSQL instance
+after the v14 migration:
+
+```bash
+psql -X "$DATABASE_URL" \
+  -f database/verify-reader-enrichment-immutability.sql
+psql -X "$DATABASE_URL" \
+  -f database/verify-reader-enrichment-fresh-seal.sql
+```
+
+The first script proves that a sealed parent and all nine child tables reject
+inserts, updates, deletes and truncates as applicable. The second clones the
+latest sealed rows into a loading probe, seals it through exact count checks,
+then rolls the complete transaction back.
 
 ## Portability rules
 

@@ -126,20 +126,28 @@ chapter_zero_template:
     adjacency_basis: adjacent_distinct_text_state_across_official_editions
     legal_predecessor_status: not_claimed
   semantic_diff_presentation:
-    run_id: a2ebd8e5-bf91-5794-a974-b7128907cbf4
-    algorithm_version: chapter-00-semantic-diff-presentation/v2
+    run_id: 20046b53-1608-5320-80e1-432c6efb5465
+    algorithm_version: chapter-00-semantic-diff-presentation/v3
+    history_order: newest_first
+    row_subject: newer_version_as_this_version
+    change_labels:
+      added: 本版新增
+      removed: 本版刪除
+      replaced: 本版改寫
     ignored_change_classes:
       - whitespace
       - single_quote
       - width_variant
     pure_addition_has_fake_old_side: false
   reader_enrichment:
-    run_id: ac9ffa26-7d9c-5b17-ab98-39ebcb74a72f
-    generator_version: chapter-00-reader-enrichment/v10
-    semantic_tags: 81
+    run_id: 44640535-2f19-51d2-afcf-1572fea9be63
+    generator_version: chapter-00-reader-enrichment/v14
+    semantic_tags: 82
     atc_code_relations: 70
     icd11_code_only_relations: 21
-    condition_markers: 24
+    nhi_treatment_code_relations: 4
+    condition_markers: 21
+    compound_condition_expressions: 5
     agent_history_summaries: 1
     icd11_public_fields:
       - code
@@ -151,17 +159,53 @@ chapter_zero_template:
       - uri
       - definition
       - reference_snapshot
-    reader_example_sha256: 0284f2f466d9911091f9d61c455c1dfd3b018d265dbd72f3a1c72f463a0bb6a7
-    sqlite_projection_sha256: 8819bbcd6ef924437778c3ff00ce60bd17f92bcd2a8ebeae215a8210c34f12e6
+    reader_example_sha256: 65773b51ab5866dfcc2b809e4ad7b898bd8076630fcfc991c994d6b5d62f63d2
+    sqlite_projection_sha256: 95097aa5091824519fcc42efb2ba3c269e33315a46e6d3da61a25a4fea5ff2e0
+    sqlite_logical_sha256: e230b714a1ec6e128898f9b8dd676997362ad4b9aa1a5d81b464ff4162a14b11
+    sqlite_builder:
+      python: 3.11.15
+      sqlite: 3.50.4
+      byte_reproducibility_scope: same_sqlite_library_version
     latin_token_boundary_guard: passed
     inline_terminology_code_policy: hidden_until_tag_page
-    quantity_value_policy: value_plus_unit_within_limit_expression
+    coding_able_systems:
+      - ATC
+      - ICD-11
+      - NHI_TREATMENT
+    capd_primary_treatment_code: 58011C
+    compound_condition_policy: detected_contiguous_expression_critical_red
+    compound_condition_fields:
+      - comparator
+      - value_numeric
+      - unit_code
+      - action_text
+      - action_count
+      - severity_level
     hanging_indent_semantic_tag_guard: text_indent_reset
-    v10_live_verification: pending_deploy
+    v14_live_verification: pending_deploy
+    future_user_highlight_settings:
+      status: planned_not_implemented
+      boundary: presentation_only_never_mutates_pg_parsing
+      controls:
+        - visible_condition_types
+        - per_type_color
+        - restore_default_palette
+      default_behavior: all_detected_compound_conditions_visible_critical_red
+    sealed_enrichment_immutability:
+      migration: clause_reader_enrichment_immutability_v14
+      full_count_receipt_migration: clause_reader_enrichment_full_count_receipt_v15
+      live_trigger_count: 21
+      sealed_child_count_fields: 9
+      icd11_code_count: 21
+      icd11_private_count: 21
+      disposable_forward_rollback_tests: passed_3
+      live_sealed_mutation_attack_test: passed
+      live_loading_to_sealed_transactional_probe: passed_rolled_back
+      deterministic_replay_after_migration: passed_hashes_unchanged
     browser_desktop_check: passed_no_horizontal_overflow
     browser_mobile_390x844_check: passed_coding_coverage_no_inline_codes_no_overlap_no_overflow
     browser_mobile_320x800_check: passed_no_horizontal_overflow
-    deterministic_replay: passed_byte_identical
+    deterministic_replay: passed_same_runtime_byte_identical_cross_runtime_logical_identical
     frozen_reader_dock:
       desktop: title_left_search_right_single_row
       mobile: floating_island_toc_and_search

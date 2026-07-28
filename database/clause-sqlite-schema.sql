@@ -271,8 +271,20 @@ CREATE TABLE reader_enrichment_run (
   tag_icd11_lookup_count INTEGER NOT NULL CHECK (
     tag_icd11_lookup_count >= 0
   ),
+  tag_icd11_code_count INTEGER NOT NULL CHECK (
+    tag_icd11_code_count >= 0
+  ),
+  tag_icd11_private_count INTEGER NOT NULL CHECK (
+    tag_icd11_private_count >= 0
+  ),
+  tag_nhi_treatment_count INTEGER NOT NULL CHECK (
+    tag_nhi_treatment_count >= 0
+  ),
   condition_marker_count INTEGER NOT NULL CHECK (
     condition_marker_count >= 0
+  ),
+  condition_expression_count INTEGER NOT NULL CHECK (
+    condition_expression_count >= 0
   ),
   summary_count INTEGER NOT NULL CHECK (summary_count >= 0),
   started_at TEXT NOT NULL,
@@ -287,18 +299,21 @@ CREATE TABLE clause_semantic_tag (
   tag_text TEXT NOT NULL,
   normalized_tag TEXT NOT NULL,
   display_text TEXT NOT NULL,
-  tag_type TEXT NOT NULL CHECK (tag_type IN ('drug', 'disease')),
+  tag_type TEXT NOT NULL CHECK (
+    tag_type IN ('drug', 'disease', 'treatment')
+  ),
   entity_type TEXT NOT NULL CHECK (
     entity_type IN (
       'ingredient', 'brand', 'drug_class', 'abbreviation',
-      'disease', 'clinical_condition'
+      'disease', 'clinical_condition', 'treatment_modality'
     )
   ),
   match_mode TEXT NOT NULL CHECK (match_mode = 'exact_case_insensitive'),
   resolution_status TEXT NOT NULL CHECK (
     resolution_status IN (
       'resolved_atc', 'multiple_atc',
-      'official_lookup_only', 'terminology_pending'
+      'official_lookup_only', 'terminology_pending',
+      'resolved_nhi_treatment', 'multiple_nhi_treatment'
     )
   ),
   provenance TEXT NOT NULL,
@@ -363,6 +378,33 @@ CREATE TABLE clause_semantic_tag_icd11_code (
     REFERENCES clause_semantic_tag(enrichment_run_id, tag_id)
 );
 
+CREATE TABLE clause_semantic_tag_nhi_treatment (
+  enrichment_run_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL,
+  treatment_code TEXT NOT NULL,
+  is_primary INTEGER NOT NULL CHECK (is_primary IN (0, 1)),
+  mapping_role TEXT NOT NULL CHECK (
+    mapping_role IN ('core_service', 'related_service')
+  ),
+  mapping_basis TEXT NOT NULL CHECK (
+    mapping_basis = 'nhi_payment_standard_exact_name_and_clause_context'
+  ),
+  name_zh TEXT NOT NULL,
+  name_en TEXT,
+  effective_date TEXT NOT NULL,
+  source_resource_modified TEXT NOT NULL,
+  source_dataset_identifier TEXT NOT NULL CHECK (
+    source_dataset_identifier = 'A21030000I-D20020'
+  ),
+  source_url TEXT NOT NULL,
+  review_status TEXT NOT NULL CHECK (
+    review_status = 'agent_verified'
+  ),
+  PRIMARY KEY (enrichment_run_id, tag_id, treatment_code),
+  FOREIGN KEY (enrichment_run_id, tag_id)
+    REFERENCES clause_semantic_tag(enrichment_run_id, tag_id)
+);
+
 CREATE TABLE clause_condition_marker (
   enrichment_run_id TEXT NOT NULL REFERENCES reader_enrichment_run(run_id),
   marker_id TEXT NOT NULL,
@@ -380,6 +422,49 @@ CREATE TABLE clause_condition_marker (
   provenance TEXT NOT NULL,
   PRIMARY KEY (enrichment_run_id, marker_id),
   UNIQUE (enrichment_run_id, clause_id, normalized_marker)
+);
+
+CREATE TABLE clause_condition_expression (
+  enrichment_run_id TEXT NOT NULL REFERENCES reader_enrichment_run(run_id),
+  expression_id TEXT NOT NULL,
+  clause_id TEXT NOT NULL REFERENCES clause(clause_id),
+  expression_text TEXT NOT NULL,
+  normalized_expression TEXT NOT NULL,
+  expression_type TEXT NOT NULL CHECK (
+    expression_type IN (
+      'numeric_upper_bound',
+      'duration_upper_bound',
+      'recurring_action'
+    )
+  ),
+  comparator TEXT NOT NULL CHECK (
+    comparator IN (
+      'less_than_or_equal',
+      'duration_cap',
+      'recurs_every'
+    )
+  ),
+  operator_text TEXT NOT NULL,
+  value_numeric REAL NOT NULL CHECK (value_numeric >= 0),
+  unit_code TEXT NOT NULL CHECK (
+    unit_code IN (
+      'hour', 'day', 'week', 'month', 'year',
+      'unit_u', 'microgram', 'item'
+    )
+  ),
+  value_text TEXT NOT NULL,
+  action_text TEXT,
+  action_count REAL CHECK (
+    action_count IS NULL OR action_count >= 0
+  ),
+  severity_level TEXT NOT NULL CHECK (
+    severity_level = 'critical'
+  ),
+  parser_pattern_id TEXT NOT NULL,
+  match_mode TEXT NOT NULL CHECK (match_mode = 'exact_longest_first'),
+  provenance TEXT NOT NULL,
+  PRIMARY KEY (enrichment_run_id, expression_id),
+  UNIQUE (enrichment_run_id, clause_id, normalized_expression)
 );
 
 CREATE TABLE agent_history_summary (
@@ -463,4 +548,8 @@ CREATE INDEX diff_presentation_hunk_idx
 CREATE INDEX clause_semantic_tag_lookup_idx
   ON clause_semantic_tag(
     enrichment_run_id, clause_id, normalized_tag
+  );
+CREATE INDEX clause_condition_expression_lookup_idx
+  ON clause_condition_expression(
+    enrichment_run_id, clause_id, normalized_expression
   );

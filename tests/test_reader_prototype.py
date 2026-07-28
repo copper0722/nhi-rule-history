@@ -85,12 +85,33 @@ class ReaderPrototypeTests(unittest.TestCase):
                 transition["legal_predecessor_status"],
                 "not_claimed",
             )
-        self.assertIn("下一版刪除", SCRIPT)
-        self.assertIn("下一版新增", SCRIPT)
+        self.assertIn("本版刪除", SCRIPT)
+        self.assertIn("本版新增", SCRIPT)
+        self.assertNotIn("下一版刪除", SCRIPT)
+        self.assertNotIn("下一版新增", SCRIPT)
         self.assertIn("diff-side--old", SCRIPT)
         self.assertIn("diff-side--new", SCRIPT)
         self.assertIn(".inline-change--old", CSS)
         self.assertIn(".inline-change--new", CSS)
+
+    def test_history_is_newest_first_and_uses_each_newer_version_as_subject(
+        self,
+    ) -> None:
+        transitions = CLAUSE_04["transitions"]
+        newer_orders = [
+            transition["newer"]["state_order"] for transition in transitions
+        ]
+        self.assertEqual(newer_orders, sorted(newer_orders, reverse=True))
+        self.assertEqual(
+            transitions[0]["newer"]["clause_version_id"],
+            CLAUSE_04["latest"]["clause_version_id"],
+        )
+        self.assertIn("edition-meta__badge", SCRIPT)
+        self.assertIn("最新版", SCRIPT)
+        self.assertIn("前版 → 本版", SCRIPT)
+        self.assertIn("由最新版往前排列", HTML)
+        self.assertIn("本版刪除", HTML)
+        self.assertIn("本版新增", HTML)
 
     def test_history_uses_new_in_text_date_annotations_as_reader_labels(self) -> None:
         transition_to_99 = next(
@@ -159,12 +180,18 @@ class ReaderPrototypeTests(unittest.TestCase):
                 codes,
                 term,
             )
-        self.assertNotIn("CAPD", tags_by_text)
+        capd = tags_by_text["CAPD"]
+        self.assertEqual(capd["terminology"]["system"], "NHI_TREATMENT")
+        self.assertEqual(
+            capd["terminology"]["codes"][0]["code"],
+            "58011C",
+        )
+        self.assertTrue(capd["terminology"]["codes"][0]["is_primary"])
         self.assertNotIn("癌症", tags_by_text)
         marker_texts = {
             marker["marker_text"] for marker in CLAUSE_04["condition_markers"]
         }
-        self.assertTrue({"限", "不得", "且", "或"}.issubset(marker_texts))
+        self.assertTrue({"不得", "且", "或"}.issubset(marker_texts))
         self.assertNotIn("至多", marker_texts)
         logical_markers = {
             marker["marker_text"]
@@ -195,8 +222,32 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertNotIn("應", marker_texts)
         self.assertNotIn("需", marker_texts)
         self.assertNotIn("不超過", marker_texts)
+        self.assertNotIn("方得", marker_texts)
+        self.assertNotIn("限", marker_texts)
+        self.assertNotIn("為限", marker_texts)
+        expressions = {
+            expression["expression_text"]: expression
+            for expression in CLAUSE_04["condition_expressions"]
+        }
+        self.assertEqual(
+            set(expressions),
+            {
+                "不超過20,000U",
+                "不得超過15支",
+                "不得超過20支",
+                "一個月為限",
+                "每三個月應追蹤一次",
+            },
+        )
+        self.assertTrue(
+            all(
+                expression["severity_level"] == "critical"
+                for expression in expressions.values()
+            )
+        )
         self.assertIn("semantic-tag--drug", CSS)
         self.assertIn("semantic-tag--disease", CSS)
+        self.assertIn("semantic-tag--treatment", CSS)
         semantic_tag_css = CSS[
             CSS.index(".semantic-tag {") : CSS.index(".semantic-tag--drug")
         ]
@@ -215,11 +266,15 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertIn("condition-term--logical", CSS)
         self.assertIn("condition-term--duration", CSS)
         self.assertIn("condition-term--quantity", CSS)
-        self.assertIn('marker.marker_text === "限"', SCRIPT)
-        self.assertIn('=== "上限"', SCRIPT)
+        self.assertIn("condition-expression--critical", CSS)
+        self.assertIn("condition_expressions", SCRIPT)
+        self.assertIn('kind: "condition-expression"', SCRIPT)
+        self.assertNotIn('marker.marker_text === "限"', SCRIPT)
         self.assertIn("ATC", TAG_SCRIPT)
         self.assertIn("已確認關聯", TAG_SCRIPT)
         self.assertIn("候選關聯", TAG_SCRIPT)
+        self.assertIn("核心現行處置碼", TAG_SCRIPT)
+        self.assertIn("NHI_TREATMENT", json.dumps(CLAUSE_04))
         self.assertIn("ICD-11", TAG_HTML)
 
     def test_latin_token_boundary_guard_executes_expected_cases(self) -> None:
@@ -241,6 +296,51 @@ for (const [actual, expected] of cases) {
 """
         subprocess.run(
             ["node", "-e", f"{boundary_source}\n{assertions}"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_compound_condition_renderer_wins_over_atomic_markers(self) -> None:
+        renderer_source = SCRIPT[
+            SCRIPT.index("function escapeRegExp")
+            : SCRIPT.index("function renderMarkdownInline")
+        ]
+        payload = json.dumps(
+            {
+                "semantic_tags": CLAUSE_04["semantic_tags"],
+                "condition_expressions": CLAUSE_04[
+                    "condition_expressions"
+                ],
+                "condition_markers": CLAUSE_04["condition_markers"],
+            },
+            ensure_ascii=False,
+        )
+        assertions = f"""
+function escapeHtml(value) {{ return String(value); }}
+const state = {{data: {payload}}};
+const cases = [
+  "不超過20,000U",
+  "不得超過20支",
+  "一個月為限",
+  "每三個月應追蹤一次",
+];
+for (const value of cases) {{
+  const matches = collectRichTextMatches(value);
+  if (matches.length !== 1) process.exit(1);
+  if (matches[0].kind !== "condition-expression") process.exit(2);
+  if (matches[0].start !== 0 || matches[0].end !== value.length) process.exit(3);
+  const html = renderRichText(value);
+  if (!html.includes("condition-expression--critical")) process.exit(4);
+  if (html.includes("condition-term--")) process.exit(5);
+}}
+const capd = collectRichTextMatches("CAPD 抗生素");
+if (capd[0]?.kind !== "tag" || capd[0]?.payload?.tag_type !== "treatment") {{
+  process.exit(6);
+}}
+"""
+        subprocess.run(
+            ["node", "-e", f"{renderer_source}\n{assertions}"],
             check=True,
             capture_output=True,
             text=True,
