@@ -64,6 +64,21 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
+const LATIN_TOKEN_CHARACTER =
+  /[\p{Script=Latin}\p{Script=Greek}\p{Number}]/u;
+
+function isEmbeddedLatinToken(text, start, end) {
+  const first = text.slice(start, start + 1);
+  const last = text.slice(end - 1, end);
+  const previous = text.slice(Math.max(0, start - 1), start);
+  const next = text.slice(end, end + 1);
+  return (
+    (LATIN_TOKEN_CHARACTER.test(first) &&
+      LATIN_TOKEN_CHARACTER.test(previous)) ||
+    (LATIN_TOKEN_CHARACTER.test(last) && LATIN_TOKEN_CHARACTER.test(next))
+  );
+}
+
 function terminologyLabel(tag) {
   if (tag.tag_type === "disease") {
     const codes = tag.terminology?.codes ?? [];
@@ -86,9 +101,11 @@ function collectRichTextMatches(text) {
   for (const tag of tags) {
     const pattern = new RegExp(escapeRegExp(tag.tag_text), "giu");
     for (const match of text.matchAll(pattern)) {
+      const end = match.index + match[0].length;
+      if (isEmbeddedLatinToken(text, match.index, end)) continue;
       candidates.push({
         start: match.index,
-        end: match.index + match[0].length,
+        end,
         kind: "tag",
         priority: 30,
         payload: tag,
@@ -146,16 +163,9 @@ function renderRichText(value) {
     const matchedText = escapeHtml(text.slice(match.start, match.end));
     if (match.kind === "tag") {
       const tag = match.payload;
-      output.push(`
-        <a
-          class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}"
-          href="${escapeHtml(tag.internal_url)}"
-          title="${escapeHtml(terminologyLabel(tag))}"
-        >
-          <span>${matchedText}</span>
-          <small>${escapeHtml(terminologyLabel(tag))}</small>
-        </a>
-      `);
+      output.push(
+        `<a class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}" href="${escapeHtml(tag.internal_url)}" title="${escapeHtml(terminologyLabel(tag))}"><span>${matchedText}</span><small>${escapeHtml(terminologyLabel(tag))}</small></a>`,
+      );
     } else if (match.kind === "condition") {
       const marker = match.payload;
       output.push(

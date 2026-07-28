@@ -32,11 +32,14 @@
   不改變全庫法律歷史 0/1,548 的結論。
 - 第 `0.4` 條 reader enrichment 已在 PostgreSQL 封存：
   semantic diff presentation v2 忽略 Unicode 空白、單引號與全／半形；
-  純新增不產生虛構的「下一版刪除」。65 個語意標籤含 44 個藥名／藥物類別
-  與 21 個疾病詞，另有 50 筆 ATC 關聯、21 筆 code-only ICD-11 關聯、
+  純新增不產生虛構的「下一版刪除」。66 個語意標籤含 45 個藥名／藥物類別
+  與 21 個疾病詞，另有 51 筆 ATC 關聯、21 筆 code-only ICD-11 關聯、
   14 個條件詞規則及 1 筆 agent 歷史摘要。疾病 code 分成
   `agent_selected` 與 `candidate`，候選在 UI 明列待人工確認；WHO 標題、
   URI、定義與參考快照不進 Git。
+  Reader enrichment v4 新增 `apomorphine → N04BC07` 完整詞索引，並禁止
+  在拉丁字詞內以子字串錯配（例如不再把 apomorphine 的 morphine 連到
+  N02AA01）；手機上名稱與 code 視為同一個不可拆 inline tag。
 - `0.4` 的歷史主標籤已改由「下一版首次新出現的文內日期註記」程式化產生，
   例如 99 年版顯示 `99/11`；同時保留來源版名，並明示日期尚未認定為法律
   生效日。
@@ -67,8 +70,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 431 項 public tests
-  （424 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 432 項 public tests
+  （425 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
   響應式 reader controls 與真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。

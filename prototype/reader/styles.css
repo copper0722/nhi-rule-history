@@ -760,11 +760,12 @@ h1 {
   display: inline-flex;
   align-items: baseline;
   gap: 0.3em;
+  vertical-align: baseline;
   color: inherit;
   font-weight: 720;
-  line-height: 1.35;
+  line-height: 1.18;
   text-decoration: none;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .semantic-tag small {

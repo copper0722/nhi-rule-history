@@ -169,6 +169,11 @@ The `0.4` prototype performs longest-match-first conditional rendering:
   phrases are highlighted by semantic role;
 - parenthesized ROC dates use a smaller typographic level.
 
+Latin-script terms are matched at token boundaries, not as substrings inside a
+different drug name. The name and its displayed code form one non-breaking
+inline unit, so a narrow viewport may wrap before or after the tag but never
+between the name and code.
+
 For long clauses, a frozen reader dock keeps the selected clause identity and
 global clause search visible while scrolling on desktop. At phone widths, the
 dock is replaced by a bottom floating island so the article keeps its vertical
