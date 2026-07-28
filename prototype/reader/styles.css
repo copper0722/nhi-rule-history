@@ -768,14 +768,6 @@ h1 {
   white-space: nowrap;
 }
 
-.semantic-tag small {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 0.57em;
-  font-weight: 760;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
 .semantic-tag--drug {
   border-color: #a9d5c7;
   color: #0a5f50;
@@ -816,10 +808,16 @@ h1 {
 }
 
 .condition-term--requirement,
-.condition-term--conjunction {
+.condition-term--logical {
   color: #274f82;
   background: #e5effd;
   box-shadow: inset 0 -2px 0 #77a6dc;
+}
+
+.condition-term--duration {
+  color: #075d63;
+  background: #dff5f2;
+  box-shadow: inset 0 -2px 0 #4eb1aa;
 }
 
 .condition-term--exception {
@@ -1696,10 +1694,6 @@ footer p {
 
   .semantic-tag {
     gap: 0.2em;
-  }
-
-  .semantic-tag small {
-    font-size: 0.52em;
   }
 
   .agent-summary {

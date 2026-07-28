@@ -713,3 +713,38 @@
   SHA-256 matched the sealed projection, and a final 390×844 in-app Browser
   check confirmed the atomic `apomorphine / ATC N04BC07` tag, zero false
   morphine tags, active history scrollspy and zero horizontal overflow.
+- Copper clarified that the remaining defect was not keyword color or ATC
+  value adjudication: the reader should never expose ATC/ICD code badges beside
+  drug and disease names before a click. The clause surface now renders only
+  the colored linked term; the local tag detail page remains the sole surface
+  that displays terminology codes and mapping status. This supersedes the
+  earlier name+code inline presentation decision while preserving the PG
+  relations and token-boundary correction.
+- Copper further refined the condition lexicon: `需要` is intentionally
+  excluded because it usually expresses subjective judgment rather than a
+  stable reimbursement constraint; `且` and `或` are both stored with the
+  shared `logical` semantic role and render with the same visual treatment.
+  Because almost every duration in this clause is introduced by `至多`, that
+  word is also excluded as low-information. Quantity-plus-time expressions
+  such as `二週`, `六天` and `一個月` are instead extracted across all stored
+  clause versions into the shared PG `condition_marker` schema with semantic
+  role `duration`.
+- `應` is likewise excluded as a ubiquitous low-information token. Recurring
+  duration syntax is covered explicitly: `每三個月應追蹤一次` highlights only
+  `三個月`, while `應每週發藥` highlights only `每週`.
+- Applied the additive PG semantic-role migration and sealed reader enrichment
+  v5 as run `d283c7d7-4ec3-5132-b066-e9e47dce7c23`: 66 semantic tags, 51 ATC
+  relations, 21 public ICD-11 code relations, 21 condition markers and one
+  diff-bound summary. The output SHA-256 is
+  `389e84f25a2583bb6b58d14bbc1affe0b13060ba12afd9ab6b484bd399b69767`.
+  PG then regenerated the public JSONL and all 12 reader pages. The portable
+  SQLite projection passed integrity and foreign-key checks with SHA-256
+  `0e0f10f70ed4da7949e82a3b6d1d1b7e7335d3beb45f7e09f87811d33cbf3de9`.
+- In-app Browser at 390×844 verified the exact scopes: no mark around `需要`,
+  `應` or `至多`; only `三個月` is marked in `每三個月應追蹤一次`, and only
+  `每週` in `應每週發藥`. Drug/disease links expose no inline ATC/ICD code,
+  there is no horizontal overflow, and opening `Mircera` shows ATC `B03XA03`
+  on the local tag page.
+- Deterministic replay returned the same sealed v5 run and byte-identical JSONL
+  and reader projections. The complete public test suite passed: 432 tests,
+  seven intentionally skipped.

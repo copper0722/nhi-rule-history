@@ -45,9 +45,24 @@
       "semantic_role": "prohibition"
     },
     {
+      "marker_id": "condition-marker:facd7545673b3839e23a2b8f67fc13e2985b415cd860065bd535b6e7b8657e39",
+      "marker_text": "一個月",
+      "semantic_role": "duration"
+    },
+    {
+      "marker_id": "condition-marker:83dd1b0c42e74dad40b28165dfe36a60a43cfa22fc0f4bc25879c68ed8da6615",
+      "marker_text": "三個月",
+      "semantic_role": "duration"
+    },
+    {
       "marker_id": "condition-marker:92f9d6d061e100cf4b0b2780576ee1b68e0c977ebbe22aed9f6a1a80f2423a55",
       "marker_text": "不超過",
       "semantic_role": "maximum"
+    },
+    {
+      "marker_id": "condition-marker:630d1229e38891cd0661a399adccdba9a433c761e7c0ec991e5f4ca88ac0bf2a",
+      "marker_text": "三天",
+      "semantic_role": "duration"
     },
     {
       "marker_id": "condition-marker:501561dc454806788bea229103fd99af4e0a24f2d56e56a420cb8c0c9d055c9d",
@@ -55,9 +70,39 @@
       "semantic_role": "prohibition"
     },
     {
+      "marker_id": "condition-marker:0c8876151fff919bf40ad14f0b8f57e842a9dfafdb90d836774fdef90ba4e665",
+      "marker_text": "二週",
+      "semantic_role": "duration"
+    },
+    {
+      "marker_id": "condition-marker:789206cc37d9cca84beb46d46beb0c9fc9ccf33379dad8bba7c0e6431ca45542",
+      "marker_text": "兩週",
+      "semantic_role": "duration"
+    },
+    {
+      "marker_id": "condition-marker:98160de01be954622ab7ff40a4ae9b258ae734e6132de1d4ac5762cbd9a19ef7",
+      "marker_text": "六天",
+      "semantic_role": "duration"
+    },
+    {
+      "marker_id": "condition-marker:e2dcc1968a53b749bbc11c42f7e317d15eeeaf7fadff0f2da1d41285d082b46e",
+      "marker_text": "四週",
+      "semantic_role": "duration"
+    },
+    {
       "marker_id": "condition-marker:db0023fa014c9e55f1757b506eacf8e113914cbfbec9798b82a4b305ffc0bc14",
       "marker_text": "方得",
       "semantic_role": "restriction"
+    },
+    {
+      "marker_id": "condition-marker:586c366e9cab899eadba0458319023c8de890c9036786827c8e270181d9efd3f",
+      "marker_text": "每月",
+      "semantic_role": "duration"
+    },
+    {
+      "marker_id": "condition-marker:fc06c3f88179fd4ff6b2c21c0ff0c52c35e6d171dfb58b5bd0f21c60b79a9071",
+      "marker_text": "每週",
+      "semantic_role": "duration"
     },
     {
       "marker_id": "condition-marker:725afd5879ffdf18551f6d8b62b63993dd9306ac05e8fb02e5b57ad41bb19059",
@@ -65,19 +110,9 @@
       "semantic_role": "maximum"
     },
     {
-      "marker_id": "condition-marker:f9eded274c89970f28069a35ffe5b474b177c995e51de49a2273483592843f60",
-      "marker_text": "至多",
-      "semantic_role": "maximum"
-    },
-    {
-      "marker_id": "condition-marker:20b33a3aa2c657074e58079ba2f8afcc3f2880716643e31acf600899f59f0781",
-      "marker_text": "需要",
-      "semantic_role": "requirement"
-    },
-    {
-      "marker_id": "condition-marker:bf75b0e3c853bd62e8dd7ac447e8fef952914902ecf513eda02a104156734edc",
+      "marker_id": "condition-marker:100bb629371bec6bde72d32fb94d6a6f6f46efdf023b518f9fa41b570aa00a6e",
       "marker_text": "且",
-      "semantic_role": "conjunction"
+      "semantic_role": "logical"
     },
     {
       "marker_id": "condition-marker:13bd282b0871cd495867786e417e4a61141a22938dbac3adb0e290319d68cbfa",
@@ -85,9 +120,9 @@
       "semantic_role": "exception"
     },
     {
-      "marker_id": "condition-marker:3c0e95803b9e8404c2154011e64d27f7a6e50ec9053d56a41c2feeab133b47a8",
-      "marker_text": "應",
-      "semantic_role": "requirement"
+      "marker_id": "condition-marker:fba99b10e3d704c846b5c61562ffd9d50fc62cbe60d8a44393896b148c1870d8",
+      "marker_text": "或",
+      "semantic_role": "logical"
     },
     {
       "marker_id": "condition-marker:19e70aa6a8096881bf378ef53c2151700cd3254833056b0f596a819fb7bb7703",
