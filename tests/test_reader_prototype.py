@@ -180,6 +180,42 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertIn("normalizedSearch(clause.search_text)", SCRIPT)
         self.assertIn(".clause-result", CSS)
 
+    def test_title_and_search_share_a_frozen_reader_dock(self) -> None:
+        dock_start = HTML.index('<div class="reader-dock">')
+        main_start = HTML.index('<main id="top">')
+        self.assertLess(dock_start, main_start)
+        dock_html = HTML[dock_start:main_start]
+        self.assertIn('id="dock-page-title"', dock_html)
+        self.assertIn("搜尋通則條文", dock_html)
+        self.assertIn('id="page-search"', dock_html)
+        self.assertIn('class="section-nav"', dock_html)
+        self.assertIn(".reader-dock {\n  position: sticky;", CSS)
+        self.assertIn("grid-template-columns: minmax(300px, 0.88fr)", CSS)
+        self.assertIn("els.dockPageTitle.textContent", SCRIPT)
+
+    def test_mobile_reader_uses_floating_island_and_scrollspy_toc(self) -> None:
+        self.assertIn('class="mobile-reader-island"', HTML)
+        self.assertIn('id="mobile-toc-drawer"', HTML)
+        self.assertIn('data-mobile-toc-target="latest"', HTML)
+        self.assertIn('data-mobile-toc-target="history"', HTML)
+        self.assertIn('data-mobile-toc-target="method"', HTML)
+        self.assertIn("initializeMobileTocScrollspy", SCRIPT)
+        self.assertIn("new IntersectionObserver", SCRIPT)
+        self.assertIn("selectFromScrollPosition", SCRIPT)
+        self.assertIn(
+            'window.addEventListener("scroll", requestScrollspyUpdate',
+            SCRIPT,
+        )
+        self.assertIn('setMobilePanel(mobilePanel === "toc" ? null : "toc")', SCRIPT)
+        self.assertIn(
+            'setMobilePanel(mobilePanel === "search" ? null : "search")',
+            SCRIPT,
+        )
+        self.assertIn("@media (max-width: 700px)", CSS)
+        self.assertIn(".mobile-reader-island {", CSS)
+        self.assertIn(".mobile-toc-drawer--open", CSS)
+        self.assertIn(".reader-dock .find-bar--mobile-open", CSS)
+
     def test_navigation_codes_and_legal_scope_are_not_overclaimed(self) -> None:
         self.assertEqual(CLAUSE_04["chapter"]["display_label"], "通則")
         self.assertEqual(

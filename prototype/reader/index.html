@@ -26,6 +26,113 @@
       </div>
     </header>
 
+    <div class="reader-dock">
+      <div class="reader-dock__inner">
+        <div class="reader-dock__identity" aria-label="目前條文">
+          <span id="dock-clause-code">0.4</span>
+          <div>
+            <strong id="dock-page-title">注射藥品之使用原則</strong>
+            <nav class="section-nav" aria-label="本頁導覽">
+              <a href="#latest">最新版</a>
+              <a href="#history">歷史變更</a>
+              <a href="#method">資料說明</a>
+            </nav>
+          </div>
+        </div>
+
+        <section class="find-bar" aria-labelledby="find-title">
+          <label id="find-title" for="page-search">搜尋通則條文</label>
+          <div class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input
+              id="page-search"
+              type="search"
+              autocomplete="off"
+              placeholder="輸入藥名、疾病或給付條件"
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+          <button
+            id="mobile-search-close"
+            class="mobile-search-close"
+            type="button"
+            aria-label="關閉搜尋"
+          >
+            ×
+          </button>
+          <p id="search-status" class="search-status" aria-live="polite"></p>
+          <div
+            id="clause-results"
+            class="clause-results"
+            aria-live="polite"
+            hidden
+          ></div>
+        </section>
+      </div>
+    </div>
+
+    <div
+      id="mobile-control-backdrop"
+      class="mobile-control-backdrop"
+      aria-hidden="true"
+    ></div>
+
+    <aside
+      id="mobile-toc-drawer"
+      class="mobile-toc-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-toc-title"
+      aria-hidden="true"
+      inert
+    >
+      <header>
+        <div>
+          <p>目前條文 <span id="mobile-toc-code">0.4</span></p>
+          <h2 id="mobile-toc-title">快速目錄</h2>
+        </div>
+        <button
+          id="mobile-toc-close"
+          class="mobile-panel-close"
+          type="button"
+          aria-label="關閉目錄"
+        >
+          ×
+        </button>
+      </header>
+      <nav aria-label="手機快速目錄">
+        <a href="#latest" data-mobile-toc-target="latest">
+          <span>01</span>本條最新版全文
+        </a>
+        <a href="#history" data-mobile-toc-target="history">
+          <span>02</span>本條歷史變更
+        </a>
+        <a href="#method" data-mobile-toc-target="method">
+          <span>03</span>資料與版本說明
+        </a>
+      </nav>
+    </aside>
+
+    <div class="mobile-reader-island" aria-label="手機閱讀工具">
+      <button
+        id="mobile-toc-toggle"
+        type="button"
+        aria-controls="mobile-toc-drawer"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">☰</span>目錄
+      </button>
+      <strong id="mobile-island-code">0.4</strong>
+      <button
+        id="mobile-search-toggle"
+        type="button"
+        aria-controls="page-search"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">⌕</span>搜尋
+      </button>
+    </div>
+
     <main id="top">
       <section class="hero" aria-labelledby="page-title">
         <nav class="breadcrumbs" aria-label="條文位置">
@@ -83,36 +190,6 @@
           <span id="share-status" class="share-status" aria-live="polite"></span>
         </div>
       </section>
-
-      <section class="find-bar" aria-labelledby="find-title">
-        <div>
-          <label id="find-title" for="page-search">搜尋通則的條文</label>
-          <p>例如：insulin、GLP-1、生物標記、內服液劑</p>
-        </div>
-        <div class="search-box">
-          <span aria-hidden="true">⌕</span>
-          <input
-            id="page-search"
-            type="search"
-            autocomplete="off"
-            placeholder="輸入藥名、檢查或給付條件"
-          />
-          <kbd>⌘ K</kbd>
-        </div>
-        <p id="search-status" class="search-status" aria-live="polite"></p>
-        <div
-          id="clause-results"
-          class="clause-results"
-          aria-live="polite"
-          hidden
-        ></div>
-      </section>
-
-      <nav class="section-nav" aria-label="本頁導覽">
-        <a href="#latest">本條最新版</a>
-        <a href="#history">本條歷史變更</a>
-        <a href="#method">資料說明</a>
-      </nav>
 
       <div id="load-error" class="load-error" hidden role="alert">
         無法讀取 PG 產生的單一條文投影。請以本機 HTTP server 開啟

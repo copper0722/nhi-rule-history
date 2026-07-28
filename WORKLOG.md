@@ -665,3 +665,21 @@
   200, served the expected PG projection and passed a final in-app Browser
   check for code display, `99/11`, summary visibility, pure-addition semantics
   and zero horizontal overflow.
+- Reworked the long-reader navigation after Copper's UI correction. A second
+  frozen dock now keeps clause code/title/navigation in the left column and
+  the global clause search in the right column. Copper then clarified that a
+  phone should not inherit the tall frozen desktop dock. Following the shared
+  webpage mobile-navigation contract, widths at or below 700 px now use a
+  bottom floating island: `目錄` opens a slide-in drawer with
+  IntersectionObserver scrollspy, and `搜尋` opens the same clause search as a
+  bottom sheet. Backdrop, close buttons and Escape all dismiss the active
+  panel; reduced-motion users get no drawer transition.
+- The first browser pass caught a stale scrollspy state after an anchor jump.
+  The final implementation keeps IntersectionObserver and adds a
+  requestAnimationFrame-throttled reading-line calculation for scroll,
+  resize, hash changes and dynamically rendered long sections. In-app Browser
+  verification at 390×844 passed at scroll position 8,000: zero horizontal
+  overflow, `history` selected in the drawer, working anchor dismissal, and
+  one `0.4` result for `insulin`. Desktop 1280×900 retained the 77 px sticky
+  dock below the site header, hid the mobile island and had zero overflow.
+  The complete public suite passed 431 tests with seven skips.

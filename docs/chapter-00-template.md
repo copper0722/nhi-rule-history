@@ -169,6 +169,13 @@ The `0.4` prototype performs longest-match-first conditional rendering:
   phrases are highlighted by semantic role;
 - parenthesized ROC dates use a smaller typographic level.
 
+For long clauses, a frozen reader dock keeps the selected clause identity and
+global clause search visible while scrolling on desktop. At phone widths, the
+dock is replaced by a bottom floating island so the article keeps its vertical
+reading space. `目錄` opens a slide-in section list with scroll-position
+tracking; `搜尋` opens the same clause search in a bottom sheet. Desktop search
+results remain an anchored dropdown, and neither mode reflows the article.
+
 The public ICD projection contains only the project-authored term→code
 relation, rank, confidence and review state. WHO titles, URIs, definitions and
 the ICD reference snapshot remain in private PostgreSQL and are absent from

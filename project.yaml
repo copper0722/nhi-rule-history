@@ -10,8 +10,8 @@ last_verified_date: "2026-07-28"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 429
-  public_tests_passed: 422
+  public_tests_run: 431
+  public_tests_passed: 424
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -153,6 +153,13 @@ chapter_zero_template:
     sqlite_projection_sha256: 35eecae8c91564702745e89d6c648c469a099a1e0b4728cb9780e854f3bf905e
     browser_desktop_check: passed_no_horizontal_overflow
     browser_mobile_390x844_check: passed_no_horizontal_overflow
+    frozen_reader_dock:
+      desktop: title_left_search_right_single_row
+      mobile: floating_island_toc_and_search
+      mobile_toc: slide_in_drawer_intersection_observer_scrollspy
+      mobile_search: floating_bottom_sheet
+      search_results: desktop_anchored_dropdown_mobile_sheet_list
+      long_scroll_check: passed_desktop_and_mobile
   claim_limits:
     official_source_universe_closed: false
     legal_history_complete: false
