@@ -708,3 +708,8 @@
   matches. The audit's regression-test gap was closed with an executable Node
   boundary test and selector-specific CSS assertions. Final public regression:
   432 tests, 425 passed and seven environment skips.
+- PR #4 merged as `4f491ec5c2179e158601f6d6f06a82da4bd47b65`;
+  Pages workflow `30329354387` deployed successfully. The production JSON
+  SHA-256 matched the sealed projection, and a final 390×844 in-app Browser
+  check confirmed the atomic `apomorphine / ATC N04BC07` tag, zero false
+  morphine tags, active history scrollspy and zero horizontal overflow.

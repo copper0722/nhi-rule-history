@@ -31,10 +31,12 @@ public_outputs:
   reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
   reader_prototype_deployment:
     status: live
-    workflow_run_id: 30327622935
-    merged_commit: 864a4516c7543e771fd0c9db77eb85e2b4cd14c1
+    workflow_run_id: 30329354387
+    merged_commit: 4f491ec5c2179e158601f6d6f06a82da4bd47b65
     http_status: 200
     browser_verified: true
+    verified_reader_enrichment_run: c3280b44-067f-5624-b661-bc1ec9959335
+    verified_semantic_tag: apomorphine_to_N04BC07
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
