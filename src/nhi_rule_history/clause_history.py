@@ -38,7 +38,7 @@ from nhi_rule_history.edition_history import (
 EXTRACTOR_VERSION = "chapter-00-single-clause-extractor/v1"
 DIFF_VERSION = "chapter-00-single-clause-diff/v1"
 DIFF_PRESENTATION_VERSION = "chapter-00-semantic-diff-presentation/v2"
-READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v4"
+READER_ENRICHMENT_VERSION = "chapter-00-reader-enrichment/v5"
 NHI_DRUG_LOOKUP_URL = "https://info.nhi.gov.tw/INAE3000/INAE3000S01"
 ICD11_CODING_TOOL_URL = (
     "https://icd.who.int/ct/icd11_mms/en/2026-01"
@@ -239,15 +239,22 @@ CHAPTER_04_CONDITION_MARKERS: tuple[tuple[str, str], ...] = (
     ("需敘明理由", "requirement"),
     ("不得超過", "prohibition"),
     ("不超過", "maximum"),
-    ("至多", "maximum"),
     ("為限", "maximum"),
     ("方得", "restriction"),
     ("不得", "prohibition"),
-    ("需要", "requirement"),
-    ("且", "conjunction"),
-    ("應", "requirement"),
+    ("且", "logical"),
+    ("或", "logical"),
     ("惟", "exception"),
     ("限", "restriction"),
+)
+
+DURATION_MARKER_PATTERN = re.compile(
+    r"(?<![\d/])(?:"
+    r"每(?:小時|天|日|週|周|月|年)"
+    r"|(?:\d+|[零〇○一二三四五六七八九十百千兩]+)"
+    r"(?:個)?(?:小時|天|日|週|周|月|年)"
+    r")"
+    r"(?![\d/])"
 )
 
 CHAPTER_04_AGENT_SUMMARY = """\
@@ -1676,6 +1683,19 @@ def rebuild_reader_enrichment(
             raise ValueError("clause 0.4 missing from sealed import")
         clause_id = str(clause_row["clause_id"])
         latest_text = str(clause_row["normalized_text"])
+        cur.execute(
+            """
+            SELECT normalized_text
+            FROM nhi_rule_history_clause.clause_version
+            WHERE clause_id = %s
+              AND first_import_run_id = %s
+            ORDER BY state_order
+            """,
+            (clause_id, clause_import_run_id),
+        )
+        condition_source_text = "\n".join(
+            str(row["normalized_text"]) for row in cur.fetchall()
+        )
 
         cur.execute(
             """
@@ -1972,11 +1992,17 @@ def rebuild_reader_enrichment(
                 )
 
         condition_rows: list[dict[str, Any]] = []
-        normalized_latest = _normalized_keyword(latest_text)
-        for marker_text, semantic_role in CHAPTER_04_CONDITION_MARKERS:
+        normalized_condition_source = _normalized_keyword(
+            condition_source_text
+        )
+
+        def append_condition(
+            marker_text: str,
+            semantic_role: str,
+            *,
+            selection: str,
+        ) -> None:
             normalized_marker = _normalized_keyword(marker_text)
-            if normalized_marker not in normalized_latest:
-                continue
             condition_rows.append(
                 {
                     "enrichment_run_id": None,
@@ -1994,12 +2020,34 @@ def rebuild_reader_enrichment(
                     "semantic_role": semantic_role,
                     "match_mode": "exact_longest_first",
                     "provenance": {
-                        "selection": (
-                            "agent_curated_constraint_lexicon_for_clause_0.4"
-                        ),
+                        "selection": selection,
                         "rendering": "longest_match_wins",
                     },
                 }
+            )
+
+        for marker_text, semantic_role in CHAPTER_04_CONDITION_MARKERS:
+            normalized_marker = _normalized_keyword(marker_text)
+            if normalized_marker not in normalized_condition_source:
+                continue
+            append_condition(
+                marker_text,
+                semantic_role,
+                selection=(
+                    "agent_curated_constraint_lexicon_for_clause_0.4"
+                ),
+            )
+        duration_markers = sorted(
+            set(DURATION_MARKER_PATTERN.findall(condition_source_text)),
+            key=lambda value: (-len(value), value),
+        )
+        for marker_text in duration_markers:
+            append_condition(
+                marker_text,
+                "duration",
+                selection=(
+                    "programmatic_quantity_plus_time_unit_across_clause_history"
+                ),
             )
 
     input_payload = {
@@ -2009,6 +2057,7 @@ def rebuild_reader_enrichment(
         "drug_keywords": list(CHAPTER_04_DRUG_KEYWORDS),
         "disease_tags": list(CHAPTER_04_DISEASE_TAGS),
         "condition_markers": list(CHAPTER_04_CONDITION_MARKERS),
+        "duration_marker_pattern": DURATION_MARKER_PATTERN.pattern,
         "summary_markdown": CHAPTER_04_AGENT_SUMMARY,
     }
     input_sha256 = _sha256_text(_canonical_json(input_payload))

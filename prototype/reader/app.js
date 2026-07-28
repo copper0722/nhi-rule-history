@@ -79,20 +79,9 @@ function isEmbeddedLatinToken(text, start, end) {
   );
 }
 
-function terminologyLabel(tag) {
-  if (tag.tag_type === "disease") {
-    const codes = tag.terminology?.codes ?? [];
-    if (!codes.length) return "ICD-11 待判讀";
-    const suffix = codes.some((item) => item.mapping_status === "candidate")
-      ? " · 候選"
-      : "";
-    return `ICD-11 ${codes.map((item) => item.code).join(" · ")}${suffix}`;
-  }
-  const codes = tag.terminology?.codes?.map((item) => item.code) ?? [];
-  if (!codes.length) return "ATC 待核對";
-  return codes.length === 1
-    ? `ATC ${codes[0]}`
-    : `ATC ${codes[0]} +${codes.length - 1}`;
+function semanticLinkLabel(tag, matchedText) {
+  const relation = tag.tag_type === "disease" ? "疾病代碼關聯" : "藥品代碼關聯";
+  return `${matchedText}，查看${relation}`;
 }
 
 function collectRichTextMatches(text) {
@@ -164,7 +153,7 @@ function renderRichText(value) {
     if (match.kind === "tag") {
       const tag = match.payload;
       output.push(
-        `<a class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}" href="${escapeHtml(tag.internal_url)}" title="${escapeHtml(terminologyLabel(tag))}"><span>${matchedText}</span><small>${escapeHtml(terminologyLabel(tag))}</small></a>`,
+        `<a class="semantic-tag semantic-tag--${escapeHtml(tag.tag_type)}" href="${escapeHtml(tag.internal_url)}" aria-label="${escapeHtml(semanticLinkLabel(tag, text.slice(match.start, match.end)))}"><span>${matchedText}</span></a>`,
       );
     } else if (match.kind === "condition") {
       const marker = match.payload;

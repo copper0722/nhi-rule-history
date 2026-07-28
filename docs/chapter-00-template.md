@@ -160,19 +160,26 @@ legal_history_complete = false
 The `0.4` prototype performs longest-match-first conditional rendering:
 
 - drug ingredients, brands and classes link to a local tag page and show the
-  primary ATC code inline; all clause-specific codes remain available on the
-  tag page;
-- disease terms link to a local tag page and show ICD-11 code(s);
+  term only in the clause text; ATC codes appear after the reader opens the tag
+  page;
+- disease terms link to a local tag page, while ICD-11 codes likewise remain
+  off the clause text and appear only on that tag page;
 - `agent_selected` codes are visually distinct from `candidate` codes;
 - broad terms with no defensible single code remain `待判讀`;
-- phrases such as `至多`, `不得`, `需要`, `且` and prior-authorization
-  phrases are highlighted by semantic role;
+- phrases such as `不得` and prior-authorization expressions are highlighted
+  by semantic role; `且` and `或` share one logical-word style, while the
+  subjective term `需要` and low-information `至多`／`應` are deliberately
+  not emphasized;
+- duration expressions are programmatically extracted as quantity plus time
+  unit or a recurring time unit across every stored version of the clause,
+  then rendered with one `duration` style (for example `二週`, `六天`,
+  `一個月`, `每週`);
 - parenthesized ROC dates use a smaller typographic level.
 
 Latin-script terms are matched at token boundaries, not as substrings inside a
-different drug name. The name and its displayed code form one non-breaking
-inline unit, so a narrow viewport may wrap before or after the tag but never
-between the name and code.
+different drug name. The colored inline term is the entire link; terminology
+codes and mapping status belong to the tag detail page rather than the clause
+reading surface.
 
 For long clauses, a frozen reader dock keeps the selected clause identity and
 global clause search visible while scrolling on desktop. At phone widths, the

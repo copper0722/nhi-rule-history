@@ -140,18 +140,41 @@ class ReaderPrototypeTests(unittest.TestCase):
         marker_texts = {
             marker["marker_text"] for marker in CLAUSE_04["condition_markers"]
         }
-        self.assertTrue({"限", "至多", "不得", "且"}.issubset(marker_texts))
-        self.assertIn("需要", marker_texts)
+        self.assertTrue({"限", "不得", "且", "或"}.issubset(marker_texts))
+        self.assertNotIn("至多", marker_texts)
+        logical_markers = {
+            marker["marker_text"]
+            for marker in CLAUSE_04["condition_markers"]
+            if marker["semantic_role"] == "logical"
+        }
+        self.assertEqual(logical_markers, {"且", "或"})
+        duration_markers = {
+            marker["marker_text"]
+            for marker in CLAUSE_04["condition_markers"]
+            if marker["semantic_role"] == "duration"
+        }
+        self.assertTrue(
+            {"二週", "六天", "一個月", "三個月", "每週"}.issubset(
+                duration_markers
+            )
+        )
+        self.assertNotIn("需要", marker_texts)
+        self.assertNotIn("應", marker_texts)
         self.assertNotIn("需", marker_texts)
         self.assertIn("semantic-tag--drug", CSS)
         self.assertIn("semantic-tag--disease", CSS)
         semantic_tag_css = CSS[
-            CSS.index(".semantic-tag {") : CSS.index(".semantic-tag small")
+            CSS.index(".semantic-tag {") : CSS.index(".semantic-tag--drug")
         ]
         self.assertIn("vertical-align: baseline;", semantic_tag_css)
         self.assertIn("white-space: nowrap;", semantic_tag_css)
+        self.assertNotIn(".semantic-tag small", CSS)
         self.assertIn("condition-term--prohibition", CSS)
         self.assertIn("isEmbeddedLatinToken", SCRIPT)
+        self.assertIn("semanticLinkLabel", SCRIPT)
+        self.assertNotIn("terminologyLabel", SCRIPT)
+        self.assertIn("condition-term--logical", CSS)
+        self.assertIn("condition-term--duration", CSS)
         self.assertIn("ATC", TAG_SCRIPT)
         self.assertIn("已確認關聯", TAG_SCRIPT)
         self.assertIn("候選關聯", TAG_SCRIPT)
@@ -160,7 +183,7 @@ class ReaderPrototypeTests(unittest.TestCase):
     def test_latin_token_boundary_guard_executes_expected_cases(self) -> None:
         boundary_source = SCRIPT[
             SCRIPT.index("const LATIN_TOKEN_CHARACTER")
-            : SCRIPT.index("function terminologyLabel")
+            : SCRIPT.index("function semanticLinkLabel")
         ]
         assertions = """
 const cases = [

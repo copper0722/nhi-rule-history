@@ -134,12 +134,12 @@ chapter_zero_template:
       - width_variant
     pure_addition_has_fake_old_side: false
   reader_enrichment:
-    run_id: c3280b44-067f-5624-b661-bc1ec9959335
-    generator_version: chapter-00-reader-enrichment/v4
+    run_id: d283c7d7-4ec3-5132-b066-e9e47dce7c23
+    generator_version: chapter-00-reader-enrichment/v5
     semantic_tags: 66
     atc_code_relations: 51
     icd11_code_only_relations: 21
-    condition_markers: 14
+    condition_markers: 21
     agent_history_summaries: 1
     icd11_public_fields:
       - code
@@ -151,13 +151,13 @@ chapter_zero_template:
       - uri
       - definition
       - reference_snapshot
-    reader_example_sha256: 4b030dcc581b1ffe0806892a809a957ba2ea5b29efd898d9ee95190d924c9f51
-    sqlite_projection_sha256: e2b97e0744923bfcb5546ea0e907b1ceda9b6030270126637b2024b45292e369
+    reader_example_sha256: b95e0974946963bb5be8718f44eeb346bd047ae1ad601a6c54b12d020aec04f7
+    sqlite_projection_sha256: 0e0f10f70ed4da7949e82a3b6d1d1b7e7335d3beb45f7e09f87811d33cbf3de9
     latin_token_boundary_guard: passed
-    semantic_tag_wrap_policy: atomic_name_plus_code
+    inline_terminology_code_policy: hidden_until_tag_page
     browser_desktop_check: passed_no_horizontal_overflow
-    browser_mobile_390x844_check: passed_no_horizontal_overflow
-    browser_mobile_320x800_check: passed_atomic_tags_no_horizontal_overflow
+    browser_mobile_390x844_check: passed_duration_scope_no_inline_codes_no_overflow
+    browser_mobile_320x800_check: passed_no_horizontal_overflow
     deterministic_replay: passed_byte_identical
     frozen_reader_dock:
       desktop: title_left_search_right_single_row

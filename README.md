@@ -31,9 +31,12 @@ version chain**：目前共有 152 筆來源觀察、29 個不同文字狀態、
 詳見 [`通則` 方法學](docs/chapter-00-template.md)與
 [reader template](prototype/reader/index.html)。
 
-第 `0.4` 條另完成 reader enrichment：藥名顯示 ATC，疾病詞顯示
-ICD-11 code 與「已確認／候選」狀態，限制條件詞以語意角色著色，文內民國
-日期縮小顯示，歷史前置一段由 stored diff 產生的 agent 摘要。ICD-11
+第 `0.4` 條另完成 reader enrichment：正文中的藥名與疾病詞只顯示可點擊
+的名稱，ATC、ICD-11 code 與「已確認／候選」狀態在站內 tag 頁顯示；限制
+條件詞以語意角色著色，`且`／`或`共用邏輯詞樣式，主觀的`需要`與低區辨力
+的`至多`／`應`不強調；`二週`、`六天`、`一個月`、`每週`等期間則程式化
+標為 duration。
+文內民國日期縮小顯示，歷史前置一段由 stored diff 產生的 agent 摘要。ICD-11
 公開投影只含專案建立的 term→code 關係，不含 WHO 標題、URI、定義或完整
 參考資料；完整欄位仍留在私有 PostgreSQL。詳見
 [資料授權邊界](DATA_LICENSE.md)。
