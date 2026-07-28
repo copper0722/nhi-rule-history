@@ -711,6 +711,30 @@ methodology_v3:
       - v3_queue_converter
       - frozen_10_unit_pilot_packet
       - NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED_true
+  source_selection:
+    primary_legal_update_lane: reimbursement_rule_rss_and_official_attachments
+    separate_drug_announcement_required: false
+    supplemental_search_only_for:
+      - missing_exact_product_or_ingredient_relation
+      - missing_item_code_atc_strength_or_price_period
+      - cross_source_discrepancy
+      - unresolved_effective_date_scope_or_full_sides
+  pilot_candidates:
+    - source_uid: gov_健保審字第1150055452號
+      work_item_id: cdaeef82-987e-5f11-ab15-708b6905f2d7
+      status: source_captured_partition_required_no_dispatch
+      effective_from_candidate: "2026-08-01"
+      source_designations:
+        - "9.138"
+        - "9.24"
+        - "9.29"
+        - "9.45"
+        - "9.80"
+        - "9.83"
+      evidence_roles:
+        - transition_evidence_candidate
+        - drug_rule_link_evidence
+      separate_drug_announcement_search_required: false
 
 current_work_package:
   id: M1

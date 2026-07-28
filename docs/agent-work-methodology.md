@@ -101,6 +101,36 @@ anchor_replay_coverage
 6,360 個有效日期 marker 已抽取；它們在 v3 evidence-basis 契約下尚待日期
 角色與 transition adjudication。公告連結率另計。
 
+## Source selection：給付規定 RSS 優先
+
+條文歷史與藥品關聯不需要各自追一套公告宇宙。當給付規定 RSS 捕捉到的同一
+官方 bundle 已明列成分／商品與給付條號時，該 bundle 可以同時產生：
+
+- `transition_evidence`：條文修訂前後、日期角色與 scope；
+- `drug_rule_link_evidence`：成分／特定商品／強度指向哪些 source
+  designations。
+
+此時不必為了證明相同關係，再強制追查一份獨立「藥品公告」。只有以下 gap
+才啟動補充來源搜尋：
+
+- RSS bundle 沒有產品、成分或條號的 exact relation；
+- 要解析健保品項代碼、ATC、價格有效期或特定強度，而附件不足；
+- RSS、IODE、INAE3000、現行條文或其他官方來源互相矛盾；
+- 條文生效日、完整 old/new sides 或適用範圍仍不明。
+
+藥品品項／ATC 的主重建來源仍是 IODE snapshot，INAE3000 作 current
+freshness。公告中的品牌或成分只證明該 exact source assertion；不能自動
+擴張成所有同成分商品、所有強度或整個 ATC class。
+
+具體 canary：
+`gov_健保審字第1150055452號` 的 RSS/detail bundle 明列
+aumolertinib（Pulmivex）及 gefitinib、erlotinib、afatinib、
+osimertinib、dacomitinib，並直接指向 9.138、9.24、9.29、9.45、9.80、
+9.83；ODT 對照表標示自 2026-08-01 生效。因此它已足以作這六組
+ingredient/product→source-designation linkage evidence，不需另追一份藥品
+公告來重複證明相同關係。品項代碼、ATC、價格／支付期間仍須由 ODS／
+IODE／INAE3000 evidence 補齊。
+
 ## 單一 agent work unit 的標準流程
 
 ### 0. 驗證輸入，禁止自行擴張權限
@@ -209,6 +239,7 @@ comparison_edge
 diff_hunk
 history_coverage
 notice_search_observation
+drug_rule_link_evidence
 ```
 
 `rule_transition` 不應有 mandatory `official_event_id`。官方公告以 nullable

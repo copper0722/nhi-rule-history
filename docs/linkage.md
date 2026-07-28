@@ -33,6 +33,58 @@ IODE CSV 每列同時保存健保藥品代號、成分、價格有效起迄、AT
 來源所列章節已解析為本專案的穩定 rule identity／精確 snapshot
 ```
 
+## 給付規定 RSS 也可直接提供藥品關聯
+
+藥品與條文的 relation 不限於 IODE／INAE3000。若給付規定 RSS 所指向的
+官方 detail／附件已在同一 source bundle 中明列成分、商品與條號，應直接
+保存為 `drug_rule_link_evidence`，不必為了相同 assertion 再強制追查一份
+獨立「藥品公告」。
+
+2026 年 `gov_健保審字第1150055452號` 是明確 canary。公告事項與 ODT
+對照表直接列出：
+
+| relation subject | source designation |
+|---|---|
+| aumolertinib（Pulmivex） | 9.138 |
+| gefitinib（Iressa） | 9.24 |
+| erlotinib（Tarceva） | 9.29 |
+| afatinib（Giotrif） | 9.45 |
+| osimertinib（Tagrisso） | 9.80 |
+| dacomitinib（Vizimpro） | 9.83 |
+
+同一 ODT 標示自 2026-08-01 生效，並保存修訂後／原給付規定兩側。這個
+bundle 因而同時是 transition evidence candidate 與
+ingredient/product→designation direct evidence。它不必再靠另一份藥品公告
+才能建立上述關係。
+
+但來源角色仍須分開：
+
+- 公告／ODT：成分或 named product 與 source designation 的 exact
+  assertion、條文 old/new sides、日期文字；
+- ODS／IODE／INAE3000：健保品項代碼、特定強度、ATC、價格／支付有效期；
+- stable `rule_identity`／`rule_snapshot`：仍須條文 identity 與 replay
+  gate。
+
+`drug_rule_link_evidence` 至少保存：
+
+```text
+evidence_id
+source_uid
+artifact_sha256
+source_locator
+subject_kind              # ingredient | brand | reimbursement_item
+subject_value_raw
+rule_designation_raw
+relation_type             # explicitly_named | item_file_reference
+effective_from
+assertion_scope
+review_state
+```
+
+只有當 RSS bundle 缺少 relation、品項／ATC 欄位不足，或官方來源互相矛盾
+時，才開補充藥品公告搜尋。不得由「某成分被點名」推論所有品牌、所有強度
+或整個 ATC class 都受相同條文規範。
+
 2026-07-27 的 live CSV 有 224,455 列、45,124 個健保藥品代號、2,244 個
 ATC codes；95,703 列有給付章節、95,520 列有給付文件 URL。原檔
 96,799,113 bytes，SHA-256

@@ -14,6 +14,7 @@ SCHEMA = (
 METHOD = ROOT / "docs" / "agent-work-methodology.md"
 COMPLETION = ROOT / "docs" / "completion-contract.md"
 PROJECT = ROOT / "project.yaml"
+LINKAGE = ROOT / "docs" / "linkage.md"
 
 
 class MethodologyV3ContractTests(unittest.TestCase):
@@ -65,6 +66,15 @@ class MethodologyV3ContractTests(unittest.TestCase):
             project,
         )
         self.assertIn("admin_ops_project_todo_id: 41", project)
+
+    def test_rule_rss_can_supply_product_linkage_without_duplicate_search(self) -> None:
+        method = METHOD.read_text(encoding="utf-8")
+        linkage = LINKAGE.read_text(encoding="utf-8")
+        project = PROJECT.read_text(encoding="utf-8")
+        self.assertIn("給付規定 RSS 優先", method)
+        self.assertIn("drug_rule_link_evidence", linkage)
+        self.assertIn("gov_健保審字第1150055452號", linkage)
+        self.assertIn("separate_drug_announcement_required: false", project)
 
 
 if __name__ == "__main__":

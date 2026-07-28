@@ -176,14 +176,17 @@ canonical history。
 3. 品項到 ATC 是官方來源 assertion；品項到給付章節／URL 也是官方來源
    assertion。章節到 canonical `rule_identity`／`rule_snapshot` 仍須獨立
    resolution。
-4. 條文到 ATC 只由已解析產品列推導，保存 support count 與 source release；
+4. 給付規定 RSS/detail/attachment 若直接同時列出成分／商品與條號，另建立
+   `drug_rule_link_evidence`；相同關係不必再強制追一份獨立藥品公告。只有
+   relation、品項／ATC／強度或跨來源 discrepancy 未解時才補充搜尋。
+5. 條文到 ATC 只由已解析產品列推導，保存 support count 與 source release；
    不把它宣稱成整個 ATC class 的適用範圍。
-5. 每月 IODE snapshot 是可重建基線；INAE3000
+6. 每月 IODE snapshot 是可重建基線；INAE3000
    `POST /api/INAE3000/INAE3000S01/SQL0001` 作每週 freshness
    reconciliation，不覆寫或刪除舊 snapshot。
-6. PostgreSQL 與 SQLite 使用相同
+7. PostgreSQL 與 SQLite 使用相同
    `linkage_import_run`／`nhi_drug_item_observation`／
-   `nhi_drug_rule_reference` logical contract。
+   `nhi_drug_rule_reference`／`drug_rule_link_evidence` logical contract。
 
 實作與 live audit 見 [ATC 與 ICD-11 linkage](linkage.md)。
 
