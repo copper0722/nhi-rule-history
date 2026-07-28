@@ -40,8 +40,10 @@
 - `0.4` 的歷史主標籤已改由「下一版首次新出現的文內日期註記」程式化產生，
   例如 99 年版顯示 `99/11`；同時保留來源版名，並明示日期尚未認定為法律
   生效日。
-- GitHub Pages workflow 已建立，發布 `prototype/reader`；桌面與
-  390×844 手機 viewport 均已在 in-app Browser 實測，無水平溢位。
+- GitHub Pages workflow 已建立並成功發布 `prototype/reader`：
+  <https://copper0722.github.io/nhi-rule-history/?rule=0.4>。正式 URL 已核對
+  HTTP 200、PG 投影載入、`99/11`、agent 摘要、ICD-11 code、純新增 diff
+  與零水平溢位；桌面與 390×844 手機 viewport 均已實測。
 - ATC linkage 資料模型，以及 ICD-11 授權 fail-closed 邊界。
 - 重新確認 ATC 的官方來源鏈：INAE3000 是既有高頻 current lookup，
   IODE `A21030000I-E41001-001` 是可整批重建的每月 CSV。2026-07-27

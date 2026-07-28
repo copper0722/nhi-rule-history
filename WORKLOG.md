@@ -658,3 +658,10 @@
 - Added a GitHub Pages Actions workflow publishing only `prototype/reader`.
   The page includes copy-link and GitHub issue feedback actions. No Claude,
   Grok, Gemini or other rule-cleaning model was called.
+- PR #1 merged as `864a4516c7543e771fd0c9db77eb85e2b4cd14c1`.
+  The first Pages run correctly failed because Pages had never been enabled;
+  the repository was then explicitly configured with `build_type=workflow`.
+  Rerun `30327622935` deployed successfully. The production URL returned HTTP
+  200, served the expected PG projection and passed a final in-app Browser
+  check for code display, `99/11`, summary visibility, pure-addition semantics
+  and zero horizontal overflow.
