@@ -33,8 +33,8 @@ from nhi_rule_history.update.odt import inspect_odt_document
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.0.0"
-EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.0.0"
+LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.1.0"
+EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.1.0"
 NOTICE_URL = "https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html"
 NOTICE_REFERENCE = "健保審字第1150671962號"
 NOTICE_TITLE = "公告異動降血脂藥品支付價格及修訂其藥品給付規定"
@@ -51,6 +51,12 @@ MIGRATION = (
     / "pg"
     / "migrations"
     / "2026-07-29_nhi_rule_history_announced_decision_v21.sql"
+)
+RELEASE_GATE_MIGRATION = (
+    Path(__file__).resolve().parents[2]
+    / "pg"
+    / "migrations"
+    / "2026-07-29_nhi_rule_history_announced_release_gate_v22.sql"
 )
 _UUID_NAMESPACE = uuid.UUID("90f6ded1-5025-4938-9e68-fcdfdc349c1c")
 _TABLE2_CODE_RE = __import__("re").compile(r"^[A-Z0-9]{10}$")
@@ -358,7 +364,12 @@ def prepare_announced_material(
         "known_products": sorted(known_by_code),
     }
     code_sha = code_fingerprint(Path(__file__).resolve())
-    migration_sha = migration_fingerprint(MIGRATION)
+    migration_sha = object_fingerprint(
+        {
+            "v21": migration_fingerprint(MIGRATION),
+            "v22": migration_fingerprint(RELEASE_GATE_MIGRATION),
+        }
+    )
     input_fingerprint = object_fingerprint(
         {
             "artifact_sha256": artifact_sha256,
@@ -752,9 +763,15 @@ def _apply_migration(connection: Any) -> None:
         cursor.execute(
             "SELECT to_regclass('nhi_rule_history_announced.release_run')"
         )
-        if cursor.fetchone()[0] is not None:
-            return
-        cursor.execute(MIGRATION.read_text(encoding="utf-8"))
+        if cursor.fetchone()[0] is None:
+            cursor.execute(MIGRATION.read_text(encoding="utf-8"))
+        cursor.execute(
+            "SELECT to_regclass("
+            "'nhi_rule_history_announced.release_control_event'"
+            ")"
+        )
+        if cursor.fetchone()[0] is None:
+            cursor.execute(RELEASE_GATE_MIGRATION.read_text(encoding="utf-8"))
 
 
 def _insert_material(connection: Any, material: AnnouncedMaterial) -> bool:
@@ -907,8 +924,21 @@ def load_announced_dyslipidemia(
                 active = cursor.fetchone()
                 if not active or str(active[0]) != material.run_id:
                     cursor.execute(
-                        f"INSERT INTO {SCHEMA}.release_activation(run_id) VALUES(%s)",
-                        (material.run_id,),
+                        f"""
+                        SELECT {SCHEMA}.set_release_control(
+                          %s, 'activate', %s, %s::jsonb
+                        )
+                        """,
+                        (
+                            material.run_id,
+                            "announced dyslipidemia loader activation",
+                            json_text(
+                                {
+                                    "loader_version": LOADER_VERSION,
+                                    "sealed_fingerprint": material.sealed_fingerprint,
+                                }
+                            ),
+                        ),
                     )
     result = verify_announced_material(
         material.run_id, conninfo=dsn, connect=connector, expected=material
