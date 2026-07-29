@@ -35,7 +35,7 @@ from nhi_rule_history.update.odt import inspect_odt_document
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.2.0"
+LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.2.1"
 EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.1.0"
 COMPOSITION_RULE_VERSION = (
     "nhi-rule-history/2.6.1-amendment-plus-inherited-remainder/1.0.0"
@@ -48,6 +48,7 @@ EFFECTIVE_DATE = "2026-09-01"
 EXPECTED_ARTIFACT_SHA256 = (
     "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44"
 )
+SOURCE_ARTIFACT_FILENAME = "attachment-003.odt"
 PREDECESSOR_TEXT_SHA256 = (
     "5c6cbaaae104aaed9427080168c38ff25afc38667063c29eb04981fbdee56e3a"
 )
@@ -622,7 +623,7 @@ def prepare_announced_material(
                 "effective_on": EFFECTIVE_DATE,
                 "civil_timezone": "Asia/Taipei",
                 "source_artifact_sha256": artifact_sha256,
-                "source_artifact_filename": Path(odt_path).name,
+                "source_artifact_filename": SOURCE_ARTIFACT_FILENAME,
                 "source_exact": True,
                 "event_scope_complete": False,
                 "unresolved_scope": unresolved_scope,
