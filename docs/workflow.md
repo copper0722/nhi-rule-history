@@ -408,8 +408,14 @@ official chapter ODTs
 2. 付費站在 build 時讀取 typed contracts，產生受訂閱 gateway 保護的
    same-origin JSON 與 reader；不讓瀏覽器直接連 tailnet API。
 3. `boan-emr` 只讀 latest contract，不把歷史重建、agent summary 或私有
-   ICD-11 內容帶入臨床端。Provider 已上線；consumer 必須另外從 BOA
-   主機驗證，未完成前不得宣稱整合完成。
+   ICD-11 內容帶入臨床端。瀏覽器只呼叫 BOA same-origin proxy；BOA
+   server-side client 驗證 exact v1 contract、sealed state、run ID 與
+   output fingerprint，同一藥品卡不得混用兩個 publication receipts。
+   本地 `tw_drug` 只提供藥品到條文號的連結；upstream 404 不復活舊條文，
+   upstream failure 才可顯示明確標示 `latest_only=false` 的舊鏡像。
+   2026-07-29 已從 BOA 實機通過 status、list、detail 與 formulary
+   projection，收據見
+   [`2026-07-29-boan-emr-latest-consumer-live-verification.json`](audits/2026-07-29-boan-emr-latest-consumer-live-verification.json)。
 4. GitHub 保存可重現 workflow、schema、程式、公開稽核收據及可攜
    JSON／SQLite release。它不是付費 reader 的 production host。
 

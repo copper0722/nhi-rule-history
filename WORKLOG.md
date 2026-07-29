@@ -1159,12 +1159,35 @@
   證實匿名 page/JSON 均為 303，合法訂閱 session 下 page/JSON 均為
   200；same-origin dataset 含 639 條、82 個 reviewed semantic tags 與
   5 個 compound conditions。
-- BOA 端預定只使用 latest-only API。由目前主機對 `ssh boa` 的驗證被
-  `Permission denied (publickey,password)` 拒絕，因此 provider ready，
-  consumer call 尚未實機證明；明列為部署缺口。
+- BOA 端預定只使用 latest-only API。當時直接 `ssh boa` 因使用錯誤的
+  預設帳號而被拒，故先將 consumer call 明列為待實機證明；後續已由
+  既有跳板與正確主機帳號完成，見下方 live consumer 紀錄。
 - GitHub 專案定位固定為公開方法學、schema、crawler/exporter、稽核收據
   與 JSON／SQLite 可攜 release；付費條文 reader 留在 subscriber site，
   GitHub Pages 只保留原型／回饋用途，不作 production content surface。
+
+## 2026-07-29 — BOA latest-only consumer 實機上線
+
+- 釐清先前阻礙不是 BOA 無法連線，而是 `ssh boa` 採用了錯誤預設帳號。
+  既有 `hm4 → cm1 → BOA` 跳板可登入，BOA 亦可經 private network 讀取
+  `hmj:8710`；未建立任何公開 ingress。
+- `boan-emr` PR #7 已 merge，commit
+  `e53044b8bdce655adfb6cb7e49d7c1f931100471`。新增 bounded server-side
+  client、status/list/detail same-origin proxy、exact v1 contract 與
+  sealed publication validation、timeout/cache、mixed-publication rejection
+  及五個 focused tests。
+- 院內藥品卡仍以 `tw_drug` 唯讀鏡像取得 product→clause linkage，但條文
+  全文只取 active sealed latest detail。404 代表條文不在現行分章，不以
+  舊文補位；服務失聯時舊鏡像只能以 `local_mirror_fallback`、
+  `latest_only=false` 與前端「可能不是現行版本」警示顯示。
+- BOA PM2 已保存 private API base environment 並重啟。實機 status 回報
+  `nhi-reimbursement-rules/latest/v1`、sealed run
+  `a707d13a-0b06-5dfe-96b7-6d107ab8793f`、639 current clauses；CAPD 搜尋
+  回 5 條，0.4 detail 回 2,123 字及 26/10/16 版本 inventory。院內 canary
+  同時取得 10.1、10.8.2、10.8.2.3 三條現行全文，三者 run ID 與 output
+  fingerprint 完全一致。Caddy 路徑與動態 formulary page 亦已核對。
+- 公開收據不記錄 BOA 內網位址、登入資訊或院內藥品識別碼：
+  `docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json`。
 
 ## 2026-07-29 — GPT Pro 完成 84 年逐頁校對並載入 source-observation PG
 

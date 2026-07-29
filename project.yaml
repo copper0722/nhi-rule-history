@@ -63,8 +63,21 @@ service_surfaces:
     intended_endpoint: http://hmj:8710/api/drugs/reimbursement-rules/latest
     scope: latest_only
     api_provider_status: live_verified
-    boa_host_consumer_probe: blocked_ssh_permission_denied
-    integration_status: not_yet_verified_from_boa
+    consumer_proxy:
+      status: /api/nhi-reimbursement-rules/status
+      latest: /api/nhi-reimbursement-rules/latest
+      detail: /api/nhi-reimbursement-rules/latest/{clause_code}
+      formulary_projection: /api/formulary/{boan_code}
+    boa_host_consumer_probe: passed_via_existing_jump_host
+    server_side_private_network_only: true
+    browser_direct_provider_access: false
+    publication_validation: exact_contract_sealed_single_receipt
+    local_mirror_role: product_to_clause_linkage_and_explicit_availability_fallback_only
+    fallback_visible_latest_only_false: true
+    merged_commit: e53044b8bdce655adfb6cb7e49d7c1f931100471
+    pull_request: https://github.com/Bo-An-Clinic/boan-emr/pull/7
+    live_verification: docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json
+    integration_status: live_verified
 
 current_publication:
   source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
