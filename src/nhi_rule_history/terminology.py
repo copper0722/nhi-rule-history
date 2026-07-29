@@ -654,6 +654,46 @@ def _resolve_occurrence_statuses(
     )
 
 
+def scan_block_alias_occurrences(
+    raw_text: str,
+    aliases: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    """Scan one immutable text block with the canonical terminology matcher.
+
+    This is the version-agnostic entry point.  Current publications and newly
+    announced clause versions must use this same matcher so a frontend never
+    invents a second lexical-highlighting policy.
+    """
+
+    normalized_map = _normalized_text_map(raw_text)
+    raw_matches: list[dict[str, Any]] = []
+    for alias in aliases:
+        for span in _iter_matches(
+            raw_text, alias, normalized_map=normalized_map
+        ):
+            if alias["production_status"] == "admitted":
+                occurrence_status = "admitted"
+                occurrence_reason = "reviewed_alias_longest_match"
+            elif alias["production_status"] == "candidate":
+                occurrence_status = "candidate"
+                occurrence_reason = "alias_candidate"
+            else:
+                occurrence_status = "blocked"
+                occurrence_reason = "alias_blocked"
+            raw_matches.append(
+                {
+                    **span,
+                    "concept_id": alias["concept_id"],
+                    "alias_id": alias["alias_id"],
+                    "normalized_alias": alias["normalized_alias"],
+                    "occurrence_status": occurrence_status,
+                    "occurrence_reason": occurrence_reason,
+                    "match_rule": alias["match_rule"],
+                }
+            )
+    return tuple(_resolve_occurrence_statuses(raw_matches))
+
+
 def _scan_blocks(
     *,
     tagging_run_id: str,
@@ -664,33 +704,7 @@ def _scan_blocks(
     occurrences: list[dict[str, Any]] = []
     for block in source.blocks:
         raw_text = str(block["raw_text"])
-        normalized_map = _normalized_text_map(raw_text)
-        raw_matches: list[dict[str, Any]] = []
-        for alias in aliases:
-            for span in _iter_matches(
-                raw_text, alias, normalized_map=normalized_map
-            ):
-                if alias["production_status"] == "admitted":
-                    occurrence_status = "admitted"
-                    occurrence_reason = "reviewed_alias_longest_match"
-                elif alias["production_status"] == "candidate":
-                    occurrence_status = "candidate"
-                    occurrence_reason = "alias_candidate"
-                else:
-                    occurrence_status = "blocked"
-                    occurrence_reason = "alias_blocked"
-                raw_matches.append(
-                    {
-                        **span,
-                        "concept_id": alias["concept_id"],
-                        "alias_id": alias["alias_id"],
-                        "normalized_alias": alias["normalized_alias"],
-                        "occurrence_status": occurrence_status,
-                        "occurrence_reason": occurrence_reason,
-                        "match_rule": alias["match_rule"],
-                    }
-                )
-        resolved = _resolve_occurrence_statuses(raw_matches)
+        resolved = scan_block_alias_occurrences(raw_text, aliases)
         status_counts = defaultdict(int)
         for match in resolved:
             status_counts[str(match["occurrence_status"])] += 1

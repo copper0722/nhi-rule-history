@@ -166,30 +166,58 @@ official notices + gazettes + archival holdings
 
 ## 現行條文與最新公告的 production update lane
 
-現行正典與公告事件是兩個不同物件，前端可以同頁呈現，但資料層不能混成
-一個「最新」：
+「最新公告版本」與「目前已生效版本」是兩個可同時由 PG 表示的狀態，
+不能再把前者降格成頁面上的簡短消息：
 
-1. `current publication` 是由最新官方分章檔封存的 639 個單一條文；
-   API／付費站／BOA 的完整條文只讀這個 sealed publication。
-2. `official notice feed` 是健保署 RSS 中已分類為藥品給付規定公告的
-   事件清單。`rss_published_at` 只表示 RSS 公告時間，不是法律生效日；
-   公告是否已反映於 current publication 必須另行驗證。
-3. 公告附件進 raw／queue evidence 後，不自動寫 canonical history。
-   future-effective、old/new sides、stable identity 與 anchor replay 仍走
-   本文件的 transition gate。
+1. `latest published version`：官方公告及附件完成來源綁定、逐段解析與全文
+   平衡後，立即成為該單一條文的最新版本；即使生效日未到，仍以完整全文
+   置頂，並明示「尚未生效」。
+2. `currently effective version`：生效日前仍是申報依據。當已有較新公告版
+   時，它自動成為上一版，全文預設收合，但不刪除。
+3. `official notice event`：保存文號、公告日、明示生效日、附件與影響條文；
+   `rss_published_at` 只是發現時間，不能代替公告或生效日期。
 
-Production 更新分成兩個 deterministic PG tasks：
+新增版本的 routine path 是全機械流程，不等待模型逐條裁決：
+
+```text
+official RSS / listing poll
+  -> immutable detail + attachment acquisition
+  -> source hash / media / locator validation
+  -> exact structural parse into one-clause version blocks
+  -> full-text and block accounting gates
+  -> insert immutable PG version
+  -> link direct predecessor by the same stable clause identity
+  -> previous latest version becomes history
+  -> generate adjacent-version semantic diff
+  -> run the shared terminology / date / condition render-plan compiler
+  -> seal one PG release
+  -> API projection
+  -> paid-site rebuild and authenticated live parity check
+```
+
+這裡的「自動成為最新版本」是版本庫與讀者頁的 publication order，不是讓
+系統自行推論法律效力。生效狀態直接使用官方明示日期；日期未到就提示，日期
+到達則依同一版本 metadata 顯示。來源缺附件、全文不平衡、條文 identity
+無法確定或 schema 漂移時 fail closed，保留 queue evidence，但不能讓 agent
+以猜測文字補齊後發布。
+
+Production 更新目前由兩個 deterministic PG tasks 驅動：
 
 ```text
 task 260 / every 15 min
   official RSS poll
   -> immutable feed observation
   -> classified work item + raw/corpus bundle
-  -> no automatic legal promotion
+  -> supported source adapter
+  -> deterministic clause-version loader
+  -> no model approval gate
 
 task 276 / every 15 min, depends on task 260
   hash meaningful contents of:
     current clauses
+    latest published clause versions
+    adjacent diffs
+    shared render plans
     history inventory
     reviewed semantic enrichments
     official notice feed
@@ -201,15 +229,33 @@ task 276 / every 15 min, depends on task 260
 ```
 
 每次 RSS poll 的 observation time 會變，但不影響頁面內容，因此不得納入
-deployment fingerprint。付費站 build 不保留 stale-file fallback：四個 typed
-contracts 任一失敗、截斷或 schema 漂移即停止建置。條文歷史 agent proposal
-task 261 另行維持 `skipped_gate`；更新公告與發布現行正典不等於恢復 agent
-裁決。
+deployment fingerprint。付費站 build 不保留 stale-file fallback：必要 typed
+contracts 任一失敗、截斷或 schema 漂移即停止建置。一般歷史回溯的 agent
+proposal task 261 仍可暫停；它與新公告的 routine ingestion 是兩條不同
+workflow，不能讓長期歷史考據阻擋最新版本上線。
 
-前端呈現同樣遵守分層：現行條文全文是主要內容；最新公告是可見但簡短的
-official-event lane；歷史與方法預設收合。藥物／疾病名稱仍是站內搜尋連結，
-ATC、ICD-11 與健保治療碼不直接塞進正文，而在滑鼠 hover、鍵盤 focus 或
-手機首次點按的提示窗顯示。代碼是索引 metadata，不改寫官方條文文字。
+前端不得重做資料工作。最新版全文、上一版全文、diff、條件變色、藥名與
+疾病連結全部只讀同一個 PG render plan；瀏覽器不得另寫只適用某條文的
+regex、手工 tag、手工 diff 或補字。藥物／疾病名稱是站內搜尋連結，ATC、
+ICD-11 與健保治療碼不直接塞進正文，而在滑鼠 hover、鍵盤 focus 或手機
+首次點按的提示窗顯示。代碼是索引 metadata，不改寫官方條文文字。
+
+## 稽核 agent 的角色：找規則缺口，不生產 routine 條文
+
+稽核 agent 在 sealed release 後做對抗式抽查，固定檢查：
+
+- 官方 bytes、逐段 raw text、PG version 與 API／DOM 是否 exact parity；
+- 新版是否真的連到同一條文的直接前版；
+- 純新增是否只顯示「本版新增」，沒有憑空製造「本版刪除」；
+- 空白、單引號、全／半形等忽略規則是否只改 presentation；
+- terminology／condition offsets 是否重疊、越界或造成正文換字；
+- 桌面、手機、鍵盤與觸控是否仍能閱讀，且無橫向溢出。
+
+agent finding 只有三種結局：`false_positive`、`source_exception` 或
+`mechanical_rule_gap`。第三種必須新增 parser／schema constraint／regression
+fixture，接著從 immutable raw source 全量 replay；不得只修該頁 HTML 或只改
+該筆 PG。若新規則無法對代表性舊資料重播，release 保持失敗狀態。這使 agent
+成為規則改良者，而不是看不見的人工資料清理層。
 
 ## Terminology：master、alias 與 occurrence 分層
 

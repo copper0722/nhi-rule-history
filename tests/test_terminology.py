@@ -13,6 +13,7 @@ from nhi_rule_history.terminology import (
     _resolve_occurrence_statuses,
     normalize_alias,
     prepare_terminology,
+    scan_block_alias_occurrences,
 )
 
 
@@ -112,6 +113,37 @@ class TerminologyMatcherTest(unittest.TestCase):
         self.assertEqual(
             {row["occurrence_reason"] for row in resolved},
             {"same_span_cross_concept"},
+        )
+
+    def test_version_agnostic_scanner_reuses_longest_match_policy(self) -> None:
+        aliases = [
+            _alias(
+                "statin",
+                concept_id="class",
+                alias_id="a-class",
+            ),
+            _alias(
+                "atorvastatin",
+                concept_id="ingredient",
+                alias_id="a-ingredient",
+            ),
+        ]
+        matches = scan_block_alias_occurrences(
+            "atorvastatin及statin類", aliases
+        )
+        admitted = [
+            row for row in matches if row["occurrence_status"] == "admitted"
+        ]
+        self.assertEqual(
+            [row["matched_text"] for row in admitted],
+            ["atorvastatin", "statin"],
+        )
+        self.assertTrue(
+            all(
+                row["occurrence_reason"]
+                == "reviewed_alias_longest_match"
+                for row in admitted
+            )
         )
 
 

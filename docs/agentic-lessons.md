@@ -398,3 +398,27 @@ Prompt 與完整回覆：
 
 - [`2026-07-29-fint-fable-live-gate-prompt.md`](audits/2026-07-29-fint-fable-live-gate-prompt.md)
 - [`2026-07-29-fint-fable-live-gate-response.md`](audits/2026-07-29-fint-fable-live-gate-response.md)
+
+## 前端特例會造成 projection laundering（2026-07-29）
+
+2.6.1 的第一次完整頁面雖然已由 PG 提供 406 個來源 blocks，但數值與時間
+變色曾在瀏覽器另用一條只針對 LDL-C／TC／TG／月份的 regex。畫面看起來
+像已完成與 GitHub prototype 相同的結構化 tagging，實際上卻沒有 PG
+occurrence、offset、policy version 或全庫重播能力。這是
+`projection laundering`：把前端臨時效果誤呈現成資料庫能力。
+
+修正後的硬規則：
+
+1. current 與 announced versions 都由同一個 PG render-plan compiler
+   產生 terminology、condition 與 date segments；
+2. 每個 render block 必須與來源 block identity、順序及完整文字 exact
+   parity，否則 API／exporter fail closed；
+3. adjacent diff 由 PG 保存，前端只呈現；ABC→ABCD 的 addition-only
+   transition 不得出現 removal segment；
+4. UI regression test 必須明確拒絕 clause-specific frontend regex；
+5. 稽核 agent 發現漏標或錯標時，finding 回到 alias／parser／schema／test，
+   然後全量 replay，不准在 HTML 補例外。
+
+可重用判準是：凡一個視覺效果無法指出其 PG row、policy version、exact
+offset 與 replay test，就只能算 prototype，不能在 production 假裝是已
+治理的結構化資料。

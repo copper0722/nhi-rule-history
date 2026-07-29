@@ -16,9 +16,15 @@ import os
 import unicodedata
 import uuid
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
+from nhi_rule_history.clause_history import (
+    DIFF_PRESENTATION_VERSION,
+    IGNORED_CHANGE_POLICY,
+    semantic_diff_presentation,
+)
 from nhi_rule_history.contracts import canonical_json_bytes
 from nhi_rule_history.current_publication import semantic_comparison_text
 from nhi_rule_history.pg.acquisition import DSN_ENV, _default_connect
@@ -31,11 +37,17 @@ from nhi_rule_history.pg.common import (
     row_set_fingerprint,
     row_sha256,
 )
+from nhi_rule_history.terminology import (
+    ALIAS_ADMISSION_POLICY,
+    MATCHER_VERSION,
+    OFFSET_CONTRACT,
+    scan_block_alias_occurrences,
+)
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.2.1"
+LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.3.0"
 EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.1.0"
 COMPOSITION_RULE_VERSION = (
     "nhi-rule-history/2.6.1-amendment-plus-inherited-remainder/1.0.0"
@@ -69,6 +81,12 @@ COMPOSITION_MIGRATION = (
     / "pg"
     / "migrations"
     / "2026-07-29_nhi_rule_history_announced_composite_v23.sql"
+)
+VERSION_PROJECTION_MIGRATION = (
+    Path(__file__).resolve().parents[2]
+    / "pg"
+    / "migrations"
+    / "2026-07-29_nhi_rule_history_announced_version_projection_v24.sql"
 )
 _UUID_NAMESPACE = uuid.UUID("90f6ded1-5025-4938-9e68-fcdfdc349c1c")
 _TABLE2_CODE_RE = __import__("re").compile(r"^[A-Z0-9]{10}$")
@@ -436,11 +454,213 @@ def _inherited_composite_source(
     }
 
 
+def _terminology_projection_rows(
+    *,
+    run_id: str,
+    version_id: str,
+    clause_code: str,
+    composite_sources: Sequence[Mapping[str, Any]],
+    terminology_projection: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    tagging_run_id = str(
+        terminology_projection.get("tagging_run_id") or ""
+    )
+    aliases = list(terminology_projection.get("aliases") or ())
+    if not tagging_run_id or not aliases:
+        raise AnnouncedDyslipidemiaError(
+            "active reviewed terminology projection is unavailable"
+        )
+    block_inputs: list[dict[str, Any]] = []
+    occurrences: list[dict[str, Any]] = []
+    for block_order, block in enumerate(composite_sources):
+        raw_text = str(block["raw_text"])
+        matches = scan_block_alias_occurrences(raw_text, aliases)
+        status_counts = {
+            status: sum(
+                row["occurrence_status"] == status for row in matches
+            )
+            for status in ("admitted", "candidate", "blocked")
+        }
+        block_inputs.append(
+            _with_hash(
+                {
+                    "run_id": run_id,
+                    "version_id": version_id,
+                    "block_order": block_order,
+                    "terminology_tagging_run_id": tagging_run_id,
+                    "source_block_id": block["source_block_id"],
+                    "source_block_sha256": block["raw_text_sha256"],
+                    "matcher_version": MATCHER_VERSION,
+                    "offset_contract": OFFSET_CONTRACT,
+                    "alias_admission_policy": ALIAS_ADMISSION_POLICY,
+                    "scan_status": (
+                        "scanned_with_match"
+                        if matches
+                        else "scanned_no_match"
+                    ),
+                    "candidate_match_count": status_counts["candidate"],
+                    "admitted_match_count": status_counts["admitted"],
+                    "blocked_match_count": status_counts["blocked"],
+                }
+            )
+        )
+        for match in matches:
+            identity = {
+                "run_id": run_id,
+                "version_id": version_id,
+                "block_order": block_order,
+                "concept_id": match["concept_id"],
+                "alias_id": match["alias_id"],
+                "start_scalar": match["start_scalar"],
+                "end_scalar": match["end_scalar"],
+                "occurrence_status": match["occurrence_status"],
+            }
+            occurrences.append(
+                _with_hash(
+                    {
+                        "run_id": run_id,
+                        "version_id": version_id,
+                        "occurrence_id": _stable_uuid(
+                            "announced-terminology-occurrence", identity
+                        ),
+                        "clause_code": clause_code,
+                        "block_order": block_order,
+                        "terminology_tagging_run_id": tagging_run_id,
+                        "source_block_id": block["source_block_id"],
+                        "source_block_sha256": block["raw_text_sha256"],
+                        "concept_id": match["concept_id"],
+                        "alias_id": match["alias_id"],
+                        "start_scalar": match["start_scalar"],
+                        "end_scalar": match["end_scalar"],
+                        "start_utf8_byte": match["start_utf8_byte"],
+                        "end_utf8_byte": match["end_utf8_byte"],
+                        "matched_text": match["matched_text"],
+                        "matched_text_sha256": _sha256_text(
+                            str(match["matched_text"])
+                        ),
+                        "occurrence_status": match["occurrence_status"],
+                        "occurrence_reason": match["occurrence_reason"],
+                        "match_rule": match["match_rule"],
+                    }
+                )
+            )
+    return block_inputs, occurrences
+
+
+def _adjacent_diff_rows(
+    *,
+    run_id: str,
+    version_id: str,
+    clause_code: str,
+    predecessor: Mapping[str, Any],
+    predecessor_blocks: Sequence[Mapping[str, Any]],
+    composite_sources: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    matcher = SequenceMatcher(
+        None,
+        [
+            semantic_comparison_text(str(row["raw_text"]))
+            for row in predecessor_blocks
+        ],
+        [
+            semantic_comparison_text(str(row["raw_text"]))
+            for row in composite_sources
+        ],
+        autojunk=False,
+    )
+    rows: list[dict[str, Any]] = []
+    for opcode, old_start, old_end, new_start, new_end in matcher.get_opcodes():
+        if opcode == "equal":
+            continue
+        old_text = (
+            "\n\n".join(
+                str(row["raw_text"])
+                for row in predecessor_blocks[old_start:old_end]
+            )
+            or None
+        )
+        new_text = (
+            "\n\n".join(
+                str(row["raw_text"])
+                for row in composite_sources[new_start:new_end]
+            )
+            or None
+        )
+        presentation = semantic_diff_presentation(old_text, new_text)
+        if presentation["semantic_change_kind"] == "format_only":
+            continue
+        hunk_order = len(rows)
+        rows.append(
+            _with_hash(
+                {
+                    "run_id": run_id,
+                    "version_id": version_id,
+                    "hunk_id": _stable_uuid(
+                        "announced-adjacent-diff-hunk",
+                        {
+                            "version_id": version_id,
+                            "hunk_order": hunk_order,
+                            "old_start": old_start,
+                            "old_end": old_end,
+                            "new_start": new_start,
+                            "new_end": new_end,
+                            "old_text": old_text,
+                            "new_text": new_text,
+                        },
+                    ),
+                    "clause_code": clause_code,
+                    "predecessor_publication_run_id": predecessor["run_id"],
+                    "predecessor_text_sha256": predecessor[
+                        "raw_text_sha256"
+                    ],
+                    "hunk_order": hunk_order,
+                    "semantic_change_kind": presentation[
+                        "semantic_change_kind"
+                    ],
+                    "display_note": presentation["display_note"],
+                    "old_block_start": (
+                        old_start if old_start != old_end else None
+                    ),
+                    "old_block_end": (
+                        old_end if old_start != old_end else None
+                    ),
+                    "new_block_start": (
+                        new_start if new_start != new_end else None
+                    ),
+                    "new_block_end": (
+                        new_end if new_start != new_end else None
+                    ),
+                    "old_text": old_text,
+                    "new_text": new_text,
+                    "old_text_sha256": (
+                        _sha256_text(old_text) if old_text else None
+                    ),
+                    "new_text_sha256": (
+                        _sha256_text(new_text) if new_text else None
+                    ),
+                    "inline_segments": presentation["inline_segments"],
+                    "ignored_change_classes": presentation[
+                        "ignored_change_classes"
+                    ],
+                    "comparison_label": "與上一版本差異",
+                    "algorithm_version": DIFF_PRESENTATION_VERSION,
+                    "ignored_change_policy": IGNORED_CHANGE_POLICY,
+                }
+            )
+        )
+    if not rows:
+        raise AnnouncedDyslipidemiaError(
+            "announced version produced no substantive adjacent diff"
+        )
+    return rows
+
+
 def prepare_announced_material(
     odt_path: Path,
     *,
     known_products: Sequence[Mapping[str, Any]],
     predecessor: Mapping[str, Any],
+    terminology_projection: Mapping[str, Any],
 ) -> AnnouncedMaterial:
     payload = Path(odt_path).read_bytes()
     artifact_sha256 = hashlib.sha256(payload).hexdigest()
@@ -557,6 +777,7 @@ def prepare_announced_material(
             "v21": migration_fingerprint(MIGRATION),
             "v22": migration_fingerprint(RELEASE_GATE_MIGRATION),
             "v23": migration_fingerprint(COMPOSITION_MIGRATION),
+            "v24": migration_fingerprint(VERSION_PROJECTION_MIGRATION),
         }
     )
     input_fingerprint = object_fingerprint(
@@ -571,6 +792,22 @@ def prepare_announced_material(
             "composition_rule_version": COMPOSITION_RULE_VERSION,
             "composition_manifest_sha256": composition_manifest_sha,
             "composed_text_sha256": composed_text_sha,
+            "terminology_projection": {
+                "tagging_run_id": terminology_projection.get(
+                    "tagging_run_id"
+                ),
+                "output_fingerprint": terminology_projection.get(
+                    "output_fingerprint"
+                ),
+                "sealed_fingerprint": terminology_projection.get(
+                    "sealed_fingerprint"
+                ),
+                "matcher_version": MATCHER_VERSION,
+                "offset_contract": OFFSET_CONTRACT,
+                "alias_admission_policy": ALIAS_ADMISSION_POLICY,
+            },
+            "diff_algorithm_version": DIFF_PRESENTATION_VERSION,
+            "ignored_change_policy": IGNORED_CHANGE_POLICY,
             "model": model_source,
             "loader_version": LOADER_VERSION,
             "evaluator_version": EVALUATOR_VERSION,
@@ -605,6 +842,9 @@ def prepare_announced_material(
         for name in (
             "notice_event", "notice_effect", "clause_patch", "patch_component",
             "composed_clause_version", "composed_clause_block",
+            "composed_clause_tagging_block_input",
+            "composed_clause_terminology_occurrence",
+            "composed_clause_diff_hunk",
             "reimbursement_product_snapshot",
             "composed_clause_reimbursement_code",
             "decision_model", "decision_input", "risk_category", "risk_branch",
@@ -733,6 +973,27 @@ def prepare_announced_material(
                 }
             )
         )
+    tagging_inputs, terminology_occurrences = _terminology_projection_rows(
+        run_id=run_id,
+        version_id=version_id,
+        clause_code="2.6.1",
+        composite_sources=composite_sources,
+        terminology_projection=terminology_projection,
+    )
+    rows["composed_clause_tagging_block_input"].extend(tagging_inputs)
+    rows["composed_clause_terminology_occurrence"].extend(
+        terminology_occurrences
+    )
+    rows["composed_clause_diff_hunk"].extend(
+        _adjacent_diff_rows(
+            run_id=run_id,
+            version_id=version_id,
+            clause_code="2.6.1",
+            predecessor=predecessor,
+            predecessor_blocks=predecessor_blocks,
+            composite_sources=composite_sources,
+        )
+    )
 
     predicate_fingerprint = object_fingerprint(
         {
@@ -982,6 +1243,30 @@ _TABLE_COLUMNS = {
         "raw_text","raw_text_sha256","source_locator","render_locator",
         "inheritance_basis","source_row_sha256",
     ),
+    "composed_clause_tagging_block_input": (
+        "run_id","version_id","block_order","terminology_tagging_run_id",
+        "source_block_id","source_block_sha256","matcher_version",
+        "offset_contract","alias_admission_policy","scan_status",
+        "candidate_match_count","admitted_match_count","blocked_match_count",
+        "source_row_sha256",
+    ),
+    "composed_clause_terminology_occurrence": (
+        "run_id","version_id","occurrence_id","clause_code","block_order",
+        "terminology_tagging_run_id","source_block_id","source_block_sha256",
+        "concept_id","alias_id","start_scalar","end_scalar",
+        "start_utf8_byte","end_utf8_byte","matched_text",
+        "matched_text_sha256","occurrence_status","occurrence_reason",
+        "match_rule","source_row_sha256",
+    ),
+    "composed_clause_diff_hunk": (
+        "run_id","version_id","hunk_id","clause_code",
+        "predecessor_publication_run_id","predecessor_text_sha256",
+        "hunk_order","semantic_change_kind","display_note",
+        "old_block_start","old_block_end","new_block_start","new_block_end",
+        "old_text","new_text","old_text_sha256","new_text_sha256",
+        "inline_segments","ignored_change_classes","comparison_label",
+        "algorithm_version","ignored_change_policy","source_row_sha256",
+    ),
     "reimbursement_product_snapshot": (
         "run_id","nhi_code","product_name","ingredient_name","atc_code",
         "snapshot_basis","source_component_order","source_row_sha256",
@@ -1022,7 +1307,7 @@ _TABLE_COLUMNS = {
 }
 _JSON_COLUMNS = {
     "unresolved_scope", "unprocessed_event_scope", "source_locator",
-    "render_locator",
+    "render_locator", "inline_segments", "ignored_change_policy",
     "outcome_codes", "operand",
 }
 
@@ -1118,6 +1403,64 @@ def _current_predecessor(connection: Any) -> dict[str, Any]:
     }
 
 
+def _active_terminology_projection(connection: Any) -> dict[str, Any]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT tagging_run_id, output_fingerprint, sealed_fingerprint,
+                   matcher_version, offset_contract, alias_admission_policy
+            FROM nhi_rule_history_terminology.v_active_tagging_run
+            """
+        )
+        run = cursor.fetchone()
+        if run is None:
+            raise AnnouncedDyslipidemiaError(
+                "active sealed terminology run is unavailable"
+            )
+        cursor.execute(
+            """
+            SELECT alias_id, concept_id, normalized_alias,
+                   production_status, match_rule
+            FROM nhi_rule_history_terminology.concept_alias
+            WHERE tagging_run_id=%s
+            ORDER BY length(normalized_alias) DESC,
+                     normalized_alias, concept_id, alias_id
+            """,
+            (run[0],),
+        )
+        aliases = [
+            {
+                "alias_id": str(row[0]),
+                "concept_id": str(row[1]),
+                "normalized_alias": str(row[2]),
+                "production_status": str(row[3]),
+                "match_rule": str(row[4]),
+            }
+            for row in cursor.fetchall()
+        ]
+    if not aliases:
+        raise AnnouncedDyslipidemiaError(
+            "active terminology run has no aliases"
+        )
+    if (
+        str(run[3]) != MATCHER_VERSION
+        or str(run[4]) != OFFSET_CONTRACT
+        or str(run[5]) != ALIAS_ADMISSION_POLICY
+    ):
+        raise AnnouncedDyslipidemiaError(
+            "active terminology policy differs from announced-version matcher"
+        )
+    return {
+        "tagging_run_id": str(run[0]),
+        "output_fingerprint": str(run[1]),
+        "sealed_fingerprint": str(run[2]),
+        "matcher_version": str(run[3]),
+        "offset_contract": str(run[4]),
+        "alias_admission_policy": str(run[5]),
+        "aliases": aliases,
+    }
+
+
 def _apply_migration(connection: Any) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -1139,6 +1482,16 @@ def _apply_migration(connection: Any) -> None:
         )
         if cursor.fetchone()[0] is None:
             cursor.execute(COMPOSITION_MIGRATION.read_text(encoding="utf-8"))
+        cursor.execute(
+            "SELECT to_regclass("
+            "'nhi_rule_history_announced."
+            "composed_clause_terminology_occurrence'"
+            ")"
+        )
+        if cursor.fetchone()[0] is None:
+            cursor.execute(
+                VERSION_PROJECTION_MIGRATION.read_text(encoding="utf-8")
+            )
 
 
 def _insert_material(connection: Any, material: AnnouncedMaterial) -> bool:
@@ -1247,6 +1600,10 @@ def verify_announced_material(
                 (run_id,),
             )
             composed = cursor.fetchone()
+            if composed is None:
+                raise AnnouncedDyslipidemiaError(
+                    "fresh composed clause version is unavailable"
+                )
             cursor.execute(
                 f"""
                 SELECT count(*) FILTER (
@@ -1276,6 +1633,96 @@ def verify_announced_material(
                 (run_id,),
             )
             code_link_counts = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT count(*),
+                       count(*) FILTER (
+                         WHERE scan_status='scanned_with_match'
+                       )
+                FROM {SCHEMA}.composed_clause_tagging_block_input
+                WHERE run_id=%s AND version_id=%s
+                """,
+                (run_id, composed[0]),
+            )
+            tagging_block_counts = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT count(*) FILTER (
+                         WHERE occurrence_status='admitted'
+                       ),
+                       count(*) FILTER (
+                         WHERE occurrence_status='candidate'
+                       ),
+                       count(*) FILTER (
+                         WHERE occurrence_status='blocked'
+                       )
+                FROM {SCHEMA}.composed_clause_terminology_occurrence
+                WHERE run_id=%s AND version_id=%s
+                """,
+                (run_id, composed[0]),
+            )
+            terminology_counts = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT count(*)
+                FROM {SCHEMA}.composed_clause_diff_hunk
+                WHERE run_id=%s AND version_id=%s
+                """,
+                (run_id, composed[0]),
+            )
+            diff_hunk_count = int(cursor.fetchone()[0])
+            cursor.execute(
+                f"""
+                WITH inherited_announced AS (
+                  SELECT occurrence.source_block_id,
+                         occurrence.source_block_sha256,
+                         occurrence.concept_id, occurrence.alias_id,
+                         occurrence.start_scalar, occurrence.end_scalar,
+                         occurrence.matched_text
+                  FROM {SCHEMA}.composed_clause_terminology_occurrence
+                    occurrence
+                  JOIN {SCHEMA}.composed_clause_block block
+                    ON (block.run_id, block.version_id, block.block_order) =
+                       (occurrence.run_id, occurrence.version_id,
+                        occurrence.block_order)
+                  WHERE occurrence.run_id=%s
+                    AND occurrence.version_id=%s
+                    AND occurrence.occurrence_status='admitted'
+                    AND block.origin_lane='predecessor_inherited'
+                ),
+                current_source AS (
+                  SELECT occurrence.source_block_id,
+                         occurrence.source_block_sha256,
+                         occurrence.concept_id, occurrence.alias_id,
+                         occurrence.start_scalar, occurrence.end_scalar,
+                         occurrence.matched_text
+                  FROM
+                    nhi_rule_history_terminology
+                      .v_admitted_clause_occurrence occurrence
+                  WHERE occurrence.clause_code='2.6.1'
+                    AND occurrence.source_block_id IN (
+                      SELECT block.source_block_id
+                      FROM {SCHEMA}.composed_clause_block block
+                      WHERE block.run_id=%s
+                        AND block.version_id=%s
+                        AND block.origin_lane='predecessor_inherited'
+                    )
+                )
+                SELECT (
+                  SELECT count(*) FROM (
+                    (SELECT * FROM inherited_announced
+                     EXCEPT SELECT * FROM current_source)
+                    UNION ALL
+                    (SELECT * FROM current_source
+                     EXCEPT SELECT * FROM inherited_announced)
+                  ) mismatch
+                )::integer
+                """,
+                (run_id, composed[0], run_id, composed[0]),
+            )
+            inherited_terminology_mismatch_count = int(
+                cursor.fetchone()[0]
+            )
     output = object_fingerprint(
         {"counts": counts, "table_fingerprints": fingerprints}
     )
@@ -1317,6 +1764,22 @@ def verify_announced_material(
         raise AnnouncedDyslipidemiaError(
             "fresh reimbursement-code links do not cover all products"
         )
+    if int(tagging_block_counts[0]) != 406:
+        raise AnnouncedDyslipidemiaError(
+            "fresh terminology scan does not cover all composed blocks"
+        )
+    if int(terminology_counts[0]) < 1:
+        raise AnnouncedDyslipidemiaError(
+            "fresh composed clause has no admitted terminology occurrences"
+        )
+    if inherited_terminology_mismatch_count:
+        raise AnnouncedDyslipidemiaError(
+            "inherited composed blocks differ from current terminology scan"
+        )
+    if diff_hunk_count < 1:
+        raise AnnouncedDyslipidemiaError(
+            "fresh composed clause has no adjacent diff hunks"
+        )
     return {
         "run_id": run_id,
         "state": "sealed",
@@ -1331,6 +1794,17 @@ def verify_announced_material(
         "composed_block_count": int(composed_counts[2]),
         "reimbursement_code_link_count": sum(
             int(value) for value in code_link_counts
+        ),
+        "tagged_block_count": int(tagging_block_counts[0]),
+        "tagged_block_with_match_count": int(tagging_block_counts[1]),
+        "terminology_occurrence_counts": {
+            "admitted": int(terminology_counts[0]),
+            "candidate": int(terminology_counts[1]),
+            "blocked": int(terminology_counts[2]),
+        },
+        "diff_hunk_count": diff_hunk_count,
+        "inherited_terminology_mismatch_count": (
+            inherited_terminology_mismatch_count
         ),
     }
 
@@ -1349,10 +1823,12 @@ def load_announced_dyslipidemia(
     with connector(dsn) as connection:
         known_products = _known_c10_products(connection)
         predecessor = _current_predecessor(connection)
+        terminology_projection = _active_terminology_projection(connection)
     material = prepare_announced_material(
         Path(odt_path),
         known_products=known_products,
         predecessor=predecessor,
+        terminology_projection=terminology_projection,
     )
     with connector(dsn) as connection:
         already_loaded = _insert_material(connection, material)
