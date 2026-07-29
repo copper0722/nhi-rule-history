@@ -1,9 +1,11 @@
-"""Load the 2026-07-28 dyslipidemia notice as a sealed future patch.
+"""Load the 2026-07-28 dyslipidemia notice and its complete clause projection.
 
-The official amendment attachment omits the unchanged Table 2 body.  This
-loader therefore publishes a source-exact amendment patch, not a fictitious
-single-source full clause.  It also materializes a normalized, version-bound
-Table 1 LDL-C threshold model.  User-entered facts are never handled here.
+The official amendment attachment elides the unchanged remainder below the new
+Table 2 heading.  The loader therefore preserves two provenance lanes: exact
+amendment blocks and byte-exact inherited predecessor blocks.  Their sealed
+manifest forms one deterministic complete 2.6.1 version.  The same release also
+normalizes NHI reimbursement-product-code links and a version-bound Table 1
+LDL-C threshold model.  User-entered facts are never handled here.
 """
 
 from __future__ import annotations
@@ -33,8 +35,11 @@ from nhi_rule_history.update.odt import inspect_odt_document
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.1.1"
+LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.2.0"
 EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.1.0"
+COMPOSITION_RULE_VERSION = (
+    "nhi-rule-history/2.6.1-amendment-plus-inherited-remainder/1.0.0"
+)
 NOTICE_URL = "https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html"
 NOTICE_REFERENCE = "健保審字第1150671962號"
 NOTICE_TITLE = "公告異動降血脂藥品支付價格及修訂其藥品給付規定"
@@ -58,6 +63,12 @@ RELEASE_GATE_MIGRATION = (
     / "migrations"
     / "2026-07-29_nhi_rule_history_announced_release_gate_v22.sql"
 )
+COMPOSITION_MIGRATION = (
+    Path(__file__).resolve().parents[2]
+    / "pg"
+    / "migrations"
+    / "2026-07-29_nhi_rule_history_announced_composite_v23.sql"
+)
 _UUID_NAMESPACE = uuid.UUID("90f6ded1-5025-4938-9e68-fcdfdc349c1c")
 _TABLE2_CODE_RE = __import__("re").compile(r"^[A-Z0-9]{10}$")
 
@@ -71,6 +82,7 @@ class AnnouncedMaterial:
     run_id: str
     notice_id: str
     patch_id: str
+    version_id: str
     model_id: str
     rows: Mapping[str, tuple[dict[str, Any], ...]]
     expected_counts: Mapping[str, int]
@@ -293,10 +305,141 @@ def _model_graph() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dic
     return categories, branches, predicates
 
 
+def _validate_predecessor(predecessor: Mapping[str, Any]) -> list[dict[str, Any]]:
+    if str(predecessor.get("clause_code") or "") != "2.6.1":
+        raise AnnouncedDyslipidemiaError("predecessor clause is not 2.6.1")
+    if predecessor.get("raw_text_sha256") != PREDECESSOR_TEXT_SHA256:
+        raise AnnouncedDyslipidemiaError("predecessor 2.6.1 text hash changed")
+    blocks = [dict(row) for row in predecessor.get("blocks") or []]
+    if [int(row["block_order"]) for row in blocks] != list(range(72)):
+        raise AnnouncedDyslipidemiaError(
+            "predecessor 2.6.1 block coverage is not exactly 0..71"
+        )
+    if not str(blocks[0]["raw_text"]).startswith("2.6.1."):
+        raise AnnouncedDyslipidemiaError("predecessor clause heading changed")
+    if str(blocks[1]["raw_text"]).strip() != (
+        "全民健康保險降膽固醇藥物給付規定表"
+    ):
+        raise AnnouncedDyslipidemiaError(
+            "predecessor Table-2 inheritance anchor changed"
+        )
+    if str(blocks[51]["raw_text"]).strip() != (
+        "全民健康保險降三酸甘油酯藥物給付規定表"
+    ):
+        raise AnnouncedDyslipidemiaError(
+            "predecessor triglyceride-table anchor changed"
+        )
+    return blocks
+
+
+def _patch_composite_source(
+    block: Mapping[str, Any],
+    *,
+    patch_component_order: int,
+) -> dict[str, Any]:
+    locator = dict(block["locator"])
+    role = _component_role(int(locator["document_order"]))
+    render_locator: dict[str, Any] = {"section_role": role}
+    if role == "table2_code_set":
+        block_kind = "table_paragraph"
+        container = "table_cell"
+        render_locator.update(
+            {
+                "table_index": 0,
+                "table_role": "table2_product_codes",
+                "row_index": int(locator["row_index"]),
+                "cell_index": int(locator["cell_index"]),
+            }
+        )
+    elif role == "table1_matrix":
+        block_kind = "table_paragraph"
+        container = "table_cell"
+        render_locator.update(
+            {
+                "table_index": 1,
+                "table_role": "table1_ldl_thresholds",
+                "row_index": int(locator["row_index"]),
+                "cell_index": int(locator["cell_index"]),
+            }
+        )
+    else:
+        block_kind = "paragraph"
+        container = "flow"
+    return {
+        "origin_lane": "amendment_exact",
+        "patch_component_order": patch_component_order,
+        "predecessor_publication_run_id": None,
+        "predecessor_block_order": None,
+        "source_artifact_sha256": EXPECTED_ARTIFACT_SHA256,
+        "source_block_id": block["block_id"],
+        "block_kind": block_kind,
+        "container": container,
+        "raw_text": block["raw_text"],
+        "raw_text_sha256": block["raw_text_sha256"],
+        "source_locator": locator,
+        "render_locator": render_locator,
+        "inheritance_basis": None,
+    }
+
+
+def _inherited_composite_source(
+    block: Mapping[str, Any],
+    *,
+    predecessor: Mapping[str, Any],
+) -> dict[str, Any]:
+    source_order = int(block["block_order"])
+    source_locator = dict(block["source_locator"])
+    render_locator: dict[str, Any]
+    if 2 <= source_order <= 38:
+        render_locator = {
+            "table_index": 2,
+            "table_role": "table2_ldl_thresholds",
+            "row_index": int(source_locator["row_logical_index"]),
+            "cell_index": int(source_locator["cell_logical_index"]),
+            "section_role": "inherited_table2",
+        }
+        block_kind = "table_paragraph"
+        container = "table_cell"
+    elif 52 <= source_order <= 71:
+        render_locator = {
+            "table_index": 3,
+            "table_role": "triglyceride_thresholds",
+            "row_index": int(source_locator["row_logical_index"]),
+            "cell_index": int(source_locator["cell_logical_index"]),
+            "section_role": "inherited_triglyceride_table",
+        }
+        block_kind = "table_paragraph"
+        container = "table_cell"
+    else:
+        render_locator = {"section_role": "inherited_remainder"}
+        block_kind = "paragraph"
+        container = "flow"
+    return {
+        "origin_lane": "predecessor_inherited",
+        "patch_component_order": None,
+        "predecessor_publication_run_id": predecessor["run_id"],
+        "predecessor_block_order": source_order,
+        "source_artifact_sha256": predecessor["source_artifact_sha256"],
+        "source_block_id": block["source_block_id"],
+        "block_kind": block_kind,
+        "container": container,
+        "raw_text": block["raw_text"],
+        "raw_text_sha256": block["raw_text_sha256"],
+        "source_locator": source_locator,
+        "render_locator": render_locator,
+        "inheritance_basis": (
+            "The official amendment comparison ends the new 2.6.1 column "
+            "below its Table-2 heading with '(以下略)'; predecessor blocks "
+            "2..71 are replayed byte-exact as the unchanged remainder."
+        ),
+    }
+
+
 def prepare_announced_material(
     odt_path: Path,
     *,
     known_products: Sequence[Mapping[str, Any]],
+    predecessor: Mapping[str, Any],
 ) -> AnnouncedMaterial:
     payload = Path(odt_path).read_bytes()
     artifact_sha256 = hashlib.sha256(payload).hexdigest()
@@ -308,6 +451,7 @@ def prepare_announced_material(
         raise AnnouncedDyslipidemiaError("official amendment structural parity failed")
     all_blocks = inspected["blocks"]
     selected = _selected_source_blocks(all_blocks)
+    predecessor_blocks = _validate_predecessor(predecessor)
     table2_products, code_doc_orders = _extract_table2_products(all_blocks)
     component_manifest = [
         {
@@ -320,6 +464,47 @@ def prepare_announced_material(
     patch_text = "\n\n".join(str(row["raw_text"]) for row in selected)
     patch_sha = _sha256_text(patch_text)
     component_manifest_sha = object_fingerprint(component_manifest)
+    amendment_composite_sources = [
+        _patch_composite_source(row, patch_component_order=index)
+        for index, row in enumerate(selected[:-1])
+    ]
+    inherited_composite_sources = [
+        _inherited_composite_source(row, predecessor=predecessor)
+        for row in predecessor_blocks[2:]
+    ]
+    composite_sources = [
+        *amendment_composite_sources,
+        *inherited_composite_sources,
+    ]
+    if len(amendment_composite_sources) != 336:
+        raise AnnouncedDyslipidemiaError(
+            "composite amendment block count is not 336"
+        )
+    if len(inherited_composite_sources) != 70:
+        raise AnnouncedDyslipidemiaError(
+            "composite inherited block count is not 70"
+        )
+    composition_manifest = [
+        {
+            "block_order": index,
+            "origin_lane": row["origin_lane"],
+            "source_artifact_sha256": row["source_artifact_sha256"],
+            "source_block_id": row["source_block_id"],
+            "raw_text_sha256": row["raw_text_sha256"],
+            "patch_component_order": row["patch_component_order"],
+            "predecessor_publication_run_id": (
+                row["predecessor_publication_run_id"]
+            ),
+            "predecessor_block_order": row["predecessor_block_order"],
+            "render_locator": row["render_locator"],
+        }
+        for index, row in enumerate(composite_sources)
+    ]
+    composition_manifest_sha = object_fingerprint(composition_manifest)
+    composed_text = "\n\n".join(
+        str(row["raw_text"]) for row in composite_sources
+    )
+    composed_text_sha = _sha256_text(composed_text)
     doc_to_component = {
         int(row["locator"]["document_order"]): index
         for index, row in enumerate(selected)
@@ -361,13 +546,16 @@ def prepare_announced_material(
         "branches": graph_branches,
         "predicates": graph_predicates,
         "table2_codes": sorted(table2_by_code),
-        "known_products": sorted(known_by_code),
+        "known_products": [
+            known_by_code[code] for code in sorted(known_by_code)
+        ],
     }
     code_sha = code_fingerprint(Path(__file__).resolve())
     migration_sha = object_fingerprint(
         {
             "v21": migration_fingerprint(MIGRATION),
             "v22": migration_fingerprint(RELEASE_GATE_MIGRATION),
+            "v23": migration_fingerprint(COMPOSITION_MIGRATION),
         }
     )
     input_fingerprint = object_fingerprint(
@@ -375,6 +563,13 @@ def prepare_announced_material(
             "artifact_sha256": artifact_sha256,
             "predecessor_text_sha256": PREDECESSOR_TEXT_SHA256,
             "component_manifest_sha256": component_manifest_sha,
+            "predecessor_publication_run_id": predecessor["run_id"],
+            "predecessor_source_artifact_sha256": (
+                predecessor["source_artifact_sha256"]
+            ),
+            "composition_rule_version": COMPOSITION_RULE_VERSION,
+            "composition_manifest_sha256": composition_manifest_sha,
+            "composed_text_sha256": composed_text_sha,
             "model": model_source,
             "loader_version": LOADER_VERSION,
             "evaluator_version": EVALUATOR_VERSION,
@@ -385,6 +580,14 @@ def prepare_announced_material(
     run_id = _stable_uuid("release-run", input_fingerprint)
     notice_id = _stable_uuid("notice", [NOTICE_REFERENCE, artifact_sha256])
     patch_id = _stable_uuid("patch", ["2.6.1", EFFECTIVE_DATE, patch_sha])
+    version_id = _stable_uuid(
+        "composed-version",
+        [
+            patch_id,
+            predecessor["run_id"],
+            composition_manifest_sha,
+        ],
+    )
     model_id = _stable_uuid("model", [patch_id, EVALUATOR_VERSION])
     effect_ids = {
         key: _stable_uuid("effect", [notice_id, key])
@@ -400,6 +603,9 @@ def prepare_announced_material(
         name: []
         for name in (
             "notice_event", "notice_effect", "clause_patch", "patch_component",
+            "composed_clause_version", "composed_clause_block",
+            "reimbursement_product_snapshot",
+            "composed_clause_reimbursement_code",
             "decision_model", "decision_input", "risk_category", "risk_branch",
             "risk_predicate", "model_product_code",
         )
@@ -456,14 +662,15 @@ def prepare_announced_material(
                 "source_exact_patch_text": patch_text,
                 "source_exact_patch_sha256": patch_sha,
                 "omitted_text_present": True,
-                "composition_status": "patch_only",
+                "composition_status": "reviewed_composite",
                 "comparison_sha256": _sha256_text(semantic_comparison_text(patch_text)),
                 "component_manifest_sha256": component_manifest_sha,
                 "partial_event_projection": True,
                 "unprocessed_event_scope": unresolved_scope,
                 "public_note": (
-                    "官方修訂附件的表二標示「以下略」；本資料為來源逐字修正內容，"
-                    "不是單一附件所載的完整 2.6.1 全文。"
+                    "完整 2.6.1 由公告逐字修正 blocks 與 115.5.22 "
+                    "官方分章檔未變 remainder 機械合成；每一 block "
+                    "均保存來源 lane、locator 與 SHA-256。"
                 ),
             }
         )
@@ -482,6 +689,46 @@ def prepare_announced_material(
                     "source_locator": block["locator"],
                     "raw_text": block["raw_text"],
                     "raw_text_sha256": block["raw_text_sha256"],
+                }
+            )
+        )
+    rows["composed_clause_version"].append(
+        _with_hash(
+            {
+                "run_id": run_id,
+                "version_id": version_id,
+                "patch_id": patch_id,
+                "clause_code": "2.6.1",
+                "effective_from": EFFECTIVE_DATE,
+                "predecessor_publication_run_id": predecessor["run_id"],
+                "predecessor_text_sha256": PREDECESSOR_TEXT_SHA256,
+                "predecessor_source_artifact_sha256": (
+                    predecessor["source_artifact_sha256"]
+                ),
+                "composition_rule_version": COMPOSITION_RULE_VERSION,
+                "composition_manifest_sha256": composition_manifest_sha,
+                "composed_text": composed_text,
+                "composed_text_sha256": composed_text_sha,
+                "amendment_block_count": len(amendment_composite_sources),
+                "inherited_block_count": len(inherited_composite_sources),
+                "review_status": "deterministic_owner_directed",
+                "public_note": (
+                    "公告新文與 predecessor 未變 remainder 已正規化為 "
+                    "single-clause complete version。"
+                ),
+            }
+        )
+    )
+    for order, source in enumerate(composite_sources):
+        rows["composed_clause_block"].append(
+            _with_hash(
+                {
+                    "run_id": run_id,
+                    "version_id": version_id,
+                    "patch_id": patch_id,
+                    "clause_code": "2.6.1",
+                    "block_order": order,
+                    **source,
                 }
             )
         )
@@ -597,11 +844,52 @@ def prepare_announced_material(
     for code in sorted(known_by_code):
         product = dict(known_by_code[code])
         exception = table2_by_code.get(code)
+        source_component_order = (
+            doc_to_component[code_doc_orders[code]]
+            if exception
+            else None
+        )
         if exception:
             product.update(
                 product_name=exception["product_name"],
                 ingredient_name=exception["ingredient_name"],
             )
+        rows["reimbursement_product_snapshot"].append(
+            _with_hash(
+                {
+                    "run_id": run_id,
+                    **product,
+                    "snapshot_basis": (
+                        "notice_exact_code_set"
+                        if exception
+                        else "nhi_product_master_snapshot"
+                    ),
+                    "source_component_order": source_component_order,
+                }
+            )
+        )
+        rows["composed_clause_reimbursement_code"].append(
+            _with_hash(
+                {
+                    "run_id": run_id,
+                    "version_id": version_id,
+                    "nhi_code": code,
+                    "applicability_lane": (
+                        "table2_exception"
+                        if exception
+                        else "table1_default"
+                    ),
+                    "link_basis": (
+                        "notice_exact_code_set"
+                        if exception
+                        else (
+                            "nhi_product_master_c10_minus_notice_exceptions"
+                        )
+                    ),
+                    "source_component_order": source_component_order,
+                }
+            )
+        )
         rows["model_product_code"].append(
             _with_hash(
                 {
@@ -614,11 +902,7 @@ def prepare_announced_material(
                         if exception
                         else "nhi_product_master_snapshot"
                     ),
-                    "source_component_order": (
-                        doc_to_component[code_doc_orders[code]]
-                        if exception
-                        else None
-                    ),
+                    "source_component_order": source_component_order,
                 }
             )
         )
@@ -645,6 +929,7 @@ def prepare_announced_material(
         run_id=run_id,
         notice_id=notice_id,
         patch_id=patch_id,
+        version_id=version_id,
         model_id=model_id,
         rows=frozen_rows,
         expected_counts=expected_counts,
@@ -680,6 +965,30 @@ _TABLE_COLUMNS = {
         "run_id","patch_id","component_order","component_role","source_block_id",
         "source_locator","raw_text","raw_text_sha256","source_row_sha256",
     ),
+    "composed_clause_version": (
+        "run_id","version_id","patch_id","clause_code","effective_from",
+        "predecessor_publication_run_id","predecessor_text_sha256",
+        "predecessor_source_artifact_sha256","composition_rule_version",
+        "composition_manifest_sha256","composed_text","composed_text_sha256",
+        "amendment_block_count","inherited_block_count","review_status",
+        "public_note","source_row_sha256",
+    ),
+    "composed_clause_block": (
+        "run_id","version_id","patch_id","clause_code","block_order",
+        "origin_lane","patch_component_order",
+        "predecessor_publication_run_id","predecessor_block_order",
+        "source_artifact_sha256","source_block_id","block_kind","container",
+        "raw_text","raw_text_sha256","source_locator","render_locator",
+        "inheritance_basis","source_row_sha256",
+    ),
+    "reimbursement_product_snapshot": (
+        "run_id","nhi_code","product_name","ingredient_name","atc_code",
+        "snapshot_basis","source_component_order","source_row_sha256",
+    ),
+    "composed_clause_reimbursement_code": (
+        "run_id","version_id","nhi_code","applicability_lane","link_basis",
+        "source_component_order","source_row_sha256",
+    ),
     "decision_model": (
         "run_id","model_id","patch_id","model_key","title","scope_label",
         "model_status","effective_from","effective_until","evaluator_version",
@@ -712,6 +1021,7 @@ _TABLE_COLUMNS = {
 }
 _JSON_COLUMNS = {
     "unresolved_scope", "unprocessed_event_scope", "source_locator",
+    "render_locator",
     "outcome_codes", "operand",
 }
 
@@ -758,6 +1068,55 @@ def _known_c10_products(connection: Any) -> list[dict[str, Any]]:
         ]
 
 
+def _current_predecessor(connection: Any) -> dict[str, Any]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT run_id, clause_code, raw_text, raw_text_sha256,
+                   source_artifact_sha256, source_url, source_label
+            FROM nhi_rule_history_publication.v_current_clause
+            WHERE clause_code='2.6.1'
+            """
+        )
+        clause = cursor.fetchone()
+        if not clause:
+            raise AnnouncedDyslipidemiaError(
+                "current 2.6.1 predecessor is unavailable"
+            )
+        cursor.execute(
+            """
+            SELECT block_order, source_block_id, block_kind, container,
+                   raw_text, raw_text_sha256, source_locator
+            FROM nhi_rule_history_publication.v_current_clause_block
+            WHERE run_id=%s AND clause_code='2.6.1'
+            ORDER BY block_order
+            """,
+            (clause[0],),
+        )
+        blocks = [
+            {
+                "block_order": row[0],
+                "source_block_id": row[1],
+                "block_kind": row[2],
+                "container": row[3],
+                "raw_text": row[4],
+                "raw_text_sha256": row[5],
+                "source_locator": row[6],
+            }
+            for row in cursor.fetchall()
+        ]
+    return {
+        "run_id": str(clause[0]),
+        "clause_code": clause[1],
+        "raw_text": clause[2],
+        "raw_text_sha256": clause[3],
+        "source_artifact_sha256": clause[4],
+        "source_url": clause[5],
+        "source_label": clause[6],
+        "blocks": blocks,
+    }
+
+
 def _apply_migration(connection: Any) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -772,6 +1131,13 @@ def _apply_migration(connection: Any) -> None:
         )
         if cursor.fetchone()[0] is None:
             cursor.execute(RELEASE_GATE_MIGRATION.read_text(encoding="utf-8"))
+        cursor.execute(
+            "SELECT to_regclass("
+            "'nhi_rule_history_announced.composed_clause_version'"
+            ")"
+        )
+        if cursor.fetchone()[0] is None:
+            cursor.execute(COMPOSITION_MIGRATION.read_text(encoding="utf-8"))
 
 
 def _insert_material(connection: Any, material: AnnouncedMaterial) -> bool:
@@ -869,6 +1235,46 @@ def verify_announced_material(
                 (run_id,),
             )
             product_counts = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT version_id, composed_text_sha256,
+                       amendment_block_count, inherited_block_count,
+                       composition_rule_version
+                FROM {SCHEMA}.composed_clause_version
+                WHERE run_id=%s AND clause_code='2.6.1'
+                """,
+                (run_id,),
+            )
+            composed = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT count(*) FILTER (
+                         WHERE origin_lane='amendment_exact'
+                       ),
+                       count(*) FILTER (
+                         WHERE origin_lane='predecessor_inherited'
+                       ),
+                       count(*)
+                FROM {SCHEMA}.composed_clause_block
+                WHERE run_id=%s
+                """,
+                (run_id,),
+            )
+            composed_counts = cursor.fetchone()
+            cursor.execute(
+                f"""
+                SELECT count(*) FILTER (
+                         WHERE applicability_lane='table2_exception'
+                       ),
+                       count(*) FILTER (
+                         WHERE applicability_lane='table1_default'
+                       )
+                FROM {SCHEMA}.composed_clause_reimbursement_code
+                WHERE run_id=%s
+                """,
+                (run_id,),
+            )
+            code_link_counts = cursor.fetchone()
     output = object_fingerprint(
         {"counts": counts, "table_fingerprints": fingerprints}
     )
@@ -888,6 +1294,28 @@ def verify_announced_material(
         raise AnnouncedDyslipidemiaError("fresh announced data differs from prepared material")
     if int(product_counts[0]) != 116:
         raise AnnouncedDyslipidemiaError("fresh Table-2 code count is not 116")
+    if not composed or (
+        int(composed[2]),
+        int(composed[3]),
+        composed[4],
+    ) != (336, 70, COMPOSITION_RULE_VERSION):
+        raise AnnouncedDyslipidemiaError(
+            "fresh composed clause version is incomplete"
+        )
+    if tuple(int(value) for value in composed_counts) != (336, 70, 406):
+        raise AnnouncedDyslipidemiaError(
+            "fresh composed clause block coverage is not 336+70"
+        )
+    if int(code_link_counts[0]) != 116:
+        raise AnnouncedDyslipidemiaError(
+            "fresh Table-2 reimbursement-code link count is not 116"
+        )
+    if int(code_link_counts[1]) + int(code_link_counts[0]) != sum(
+        int(value) for value in product_counts
+    ):
+        raise AnnouncedDyslipidemiaError(
+            "fresh reimbursement-code links do not cover all products"
+        )
     return {
         "run_id": run_id,
         "state": "sealed",
@@ -897,6 +1325,12 @@ def verify_announced_material(
         "sealed_fingerprint": run[5],
         "table2_product_count": int(product_counts[0]),
         "table1_product_count": int(product_counts[1]),
+        "version_id": str(composed[0]),
+        "composed_text_sha256": composed[1],
+        "composed_block_count": int(composed_counts[2]),
+        "reimbursement_code_link_count": sum(
+            int(value) for value in code_link_counts
+        ),
     }
 
 
@@ -913,8 +1347,11 @@ def load_announced_dyslipidemia(
         _apply_migration(connection)
     with connector(dsn) as connection:
         known_products = _known_c10_products(connection)
+        predecessor = _current_predecessor(connection)
     material = prepare_announced_material(
-        Path(odt_path), known_products=known_products
+        Path(odt_path),
+        known_products=known_products,
+        predecessor=predecessor,
     )
     with connector(dsn) as connection:
         already_loaded = _insert_material(connection, material)
@@ -976,6 +1413,7 @@ def load_announced_dyslipidemia(
         {
             "notice_id": material.notice_id,
             "patch_id": material.patch_id,
+            "version_id": material.version_id,
             "model_id": material.model_id,
             "already_loaded": already_loaded,
             "active": activate,
