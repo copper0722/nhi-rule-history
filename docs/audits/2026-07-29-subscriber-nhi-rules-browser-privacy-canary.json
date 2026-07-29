@@ -1,0 +1,31 @@
+{
+  "contract": "subscriber-nhi-rules/browser-privacy-canary/v1",
+  "tested_at": "2026-07-29T17:47:00+08:00",
+  "tested_url": "https://s.copper0722.com/member/tools/nhi-rules/?clause=2.6.1",
+  "deployment_id": "1ed7f4a7-bf50-4fbd-8d0f-5daac9199321",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "sentinel_values": [
+    "ZZ99999999",
+    "987.6"
+  ],
+  "post_interaction_request_count": 0,
+  "sentinel_present_in_requests": false,
+  "post_interaction_request_origins": [],
+  "console_error_count": 0,
+  "sentinel_present_in_console_errors": false,
+  "local_storage_entry_count": 0,
+  "session_storage_entry_count": 0,
+  "sentinel_present_in_browser_storage": false,
+  "external_script_origins": [
+    "https://static.cloudflareinsights.com"
+  ],
+  "external_script_note": "Cloudflare's page-view beacon is injected by the hosting platform. The request recorder was armed only after the protected rule page finished loading; evaluating the decision form generated zero requests, so neither sentinel reached this beacon or any server.",
+  "analytics_or_replay_dom_signals": [],
+  "result_is_local_unknown_code_message": true,
+  "horizontal_overflow": false,
+  "visible_card_count": 8,
+  "visible_wide_table_count": 0
+}

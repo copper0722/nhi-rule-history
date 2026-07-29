@@ -52,6 +52,9 @@ service_surfaces:
     terminology_occurrence_contract: nhi-reimbursement-rules/terminology-occurrences/v1
     official_notice_endpoint: /api/drugs/reimbursement-rules/notices
     official_notice_contract: nhi-reimbursement-rules/notices/v1
+    announced_patch_endpoint: /api/drugs/reimbursement-rules/announced
+    announced_patch_contract: nhi-reimbursement-rules/announced-decision/v1
+    announced_patch_count: 1
     status: live_verified
   subscriber_site:
     canonical_url: https://s.copper0722.com/member/tools/nhi-rules/
@@ -65,16 +68,27 @@ service_surfaces:
     latest_notice_count: 14
     latest_notice_title: 公告異動降血脂藥品支付價格及修訂其藥品給付規定。
     latest_notice_rss_published_at: "2026-07-28T03:59:00Z"
+    announced_patch_count: 1
+    announced_patch_clause: 2.6.1
+    announced_patch_effective_on: "2026-09-01"
+    announced_patch_lifecycle: future
+    announced_patch_legally_auto_selectable: false
+    wide_table_reader:
+      narrow_container: vertical_row_cards
+      long_cell_content: native_details
+      horizontal_scroll_dependency: false
+      authenticated_mobile_390px_overflow_count: 0
     semantic_code_presentation:
       inline_codes: false
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: 3ec7fb4
-      pages_deployment_id: f2b673e8-5c00-4d6b-9889-ada6cfd4587b
-      pages_production_url: https://f2b673e8.copper-s.pages.dev
-      deployed_subscriber_json_sha256: 276b904b46708b5829de6919b18e0ded207d805219d62ee9f3b7bf68631e9c49
-      live_verification_receipt: docs/audits/2026-07-29-terminology-occurrence-v20-live-verification.json
+      commit: b0be75c
+      pages_deployment_id: 1ed7f4a7-bf50-4fbd-8d0f-5daac9199321
+      pages_production_url: https://1ed7f4a7.copper-s.pages.dev
+      api_commit: 5cf97d9
+      live_verification_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-mobile-card-parity.json
+      privacy_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-browser-privacy-canary.json
     status: live_verified
   boan_emr:
     intended_contract: nhi-reimbursement-rules/latest/v1
@@ -113,15 +127,68 @@ continuous_update:
     depends_on_task: nhi_rule_history_continuous_poll_acquire
     target_host: hm4
     trigger: meaningful_pg_projection_fingerprint_change
-    source_contract_count: 4
-    projection_fingerprint: 6f18ae2c97a8ac2d95ba443e17fdb2807e75afd16fa1edf4fb3fe0fc3c39e326
+    source_contract_count: 5
+    projection_fingerprint: 78130c0a3873a76825c089a98b498e0ed6b5da5cb8b2fb6c7b7e633b879a2384
+    supported_announced_patch_loader: idempotent_hash_locked_2_6_1_2026_09_01
+    next_announced_effective_on: "2026-09-01"
     live_verification: authenticated_exact_subscriber_json_sha256_parity
-    first_scheduled_run: up_to_date
+    latest_controller_run: up_to_date
   clause_history_agent_dispatch:
     task_id: 261
     status: skipped_gate
     next_due: "2099-01-01"
     resume_requires: explicit_Copper_instruction
+
+announced_dyslipidemia_release:
+  status: live_bounded_release_with_open_rollback_drill
+  official_notice_reference: 健保審字第1150671962號
+  official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
+  published_on: "2026-07-28"
+  effective_on: "2026-09-01"
+  source_artifact_sha256: 207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44
+  clause_code: 2.6.1
+  publication_kind: source_exact_amendment_patch
+  partial_event_projection: true
+  unprocessed_effects:
+    - clause_2_6_2
+    - clause_2_6_3
+    - reimbursed_item_changes
+  table_2_body_omitted_by_source: true
+  legally_auto_selectable: false
+  pg_schema: nhi_rule_history_announced
+  migration: pg/migrations/2026-07-29_nhi_rule_history_announced_release_gate_v22.sql
+  run_id: 12484a94-7275-5199-97d1-d1876c45715f
+  patch_id: a66597ba-0d3d-5e29-888e-9dd78ba0686e
+  model_id: ddb7d27d-1327-5af1-8b43-ea015e6fce36
+  sealed_fingerprint: 3e3c299f0561cae600612a74d08e7a7cc5248b3945692ef03d55ce5e964e0cc8
+  current_resolution_state: verified_scheduled
+  decision_aid_available: true
+  live_counts:
+    notice_events: 1
+    notice_effects: 4
+    clause_patches: 1
+    patch_components: 337
+    decision_models: 1
+    decision_inputs: 29
+    risk_categories: 6
+    risk_branches: 21
+    risk_predicates: 34
+    table_1_product_codes: 493
+    table_2_product_codes: 116
+  decision_aid:
+    title: 表一 LDL-C 起始治療門檻檢查
+    evaluator: open_world_tri_state_dnf
+    pg_browser_golden_parity: passed
+    future_version_opt_in: true
+    browser_storage_persistence: none
+  pro_gate:
+    decision: REPAIR_reconciled
+    post_verification_audit: REPAIR_three_of_four_closed
+    remaining_blocker: committed_two_step_end_to_end_deactivate_reactivate_drill
+    decision_response: docs/audits/2026-07-29-dyslipidemia-future-version-r3-decision-response.md
+    audit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-post-audit-prompt.md
+    reaudit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-prompt.md
+    reaudit_response: docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-response.md
 
 current_publication:
   source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428

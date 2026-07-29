@@ -1,0 +1,1123 @@
+{
+  "branch_truth_table": {
+    "expected_branch_count": 21,
+    "receipts": [
+      {
+        "branch_key": "cad_mi_within_year",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cad_recurrent_mi",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cad_multivessel",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cad_acs_diabetes",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cad_pad",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cad_carotid",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "pad_cad",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "pad_carotid",
+        "category_key": "extreme",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "diabetes",
+        "category_key": "high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "ckd_uacr",
+        "category_key": "high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "ckd_egfr",
+        "category_key": "high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "ldl_190",
+        "category_key": "high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "cac_400",
+        "category_key": "high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "one_risk_factor",
+        "category_key": "low",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "two_or_more_risk_factors",
+        "category_key": "moderate",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "acs_history",
+        "category_key": "very_high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "revascularization",
+        "category_key": "very_high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "stroke_tia_atherosclerosis",
+        "category_key": "very_high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "pad_symptomatic_or_treated",
+        "category_key": "very_high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "imaging_plaque",
+        "category_key": "very_high",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      },
+      {
+        "branch_key": "zero_risk_factors",
+        "category_key": "zero",
+        "states": {
+          "false": 0,
+          "true": 1,
+          "unknown": -1
+        }
+      }
+    ],
+    "verified_branch_count": 21
+  },
+  "contract": "nhi-rule-history/announced-release-r3-audit/v1",
+  "feature_fixtures": {
+    "ckd_duration_2_months": {
+      "category_key": "zero",
+      "category_label": "0項心血管風險因子",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 100,
+      "matched_branch": "zero_risk_factors",
+      "outcome": "table1_threshold_not_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 160
+    },
+    "ckd_duration_3_months": {
+      "category_key": "high",
+      "category_label": "高風險",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 100,
+      "matched_branch": "ckd_uacr",
+      "outcome": "table1_threshold_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 100
+    },
+    "contradictory_inputs": {
+      "effective_from": "2026-09-01",
+      "outcome": "insufficient_information",
+      "reason": "contradictory_inputs"
+    },
+    "low_hdl": {
+      "category_key": "low",
+      "category_label": "低風險",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 130,
+      "matched_branch": "one_risk_factor",
+      "outcome": "table1_threshold_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 130
+    },
+    "metabolic_2_of_5": {
+      "category_key": "zero",
+      "category_label": "0項心血管風險因子",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 130,
+      "matched_branch": "zero_risk_factors",
+      "outcome": "table1_threshold_not_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 160
+    },
+    "metabolic_3_of_5": {
+      "category_key": "low",
+      "category_label": "低風險",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 130,
+      "matched_branch": "one_risk_factor",
+      "outcome": "table1_threshold_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 130
+    },
+    "sex_specific_age_threshold": {
+      "category_key": "moderate",
+      "category_label": "中風險",
+      "effective_from": "2026-09-01",
+      "ldl_c_mg_dl": 115,
+      "matched_branch": "two_or_more_risk_factors",
+      "outcome": "table1_threshold_met",
+      "product_code": "A001206100",
+      "threshold_mg_dl": 115
+    }
+  },
+  "generated_at": "2026-07-29T09:44:52.049037+00:00",
+  "ldl_boundaries": [
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "extreme",
+      "threshold_mg_dl": 55
+    },
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "very_high",
+      "threshold_mg_dl": 70
+    },
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "high",
+      "threshold_mg_dl": 100
+    },
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "moderate",
+      "threshold_mg_dl": 115
+    },
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "low",
+      "threshold_mg_dl": 130
+    },
+    {
+      "at_outcome": "table1_threshold_met",
+      "below_outcome": "table1_threshold_not_met",
+      "category_key": "zero",
+      "threshold_mg_dl": 160
+    }
+  ],
+  "model_id": "ddb7d27d-1327-5af1-8b43-ea015e6fce36",
+  "patch_id": "a66597ba-0d3d-5e29-888e-9dd78ba0686e",
+  "priority_unknown": [
+    {
+      "blocked_at_category": "extreme",
+      "category_key": "extreme"
+    },
+    {
+      "blocked_at_category": "very_high",
+      "category_key": "very_high"
+    },
+    {
+      "blocked_at_category": "high",
+      "category_key": "high"
+    },
+    {
+      "blocked_at_category": "moderate",
+      "category_key": "moderate"
+    },
+    {
+      "blocked_at_category": "low",
+      "category_key": "low"
+    },
+    {
+      "branch_state": -1,
+      "category_key": "zero",
+      "full_evaluator_note": "zero-risk unknown is structurally preceded by the same one-risk aggregate unknown and cannot be the first blocker"
+    }
+  ],
+  "release_control_drill": {
+    "deactivation_control_id": 4,
+    "public_patch_count_while_deactivated": 0,
+    "reactivation_control_id": 5,
+    "restored_run_id": "12484a94-7275-5199-97d1-d1876c45715f",
+    "restored_sealed_fingerprint": "3e3c299f0561cae600612a74d08e7a7cc5248b3945692ef03d55ce5e964e0cc8",
+    "sealed_row_counts_unchanged": true,
+    "table_fingerprints_unchanged": true
+  },
+  "release_gate": {
+    "current_resolution_state": "verified_scheduled",
+    "decision_aid_available": true,
+    "display_lifecycle": "future",
+    "legally_auto_selectable": false
+  },
+  "run_id": "12484a94-7275-5199-97d1-d1876c45715f",
+  "scope_receipt": {
+    "declared_scope": "表一 LDL-C 起始治療門檻檢查",
+    "forbidden_output_keys_absent": [
+      "coverage_approved",
+      "eligible",
+      "lifestyle_requirement_met",
+      "recommendation"
+    ],
+    "sample_output_keys": [
+      "category_key",
+      "category_label",
+      "effective_from",
+      "ldl_c_mg_dl",
+      "matched_branch",
+      "outcome",
+      "product_code",
+      "threshold_mg_dl"
+    ]
+  },
+  "sealed_fingerprint": "3e3c299f0561cae600612a74d08e7a7cc5248b3945692ef03d55ce5e964e0cc8",
+  "source_round_trip": {
+    "expected_predicate_count": 34,
+    "receipts": [
+      {
+        "branch_key": "cad_acs_diabetes",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_acs_diabetes",
+        "category_key": "extreme",
+        "input_key": "acute_coronary_syndrome",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "103711e942ab409a0bc2fdc701648cbf35a4175492d5c5867138a8482ff8054e",
+        "source_component_order": 292,
+        "source_component_sha256": "637af7793a57e675f308b1b767453f18ea1541230c3b924363fabe28990ab1ef",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 300,
+          "kind": "table_cell",
+          "paragraph_index": 7,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_acs_diabetes",
+        "category_key": "extreme",
+        "input_key": "diabetes",
+        "operator": "is_true",
+        "predicate_order": 2,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "103711e942ab409a0bc2fdc701648cbf35a4175492d5c5867138a8482ff8054e",
+        "source_component_order": 292,
+        "source_component_sha256": "637af7793a57e675f308b1b767453f18ea1541230c3b924363fabe28990ab1ef",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 300,
+          "kind": "table_cell",
+          "paragraph_index": 7,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_carotid",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_carotid",
+        "category_key": "extreme",
+        "input_key": "carotid_stenosis",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bb0aa161c046587ae9d3906063f93571bae027c4b35614f7b6fccd805b58a8a6",
+        "source_component_order": 293,
+        "source_component_sha256": "b38eae44c377c29a960a46d6e76fd0bf12f8f650adc677b2224d2db4b2505618",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 301,
+          "kind": "table_cell",
+          "paragraph_index": 8,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_mi_within_year",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_mi_within_year",
+        "category_key": "extreme",
+        "input_key": "mi_within_one_year",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "9954c71c813725560cf7c0095ac5171daf80aed17c79d06ff86ce8e56e4918d0",
+        "source_component_order": 289,
+        "source_component_sha256": "761619aefa5483cf269bb9e65626b9a0cc365525ca1bbec0ea73c2d4b05902ab",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 297,
+          "kind": "table_cell",
+          "paragraph_index": 4,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_multivessel",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_multivessel",
+        "category_key": "extreme",
+        "input_key": "multivessel_coronary_obstruction",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "cdd2fd42fad19a470f7e8393f2f6e8e03d2da02ef703d0908c001329082ae25f",
+        "source_component_order": 291,
+        "source_component_sha256": "b5c83e2c597a69a194799b00d1ce3370ae535d902d62d50f23368c21aae49fb8",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 299,
+          "kind": "table_cell",
+          "paragraph_index": 6,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_pad",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_pad",
+        "category_key": "extreme",
+        "input_key": "peripheral_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bb0aa161c046587ae9d3906063f93571bae027c4b35614f7b6fccd805b58a8a6",
+        "source_component_order": 293,
+        "source_component_sha256": "b38eae44c377c29a960a46d6e76fd0bf12f8f650adc677b2224d2db4b2505618",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 301,
+          "kind": "table_cell",
+          "paragraph_index": 8,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_recurrent_mi",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "a6916bca8745e67d40cd6a799f0f905f699701ccc3248997347ca831c1c62cbe",
+        "source_component_order": 288,
+        "source_component_sha256": "f52f32cb0ff6ca25297aaeb357e13b99e4772eff36eb2878b508c3dbf66254e7",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 296,
+          "kind": "table_cell",
+          "paragraph_index": 3,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cad_recurrent_mi",
+        "category_key": "extreme",
+        "input_key": "mi_history_count",
+        "operator": "gte",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "08ec174b08ade0d7f5f4b9adb918581e3519eec6e997fd89063112f3a3ab617a",
+        "source_component_order": 290,
+        "source_component_sha256": "112c0fccf46a0e3ea3cbecfc3b069971dae7187eea51945a4f5c993c9af40474",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 298,
+          "kind": "table_cell",
+          "paragraph_index": 5,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "pad_cad",
+        "category_key": "extreme",
+        "input_key": "peripheral_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "780b85fa010f9613df79bf4ce6be21a7bc64d99a7fbda01112722b12903697bc",
+        "source_component_order": 294,
+        "source_component_sha256": "cda0ba301872327a7541e01eae93a71d9cede0dc67e483d3bb02ae7f3e8ac70e",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 302,
+          "kind": "table_cell",
+          "paragraph_index": 9,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "pad_cad",
+        "category_key": "extreme",
+        "input_key": "coronary_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "cdf07e8375ddf246d4074a6ba0bfdd57f0ec552278d81dade1ebe03a2fe58bdc",
+        "source_component_order": 295,
+        "source_component_sha256": "e8890cfc4591c5cbd1999ba3b54e74ae54ddd8dbbb1c08d2a60279f94bc23809",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 303,
+          "kind": "table_cell",
+          "paragraph_index": 10,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "pad_carotid",
+        "category_key": "extreme",
+        "input_key": "peripheral_artery_disease",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "780b85fa010f9613df79bf4ce6be21a7bc64d99a7fbda01112722b12903697bc",
+        "source_component_order": 294,
+        "source_component_sha256": "cda0ba301872327a7541e01eae93a71d9cede0dc67e483d3bb02ae7f3e8ac70e",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 302,
+          "kind": "table_cell",
+          "paragraph_index": 9,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "pad_carotid",
+        "category_key": "extreme",
+        "input_key": "carotid_stenosis",
+        "operator": "is_true",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "4d2de3cd87d7ec46d756ad41469408dfef20a0b6ac60c5a61fed45643b4b3c10",
+        "source_component_order": 296,
+        "source_component_sha256": "3017e736ff52829cc8fc7d2b8588944cf6a086078224d3ed3e1c569eaa972d95",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 304,
+          "kind": "table_cell",
+          "paragraph_index": 11,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "cac_400",
+        "category_key": "high",
+        "input_key": "cac_score",
+        "operator": "gte",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "565a1e8e5dada49ddc1ad95d5ad13a3510792d5795b63b27791b64c4f8e55989",
+        "source_component_order": 311,
+        "source_component_sha256": "2af654359b74b6a5de486a38d8a9fa582cf5d10a0fd2a92bc0eb1d1371f05a19",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 319,
+          "kind": "table_cell",
+          "paragraph_index": 26,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_egfr",
+        "category_key": "high",
+        "input_key": "predialysis_ckd",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_egfr",
+        "category_key": "high",
+        "input_key": "ckd_duration_months",
+        "operator": "gte",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_egfr",
+        "category_key": "high",
+        "input_key": "egfr_ml_min_1_73m2",
+        "operator": "lt",
+        "predicate_order": 2,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_uacr",
+        "category_key": "high",
+        "input_key": "predialysis_ckd",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_uacr",
+        "category_key": "high",
+        "input_key": "ckd_duration_months",
+        "operator": "gte",
+        "predicate_order": 1,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ckd_uacr",
+        "category_key": "high",
+        "input_key": "uacr_mg_g",
+        "operator": "gte",
+        "predicate_order": 2,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "bea4c4472771827f0aca77ba8b9b9654d88a768dcd415f4968a60ac05864e745",
+        "source_component_order": 309,
+        "source_component_sha256": "884c71b1cb4858c31ebd6c22f54d7fb5364c1dc6e485ae6031326d864e8b57c4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 317,
+          "kind": "table_cell",
+          "paragraph_index": 24,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "diabetes",
+        "category_key": "high",
+        "input_key": "diabetes",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "5ec8f8abd0dff059a39f7f005c29f07d24c2a13e4b75e7de86d4d72c279eedae",
+        "source_component_order": 308,
+        "source_component_sha256": "ab2074b5d3d726e5a8eda95d931a0f01b4fb750754e0c3061e2b19f8320f7eb3",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 316,
+          "kind": "table_cell",
+          "paragraph_index": 23,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "ldl_190",
+        "category_key": "high",
+        "input_key": "ldl_c_mg_dl",
+        "operator": "gte",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "c3eb708792ee34586d1300b68bd97e2aa6429163de9a8bf9672fb4df5cdafed8",
+        "source_component_order": 310,
+        "source_component_sha256": "76fcccac8c8e0f6fe42bb8681161a839c4d8843a79f7ff67df24cc188f8944c8",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 318,
+          "kind": "table_cell",
+          "paragraph_index": 25,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "one_risk_factor",
+        "category_key": "low",
+        "input_key": null,
+        "operator": "aggregate_eq",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "012116a9c34d43e41a8a967df9639c2496f8822a8fce83f127941a3dffdc2242",
+        "source_component_order": 313,
+        "source_component_sha256": "a98eb80b713b3257667a9abe63d2f21122325669d3f37bf39a2b1b6a35aeb38d",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 321,
+          "kind": "table_cell",
+          "paragraph_index": 28,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "two_or_more_risk_factors",
+        "category_key": "moderate",
+        "input_key": null,
+        "operator": "aggregate_gte",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "2e70e6d9fc386bb6a950fd8e8227404955afeaaabb2f99bfb253e6d333b0badf",
+        "source_component_order": 312,
+        "source_component_sha256": "983c5cdb455c7a0441a3cc854b6859e64ad2273dfc5f0b250e112142dba71db4",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 320,
+          "kind": "table_cell",
+          "paragraph_index": 27,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "acs_history",
+        "category_key": "very_high",
+        "input_key": "acute_coronary_syndrome",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "0a4136e34264fd5f2f08b4675f0c478c81de9a20caaf92a11a249e0037476c40",
+        "source_component_order": 299,
+        "source_component_sha256": "f96952718635af61ed1040bcc1ee96e6b57ad64d645c16c9c6d4c0c78e767521",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 307,
+          "kind": "table_cell",
+          "paragraph_index": 14,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "imaging_plaque",
+        "category_key": "very_high",
+        "input_key": "plaque_stenosis_percent",
+        "operator": "gte",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "2a9cfc1326abd4e5ced8ad100287f8d23dfe48e8b9ef3b573622792b8e52c92f",
+        "source_component_order": 303,
+        "source_component_sha256": "b6bf873d926e420a054058d62ea8a4a06cc6be2e8d371124c87b10f5d3d92d9c",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 311,
+          "kind": "table_cell",
+          "paragraph_index": 18,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "pad_symptomatic_or_treated",
+        "category_key": "very_high",
+        "input_key": "symptomatic_or_treated_pad",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "20ce381804405af73f90b56c069cf4a023d53337e0d5617253c6dd37790dedbd",
+        "source_component_order": 302,
+        "source_component_sha256": "6c56a39a436d394f86b192e93d148bd4dcae22fb146299769579d037ba1aa15b",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 310,
+          "kind": "table_cell",
+          "paragraph_index": 17,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "revascularization",
+        "category_key": "very_high",
+        "input_key": "revascularization",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "115978f55a39021f9d8e0e8b12175fdb6a0f343e378c0bd871348644066788f4",
+        "source_component_order": 300,
+        "source_component_sha256": "d94f9e5848fcd20bc8127baaa27971b6a001e60838f7e7c0616702c13967d88e",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 308,
+          "kind": "table_cell",
+          "paragraph_index": 15,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "stroke_tia_atherosclerosis",
+        "category_key": "very_high",
+        "input_key": "ischemic_stroke_tia_atherosclerosis",
+        "operator": "is_true",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "c4918a3846018f1478f57fcefece8c4bff01253ba914606d2ad966f92e554f34",
+        "source_component_order": 301,
+        "source_component_sha256": "b47af40f85cb47405863672d3ca4f5db273004962158cb958ea07ba3d09ef224",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 309,
+          "kind": "table_cell",
+          "paragraph_index": 16,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      },
+      {
+        "branch_key": "zero_risk_factors",
+        "category_key": "zero",
+        "input_key": null,
+        "operator": "aggregate_eq",
+        "predicate_order": 0,
+        "source_artifact_sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "source_block_id": "9c752809fd911d9b9c7114f8c3e72fdeb9f64b614e17d60b146841aa0742a82e",
+        "source_component_order": 314,
+        "source_component_sha256": "efe46fdc85cb50e32282b17d50057f7a52a907761d225a4ee55b753057e5fcdf",
+        "source_locator": {
+          "cell_index": 0,
+          "document_order": 322,
+          "kind": "table_cell",
+          "paragraph_index": 29,
+          "parent_table_index": null,
+          "row_index": 1,
+          "row_kind": "body",
+          "table_depth": 0,
+          "table_index": 2
+        }
+      }
+    ],
+    "verified_predicate_count": 34
+  }
+}

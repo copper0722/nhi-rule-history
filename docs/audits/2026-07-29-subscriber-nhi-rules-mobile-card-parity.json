@@ -1,0 +1,40 @@
+{
+  "contract": "subscriber-nhi-rules/mobile-card-parity/v1",
+  "tested_at": "2026-07-29T17:48:00+08:00",
+  "tested_url": "https://s.copper0722.com/member/tools/nhi-rules/?clause=2.6.1",
+  "deployment_id": "1ed7f4a7-bf50-4fbd-8d0f-5daac9199321",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "document_width": {
+    "client": 390,
+    "scroll": 390
+  },
+  "overflowing_element_count": 0,
+  "visible_wide_table_count": 0,
+  "visible_card_count": 8,
+  "comparison_policy": "source and card labels/values are compared in DOM order after removing layout-only whitespace; source rowspans are expanded to their logical row/column coordinates",
+  "tables": [
+    {
+      "table_index": 0,
+      "source_rows": 6,
+      "source_columns": 5,
+      "expected_cards": 5,
+      "actual_cards": 5,
+      "exact": true,
+      "expected_sha256": "281d133bb7c55cbf5b8a4ce310ffb4f673f8e4e0da0fb8defb726d88c5422247",
+      "actual_sha256": "281d133bb7c55cbf5b8a4ce310ffb4f673f8e4e0da0fb8defb726d88c5422247"
+    },
+    {
+      "table_index": 1,
+      "source_rows": 4,
+      "source_columns": 5,
+      "expected_cards": 3,
+      "actual_cards": 3,
+      "exact": true,
+      "expected_sha256": "bcdff3edf020a0c0239859fa8c79cde01fd9ef14699f17c4e68d0d6874eff5f8",
+      "actual_sha256": "bcdff3edf020a0c0239859fa8c79cde01fd9ef14699f17c4e68d0d6874eff5f8"
+    }
+  ]
+}

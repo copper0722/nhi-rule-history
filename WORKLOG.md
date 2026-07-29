@@ -1360,3 +1360,87 @@
   reviewed-seed v1，完整掃描 639 條／13,874 blocks，但不宣稱全書
   vocabulary complete。完整 audit trail 見
   `docs/audits/2026-07-29-terminology-occurrence-v20-post-release-reconciliation.md`。
+
+## 2026-07-29 — Future-effective 2.6.1 patch, decision aid, responsive reader
+
+- Classified as R3. Sent the exact official-notice facts and proposed
+  current/announced architecture to the persistent GPT Pro workflow before
+  durable implementation. Pro returned `REPAIR`; accepted findings were:
+  lifecycle must not equal legal selectability, one notice has multiple
+  effects, Table 2 omission prevents a single-source exact full clause,
+  open-world tri-state is required, Table-2 product membership must be an
+  exact code set, the tool name must be limited to the Table-1 LDL threshold,
+  and UI/privacy/dual-evaluator tests are release gates.
+- Added migration
+  `pg/migrations/2026-07-29_nhi_rule_history_announced_decision_v21.sql`,
+  rollback, loader and CLI. Disposable PostgreSQL passed forward load,
+  idempotent replay, sealed mutation rejection, reference-evaluator golden
+  cases and rollback. Applied the migration to `hmj/vault_main`; active sealed
+  run is `b89f3894-8b0b-5687-9311-31c22a7df652`.
+- Live row inventory: one notice, four notice effects, one 2.6.1 patch, 337
+  source components, one decision model, 29 inputs, six risk categories, 21
+  DNF branches, 34 predicates and 609 product rows (493 Table 1, 116 Table 2).
+  Source ODT SHA-256 and all expected counts/fingerprints are sealed.
+- Added the read-only Copper Panel announced endpoint. API tests passed 31/31;
+  commit `914d56e` was fast-forwarded to hmj and the service restarted.
+  `scripts/doctor.py` confirmed live commit parity; the route returned exactly
+  one future 2.6.1 patch.
+- Reworked the paid reader's wide-table rendering. For a reader container below
+  900px, logical rows are reconstructed after rowspan expansion and rendered
+  as vertical cards. Short cells use a two-column value grid and prescription
+  text is a native disclosure. This removes the sideways-scroll dependency
+  without changing the source table or its field labels.
+- Added the announced-future section and browser evaluator to the paid reader.
+  The still-current official full clause remains below it. The future tool is
+  opt-in and browser-memory only; it does not place user values in the URL,
+  localStorage or sessionStorage.
+- Paid-site tests passed 138/138, Astro built 69 routes and final artifact audit
+  passed. Commit `daacfdb` deployed as Pages production
+  `cb91c1ba-ee45-402e-a0e9-c3601a0af4e0`. Authenticated live JSON exact SHA-256
+  parity passed. The production 390px page measured `scrollWidth=390`,
+  `clientWidth=390`, eight row cards, zero visible wide tables and zero
+  overflowing elements. Live Table-2 canary `AC46402100` returned
+  `requires_table2_assessment` and repeated the 115/9/1 effective date.
+- Extended the existing 15-minute subscriber sync rather than creating a
+  second schedule. It now materializes the hash-locked supported patch
+  idempotently and fingerprints five API contracts. PG task 276 was updated
+  with deployment and fingerprint receipts; a full controller replay returned
+  `status=up_to_date`.
+- Submitted
+  `docs/audits/2026-07-29-dyslipidemia-future-version-r3-post-audit-prompt.md`
+  to the same GPT Pro conversation after deterministic and live verification.
+  Final audit reconciliation remains pending at this log point.
+
+## 2026-07-29 — R3 remediation, mobile-card release and final re-audit
+
+- Added append-only release-control and patch-resolution state in v22. The
+  public decision model now fails closed after the announced date until a
+  reviewed `effective_unconsolidated` or `reconciled` receipt exists. Correction,
+  withdrawal, conflict, supersession and unresolved states suppress the tool.
+- Loaded and activated run `12484a94-7275-5199-97d1-d1876c45715f`; the sealed
+  fingerprint is
+  `3e3c299f0561cae600612a74d08e7a7cc5248b3945692ef03d55ce5e964e0cc8`.
+  The live API commit is `5cf97d9`; current lifecycle/resolution is
+  `future`/`verified_scheduled`.
+- Replayed 34/34 source-bound predicates and 21/21 branches across true,
+  false and unknown fixtures. Contradictory facts fail closed; all LDL
+  boundaries and declared edge cases were sealed in
+  `docs/audits/2026-07-29-dyslipidemia-r3-model-release-receipt.json`.
+- Deployed paid-site commit `b0be75c` as production
+  `1ed7f4a7-bf50-4fbd-8d0f-5daac9199321`. At a 390px viewport it renders eight
+  vertical row cards, no visible wide table and no horizontal overflow. A
+  separate production DOM audit reconstructed both tables with rowspans and
+  proved exact card parity for row order, labels and values.
+- The authenticated privacy canary entered product `ZZ99999999` and LDL
+  `987.6`. Browser-local evaluation emitted zero post-interaction requests,
+  console errors, URL mutation or web-storage entries; neither sentinel reached
+  telemetry or replay.
+- GPT Pro re-audit returned `REPAIR`, while explicitly accepting the responsive
+  layout, semantic parity, lifecycle gate, executable coverage and privacy.
+  The sole remaining blocker is operational proof: the earlier deactivate and
+  reactivate events were committed together, so no independent session could
+  observe the disabled state. The next authorized remediation must perform a
+  committed deactivate, fresh API/subscriber projection verification, then a
+  separately committed reactivate and exact restoration verification. No schema
+  redesign, reparse or model rebuild is indicated. Full response:
+  `docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-response.md`.

@@ -466,8 +466,9 @@
   最新全文及其 9 組歷史 diff；`0.2` 的 15 份相同來源觀察則正確折疊為
   1 個文字版本、0 組 diff。全域搜尋從 12 條 index 依藥名／條件選路。
   兩欄桌面、手機堆疊、紅綠文字標籤與官方來源連結均由 sealed PG
-  projection 產生，不含手寫條文或 browser-side diff；尚未接付費站正式
-  API／route。
+  projection 產生，不含手寫條文或 browser-side diff。正式付費站現已接
+  639 條 current API、公告 feed、reviewed terminology 與 2.6.1
+  future-effective patch；完整歷史仍依逐條 evidence gate 慢慢補入。
 
 ## 尚未完成
 
@@ -536,8 +537,9 @@
   12-clause JSONL 與 SQLite projection 已完成。
 - v2 acquisition/structural 的 typed-row JSONL↔SQLite projection。
 - v2 clean-room rebuild 與 final-commit code-hash binding。
-- 付費站正式真實資料 API／讀者 route；`通則` 靜態 PG projection template
-  已完成。
+- 付費站正式真實資料 API／讀者 route 已完成；待續工作是逐條歷史、
+  full-vocabulary expansion，以及新公告各自的 deterministic structured
+  loader，不能把 RSS 已取得誤稱為條文內容已自動解析。
 
 ## 目前完整性結論
 
@@ -567,3 +569,69 @@ PG 作 audit evidence，標記為 `superseded_by_methodology`，不作 release i
 正式 stage 是上列 corrected run `51189ce2…`。
 
 逐項關閉證據見 [docs/gap-register.md](docs/gap-register.md)。
+
+## 2026-07-29 — 2.6.1 未來公告、表一門檻工具與無橫向滑動讀者已上線
+
+- 正式載入 `健保審字第1150671962號`；公告日 115/07/28，生效日
+  115/09/01。附件 SHA-256 固定為
+  `207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44`，
+  397/397 個 ODT blocks 全部 exact-once accounting。
+- 新增 v21 `nhi_rule_history_announced` schema，保存一個 immutable
+  notice event、四個 effects、2.6.1 patch、337 個 source components、
+  29 個 inputs、6 個風險層、21 個 DNF branches、34 個 predicates 與
+  609 個給付品項 membership（表一 493、表二 exactly 116）。Sealed row
+  mutation 被拒，loader replay 為 idempotent。
+- 依 GPT Pro `REPAIR`，同一公告另修 2.6.2、2.6.3 與給付品項，故
+  `partial_event_projection=true`。因附件的表二本文明列「以下略」，
+  公開資料固定稱 source-exact amendment patch，不偽裝成完整 future
+  clause。`display_lifecycle=future` 只供顯示；
+  `legally_auto_selectable=false`，本輪沒有日期到點自動裁決。
+- 判斷器限縮為「表一 LDL-C 起始治療門檻檢查」。Outcome 為
+  `table1_threshold_met`、`table1_threshold_not_met`、
+  `requires_table2_assessment`、`insufficient_information`。較高風險
+  unknown 會阻擋降級；未知品項 fail closed。PG reference evaluator 與
+  browser evaluator 的 golden cases 相同，表二 canary `AC46402100`
+  正確轉往表二。
+- `copper-panel` commit `914d56e` 已部署，
+  `/api/drugs/reimbursement-rules/announced?clause=2.6.1` live 回傳一個
+  patch、337 components、609 products、116 Table-2 products；
+  `/healthz.commit=914d56e59ca3`。
+- `personal-website-s` commit `daacfdb` 已部署為 Cloudflare Pages
+  production `cb91c1ba-ee45-402e-a0e9-c3601a0af4e0`。付費頁把未來
+  2.6.1 放在仍有效現行全文上方，明示 115/9/1、預設不開啟判斷器，
+  每次結果重複生效日。Authenticated JSON SHA-256 =
+  `a4fbef1bd8f3c56c3868e906944b6043d2bc8c8b3573d1640a5797fa412873cf`。
+- 回應 Copper 的橫向滑動問題，讀者欄小於 900px 時不再顯示寬表，
+  而是每個病人條件一張直向卡；短欄位兩欄排列，長處方用 native
+  `<details>` 展開。正式站 390px 驗證為 `scrollWidth=clientWidth=390`、
+  8 cards、0 visible wide tables、0 overflowing elements。
+- PG task 276 仍每 15 分鐘執行，但 source contracts 由四個增為五個。
+  Controller 在 fingerprint 前 idempotently 載入這個 hash-locked
+  supported patch；payload 或 date-derived lifecycle 改變會觸發完整
+  subscriber rebuild、deploy 與 authenticated exact-SHA verification。
+  一般新公告仍先由 task 260 取得並顯示於 notice feed；沒有 reviewed
+  deterministic loader 的公告不會被假裝成已結構化條文。
+- GPT Pro R3 post-verification audit 已送出；正式稽核 prompt：
+  `docs/audits/2026-07-29-dyslipidemia-future-version-r3-post-audit-prompt.md`。
+
+### 手機寬表修復與 R3 收尾
+
+- 正式付費頁已由 commit `b0be75c` 部署為 Cloudflare Pages production
+  `1ed7f4a7-bf50-4fbd-8d0f-5daac9199321`。窄版不再要求橫向滑動：兩張
+  五欄表在 390px reader 轉成 8 張逐列縱向卡，`clientWidth` 與
+  `scrollWidth` 同為 390，0 個 overflow element、0 個 visible wide
+  table。桌面空間足夠時仍保留原始表格。
+- 正式 DOM 已把兩張 source tables 的 rowspan 展開後逐格比對卡片：
+  table 0 為 6 source rows→5 cards，table 1 為 4 source rows→3 cards；
+  row order、column label 與 value 的 normalized hashes 全部相等。收據：
+  `docs/audits/2026-07-29-subscriber-nhi-rules-mobile-card-parity.json`。
+- v22 release gate、API commit `5cf97d9` 與 active run
+  `12484a94-7275-5199-97d1-d1876c45715f` 已上線；目前 resolution =
+  `verified_scheduled`，生效日前可明示 opt-in，日期到達但尚未重新核對時
+  會 fail closed 隱藏判斷工具。
+- GPT Pro 最終重審確認：生效日 gate、34/34 predicates、21/21 branches、
+  privacy canary 與卡片語意 parity 均已關閉。唯一剩餘 `REPAIR` 是原
+  rollback drill 的 deactivate／activate 在同一 transaction；須改做兩次
+  committed transactions，並由 fresh API／subscriber sessions 證明正式
+  頁確實先撤下、再恢復。這是 recovery evidence 缺口，不是手機 UI 缺口。
+  本輪依審核契約不再靜默進入第二個 remediation loop。
