@@ -421,6 +421,14 @@ official chapter ODTs
 
 ## WP06B：掃描原始檔的 proofread source-observation layer
 
+掃描／OCR 的忠實轉錄 proofread 與現行條文的排版 proofread 是不同資料層。
+後者不得改動任何來源字元；先證明版本化 parser 已保留官方 artifact 可得
+的全部結構，再使用既有 ODT table/list locator。Parser 漏結構時屬
+`source_structure_loss`，禁止開 presentation run；只有官方來源本身不足、
+且純版面分組可逐字等價時，才允許 agent 提案。完整 schema、逐字等價
+invariant、seal gate 與 API fallback 見
+[`presentation-proofread.md`](presentation-proofread.md)。
+
 掃描 PDF 沒有可靠文字層時，模型校對不能直接寫入 canonical legal
 version。輸入包固定包含官方附件 identity、逐頁 transcript、source-local
 segments 與跨版本 lineage candidates：
@@ -430,7 +438,7 @@ official attachment snapshot in FINT PG
   -> full-page visual proofread
   -> exact source-page markers
   -> source-local segment JSONL
-  -> exact-text-in-declared-page-span validator
+  -> normalized-containment-in-declared-page-span validator
   -> unadjudicated lineage candidate parser
   -> immutable sealed transcript_run
   -> independent review
@@ -439,7 +447,7 @@ official attachment snapshot in FINT PG
 
 Loader 對每個 segment 只允許 Unicode NFKC、空白與 Markdown 結構符號的
 比較正規化，並移除 proofread 中重複的公報頁首；不得模糊比對、同義改寫
-或讓模型自行補字。任一 exact text 無法在宣告頁面範圍找到，整包拒絕
+或讓模型自行補字。任一 normalized transcript span 無法在宣告頁面範圍找到，整包拒絕
 入庫。Lineage candidates 必須一對一覆蓋所有 segment IDs，disposition
 count 也必須等於 manifest。
 
@@ -450,8 +458,8 @@ PG schema `nhi_rule_history_transcript` 把 transcript、25 個 source pages、
 
 84 年第一批 live run
 `03f3b55e-8a07-5efb-b3ec-f908fbd01575` 的 review status 是
-`agent_proofread_pending_independent_review`。即使 114/114 exact-text
-checks 全通過，它仍只代表「來源上看到什麼」：
+`agent_proofread_pending_independent_review`。即使 114/114 declared-page
+normalized-containment checks 全通過，它仍只代表「來源上看到什麼」：
 
 - 不建立 stable legal identity；
 - 不宣告 96 年條文是 direct predecessor／successor；

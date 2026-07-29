@@ -121,6 +121,15 @@ PostgreSQL stores:
 The browser reads stored projections. It does not infer version identity,
 collapse annual observations or calculate published diffs.
 
+The browser also does not infer tables or legal-list hierarchy from visible
+text. It first consumes deterministic ODT structure retained in PostgreSQL. If
+the parser failed to retain structure available in the official artifact, the
+artifact returns to parser development and presentation work is blocked. Only
+when the official source itself is insufficient for a readable layout may a
+sealed, independently reviewed, strictly character-equivalent presentation
+revision replace the raw block layout. See
+[`presentation-proofread.md`](presentation-proofread.md).
+
 Index projection:
 
 ```json
