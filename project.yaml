@@ -10,11 +10,13 @@ last_verified_date: "2026-07-29"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 495
-  public_tests_passed: 488
+  public_tests_run: 496
+  public_tests_passed: 489
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
+  sqlite_foreign_key_check: passed
+  clause_normalization_v25_pro_gate: PASS
   live_nhi_drug_linkage_fetch: passed
   github_pages_reader: passed_http_200_and_browser_verified
 
@@ -27,6 +29,7 @@ public_outputs:
   clause_document_v25_jsonl: data/releases/clause-document-v25-2.6.1
   clause_document_v25_manifest_fingerprint: a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2
   clause_document_v25_logical_rows: 2238
+  clause_document_v25_composition_verification: docs/audits/2026-07-29-clause-normalization-v25-composition-verification.json
   stage_v1_release: prepared_not_published
   stage_v2_release: prepared_partial_evidence_bundle_not_published
   sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
@@ -88,11 +91,11 @@ service_surfaces:
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: a2ff58d3726399fbb8b2fc2a38ad50f12645b8d2
-      pages_deployment_id: b32fd9ff-4885-447f-9c68-0470893e5026
-      pages_production_url: https://b32fd9ff.copper-s.pages.dev
-      api_commit: d884e092bd0e
-      subscriber_json_sha256: eb3a04288c8d9c3394b27634335b5a216155008f373e632f0ced387c6eb07aeb
+      commit: 3a4eb25ed7bc320b0d356c9388b342ca20ecb497
+      pages_deployment_id: bafa486d-0854-4796-b833-27ac94f87381
+      pages_production_url: https://bafa486d.copper-s.pages.dev
+      api_commit: f5ffd5bef5d2ab59a2bf1d5289451ff6c73cc6b3
+      subscriber_json_sha256: e00acb98c25b96ac5791c92ee4cab4616c63522601673fed083806c6f9c4b9d4
       live_verification_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-mobile-card-parity.json
       privacy_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-browser-privacy-canary.json
     status: live_verified
@@ -134,7 +137,7 @@ continuous_update:
     target_host: hm4
     trigger: meaningful_pg_projection_fingerprint_change
     source_contract_count: 5
-    projection_fingerprint: fcde763092b63cfe47315c33971549254abe96d015701f7873445a4e3c3a92b8
+    projection_fingerprint: 145d84b351290f8be6da9fc768b62fed1ee8bceb4deb8e30ac926f98fe37605a
     supported_announced_patch_loader: idempotent_hash_locked_2_6_1_2026_09_01
     next_announced_effective_on: "2026-09-01"
     live_verification: authenticated_exact_subscriber_json_sha256_parity
@@ -247,13 +250,19 @@ announced_dyslipidemia_release:
     browser_storage_persistence: none
   pro_gate:
     normalization_decision: REPAIR_reconciled
-    normalization_reaudit: pending_after_live_subscriber_verification
-    post_verification_audit: REPAIR_three_of_four_closed
-    remaining_blocker: none_two_transaction_drill_passed
+    normalization_reaudit: PASS
+    post_verification_audit: PASS_after_composition_provenance_delta
+    remaining_blocker: none
     mutation_matrix: docs/audits/2026-07-29-clause-normalization-v25-mutation-matrix.json
     two_transaction_drill: docs/audits/2026-07-29-clause-normalization-v25-two-transaction-drill.json
     portable_parity: docs/audits/2026-07-29-clause-document-v25-portable-parity.json
+    composition_verification: docs/audits/2026-07-29-clause-normalization-v25-composition-verification.json
     normalization_decision_response: docs/audits/2026-07-29-clause-normalization-v25-pro-decision-response.md
+    normalization_post_verification_prompt: docs/audits/2026-07-29-clause-normalization-v25-pro-post-verification-prompt.md
+    normalization_post_verification_response: docs/audits/2026-07-29-clause-normalization-v25-pro-post-verification-response.md
+    normalization_closure_prompt: docs/audits/2026-07-29-clause-normalization-v25-pro-composition-delta-prompt.md
+    normalization_closure_response: docs/audits/2026-07-29-clause-normalization-v25-pro-composition-delta-response.md
+    normalization_reconciliation: docs/audits/2026-07-29-clause-normalization-v25-post-verification-reconciliation.md
     decision_response: docs/audits/2026-07-29-dyslipidemia-future-version-r3-decision-response.md
     audit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-post-audit-prompt.md
     reaudit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-prompt.md

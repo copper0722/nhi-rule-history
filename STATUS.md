@@ -732,3 +732,44 @@ PG 作 audit evidence，標記為 `superseded_by_methodology`，不作 release i
   PostgreSQL↔JSONL↔SQLite parity 全部通過。SQLite 檔本身不進 Git，
   可由公開 JSONL 隨時重建；本次重建 SHA-256 =
   `87512d7d2bb8c9cd4b8e1a79c8d332490db424f0105b7e49fec0db225a78085a`。
+
+## 2026-07-29 — v25 正規化、完整條文合成與 diff 通過 GPT Pro 最終稽核
+
+- 付費站 commit
+  `3a4eb25ed7bc320b0d356c9388b342ca20ecb497` 已部署為 production
+  `bafa486d-0854-4796-b833-27ac94f87381`。正式登入頁的 2.6.1 有四個
+  正規化表格元件、130 張 responsive row cards、預設收合歷史區，
+  桌面雙欄 diff 與 390px 單欄 diff；390px
+  `scrollWidth=clientWidth=390`。live subscriber JSON SHA-256 =
+  `e00acb98c25b96ac5791c92ee4cab4616c63522601673fed083806c6f9c4b9d4`。
+- GPT Pro 全量 post-verification audit 先回 `REPAIR`，但只剩一個 Major：
+  原封包沒有攤開 2026-09-01 `verified_composite` 的完整性證明。資料本身
+  已在 sealed PG／API／JSONL；缺的是可重算收據，不是條文缺版。
+- 新增 deterministic
+  `src/nhi_rule_history/clause_document_composition.py`。它從 read-only API
+  與 canonical JSONL 重新驗證 406 個 ordered components，並由 JSONL
+  新建 SQLite：
+  - current Expression = `source_complete`；
+  - future Expression = `verified_composite`；
+  - 336 個 `amendment_exact`＋70 個 `predecessor_inherited`；
+  - manifest
+    `sha256:b241aea8f2fad47d35a6eaf334ebe7677cafe82ab92d5a5f888ef5655a98e8db`
+    可完整重算；
+  - 9,249 scalars／13,983 UTF-8 bytes 被 component envelopes exact-once
+    覆蓋；
+  - 398 個非空 blocks 的 source spans 完整重播，8 個實體空格不虛構
+    source span；
+  - 公告 `(以下略)` marker 留在公告觀察層，但不進完整 Expression；
+    公告對省略的 Table-2 body 擁有 0 個 source spans；
+  - 沿用的 70 blocks 逐一等於前版 blocks 2–71；
+  - API／JSONL／SQLite 的 completeness、manifest 與 component provenance
+    一致；
+  - SQLite `integrity_check=ok`、`foreign_key_check` 無 rows。
+- GPT Pro 讀取此單一 evidence delta 後明確回覆
+  “The sole Major blocker is closed.”，最終 verdict = `PASS`。完整鏈：
+  `docs/audits/2026-07-29-clause-normalization-v25-post-verification-reconciliation.md`。
+- 新增 supplementary-plane emoji＋combining-mark 的
+  scalar／UTF-8 regression fixture。全 repo 現為 496 tests：
+  489 passed、7 environment-gated skipped、0 failed。
+- `PASS` 只適用 2.6.1 v25 production canary 與正規化／diff 方法，不代表
+  全部歷史條文已重建完成。

@@ -78,6 +78,13 @@ OASIS 法律文件標準的概念與名稱，但以 PostgreSQL 關聯表實作�
 組合規則與審查收據。`patch_only` 只能待在公告異動區，不能因為解析成功就
 冒充完整條文。
 
+Composition manifest 採內容定址：`sha256:<manifest_sha256>` 本身就是
+manifest identifier。每個 component 都要保存 assembly ordinal、來源
+artifact SHA-256、source block／locator、角色、逐字文字雜湊，以及組合後
+的 scalar／UTF-8 byte 範圍。分隔字元也是版本化 assembly rule 的一部分，
+不能藏在 renderer。完整性 gate 必須重新計算 manifest hash、完整文字 hash
+與所有 range；只保存一個「已核准」布林值不算證明。
+
 版本先後另存 `clause_expression_relation`：
 
 - `direct_predecessor_verified`：已由正式來源證實法律上直接相鄰；
@@ -239,8 +246,28 @@ candidate，最後由人工裁決是否為同一條。
 5. 設定 `expression_completeness`。只有來源全文是
    `source_complete`，或合成 manifest 完整且經准入為
    `verified_composite`，才可輸出至完整條文 reader。
+6. 若公告以「以下略」省略未變部分，省略 marker 必須保留在公告觀察層，
+   但不得成為完整 Expression 的文字。被省略的部分必須逐 block 回指前版
+   artifact、block ID、locator 與文字雜湊；公告來源對該 remainder 的
+   source-span count 必須是 0。
+7. 對外發布前，從 read-only API、canonical JSONL 與由 JSONL 新建的
+   SQLite 重新執行同一份 composition verification。三者的完整性狀態、
+   manifest hash 與 component provenance 任一不一致即停止發布。
 
 輸出：一個帶完整性狀態的 `clause_expression` 與完整 provenance manifest。
+
+本專案的可重跑 gate：
+
+```bash
+python -m nhi_rule_history.clause_document_composition \
+  --api-json exported-api.json \
+  --jsonl-dir data/releases/clause-document-v25-2.6.1 \
+  --sqlite-output /tmp/clause-document.sqlite \
+  --receipt composition-verification.json
+```
+
+這是 deterministic verification，不是 agent 裁決。Agent 可以質疑
+composition rule，但不能直接把不通過的資料改標成 `verified_composite`。
 
 ### Step 5 — 建立條文文件樹
 
@@ -471,7 +498,9 @@ Agent 也不得直接指定：
 - additive shadow migration 與兩次 commit 的 deactivate／activate drill；
 - fresh PG replay；
 - API contract test；
+- composition manifest、omitted-remainder 與跨投影 provenance gate；
 - JSON／SQLite parity；
+- SQLite `integrity_check` 與 `foreign_key_check`；
 - 桌機與手機 visual audit；
 - live authenticated page；
 - GPT Pro 架構與 post-verification audit 的 blocking findings 全部結案。

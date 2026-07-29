@@ -74,7 +74,13 @@ python -m nhi_rule_history.clause_document_portable build-sqlite \
 
 SQLite 每張表保存 canonical `row_json` 與 `row_sha256`，可用 SQLite JSON
 functions 查詢；它不是另一套可寫正典。匯出器會逐表驗證
-PostgreSQL↔JSONL↔SQLite logical-row count 與 fingerprint。
+PostgreSQL↔JSONL↔SQLite logical-row count 與 fingerprint，並執行
+`integrity_check`／`foreign_key_check`。另有
+[完整條文合成證明](docs/audits/2026-07-29-clause-normalization-v25-composition-verification.json)
+可重算 336 個公告 blocks＋70 個前版沿用 blocks 的 manifest、scalar／
+UTF-8 ranges、公告「以下略」邊界與 exact diff；GPT Pro 的最終方法稽核
+為
+[PASS](docs/audits/2026-07-29-clause-normalization-v25-post-verification-reconciliation.md)。
 
 其餘全庫工作仍分成互不冒充的受限 staging：
 

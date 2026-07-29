@@ -6,6 +6,7 @@
   "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
   "schema": "nhi-rule-history/clause-document-sqlite/v1",
   "source_manifest_fingerprint": "a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2",
+  "sqlite_foreign_key_check": "passed",
   "sqlite_integrity_check": "ok",
   "sqlite_sha256": "87512d7d2bb8c9cd4b8e1a79c8d332490db424f0105b7e49fec0db225a78085a",
   "table_count": 20

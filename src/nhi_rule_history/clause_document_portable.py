@@ -332,6 +332,13 @@ def build_sqlite(
             raise PortableClauseDocumentError(
                 "SQLite integrity check failed"
             )
+        foreign_key_rows = list(
+            connection.execute("PRAGMA foreign_key_check")
+        )
+        if foreign_key_rows:
+            raise PortableClauseDocumentError(
+                "SQLite foreign key check failed"
+            )
         for table in TABLES:
             sqlite_rows = [
                 json.loads(row[0])
@@ -362,6 +369,7 @@ def build_sqlite(
         ),
         "sqlite_sha256": sqlite_sha256,
         "sqlite_integrity_check": "ok",
+        "sqlite_foreign_key_check": "passed",
         "logical_row_parity": "passed",
         "builder_sqlite_version": sqlite3.sqlite_version,
     }

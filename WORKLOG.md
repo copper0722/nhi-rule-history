@@ -1523,3 +1523,40 @@
   integrity check and exact per-table count/fingerprint parity; only JSONL and
   the builder are tracked, while the binary SQLite artifact remains
   reproducible output.
+
+## 2026-07-29 — v25 post-verification closure
+
+- Deployed and browser-verified the normalized reader through paid-site commit
+  `3a4eb25ed7bc320b0d356c9388b342ca20ecb497`, production deployment
+  `bafa486d-0854-4796-b833-27ac94f87381`. The authenticated artifact SHA-256 is
+  `e00acb98c25b96ac5791c92ee4cab4616c63522601673fed083806c6f9c4b9d4`.
+- Captured the full GPT Pro post-verification response unchanged. Pro accepted
+  Work/Expression separation, source-span conservation, physical/logical table
+  state, the Work-level exact diff, unresolved-node boundaries, mutation
+  protection, committed recovery and portable parity. Verdict was `REPAIR`
+  solely because the packet had not exposed the future Expression composition
+  provenance.
+- Inspected the sealed API and portable rows rather than changing canonical
+  clause content. They already contained `source_complete` for the current
+  Expression, `verified_composite` for the future Expression, composition hash,
+  336 amendment blocks and 70 predecessor blocks.
+- Added
+  `src/nhi_rule_history/clause_document_composition.py`, a deterministic
+  fail-closed verifier. It recomputes the content-addressed manifest, assembly
+  ranges, source spans, omitted-remainder exclusion, predecessor binding,
+  complete text, exact diff and API/JSONL/SQLite parity. The generated receipt
+  is
+  `docs/audits/2026-07-29-clause-normalization-v25-composition-verification.json`.
+- Added explicit SQLite `foreign_key_check` to the portable builder and a
+  supplementary-plane／combining-mark offset fixture. Replayed 496 tests:
+  489 passed, seven environment-gated skips, zero failures.
+- Sent the single evidence delta to the same GPT Pro conversation. Pro stated
+  the sole Major was closed and returned `PASS`. Captured the response and
+  disposition in
+  `docs/audits/2026-07-29-clause-normalization-v25-post-verification-reconciliation.md`.
+- Updated `docs/clause-normalization-and-diff.md`: a verified composite now has
+  an explicit content-addressed manifest identity, versioned separator,
+  scalar/UTF-8 assembly ranges, omitted-marker boundary, predecessor block
+  proof and cross-projection verification command.
+- Scope remained bounded. No claim was made that all historical NHI clauses are
+  reconstructed; the PASS applies to the 2.6.1 v25 canary and method.

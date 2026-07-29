@@ -1,0 +1,96 @@
+{
+  "api": {
+    "contract": "nhi-reimbursement-rules/announced-decision/v1",
+    "document_contract": "nhi-reimbursement-rules/clause-document/v2",
+    "payload_sha256": "f14b6e32bb32e887e1fb19c00c7eb678f4f373342ab37fe62a4af585ff69f104"
+  },
+  "clause_code": "2.6.1",
+  "composition": {
+    "amendment_exact_count": 336,
+    "component_binding_fingerprint": "cff582a98f1d7820227a6b871b600e026df2514cb817309ceeb2872a281caa61",
+    "component_count": 406,
+    "empty_physical_component_count": 8,
+    "nonempty_component_count": 398,
+    "predecessor_inherited_count": 70,
+    "rule_version": "nhi-rule-history/2.6.1-amendment-plus-inherited-remainder/1.0.0",
+    "scalar_and_utf8_exact_once_coverage": "passed",
+    "scalar_length": 9249,
+    "separator": "\\n\\n",
+    "source_span_count": 398,
+    "utf8_byte_length": 13983
+  },
+  "current_expression": {
+    "completeness": "source_complete",
+    "exact_text_sha256": "0fba3dfd13c4d4815067c629bbd466d84e6ad6883746dc6413abdf78e40efd0b",
+    "expression_id": "c966cd73-2b6f-5d2e-a9d1-abf4b2246c36",
+    "source_artifact_sha256": "3017546fe9b8db045012bb4e1135b31f8f8bc4038f762b73e5addcbe9312f506"
+  },
+  "effective_from": "2026-09-01",
+  "exact_diff": {
+    "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+    "hunk_count": 1,
+    "old_and_new_exact_replay": "passed",
+    "output_fingerprint": "7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de",
+    "sealed_fingerprint": "a2200bfb03f39c0dbc71f4aea84ffcbc400449113bf3fd4911d57f76f1354aeb",
+    "segment_count": 7,
+    "segment_kinds": [
+      "unchanged",
+      "inserted",
+      "unchanged",
+      "inserted",
+      "unchanged",
+      "inserted",
+      "unchanged"
+    ]
+  },
+  "future_expression": {
+    "completeness": "verified_composite",
+    "completeness_receipt_sha256": "7d97721f48cda7f16e0c7162305eca17d0d760fc55ddbd0d31cc4fc99dc98adc",
+    "composition_manifest_id": "sha256:b241aea8f2fad47d35a6eaf334ebe7677cafe82ab92d5a5f888ef5655a98e8db",
+    "composition_manifest_sha256": "b241aea8f2fad47d35a6eaf334ebe7677cafe82ab92d5a5f888ef5655a98e8db",
+    "exact_text_sha256": "7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f",
+    "expression_id": "08491b25-337e-515d-b327-7106c4bfcedb"
+  },
+  "normalization": {
+    "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+    "output_fingerprint": "81af6a1bde643522a2cab68b8cd2a18dab3ccf9ce98d1e1a6437c1c63c3a7618",
+    "sealed_fingerprint": "6607e914922f4d31a08d539562ce4bc6cc66ff8674d53209035bb3bb5028ae3a"
+  },
+  "omitted_remainder": {
+    "inherited_table2_source_artifact_sha256": "3017546fe9b8db045012bb4e1135b31f8f8bc4038f762b73e5addcbe9312f506",
+    "marker_excluded_from_future_expression": true,
+    "notice_marker_source_block_id": "78d57c1639ebc37637f816a205a93ea884b061fc3608060c9940ffde60a60c79",
+    "notice_marker_text_sha256": "7166f7bc3fa7fd2f1d7999ebdbf5c457b0071fe5dbb791acf65be25f9e2b6ad9",
+    "notice_table2_body_source_span_count": 0,
+    "predecessor_block_range": [
+      2,
+      71
+    ],
+    "predecessor_publication_run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f"
+  },
+  "projection_parity": {
+    "api_jsonl_component_provenance": "passed",
+    "jsonl_expression_count": 2,
+    "jsonl_manifest_fingerprint": "a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2",
+    "jsonl_source_block_count": 478,
+    "sqlite": {
+      "builder_sqlite_version": "3.50.4",
+      "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+      "logical_row_count": 2238,
+      "logical_row_parity": "passed",
+      "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+      "schema": "nhi-rule-history/clause-document-sqlite/v1",
+      "source_manifest_fingerprint": "a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2",
+      "sqlite_foreign_key_check": "passed",
+      "sqlite_integrity_check": "ok",
+      "sqlite_sha256": "87512d7d2bb8c9cd4b8e1a79c8d332490db424f0105b7e49fec0db225a78085a",
+      "table_count": 20
+    }
+  },
+  "reader_provenance": {
+    "claims_source_exact_from_amendment_attachment": false,
+    "public_note": "公告新文與 predecessor 未變 remainder 已正規化為 single-clause complete version。"
+  },
+  "schema": "nhi-rule-history/clause-composition-verification/v1",
+  "status": "passed"
+}

@@ -61,6 +61,7 @@ class ClauseDocumentPortableTest(unittest.TestCase):
             output = root / "portable.sqlite"
             receipt = build_sqlite(root, output)
             self.assertEqual(receipt["logical_row_parity"], "passed")
+            self.assertEqual(receipt["sqlite_foreign_key_check"], "passed")
             self.assertEqual(receipt["table_count"], len(TABLES))
             self.assertEqual(receipt["logical_row_count"], len(TABLES))
             with sqlite3.connect(output) as connection:
