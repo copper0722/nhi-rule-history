@@ -413,6 +413,50 @@ official chapter ODTs
 4. GitHub 保存可重現 workflow、schema、程式、公開稽核收據及可攜
    JSON／SQLite release。它不是付費 reader 的 production host。
 
+## WP06B：掃描原始檔的 proofread source-observation layer
+
+掃描 PDF 沒有可靠文字層時，模型校對不能直接寫入 canonical legal
+version。輸入包固定包含官方附件 identity、逐頁 transcript、source-local
+segments 與跨版本 lineage candidates：
+
+```text
+official attachment snapshot in FINT PG
+  -> full-page visual proofread
+  -> exact source-page markers
+  -> source-local segment JSONL
+  -> exact-text-in-declared-page-span validator
+  -> unadjudicated lineage candidate parser
+  -> immutable sealed transcript_run
+  -> independent review
+  -> identity / legal-version adjudication (separate future gate)
+```
+
+Loader 對每個 segment 只允許 Unicode NFKC、空白與 Markdown 結構符號的
+比較正規化，並移除 proofread 中重複的公報頁首；不得模糊比對、同義改寫
+或讓模型自行補字。任一 exact text 無法在宣告頁面範圍找到，整包拒絕
+入庫。Lineage candidates 必須一對一覆蓋所有 segment IDs，disposition
+count 也必須等於 manifest。
+
+PG schema `nhi_rule_history_transcript` 把 transcript、25 個 source pages、
+114 個 segments、analysis 與 114 個 candidates 分表保存。父 run 只能
+`loading → sealed`；sealed 後 parent/children 的 INSERT、UPDATE、DELETE
+及 TRUNCATE 均 fail closed。外鍵指回 FINT 內的官方 attachment snapshot。
+
+84 年第一批 live run
+`03f3b55e-8a07-5efb-b3ec-f908fbd01575` 的 review status 是
+`agent_proofread_pending_independent_review`。即使 114/114 exact-text
+checks 全通過，它仍只代表「來源上看到什麼」：
+
+- 不建立 stable legal identity；
+- 不宣告 96 年條文是 direct predecessor／successor；
+- 不把文件一般實施日下推為每個 segment 的精確生效日；
+- 不宣告完整歷史；
+- 不先扣減現行條文的 2,861 個缺版。
+
+只有 independent review 與 identity/legal-version adjudication 均通過的
+segment，才可在另一個 promotion transaction 影響 canonical version
+inventory。
+
 ## WP07：公開 release
 
 每個資料 release 至少包含：
@@ -482,7 +526,15 @@ PYTHONPATH=src python3 tools/build_current_history_inventory.py \
 PYTHONPATH=src python3 tools/load_current_publication.py \
   build/baae912e-8d5f-46b0-9efd-77cf4d567428 \
   --dsn "$DATABASE_URL"
+
+PYTHONPATH=src python3 tools/load_source_transcript.py \
+  external_bundle:gpt-pro-20260729-v1 \
+  --dsn "$DATABASE_URL"
 ```
+
+上例的 `external_bundle:` 是公開文件中的 logical locator；實際執行時傳入
+本機 formal bundle 目錄。Loader 不接受 public repo 裡未經 manifest
+hash/size 驗證的散落文字。
 
 取得 NHI 藥品／ATC／給付章節 raw snapshot：
 

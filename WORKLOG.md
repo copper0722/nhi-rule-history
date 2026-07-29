@@ -1165,3 +1165,37 @@
 - GitHub 專案定位固定為公開方法學、schema、crawler/exporter、稽核收據
   與 JSON／SQLite 可攜 release；付費條文 reader 留在 subscriber site，
   GitHub Pages 只保留原型／回饋用途，不作 production content surface。
+
+## 2026-07-29 — GPT Pro 完成 84 年逐頁校對並載入 source-observation PG
+
+- 保留並完成原 GPT Pro 任務，沒有收回。Pro 視覺檢查官方掃描 25/25 頁，
+  交付 `proofread-84.md`、114-row `clauses-84.jsonl` 與 114-item
+  `84-to-96-lineage-analysis.md`。交付摘要為 0 unresolved visual
+  readings、0 literal deletion placeholders。
+- Controller 對 UTF-8、manifest file hash/size、25 個連續 page markers、
+  114 個 unique segment IDs、頁面範圍與 lineage coverage 做 fail-closed
+  驗證。每個 exact segment text 只經 NFKC、空白／Markdown structure
+  removal 與重複公報頁首 removal 後，均能在宣告頁面範圍找到；114/114
+  通過。Lineage disposition 為 same-designation 8、renumber/move 86、
+  absent-in-96 observation 6、ambiguous 14。
+- 新增 v19 `nhi_rule_history_transcript` migration、rollback、loader 與
+  tests。資料表正規化保存 run、proofread artifact、page、segment、
+  lineage artifact 與 candidate，並外鍵連回 FINT 官方附件 snapshot。
+  Loading run 只可封存一次；parent/child 的 sealed mutation 與 TRUNCATE
+  都被拒絕。
+- Disposable PostgreSQL 已通過 forward、實際 25/114/114 load、same-run
+  idempotent replay、sealed UPDATE／DELETE／TRUNCATE rejection 與 rollback。
+  正式 `hmj/vault_main` 已載入 sealed run
+  `03f3b55e-8a07-5efb-b3ec-f908fbd01575`；fresh query 重算為
+  1 proofread artifact／25 pages／114 segments／1 lineage artifact／
+  114 candidates，fingerprints 與 sealed receipt 相同。
+- Review status 固定為 `agent_proofread_pending_independent_review`。
+  `source_observation_only=true`；legal identity、direct predecessor、
+  segment-level legal effective date 與 complete-history claims 全為 false。
+  因 84 segments 尚未與現存 canonical clause identity adjudicate，現行
+  639 條的 expected/reconstructed/missing 仍為 3,512／656／2,861，沒有
+  為了看起來進度較快而先扣數。
+- Live receipt：
+  `docs/audits/2026-07-29-source-transcript-84-live-verification.json`。
+- 本輪全套回歸為 70 項 legacy tests（1 skip）與 473 項 public tests
+  （466 passed、7 個環境性 skip），合計 543 項、535 項實際通過。
