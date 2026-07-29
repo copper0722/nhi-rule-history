@@ -4,18 +4,20 @@
 
 | ID | 缺口 | 狀態 | 關閉證據 |
 |---|---|---|---|
-| G-SOURCE-01 | 官方來源宇宙未封閉 | listing_detail_attachment_acquisition_and_grouped_reconciliation_passed_discrepancies_open | NHI listing 43/43 pages、858/858 rows、858/858 detail HTML 兩輪皆通過；2,400/2,400 attachments（476,139,573 bytes、0 issues）已 sealed。NHI 847 文號鍵與 FINT exact-phrase 365 鍵的交集 217、NHI-only 630、FINT-only 148，且有 7 個 collision keys；仍須 typed attachment semantics、同義 query、法務來源及逐筆裁決 |
-| G-SOURCE-03 | MOHW FINT exact-query date-window acquisition | source_bundles_passed_bounded | A/B 1,719-key parity、1,719/1,719 fetch、366/366 deterministic notice bundles、offline hash verify 與 byte-identical replay |
+| G-SOURCE-01 | 官方來源宇宙未封閉 | evidence_union_defined_individual_source_surfaces_bounded | 2026-07-27 NHI sealed capture 是 43/43 pages、858/858 rows、2,400/2,400 attachments；2026-07-29 即時 surface 已變 859 rows，最舊可見仍為 111-09-06，且表格含刊登期限。父層「自103年4月3日」不能作完整性分母。FINT 空關鍵字公布 17,497 筆，但 1900–1989 的 90 partitions／448 rows 後已停止；逐條重建改採年度快照、日期 marker、NHI、FINT、公報與館藏 evidence union |
+| G-SOURCE-03 | MOHW FINT exact-query date-window acquisition | source_bundles_passed_bounded_targeted_lane | A/B 1,719-key parity、1,719/1,719 fetch、366/366 deterministic notice bundles、offline hash verify 與 byte-identical replay；保留作 targeted evidence。空關鍵字年度全集只是可選 recall audit，不是主取得路徑 |
 | G-SOURCE-04 | MOHW FINT 1996–2020 exact-phrase historical baseline | source_bundles_all_declared_types_extracted_cross_format_candidate_matcher_passed_visual_review_open | A/B 2,120-key parity；942 detail、1,178 attachments 全抓並形成 942 bundles；ODT/PDF/OLE/ODS 原生 typed text matcher 得 2,034/3,080 日期與 909/3,010 joint candidates；3 份 Word／5 頁、13 standalone images 與 7 PDF zero-word pages仍有 OCR／visual review，且 candidate 尚未解析法律 effect |
-| G-SOURCE-02 | current whole/chapter 官方內容不一致 | leaf_diffs_classified_canonical_resolution_open | 268 resources、267 unique artifacts、92/92 ODT 已 sealed；各重建 639 條，606 相同／33 不同；19 個 leaf 為 6 version/date、6 list-marker、6 punctuation、1 trailing-layout，仍須以 event/effect 裁決 canonical anchor |
-| G-UPDATE-01 | 單一 update orchestration 未完成 | agent_dispatch_paused_methodology_rebuild | deterministic RSS/raw acquisition 可保留；依 Copper 2026-07-28 指示停止 Claude／其他模型條文整理。恢復前須完成 v3 evidence contract、queue conversion 與 10-unit pilot |
+| G-SOURCE-05 | 84–87 年早期版本鏈仍有中間事件缺口 | 84_official_full_scan_acquired_85_exact_event_not_found | FINT `健保醫字第84010140號` 及附件二 `全民健康保險藥品使用規範.PDF` 已封存：25 頁、3,802,900 bytes、SHA-256 `f773cf…b4d2`；live PG sealed run `2fa58923-9a91-8c8a-9a8f-a4ee0010845d`。84 年全文可得性已關閉，但掃描 proofread、85/1/1 與 86/1/1 精確修正文仍 open。句子查詢為 0，日期變體未得相關結果，只能標 `not_found_after_declared_search` |
+| G-SNAPSHOT-01 | 官方全文尚未全數切成 canonical single-clause observations | raw_and_structural_stage_passed_observation_materialization_open | 84 年掃描與 14/14 ODT 已封存；下一步逐 edition 解析 presence、designation、全文 hash，先建立 appearance／text-change／disappearance observations。identity review 後才可判定 create／amend／delete／restore／move；source edition date 不冒充 legal effective date |
+| G-SOURCE-02 | current whole/chapter 內容不一致 | closed_nonblocking_crosscheck | 官方最新版分章頁已指定為 sole current-text authority；整份檔降為 non-authoritative quality cross-check。268 resources、267 unique artifacts、92/92 ODT 已 sealed；606 相同／33 不同仍保存為品質證據，但不再阻擋現行條文發布 |
+| G-UPDATE-01 | 單一 update orchestration 未完成 | clause_proposal_dispatch_paused_methodology_rebuild | deterministic RSS/raw acquisition 與 bounded public-source research可保留；依 Copper 2026-07-28 指示停止 Claude／其他模型批次整理條文。恢復 proposal lane 前須完成 evidence contract、queue conversion 與 10-unit pilot |
 | G-PROMOTION-01 | canonical promotion 尚缺 external full-document verifier 與正向 lane | pro_method_audit_accepted_live_blocked_external_verifier_missing | adversarial review 依序找出來源綁定、時間鏈、MIME self-attestation、假 ODF ZIP、損壞壓縮 payload 與 51-byte 假 PDF 等缺口；最新草案將 release-linked ODT/ODS/PDF 全部設為 observation-only，三個 format policy 均無正向 lane。第八次獨立 disposable-PG gate 與 GPT Pro method audit 均為 C/H/M/L 0/0/1/2、`ACCEPT`；post-audit 271 項 public tests 通過（6 skip）。Medium 正是缺少 governed positive verifier/admission path，故 live 未套用 |
 | G-SCHEDULE-01 | recurring RSS/update lane | proposal_dispatch_paused_by_owner | proposal task 已設 `skipped_gate`、next due 2099，wrapper 預設拒絕 agent dispatch；恢復需 Copper 明示與 `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=true`。raw poll 不等於條文整理 |
 | G-EVENT-01 | transition evidence ledger 未建立 | methodology_v3_defined_schema_migration_open | transition 不再要求 mandatory official-event FK；須建立 `transition_evidence` 與 optional `transition_notice_link` |
 | G-DATE-01 | 生效日未證據化 | blocked | 每個 accepted date 的 official locator |
 | G-ANNOTATION-01 | source-local 日期註記尚未完成 transition adjudication | raw_6366_adjudicated_v3_resolution_pending | 6,366 個 exact slash-triplet candidates 已入 append-only stage；6 筆已確認是 Trelegy 劑量而非日期，有效日期分母 6,360。3,080 個條文×日期 discovery pairs 已 hash-bound；公告 linkage 與 transition evidence 分開計算，尚未依 v3 契約 adjudicate |
 | G-WORK-01 | 3,080 個 discovery pairs 尚待轉為 direct-edge work units | v1_queue_superseded_for_execution | v1 queue 與 SHA-256 保留作不可變 discovery provenance；其 mandatory `official_event_identity` gate 已撤回。下一步是 v3 queue converter、validator 與 10-unit pilot，不可直接派模型量產 |
-| G-COVERAGE-01 | 尚無逐條完整性 closure | methodology_v3_schema_implementation_open | annotation terminal／transition evidence／snapshot／adjacency／source-universe／anchor replay 全通過；notice linkage 只作獨立 coverage |
+| G-COVERAGE-01 | 尚無逐條完整性 closure | methodology_v4_schema_implementation_open | annotation terminal／transition evidence／snapshot presence-absence／adjacency／declared source set／anchor replay 全通過；notice linkage 與 exact-date coverage 各自另報，interval history 不冒充 exact history |
 | G-ID-01 | stable identity 未建立 | blocked | UUID、designation、curation、無 cycle |
 | G-REPLAY-01 | event replay 未對 anchors | blocked | rule set/text hash parity |
 | G-DIFF-01 | adjacent diff 未建立 | blocked | direct edge、100% source mapping |
@@ -43,6 +45,9 @@
   structural parse；另完成 942/942 source-local notice bundles 的 offline
   verify 與 byte-identical replay。1996–1998 exact phrase 為 0，不代表
   來源不存在。
+- 84-06-20 原始公告 detail、兩個附件宣告及兩份 PDF bytes 已完成
+  content-addressed raw bundle 與 live append-only PG seal；84 年給付
+  規範 PDF 為 25 頁掃描，OCR 尚未 proofread。
 - 1,719/1,719 raw linkage；31,377 blocks／1,228 occurrences structural stage。
 - 313 項 public tests（307 passed、6 項環境性 skip），另有 private registrar/migration
   contract tests、sealed DML guard、bounded rollback與 idempotent replay。

@@ -10,14 +10,18 @@
       "kind": "nhi_current_whole",
       "enabled": true,
       "base_url": "https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html",
-      "implementation_status": "implemented_deterministic_discovery"
+      "implementation_status": "implemented_deterministic_discovery",
+      "source_role": "non_authoritative_quality_crosscheck",
+      "mismatch_blocks_current_publication": false
     },
     {
       "id": "nhi-current-chapters",
       "kind": "nhi_chapters",
       "enabled": true,
       "base_url": "https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html",
-      "implementation_status": "implemented_deterministic_discovery"
+      "implementation_status": "implemented_deterministic_discovery",
+      "source_role": "sole_current_text_authority",
+      "primary_structured_format": "odt"
     }
   ],
   "excluded_semantics": [

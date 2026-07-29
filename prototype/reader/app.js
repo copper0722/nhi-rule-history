@@ -370,6 +370,18 @@ function renderTransition(transition, rowIndex) {
     rowIndex === 0
       ? `<span class="edition-meta__badge">最新版</span>`
       : "";
+  const skippedExpectedVersions = Math.max(
+    0,
+    Number(transition.skipped_expected_version_count) || 0,
+  );
+  const comparesOlderVersion = skippedExpectedVersions > 0;
+  const comparisonLabel = comparesOlderVersion
+    ? "與舊版本差異"
+    : "與上一版本差異";
+  const olderVersionLabel = comparesOlderVersion ? "舊版" : "上一版";
+  const skippedVersionNote = comparesOlderVersion
+    ? `<span class="date-caution">中間尚缺 ${skippedExpectedVersions} 個版本全文</span>`
+    : "";
 
   return `
     <article class="edition-row transition-row">
@@ -378,16 +390,23 @@ function renderTransition(transition, rowIndex) {
         <p class="edition-meta__role">${labelRole}</p>
         <strong>${escapeHtml(mainLabel)}</strong>
         ${dateCaution}
-        <span class="compare-label">前版 → 本版：${escapeHtml(olderRange)} → ${escapeHtml(newerRange)}</span>
+        <span class="compare-label">${comparisonLabel}</span>
+        <span class="compare-label">${olderVersionLabel} → 本版：${escapeHtml(olderRange)} → ${escapeHtml(newerRange)}</span>
+        ${skippedVersionNote}
         <div class="source-pair">
-          ${sourceLink(olderSource?.source?.official_url, "前版來源")}
+          ${sourceLink(olderSource?.source?.official_url, `${olderVersionLabel}來源`)}
           ${sourceLink(newerSource?.source?.official_url, "本版來源")}
         </div>
       </aside>
       <div class="edition-content">
         ${hunks}
         <p class="edge-caution">
-          僅比較本條相鄰的不同文字狀態；未宣稱兩份來源之間沒有其他公告或法律事件。
+          ${
+            comparesOlderVersion
+              ? `本列只顯示兩個已重建全文的差異；其間仍缺 ${skippedExpectedVersions} 個版本全文。`
+              : "本列比較本條相鄰的已重建文字版本。"
+          }
+          未宣稱兩份來源之間沒有其他公告或法律事件。
         </p>
       </div>
     </article>

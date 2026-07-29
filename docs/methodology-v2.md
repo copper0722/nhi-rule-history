@@ -1,11 +1,12 @@
 # v2 方法學：從官方原始資料到可稽核的結構化 stage
 
-> 2026-07-28 方法學修正：本文件的 acquisition／raw／structural stage
-> 仍有效；凡將 `official_event` 或「找到公告」設為逐條 transition 必要
-> 條件的文字，均由
-> [逐條文歷史工作的 agent 方法學](agent-work-methodology.md) 取代。
-> 無法證明所有歷史公告至今仍公開可得，故公告 linkage 只能是獨立的補強
-> 證據與 coverage metric。
+> 歷史方法已由 2026-07-29 的
+> [公開方法學](methodology.md)與[工作流程](workflow.md)取代。本文件只保留
+> acquisition／raw／structural stage 的工程紀錄。年度快照現在是逐條
+> source observations 與消失偵測面；「Git-like」只作內部比對譬喻，
+> observation delta 不等於法律 predecessor。公文不是建立 source
+> appearance window 的先決條件。凡與新方法衝突的 source-frontier 或
+> completion 敘述均不得作為現行計畫。
 
 ## 裁決
 
@@ -281,8 +282,8 @@ overlap_policy = retain every raw date expression even when it refers to ROC 109
 | Endpoint | 角色 | 本輪已證明的限制 |
 |---|---|---|
 | [NHI 歷史整份檔](https://www.nhi.gov.tw/ch/cp-2192-9951a-2509-1.html) | 96 年 7 月至 109 年 cumulative anchors | 只有 v1 的 14 ODT 已封存 |
-| [NHI 最新整份檔](https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html) | terminal cumulative anchor | 已程式化擷取；title/update metadata 不是生效日，同 URL 會變動 |
-| [NHI 最新分章檔](https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html) | terminal chapter anchors | 已程式化擷取；仍需與同批 whole 做逐條文字一致性檢查 |
+| [NHI 最新整份檔](https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html) | non-authoritative quality cross-check | 已程式化擷取；與分章頁的差異保留為品質證據，但不阻擋現行條文發布 |
+| [NHI 最新分章檔](https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html) | sole current-text authority | 官方頁明列為「最新版藥品給付規定內容(分章節)」；每章／附表 group 是現行投影唯一正典，ODT 是主要結構解析格式 |
 | [NHI 法規公告 listing](https://www.nhi.gov.tw/ch/lp-3258-1.html) | listing/detail/attachment observation | 2026-07-27 兩輪完整列出 858 筆、43 頁並抓取 858 details；兩輪 stable projection 均為 2,400 個附件 URL、5 個零附件頁；2,400/2,400 附件已抓取並 sealed 到 PG acquisition stage，最舊只到 ROC 111 |
 
 Listing DOM 在 capture 當日是 `section.list > table.rwdTable`，分頁為
@@ -331,8 +332,9 @@ byte-identical replay。原 acquisition source plan 固定保存為
 實抓後形成 267 個 unique artifacts（包含兩個 page bytes）、57,999,120
 bytes、0 blocking issue；92/92 ODT 再轉為 44,504 個 structural blocks 與
 1,322 個 occurrence candidates，已 sealed 入 PostgreSQL。這關閉的是
-「現行官方 anchor 是否確實取得」的 acquisition 缺口，不是 whole↔chapter
-逐條 parity，也不是生效日或歷史完整性。公開 receipt 見
+「現行官方 anchor 是否確實取得」的 acquisition 缺口，不是生效日或歷史
+完整性。分章頁是現行條文唯一正典；整份檔只作非阻擋的品質比對。公開
+receipt 見
 [`audits/2026-07-27-current-anchor-capture-receipt.json`](audits/2026-07-27-current-anchor-capture-receipt.json)。
 
 同批資料另做保守的條號／標題 occurrence multiset preflight。正規化僅做
@@ -363,14 +365,31 @@ flow、table 與 list blocks。整份與分章各重建 639 條，606 條逐條�
 官方檔也不能在生效日前直接成為今日 current。公開分類見
 [`audits/2026-07-27-current-anchor-leafmost-diff-classification.json`](audits/2026-07-27-current-anchor-leafmost-diff-classification.json)。
 
-因此 terminal anchor 不是「尚未比較」，而是「已比較並發現 33 個官方來源
-差異」；在逐一裁決前不得選任一側寫入 canonical current。完整 source-span
+因此 terminal cross-check 不是「尚未比較」，而是「已比較並發現 33 個
+來源差異」。這些差異繼續保存，但不需要逐一選邊：canonical current
+一律來自官方最新版分章頁，整份檔不得覆蓋或阻擋分章投影。完整 source-span
 receipts 見
 [`audits/2026-07-27-current-anchor-full-clause-parity.json`](audits/2026-07-27-current-anchor-full-clause-parity.json)。
 
 這證明一個可程式重建的 bounded source set；它仍不能證明所有會影響藥品
 給付規定的官方函釋都一定含有這個完全相同的字串。後續 source-universe
 closure 必須加入明定的查詢 partition/同義 query 與跨來源 discrepancy。
+
+2026-07-28 起加入 `FINTQRY03` frontier crawler。後續實測發現四個關鍵字
+欄位全部留空時，官方系統會公布可列舉分母；`1900-01-01..2026-07-28`
+為 17,497 筆，年度 partitions 可精確相加。因此主 acquisition 改為
+「年度空關鍵字全集 → 完整搜尋結果頁 fingerprint → FINTQRY04 RowNo
+1..N → 年度總和與 broad total 對帳」。現行 661 個不同條文標題產生的
+1,946 筆 seed provenance、1,446 組 unique keyword queries，保留作
+discrepancy 與後續更新補漏，不再作全庫 completeness 的主要分母。
+
+正式文號只作 grouping key；每個 query RowNo、detail observation 與
+detail snapshot 均分存。附件再拆成「該 snapshot 宣告的 edge」與「實抓
+bytes」；空白 link label 也不得丟棄。CAPD canary 已驗證 6/6 詳情與 1/1
+宣告附件，並發現官方頁錯掛「食品添加物規格標準.DOC」，所以 declared
+attachment、byte snapshot、relevance 與 transition evidence 必須分層。
+完整方法、PG tables 與 completion 措辭見
+[FINT 歷史公文研究 crawler](fint-keyword-crawler.md)。
 
 為把「跨來源 discrepancy」變成可驗收資料，本專案已將 NHI 858 筆
 listing/detail metadata 與 FINT 2021–capture-cut exact-phrase 366 筆，

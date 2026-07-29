@@ -2,6 +2,14 @@
 
 ## 2026-07-28
 
+- Copper 指定健保署「最新版藥品給付規定內容（分章節）」
+  `cp-7593-ad2a9-3397-1.html` 為唯一現行正典。方法學因此改為：
+  canonical current text 只來自該頁明列的章節／附表 groups，ODT 作主要
+  結構解析；最新整份檔只是 non-authoritative quality cross-check。
+  先前 639 條 whole/chapter 比對的 606 相同／33 不同與 19 個 leafmost
+  分類全部保留為 evidence，但不再阻擋現行條文發布或要求逐條選邊。
+  新增 append-only PG authority-policy migration、rollback、公開 JSON
+  receipt 與契約測試；頁面 update label 仍不得自動升格為法律生效日。
 - 完成 worker contract／recovery v2 的 public implementation 與 private
   runtime hardening。worker 改為只看 source blocks，不再接觸 notice
   metadata；title、date、URL、文號與 stable identity 全由 controller
@@ -897,3 +905,229 @@
   `95097aa5091824519fcc42efb2ba3c269e33315a46e6d3da61a25a4fea5ff2e0`，
   logical SHA 為
   `e230b714a1ec6e128898f9b8dd676997362ad4b9aa1a5d81b464ff4162a14b11`。
+
+## 2026-07-28 — FINT keyword frontier crawler
+
+- 依 Copper 指定，以
+  `https://mohwlaw.mohw.gov.tw/FINT/FINTQRY03.aspx` 建立歷史公文研究
+  crawler。CAPD canary 查得並封存 6 個正式文號、6 份詳情全文、1 份
+  宣告附件與 8 個 raw observations，0 issues；同一文號可被多個 query
+  命中，所以資料模型採 document-number grouping＋many-to-many match，
+  不以 query row 或單獨文號冒充唯一公文／條文身分；不同詳情保留為不同
+  snapshots。
+- CAPD canary 同時發現官方資料品質案例：健保藥字第0950070568號的詳情頁
+  掛出「食品添加物規格標準.DOC」，下載 bytes 亦為該 OLE Word 文件。
+  crawler 原樣保存 source edge，但附件 relevance 與 transition evidence
+  必須分層，不得自動升格。
+- Python 3.14 因 FINT 官方舊憑證缺少 Subject Key Identifier 而拒絕 TLS。
+  新 transport 使用系統 curl 的正常憑證驗證，不使用 insecure；禁止
+  redirect、核對 effective URL、限制 response size。失敗的 Python
+  transport run 留在 external raw area 作 failure evidence。
+- 由 sealed current chapter structural PG run
+  `baae912e-8d5f-46b0-9efd-77cf4d567428` 的 661 個不同條文標題，程式化
+  產生 1,946 筆 seed provenance、1,446 組 unique queries；固定 baseline
+  與 synonym queries 另有明示來源。
+- 建立 `fint_keyword_crawl_v17` PG migration 與 verified loader。完整
+  detail text 進 PG；raw HTML／附件留 content-addressed store。Disposable
+  PostgreSQL 已驗證 forward／rollback、crawler projection、idempotent
+  load、seal counts 與 post-seal immutability。正式 PG 等完整 crawl
+  manifest 產生後才載入，不把半套 run 標成完成。
+- 啟動全期 `藥品給付規定` baseline；FINT 搜尋分母為 1,309。run 位置：
+  `/Users/copper/agent-share/nhi-rule-history/fint-crawl-20260728-baseline-v1`。
+  執行中狀態不是 sealed receipt。
+- 本輪全套回歸：70 項 legacy tests（1 skip）及 453 項 public tests
+  （446 passed、7 個環境性 skip）通過。
+
+## 2026-07-28 — FINT unfiltered yearly enumeration pivot
+
+- 直接驗證 `FINTQRY03`：四個 keyword 欄位留空、`valid=3`、
+  `type=etype_` 時，`19000101..20260728` 公布 17,497 筆；原
+  `00000000..99991231` 亦為 17,497。最末筆 RowNo 17,497 的公文日期是
+  民國 43 年（1954），因此 1900 起始不漏掉目前可列舉的已知最早紀錄。
+  2025 年分母 608、2026 年 capture-cut 前分母 221，證明年度 partition
+  可用。原 1,309 筆精確詞 baseline 在 265 details／999 attachment
+  snapshots 時停止；raw 保留但不封存。
+- 主策略改為年度空關鍵字全集。新 batch controller 先取 broad total，
+  再跑互不重疊 Gregorian-year partitions，最後重取 broad total 與首頁
+  fingerprint；年度 match sum、before total、after total 必須完全相等。
+  關鍵字 1,446-query frontier 降為 discrepancy／更新補漏。
+- Grok `grok-4.5` 以 read-only、no-search、no-subagent 方式獨立審查舊
+  v17，結論 `REPAIR_THEN_REAUDIT`。實質 findings：PG 未核對逐 query
+  match `1..N`、`input_sha256 UNIQUE` 阻止同 seed 重跑、搜尋 RowNo 未
+  防 live reorder、空白附件標籤被漏掉、附件未綁 detail snapshot、
+  loader 只核 bytes/count 未核 graph、migration reapply／rollback 與
+  TRUNCATE safety 不足。正式 PG 因此維持未套用。
+- crawler 升為 `fint-frontier-crawler/2.1.0`：保存所有搜尋結果頁與
+  ordered RowNo/result fingerprints，query 完成前逐頁重取核對；detail
+  snapshot identity 加入 exact detail URL；match 保存 detail
+  observation；空白 attachment label 以 `source_label_missing=true`
+  保存。
+- 附件正規化拆成 `fint_attachment_declaration` 與
+  `fint_attachment_snapshot`。前者綁定 `match_id + snapshot_id` 並保存
+  所有官方 anchor；後者只表示實抓 bytes。`all`、`nhi_candidate`、
+  `none` 是明示 byte policy，不能拿 bytes coverage 代替 declaration
+  coverage 或 relevance。
+- v17 staging schema 移除 seed hash 唯一限制；新增 query RowNo unique、
+  attachment declaration FK、逐 query contiguous `1..N` seal gate、
+  observation URL/kind binding、attachment fetch-state parity、loader
+  advisory lock、manifest exact-file-set 與 graph validation。forward 可
+  安全 reapply；rollback 在已有 receipt 時拒絕；sealed child 與 parent
+  的 TRUNCATE 亦被阻擋。
+- 真實 1954 unfiltered canary：1 expected／1 fetched、1 document group、
+  1 detail snapshot、2 observations、0 attachment declarations、0 issues；
+  manifest SHA-256
+  `a17f4e07526bdd110294d039a45a68aa5933f007d855e4fe331c76f2bc65819c`
+  已在 disposable PG sealed 為
+  `85a4ba45-0f44-8a12-925f-f449dba45bf4`。此 run 是 pre-2.1 canary，
+  方法證據保留；2.1 的 2026 年 221-record canary 另行執行中。
+- 新增 negative receipts：非連續 RowNo、crawl 途中 search-result drift、
+  空白附件 label、query/match parity tamper、同 seed 不同 output 雙 run、
+  migration reapply、封存後 INSERT/TRUNCATE、帶 receipt rollback 均
+  fail closed。14 項 FINT crawler/PG 專項測試通過；全 repo 回歸待年度
+  canary 完成後重跑。
+- 2.1 真實 2026 年度 canary 完成：221/221 RowNo details、221 document
+  groups、221 snapshots、428 attachment declarations、244 stored
+  observations、0 attachment bytes（明示 `none` policy）、0 issues；
+  manifest SHA-256
+  `496cce733d56323ac5ff6a5720086d50eaf5ddc5cf19e40ec8bdb23ce45a3856`。
+  Disposable PG sealed run
+  `bfaa5cb5-cb1b-82c1-9cac-5fb74f40023d`，counts 221/428/0。
+- 啟動 1900–2026 yearly batch：
+  `/Users/copper/agent-share/nhi-rule-history/fint-all-years-20260728-v1`。
+  一開始為節省時間複製的 2026 canary seed locator 仍寫 1954 partition；
+  已在 batch 到達 2026 前移至
+  `preseed-2026-wrong-origin-preserved`，不作 batch input。Crawler 2.1.1
+  新增 unfiltered seed locator/date equality gate 與 negative test；正在
+  執行的 2.1.0 controller 自行生成正確年度 locator，故既有年度 outputs
+  不受此 canary provenance 錯誤影響。
+- 新增 post-batch search-index verifier：整批 detail crawl 完成後，重新
+  取得每個年度的每一個 FINTQRY03 結果頁，和該年度原始
+  `search_index_sha256` 對照；不能只看 broad total／首頁未變。1954–1955
+  兩年度 canary 得 1+1=2，broad before/after=2，最終逐年度 index
+  verification 全通過；batch manifest SHA-256
+  `a10a41ea1ef0062be79e40c26dbf0b49c45b8952137f3ad6da052bc2bb3a434a`，
+  verification year-receipts SHA-256
+  `798a387c512bd355a8e6511aa80163ee02c606fbf503fea27ec51f667c31e451`。
+
+## 2026-07-29 — 歷史重建方法改為逐條 Git-like state 與 evidence union
+
+- 依 Copper 指示把本輪共識先寫入 durable workflow，避免後續 context
+  compression 退回舊方法。Canonical version unit 明定為單一條文；整章、
+  年度檔與整份檔只作 source-edition containers。
+- 14 份年度整編檔升格為逐條 Git-like state commits：相鄰 editions 比對
+  presence、designation、structure 與完整 text hash，建立
+  create／amend／delete／restore／move candidates。整條刪除必須靠
+  presence→absence 偵測，條文內日期無法補回。
+- 條文內民國年月仍是 surviving-text 的強 amendment index；公文、old/new
+  附件、公報與館藏用於精確 transition、文號及生效日。找不到公文時保存
+  bounded search receipt 與 interval precision，不把後一 snapshot date
+  冒充生效日，也不把 diff 冒充一次公告。
+- 重新核對 NHI `lp-3258`：父層文字是「自103年4月3日以後生效之公告」，
+  但 2026-07-29 target listing 為 859 rows／43 pages，最舊可見
+  111-09-06，表格另有刊登期限。故此面只表示目前存活 listing，不是
+  2014 年後完整 archive；receipt 已存
+  `docs/audits/2026-07-29-nhi-archive-label-surface-check.json`。
+- FINT 空關鍵字 17,497-row broad crawl 從主取得策略降為 optional recall
+  audit；長跑實際停在 1900–1989，共 90 annual manifests／448 match rows，
+  partial raw 保留，未載入正式 PG。主流程改由 snapshot diff、date marker
+  與 current-to-history gap 產生 targeted queries。
+- 早期名稱系譜加入工作流程：健保署後來官方施政紀實支持 84-06-20 訂定
+  `全民健康保險藥品使用規範`、84-07-01 實施、87-03-04 改名、
+  87-04-01 實施；國圖 catalog `D9507418`／`84衛技字第052484號` 支持函轉
+  metadata。尚未找到可公開下載的 84／85 完整原始全文，狀態是
+  `availability_unresolved`，不得寫成 paper-only。
+- 依 Copper 提供的國史館臺灣文獻館衛生處全宗網址，以 in-app browser
+  核對：全宗宣告 12,992 筆；提供的升冪結果窗為 9,981–10,000，所以畫面
+  落在 1967。UI 可見導覽停在 10,000；1995 年切片只有一筆不相關卷
+  `061-12707`，精確文號與規範題名皆 0 筆。這是
+  `not_found_after_declared_search`，不是 absence proof；receipt 已存
+  `docs/audits/2026-07-29-taiwan-historica-health-department-search.json`。
+- 依 owner 指示以 model harness 比較 Grok 4.5 與 Gemini 3.1 Pro。Grok
+  兩次都只回準備搜尋的進度句，未交 direct URL／locator，兩次均 contract
+  failed；依一次重試上限停止。Gemini 完成格式但 sources array 為空，
+  且把 search miss 寫成過強的 availability claim，因此只保留 lead-only。
+  原始回答、provider status 與 controller reconciliation 已存
+  `docs/audits/2026-07-29-early-rule-multimodel-research-results.md`；失敗
+  模式已蒸餾進 agent 方法學。
+
+## 2026-07-29 — 找回 84 年原始規範、建立 raw bundle 並進 live PG
+
+- 以後期條文句子查 FINT 並不能找到早期附件內文：
+  `本保險處方用藥` 與 `處方合理之含量或規格藥品` 在
+  1995-01-01..1997-12-31 都是 0。改用當時正式名稱
+  `全民健康保險藥品使用規範` 後得到 2 筆，其中
+  `健保醫字第84010140號`（84-06-20）詳情明載附件二及「除有特別明定者
+  外，自本（八十四）年七月一日起實施」。
+- 官方附件二已完成 durable content-addressed acquisition：
+  `/Users/copper/agent-share/nhi-rule-history/fint-84-baseline-20260729-v2`。
+  Run 為 1 query、2 documents、2 snapshots、2 matches、2 attachment
+  declarations、2 attachment byte snapshots、5 observations、0 issues；
+  manifest SHA-256
+  `44caa140a4c81b700a9e54265e7f7489a6b818adf38f6bac49fc5080dc43ee57`。
+- `全民健康保險藥品使用規範.PDF` 是 25 頁、3,802,900 bytes 的官方掃描，
+  SHA-256
+  `f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2`；
+  沒有實質文字層。OCR 已做研究性試跑，但錯字明顯，只能是
+  unproofread observation，未進 canonical clause text。
+- 另封存日期探測
+  `/Users/copper/agent-share/nhi-rule-history/fint-85-date-probes-20260729-v1`：
+  四種中文日期寫法為 0；`85/1/1` 得 11 筆但逐筆皆與本條修正無關。
+  因此 `85/1/1` 精確事件狀態是
+  `not_found_after_declared_search`，不是 absence proof。
+- Claude Fable `claude-fable-5` 以 repo read-only、no-web、no-subagent
+  檢查修後 FINT crawler、loader、migration、rollback 與 tests，裁決
+  `ACCEPT_FOR_BOUNDED_LIVE_STAGE`；完整回覆存
+  `docs/audits/2026-07-29-fint-fable-live-gate-response.md`。
+- 套用 v17 migration 至 `hmj/vault_main` 後，成功載入 84 年 bounded
+  bundle，sealed run
+  `2fa58923-9a91-8c8a-9a8f-a4ee0010845d`。唯讀 live verification 確認
+  state=`sealed`、issue=0、query/document/snapshot/match/declaration/
+  attachment=`1/2/2/2/2/2`、RowNo=`1..2`、兩附件均 fetched PDF 且
+  output SHA 等於 manifest SHA。對 sealed run 的 UPDATE probe 被
+  `sealed FINT crawl runs are immutable` 拒絕。
+- 修後 FINT crawler/seed/PG 專項 18/18 tests passed；相同 raw bundle 對
+  live PG 重播回 `already_sealed`，run ID 與 counts 不變。
+- 84 年掃描第 3 頁直接顯示通則第七條的原始基線；96 年 7 月版同號文字
+  已不同並帶 `(85/1/1、86/1/1、94/6/1)`。這證明 84→96 有 observed
+  text delta，但仍不能把差異自動切成三個 exact legal transitions。
+
+## 2026-07-29 — GPT Pro 方法學 R1–R8 修補
+
+- 保存 GPT Pro `REPAIR_THEN_ACCEPT` 全文後，已將八項修補寫入
+  `docs/methodology.md`、`docs/workflow.md`、
+  `docs/history-rebuild-plan.md` 與 `docs/agent-work-methodology.md`：
+  source observation 與 legal version 分離、三條時間軸、中性
+  appearance/text-change/disappearance vocabulary、identity lineage graph、
+  current source conflict policy、exact/comparison/OCR/display text 分層、
+  per-clause completeness vector 與 reader wording validator。
+- 「Git-like」降為內部工作比喻。年度相鄰來源不再直接建立法律
+  predecessor，條號消失不再直接叫 delete；same-number 也不自動成
+  stable identity。
+- reconciliation 存
+  `docs/audits/2026-07-29-methodology-v4-pro-reconciliation.md`。修後摘要已
+  送回同一 GPT Pro 對話作窄版 re-audit；最終裁決 `VERDICT: ACCEPT`。
+  Pro 另保留非阻擋邊界：文件層一般實施日不可直接下推每條生效日、OCR
+  仍是 unproofread observation、84→96 中間事件數與法律時間未知，以及
+  JSONL／SQLite／reader 共同狀態與禁語 validator 尚待實作。完整回覆存
+  `docs/audits/2026-07-29-methodology-v4-pro-reaudit-response.md`。
+- 完成契約與 reader contract 已同步補上 v4 release gate：來源觀察不自動
+  升格法律版本、三條時間軸分離、公告層通案日期不自動下推單一條文、相鄰
+  快照只用中性 appearance／text-change／disappearance 用語。JSONL、
+  SQLite、API 與 reader 必須共用同一 status／reader-wording validator；
+  此 validator 尚未實作，故仍不得發布完整法律歷史。
+- 2026-07-29：依 owner 決策，現存條文的歷史缺版分母改為最新版全文內
+  不重複且有效的民國年月日，最少一版。以 sealed current parse
+  `baae912e-8d5f-46b0-9efd-77cf4d567428` 程式化切出 639 條；日期推得
+  3,512 個應有版本，既有全文狀態 656，尚缺 2,861 個，分布於 440 條；
+  199 條目前不缺，5 條出現 date-count underflow 並保留 discrepancy。
+  逐條收據：
+  `docs/audits/2026-07-29-current-clause-history-inventory.json`。
+- 新增 `nhi_rule_history_publication` v18 immutable PG projection 與 loader：
+  639 clauses、13,874 blocks、3,487 clause-date rows。Disposable PG
+  forward、load/seal/activate、active views、same-run replay、sealed UPDATE
+  rejection、rollback 均通過；full suite 為 legacy 70/1 skip、public
+  463/7 skip。正式 `vault_main` 套用前已送 Claude Fable 只讀獨立 gate。
+- Reader transition 由新文字首次新增的 distinct date 數推版本距離：
+  一個日期顯示「與上一版本差異」；兩個以上顯示「與舊版本差異」並明列
+  中間缺少全文版數。0.4 例如 98 年版跨 2 個、109 年版跨 4 個、最新版
+  跨 2 個預期版本。

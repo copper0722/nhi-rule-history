@@ -51,6 +51,11 @@ Every historical row compares a clause only with its own next text state.
 - Unchanged context is included only when it helps locate the change.
 - Both source observations have official links.
 
+If the edge is only supported by source chronology, labels use
+「前一來源觀察／後一來源觀察」 and the neutral terms
+「出現／文字改變／消失」. 「本版新增／本版刪除」 is reserved for an
+adjudicated direct-predecessor legal edge.
+
 Useful code-diff ideas are adjacent-version comparison, stable block identity,
 collapsed unchanged context and intra-line emphasis. The reader does not inherit
 line-number primacy, unlabeled `+`/`−`, merge terminology or a desktop-only
@@ -183,3 +188,8 @@ A prototype passes only if a reader can:
 - identify both source observations for a diff;
 - understand that source chronology is not yet complete legal history;
 - use the page on a phone without horizontal diff scrolling.
+
+The same reader-wording validator must run for PostgreSQL exports, JSONL,
+SQLite, API responses and the static reader. A release fails if any surface
+turns an observation date into an effective date, an observed disappearance
+into a verified deletion, or a bounded search miss into non-existence.

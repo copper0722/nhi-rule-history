@@ -255,12 +255,16 @@
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "source_edition_fallback",
+        "comparison_label": "與上一版本差異",
         "label": null,
         "legal_effective_status": null,
-        "raw_values": []
+        "raw_values": [],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:ef67c9de774601a3ffb31d16f4b06d03f7f2244507a89ab114ece7ff4dd3659b",
       "hunks": [
@@ -501,7 +505,9 @@
           }
         ],
         "state_order": 0
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     }
   ]
 }

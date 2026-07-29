@@ -341,8 +341,9 @@ replay。Grok 的可接受角色是 hash-bound source triage，不是逐條完�
 
 因此後續 skill／packet 的改進是：
 
-- work unit 從 `clause × date marker` 改成
-  `stable-clause candidate × direct-predecessor edge × declared cut`；
+- work unit 先從 `clause × date marker` 改成
+  `source-segment observation pair × declared cut`；identity 與
+  direct-predecessor edge 是後續 adjudication，不能先假定；
 - mandatory output 從 `official_event_identity` 改成至少一筆 accepted
   `transition_evidence`；
 - `official_notice` 改成 nullable many-to-many linkage；
@@ -356,3 +357,44 @@ replay。Grok 的可接受角色是 hash-bound source triage，不是逐條完�
 評估 retrieval／triage；真正的歷史工作能力必須看它能否在 exact
 source spans 上重建完整前後版、識別 stable identity、說明日期角色、證明
 direct adjacency，並讓 deterministic replay 通過。
+## Claude Fable：先縮小證據包，再讓模型作獨立 gate（2026-07-29）
+
+本輪第一次讓 Fable 自由讀取整個 repo 做早期版本考據，雖然模型完成了
+大範圍盤點，但輸出過長而在 controller 端截斷；而且它無法靠 repo-only
+資料找回尚未封存的 84 年官方附件。之後 deterministic controller 以歷史
+法規名稱搜尋 FINT，才找回 `健保醫字第84010140號` 及完整掃描。
+
+第二次 Fable 任務改成明確的 live-application gate：
+
+- 只讀 7 個指定 code／migration／test／audit files；
+- 明列前次 Grok findings 與本次 bounded run 的 counts；
+- 禁止 web、subagent、write 與法律效果推論；
+- 只准輸出 `ACCEPT_FOR_BOUNDED_LIVE_STAGE` 或 `BLOCK`；
+- 要求 exact file/line locators、非阻擋限制與 load 後最小 SQL。
+
+這次輸出可直接 adjudicate，並抓到數個非阻擋但值得排入 backlog 的問題：
+
+1. rollback 的空表檢查與 DROP 之間仍有 concurrent-load race；
+2. document-number identity table 可插入沒有 source edge 的 orphan identity；
+3. loader 沒有從 detail HTML 重新導出 `record_text` 再比對；
+4. 某些衍生 ID 與 attachment observation 的 content hash 關係可再重算；
+5. DELETE guard 的錯誤訊息可更精確。
+
+可重用的工作法：
+
+```text
+deterministic acquisition first
+→ bounded model packet
+→ binary verdict + exact locators
+→ controller live verification
+→ preserve response + disposition
+```
+
+模型的 repo 盤點不能替代官方來源搜尋；反過來，找到官方 bytes 也不能替代
+資料庫／migration 的獨立安全審查。Fable 適合作為 bounded architecture 或
+live-apply critic，不適合在沒有外部來源 packet 時宣告 archival absence。
+
+Prompt 與完整回覆：
+
+- [`2026-07-29-fint-fable-live-gate-prompt.md`](audits/2026-07-29-fint-fable-live-gate-prompt.md)
+- [`2026-07-29-fint-fable-live-gate-response.md`](audits/2026-07-29-fint-fable-live-gate-response.md)

@@ -151,6 +151,7 @@ ROW_ALLOWED_FIELDS: dict[str, frozenset[str]] = {
         {
             "schema",
             "attempt_id",
+            "attempt_namespace",
             "role",
             "worker_id",
             "runtime_id",
@@ -401,6 +402,13 @@ def validate_jsonl_row(row: Mapping[str, Any]) -> None:
         if not expected <= set(row):
             raise ContractError("fetch attempt status fields are incomplete")
     if schema == WORKER_ATTEMPT_SCHEMA:
+        if "attempt_namespace" in row and (
+            not isinstance(row["attempt_namespace"], str)
+            or not row["attempt_namespace"]
+        ):
+            raise ContractError(
+                "worker attempt namespace must be a non-empty string"
+            )
         if row["role"] not in {"primary", "fallback"}:
             raise ContractError("worker attempt role is invalid")
         if row["status"] not in {
@@ -409,6 +417,7 @@ def validate_jsonl_row(row: Mapping[str, Any]) -> None:
             "contract_failed",
             "timeout",
             "transport_failed",
+            "execution_unknown",
         }:
             raise ContractError("worker attempt status is invalid")
         if row["role"] == "primary" and (

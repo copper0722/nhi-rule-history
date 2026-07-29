@@ -108,6 +108,12 @@ class FintParser(HTMLParser):
         return " ".join("".join(self._pre_text).split())[:1000]
 
     @property
+    def record_text(self) -> str:
+        """Return the complete normalized text inside the official record table."""
+
+        return " ".join("".join(self._record_table_text).split())
+
+    @property
     def normalized_body(self) -> str:
         return " ".join("".join(self.body_text).split())
 
@@ -129,7 +135,7 @@ class FintParser(HTMLParser):
         return [
             anchor
             for anchor in self.anchors
-            if "GetFile.ashx" in anchor.href and anchor.text
+            if "GetFile.ashx" in anchor.href
         ]
 
     def document_number(self) -> tuple[str, str]:

@@ -5,13 +5,13 @@ title_en: Taiwan NHI Drug Reimbursement Rule History
 status: in_progress
 risk_class: R3
 privacy: public
-last_verified_date: "2026-07-28"
+last_verified_date: "2026-07-29"
 
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 432
-  public_tests_passed: 425
+  public_tests_run: 453
+  public_tests_passed: 446
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -38,16 +38,121 @@ public_outputs:
     verified_reader_enrichment_run: c3280b44-067f-5624-b661-bc1ec9959335
     verified_semantic_tag: apomorphine_to_N04BC07
 
+current_publication:
+  source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
+  authority_page_url: https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html
+  canonical_store: PostgreSQL_nhi_rule_history_publication
+  current_clause_count: 639
+  current_clause_block_count: 13874
+  distinct_valid_clause_date_count: 3487
+  version_count_policy: distinct_valid_current_text_roc_dates_minimum_one/v1
+  history_inventory:
+    expected_version_count: 3512
+    reconstructed_version_count: 656
+    missing_version_count: 2861
+    clauses_with_missing_versions: 440
+    clauses_without_missing_versions: 199
+    annotation_underflow_clause_count: 5
+    receipt: docs/audits/2026-07-29-current-clause-history-inventory.json
+  comparison_wording:
+    adjacent_expected_version: 與上一版本差異
+    skips_one_or_more_expected_versions: 與舊版本差異
+  pg_v18:
+    disposable_forward: passed
+    disposable_projection_load: passed
+    idempotent_replay: passed
+    sealed_mutation_probe: rejected
+    disposable_rollback: passed
+    focused_tests: passed_36_with_1_skip
+    full_tests: passed_533_with_8_skips
+    independent_fable_gate: pending
+    live_status: not_applied_pending_independent_gate
+
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
   parser_version: nhi-rule-history-occurrence-extract/1.1.0
   acquisition_version: nhi-rule-history/0.2.0
   structural_parser_version: nhi-rule-history-generic-odt/2.0.0
 
+fint_keyword_crawler:
+  crawler_version: nhi-rule-history/fint-frontier-crawler/2.2.0
+  search_endpoint: https://mohwlaw.mohw.gov.tw/FINT/FINTQRY03.aspx
+  detail_endpoint: https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx
+  transport:
+    tls_verification: enabled_system_curl_trust_stack
+    redirects: forbidden
+    default_minimum_interval_seconds: 0.8
+  capd_canary:
+    status: complete_declared_keyword_set
+    queries: 1
+    documents: 6
+    snapshots: 6
+    attachments: 1
+    observations: 8
+    issues: 0
+  generated_frontier:
+    source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
+    distinct_current_clause_headings: 661
+    seed_provenance_rows: 1946
+    unique_queries: 1446
+  full_range_baseline:
+    keywords:
+      - 藥品給付規定
+    expected_documents: 1309
+    status: stopped_partial_preserved_as_research_evidence
+  unfiltered_official_surface:
+    capture_start: 1900-01-01
+    capture_cut: 2026-07-28
+    broad_result_count: 17497
+    partition_unit: gregorian_year
+    attachment_policy_phase_1: none
+    canary_1954:
+      expected_rows: 1
+      fetched_rows: 1
+      issues: 0
+      disposable_pg_load: passed
+    current_batch_status: stopped_partial_optional_recall_audit
+    current_batch_producer_version: nhi-rule-history/fint-frontier-crawler/2.1.0
+    completed_years:
+      first: 1900
+      last: 1989
+      manifests: 90
+      match_rows: 448
+    primary_history_rebuild_gate: false
+  pg_projection:
+    migration: nhi_rule_history_fint_keyword_crawl_v17
+    canonical_role: normalized_append_only_query_occurrence_and_attachment_declaration_evidence
+    disposable_forward_rollback: passed
+    disposable_projection_load: passed
+    sealed_mutation_guard: passed
+    independent_grok_audit: repair_then_reaudit
+    independent_fable_audit: ACCEPT_FOR_BOUNDED_LIVE_STAGE
+    live_pg_status: bounded_84_baseline_sealed_full_frontier_not_loaded
+    bounded_84_baseline:
+      run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
+      state: sealed
+      query_count: 1
+      document_count: 2
+      attachment_count: 2
+      issue_count: 0
+      output_sha256: 44caa140a4c81b700a9e54265e7f7489a6b818adf38f6bac49fc5080dc43ee57
+      idempotent_replay: already_sealed
+      sealed_mutation_probe: rejected
+      focused_tests: passed_18_of_18
+  claim_limits:
+    declared_keyword_frontier_complete: can_be_certified_when_sealed
+    currently_published_date_bounded_fint_surface_complete: false
+    absolute_official_document_universe_complete: false
+
 methodology_audit:
-  architecture: C_PLUS_BOUNDED_DUAL_TRACK
-  post_implementation_disposition: ACCEPT_COMMIT_PUSH
-  final_pro_response_sha256: 350f4ded0e53b550f4689acc1d3051deffa9ada999f5e70a724bb32d48ddb42c
+  architecture: canonical_method_v4_evidence_union_dual_track
+  initial_pro_disposition: REPAIR_THEN_ACCEPT
+  final_pro_disposition: ACCEPT
+  final_pro_response: docs/audits/2026-07-29-methodology-v4-pro-reaudit-response.md
+  remaining_implementation:
+    - proofread_84_scan
+    - shared_jsonl_sqlite_api_reader_status_and_wording_validator
+    - clause_by_clause_identity_event_replay_and_diff_adjudication
   public_release_authorized: false
 
 legacy_history_annotation_audit:
@@ -293,6 +398,18 @@ accepted_structural_v2:
 accepted_current_anchor_capture:
   disposition: accepted_acquisition_and_source_occurrence_stage_only
   scope: nhi_current_whole_and_chapters_as_observed_2026-07-27
+  current_text_authority:
+    status: selected
+    policy_version: 1
+    authority_page_url: https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html
+    authority_surface: current_chapters
+    authority_role: sole_current_text_authority
+    primary_structured_format: odt
+    whole_page_url: https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html
+    whole_role: non_authoritative_quality_crosscheck
+    whole_mismatch_blocks_current_publication: false
+    page_update_label_is_legal_effective_date: false
+    receipt: docs/audits/2026-07-28-current-source-authority-policy.json
   acquisition_run_id: 06fbf976-fa8c-4f7a-b682-c3e94f9bf23e
   structural_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
   resource_key_set_sha256: ce67b046d91e82bd4248522f4c50fec675c08c43334843b1226592d481b51d05
@@ -306,7 +423,7 @@ accepted_current_anchor_capture:
     structural_blocks: 44504
     occurrence_candidates: 1322
     blocking_issues: 0
-  whole_chapter_clause_parity: failed_33_discrepancies_open
+  whole_chapter_clause_parity: nonblocking_crosscheck_33_discrepancies
 
 accepted_nhi_listing_capture:
   disposition: accepted_bounded_unfiltered_listing_and_detail_attachment_discovery
@@ -358,6 +475,55 @@ accepted_nhi_listing_capture:
     ambiguous_join_keys: 7
     one_to_one_join_safe: false
     receipt: docs/audits/2026-07-27-nhi-fint-source-universe-reconciliation.json
+
+current_nhi_listing_surface_check:
+  observed_on: "2026-07-29"
+  target: https://www.nhi.gov.tw/ch/lp-3258-1.html
+  parent_label: 修正規定（自103年4月3日以後生效之公告）
+  declared_pages: 43
+  observed_rows: 859
+  oldest_visible_row_date: "111-09-06"
+  listing_has_publication_expiry_field: true
+  complete_since_parent_label_date: false
+  interpretation: current_retained_listing_not_closed_historical_archive
+  receipt: docs/audits/2026-07-29-nhi-archive-label-surface-check.json
+
+early_rule_source_lineage:
+  status: 84_official_original_scan_acquired_85_exact_event_unresolved
+  original_name: 全民健康保險藥品使用規範
+  established_on: "1995-06-20"
+  general_effective_from: "1995-07-01"
+  renamed_on: "1998-03-04"
+  renamed_effective_from: "1998-04-01"
+  official_retrospective:
+    url: https://media.nhi.gov.tw/md/dl-51929-1ebbcd26f26c40efbe82725d00304fb5-3.pdf
+    source_state: later_official_reproduction
+  national_library_catalog:
+    url: https://catalog.digitalarchives.tw/item/00/13/13/07.html
+    catalog_id: D9507418
+    document_number: 84衛技字第052484號
+    source_state: catalog_only
+  taiwan_historica_search:
+    fonds: 061_臺灣省政府衛生處
+    declared_records: 12992
+    visible_navigation_cap_observed: 10000
+    supplied_window_date: "1967"
+    exact_document_number_hits: 0
+    exact_title_hits: 0
+    date_1995_hits: 1
+    date_1995_relevant_hits: 0
+    receipt: docs/audits/2026-07-29-taiwan-historica-health-department-search.json
+  official_1995_full_scan:
+    state: digitized_scan_acquired
+    document_number: 健保醫字第84010140號
+    pg_run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
+    attachment_sha256: f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2
+    proofread_state: pending
+  exact_85_01_01_amendment: not_found_after_declared_search
+  public_complete_original_1996_text: availability_unresolved
+  paper_only_proved: false
+  receipt: docs/audits/2026-07-29-early-rule-source-lineage-check.json
+  superseding_acquisition_receipt: docs/audits/2026-07-29-fint-84-baseline-acquisition.json
 
 accepted_historical_exact_phrase_capture:
   disposition: accepted_bounded_raw_and_odt_stage_only
@@ -632,7 +798,14 @@ gates:
   post_109_structural_stage:
     status: passed_bounded
   current_whole_chapter_parity:
-    status: full_clause_parity_failed_33_discrepancies_open
+    status: nonblocking_quality_crosscheck_33_discrepancies
+    canonical_current_source:
+      page_url: https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html
+      surface: current_chapters
+      role: sole_current_text_authority
+      primary_structured_format: odt
+      pg_policy_migration: 2026-07-28_nhi_rule_history_current_source_authority_v16.sql
+      receipt: docs/audits/2026-07-28-current-source-authority-policy.json
     occurrence_preflight:
       schema: nhi-rule-history/current-anchor-occurrence-parity-preflight/v1
       whole_occurrences: 662
@@ -657,7 +830,9 @@ gates:
       list_marker_structure: 6
       punctuation_only: 6
       trailing_supplement_layout: 1
-      canonical_side_selected: false
+      canonical_side_selected: current_chapters
+      selection_basis: official_latest_by_chapter_page_and_owner_authority_decision
+      mismatch_blocks_current_publication: false
       receipt: docs/audits/2026-07-27-current-anchor-leafmost-diff-classification.json
   official_event_effect_ledger:
     status: blocked
@@ -843,13 +1018,16 @@ gates:
 claims:
   allowed_now: >
     14 份年度 ODT stage 與一個 MOHW FINT exact-query/date-window 的
-    bounded acquisition/source-local ODT stage，以及 NHI 現行整份／分章
-    raw/structural capture 已驗收；均非完整法律歷史
+    bounded acquisition/source-local ODT stage，以及 NHI canonical 最新
+    分章頁與非阻擋整份 cross-check 的 raw/structural capture 已驗收。
+    年度快照可作逐條 observations 與消失偵測；84-06-20 原始 FINT 公告
+    與 25 頁《全民健康保險藥品使用規範》掃描已封存並進 append-only PG。
+    85/1/1 精確修正文仍是 bounded not-found，以上均非完整法律歷史
   reader_safe_before_completion: 已取得的官方版本與已核實異動
   forbidden_now: 完整健保給付條文歷史已入庫
 
 methodology_v3:
-  status: canonical_method_defined_implementation_open
+  status: retained_direct_edge_contract_extended_by_v4
   admin_ops_project_todo_id: 41
   document: docs/agent-work-methodology.md
   work_result_schema: contracts/history-closure-work-result-v3.schema.json
@@ -900,11 +1078,124 @@ methodology_v3:
         - drug_rule_link_evidence
       separate_drug_announcement_search_required: false
 
+methodology_v4:
+  status: pro_repair_applied_84_baseline_acquired_implementation_open
+  decided_on: "2026-07-29"
+  documents:
+    public_methodology: docs/methodology.md
+    workflow: docs/workflow.md
+    rebuild_plan: docs/history-rebuild-plan.md
+    agent_method: docs/agent-work-methodology.md
+  version_unit: single_clause
+  source_edition_role: observation_container
+  annual_snapshot_role:
+    model: source_observation_git_like_internal_analogy_only
+    detects:
+      - appearance_observed
+      - text_change_observed
+      - disappearance_observed
+    exact_effective_date_implied: false
+    direct_legal_predecessor_implied: false
+  time_axes:
+    - source_observed_at
+    - source_edition_date
+    - legal_effective_from_to
+  text_fidelity_layers:
+    - exact_source_text
+    - comparison_text
+    - ocr_observation
+    - display_markdown
+  identity_model:
+    source_observation_may_precede_canonical_identity: true
+    lineage_edges:
+      - continues_as
+      - moves_to
+      - splits_into
+      - merges_into
+      - replaced_by
+      - unrelated_number_reuse
+  time_precision:
+    without_direct_date_evidence: interval
+    exact_requires_direct_official_locator: true
+  evidence_strategy: multi_source_union
+  source_lanes:
+    - current_official_chapter_files
+    - annual_snapshot_files
+    - inline_roc_date_markers
+    - nhi_rss_listing_detail_attachments
+    - mohw_fint_targeted_queries
+    - gazettes_archives_libraries_government_publications
+  notice_linkage:
+    prerequisite_to_create_interval_history: false
+    upgrades_interval_to_exact_when_supported: true
+    absence_claim_from_zero_search_hits: false
+  broad_fint_empty_query:
+    role: optional_recall_audit
+    prerequisite: false
+  early_name_lineage_required: true
+  early_source_availability_states:
+    - born_digital_official
+    - digitized_scan
+    - catalog_only
+    - later_official_reproduction
+    - paper_holding_not_digitized
+    - availability_unresolved
+  early_baseline_acquisition:
+    status: sealed_live_pg
+    source_document_number: 健保醫字第84010140號
+    source_document_date: "1995-06-20"
+    effective_from_text: "1995-07-01"
+    attachment_label: 全民健康保險藥品使用規範.PDF
+    attachment_sha256: f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2
+    attachment_bytes: 3802900
+    attachment_pages: 25
+    raw_bundle_path: /Users/copper/agent-share/nhi-rule-history/fint-84-baseline-20260729-v2
+    pg_run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
+    pg_state: sealed
+    receipt: docs/audits/2026-07-29-fint-84-baseline-acquisition.json
+    ocr_state: unproofread_observation_only
+  exact_85_01_01_event:
+    status: not_found_after_declared_search
+    absence_claim_allowed: false
+    date_probe_receipt: docs/audits/2026-07-29-fint-84-baseline-acquisition.json
+  methodology_pro_audit:
+    initial_verdict: REPAIR_THEN_ACCEPT
+    final_verdict: ACCEPT
+    response: docs/audits/2026-07-29-methodology-v4-pro-audit-response.md
+    reaudit_response: docs/audits/2026-07-29-methodology-v4-pro-reaudit-response.md
+    repairs_applied:
+      - observation_delta_not_legal_predecessor
+      - three_time_axes
+      - neutral_delta_vocabulary
+      - identity_lineage_graph
+      - current_source_conflict_policy
+      - exact_comparison_ocr_text_layers
+      - per_clause_completeness_vector
+      - reader_wording_validator
+    residual_nonblocking_contracts:
+      - document_general_effective_date_not_automatically_clause_effective_date
+      - ocr_remains_unproofread_observation_until_review
+      - 84_to_96_is_observation_delta_with_unknown_intermediate_events
+      - shared_jsonl_sqlite_reader_status_validator_pending
+  fint_live_gate:
+    reviewer: claude-fable-5
+    verdict: ACCEPT_FOR_BOUNDED_LIVE_STAGE
+    response: docs/audits/2026-07-29-fint-fable-live-gate-response.md
+  multimodel_archive_research:
+    results: docs/audits/2026-07-29-early-rule-multimodel-research-results.md
+    grok_status: failed_twice_no_evidence
+    gemini_status: output_contract_passed_evidence_lead_only
+    controller_verification_required: true
+
 current_work_package:
   id: M1
-  title: Implement the v3 transition-evidence work contract
+  title: Materialize official editions into source-segment observations
   next_action: >
-    Do not dispatch clause-history workers. Add an additive PostgreSQL/SQLite
-    transition-evidence schema with optional notice links, build a validator
-    and v1-to-v3 queue converter, then freeze 10 representative pilot packets
-    for owner review before any model-assisted scale-out.
+    Do not dispatch clause-history proposal workers. Deterministically split
+    the 84 scan after proofread and every annual/current edition into
+    source-segment or single-clause observations; compare adjacent presence,
+    designation, structure and full-text hashes; create neutral appearance,
+    text-change and disappearance observations. In parallel add the
+    PostgreSQL/SQLite observation, identity-lineage, transition-evidence and
+    three-axis time contract. Freeze 10 representative pilot packets before
+    model-assisted proofread or identity work.

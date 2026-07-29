@@ -1,8 +1,11 @@
-"""Deterministic discovery for NHI current cumulative anchor surfaces.
+"""Deterministic discovery for NHI current source surfaces.
 
-The two NHI pages are acquisition anchors only.  This adapter preserves their
-declared file groups, attachment order, labels, and exact URLs.  It does not
-interpret page publication/update metadata as a legal effective date.
+The official chapter page is the sole current-text authority.  The separate
+whole-document page is retained only as a non-authoritative quality cross-check;
+its differences never block publication of the chapter-page projection.  This
+adapter preserves declared file groups, attachment order, labels, and exact
+URLs.  It does not interpret page publication/update metadata as a legal
+effective date.
 """
 
 from __future__ import annotations

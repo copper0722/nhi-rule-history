@@ -2691,15 +2691,19 @@
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與舊版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與舊版本差異",
         "label": "111/3",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "111/1/1",
           "111/3/1"
-        ]
+        ],
+        "skipped_expected_version_count": 1,
+        "version_distance": 2
       },
       "edge_id": "clause-edge:d080e8c8d0cb2a3bb348bb54ae334896a628dd41574e1b433612f5ff117add66",
       "hunks": [
@@ -2835,23 +2839,27 @@
           }
         ],
         "state_order": 8
-      }
+      },
+      "skipped_expected_version_count": 1,
+      "version_distance": 2
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與舊版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與舊版本差異",
         "label": "109/12",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "109/2/1",
           "109/6/1",
           "109/10/1",
-          "109/12/1",
-          "109/12/1",
           "109/12/1"
-        ]
+        ],
+        "skipped_expected_version_count": 3,
+        "version_distance": 4
       },
       "edge_id": "clause-edge:f2016f3ab15e5d4e70043f122cc7fd2ab82eea416e70969919ebbc23a633e020",
       "hunks": [
@@ -3345,18 +3353,24 @@
           }
         ],
         "state_order": 7
-      }
+      },
+      "skipped_expected_version_count": 3,
+      "version_distance": 4
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "108/10",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "108/10/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:6bcaaabca8ff44c498cf197924205bea776d427c6cc9ffbbff2b1a93da5aa11e",
       "hunks": [
@@ -3481,23 +3495,24 @@
           }
         ],
         "state_order": 6
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "103/9",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
-          "103/9/1",
-          "103/9/1",
-          "103/9/1",
-          "103/9/1",
-          "103/9/1",
           "103/9/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:0f7d65bfb2625ddcacc2693baeca9c8a6fd85da0dd7453ab1d07aabae8c56c71",
       "hunks": [
@@ -3679,16 +3694,22 @@
           }
         ],
         "state_order": 5
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "source_edition_fallback",
+        "comparison_label": "與上一版本差異",
         "label": null,
         "legal_effective_status": null,
-        "raw_values": []
+        "raw_values": [],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:eb9dc430856fb10313eeac7c02dee1c98405be27a5ebbf33df2869eb4b499de1",
       "hunks": [
@@ -4095,18 +4116,24 @@
           }
         ],
         "state_order": 4
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "100/4",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "100/4/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:3360a64d0a1d350712c76055dfd1f0b356b5d48c26049e2bd8ccd029ce6572d4",
       "hunks": [
@@ -4218,18 +4245,24 @@
           }
         ],
         "state_order": 3
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "99/11",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "99/11/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:f09929664b7d2dd321a6cee46e9954e988e2b997941374c27244b86086278f99",
       "hunks": [
@@ -4400,19 +4433,25 @@
           }
         ],
         "state_order": 2
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與舊版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與舊版本差異",
         "label": "98/11",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "98/9/1",
           "98/11/1"
-        ]
+        ],
+        "skipped_expected_version_count": 1,
+        "version_distance": 2
       },
       "edge_id": "clause-edge:3db07ea35fd2cd763226ea6081f85eb47cc802b680b690a43b55c447ebe4493e",
       "hunks": [
@@ -4707,16 +4746,22 @@
           }
         ],
         "state_order": 1
-      }
+      },
+      "skipped_expected_version_count": 1,
+      "version_distance": 2
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "source_edition_fallback",
+        "comparison_label": "與上一版本差異",
         "label": null,
         "legal_effective_status": null,
-        "raw_values": []
+        "raw_values": [],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:729c2057693835a6cec342d424eb08988912843aa99a262597333da16042c87b",
       "hunks": [
@@ -4899,7 +4944,9 @@
           }
         ],
         "state_order": 0
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     }
   ]
 }

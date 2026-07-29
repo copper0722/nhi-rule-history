@@ -9,7 +9,11 @@ from types import SimpleNamespace
 from unittest import mock
 
 import nhi_rule_history.update.workers as worker_contract
-from nhi_rule_history.contracts import sha256_bytes
+from nhi_rule_history.contracts import (
+    canonical_json_bytes,
+    sha256_bytes,
+    stable_id,
+)
 from nhi_rule_history.update.proposal import (
     PROPOSAL_SCHEMA,
     WORKER_JSON_MAX_DEPTH,
@@ -20,12 +24,15 @@ from nhi_rule_history.update.proposal import (
 )
 from nhi_rule_history.update.workers import (
     WORKER_BUDGET,
+    WorkerFailure,
     WorkerOrchestrator,
     WorkerSpec,
     assess_worker_suitability,
     build_worker_prompt,
     source_blocks_digest,
     worker_job_fingerprint,
+    worker_route_policy,
+    worker_route_policy_sha256,
 )
 
 
@@ -253,6 +260,18 @@ def proposal(source_packet: dict[str, object]) -> dict[str, object]:
 
 
 class WorkerContractV2Tests(unittest.TestCase):
+    def test_route_policy_is_canonical_and_failure_only(self) -> None:
+        policy = worker_route_policy()
+        self.assertEqual(policy["primary_max_calls"], 1)
+        self.assertEqual(policy["fallback_max_calls"], 1)
+        self.assertFalse(policy["fallback_for_validated_primary"])
+        self.assertTrue(policy["fallback_requires_recorded_primary_result"])
+        self.assertFalse(policy["unknown_execution_state_retry_allowed"])
+        self.assertEqual(
+            worker_route_policy_sha256(),
+            sha256_bytes(canonical_json_bytes(policy)),
+        )
+
     def test_worker_prompt_excludes_controller_notice_values(self) -> None:
         value = packet()
         prompt = build_worker_prompt(value)
@@ -589,6 +608,400 @@ class WorkerContractV2Tests(unittest.TestCase):
                 valid_bytes,
             )
             self.assertEqual(receipt["worker_calls"], 2)
+
+    def test_attempt_callbacks_reserve_before_call_and_record_before_fallback(
+        self,
+    ) -> None:
+        source_packet = packet()
+        valid_bytes = json.dumps(
+            proposal(source_packet),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode()
+        events: list[tuple[str, str, str | None]] = []
+        calls = 0
+
+        def before_attempt(plan):
+            events.append(
+                ("reserve", plan["role"], plan["fallback_reason"])
+            )
+
+        def after_attempt(record):
+            events.append(
+                ("record", record["role"], record["status"])
+            )
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            events.append(("invoke", str(calls), None))
+            return SimpleNamespace(
+                stdout=b"not-json" if calls == 1 else valid_bytes,
+                stderr=b"",
+                returncode=0,
+            )
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            before_attempt=before_attempt,
+            after_attempt=after_attempt,
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            orchestrator.run(
+                bundle_path=Path(temporary) / "unused",
+                candidate_root=Path(temporary) / "candidates",
+            )
+        self.assertEqual(
+            events,
+            [
+                ("reserve", "primary", None),
+                ("invoke", "1", None),
+                ("record", "primary", "contract_failed"),
+                ("reserve", "fallback", "contract_failed"),
+                ("invoke", "2", None),
+                ("record", "fallback", "validated"),
+            ],
+        )
+
+    def test_reservation_failure_prevents_worker_invocation(self) -> None:
+        source_packet = packet()
+        calls = 0
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            raise AssertionError("reservation failure must prevent invocation")
+
+        def before_attempt(_plan):
+            raise RuntimeError("durable reservation refused")
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            before_attempt=before_attempt,
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "durable reservation refused"
+            ):
+                orchestrator.run(
+                    bundle_path=Path(temporary) / "unused",
+                    candidate_root=Path(temporary) / "candidates",
+                )
+        self.assertEqual(calls, 0)
+
+    def test_attempt_record_failure_prevents_fallback_reservation(self) -> None:
+        source_packet = packet()
+        reservations: list[str] = []
+        calls = 0
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            return SimpleNamespace(
+                stdout=b"not-json",
+                stderr=b"",
+                returncode=0,
+            )
+
+        def before_attempt(plan):
+            reservations.append(plan["role"])
+
+        def after_attempt(_record):
+            raise RuntimeError("attempt persistence unavailable")
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            before_attempt=before_attempt,
+            after_attempt=after_attempt,
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "attempt persistence unavailable"
+            ):
+                orchestrator.run(
+                    bundle_path=Path(temporary) / "unused",
+                    candidate_root=Path(temporary) / "candidates",
+                )
+        self.assertEqual(calls, 1)
+        self.assertEqual(reservations, ["primary"])
+
+    def test_unknown_primary_execution_is_recorded_without_fallback(self) -> None:
+        source_packet = packet()
+        reservations: list[str] = []
+        records: list[dict] = []
+        calls = 0
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            result = SimpleNamespace(
+                stdout=b"",
+                stderr=b"remote cleanup not proven",
+                returncode=-9,
+                nhi_execution_unknown=True,
+            )
+            return result
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            before_attempt=lambda plan: reservations.append(plan["role"]),
+            after_attempt=lambda record: records.append(dict(record)),
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            with self.assertRaisesRegex(
+                WorkerFailure,
+                "not eligible for fallback",
+            ):
+                orchestrator.run(
+                    bundle_path=Path(temporary) / "unused",
+                    candidate_root=Path(temporary) / "candidates",
+                )
+        self.assertEqual(calls, 1)
+        self.assertEqual(reservations, ["primary"])
+        self.assertEqual(records[0]["status"], "execution_unknown")
+
+    def test_post_spawn_oserror_is_unknown_and_never_falls_back(self) -> None:
+        source_packet = packet()
+        records: list[dict] = []
+        calls = 0
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            error = OSError("post-spawn stream failure")
+            error.nhi_execution_unknown = True
+            raise error
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            after_attempt=lambda record: records.append(dict(record)),
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            with self.assertRaisesRegex(
+                WorkerFailure,
+                "not eligible for fallback",
+            ):
+                orchestrator.run(
+                    bundle_path=Path(temporary) / "unused",
+                    candidate_root=Path(temporary) / "candidates",
+                )
+        self.assertEqual(calls, 1)
+        self.assertEqual(records[0]["status"], "execution_unknown")
+
+    def test_valid_needs_review_primary_is_success_without_fallback(self) -> None:
+        source_packet = packet()
+        needs_review = proposal(source_packet)
+        needs_review["model_assessment"] = "needs_review"
+        valid_bytes = canonical_json_bytes(needs_review)
+        records: list[dict] = []
+        calls = 0
+
+        def runner(_argv, **_kwargs):
+            nonlocal calls
+            calls += 1
+            return SimpleNamespace(
+                stdout=valid_bytes,
+                stderr=b"",
+                returncode=0,
+            )
+
+        orchestrator = WorkerOrchestrator(
+            primary=WorkerSpec(
+                "primary",
+                "primary-v1",
+                "provider-a",
+                "model-a",
+                ("primary",),
+            ),
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            runner=runner,
+            after_attempt=lambda record: records.append(dict(record)),
+        )
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            worker_contract,
+            "source_packet",
+            return_value=source_packet,
+        ):
+            receipt = orchestrator.run(
+                bundle_path=Path(temporary) / "unused",
+                candidate_root=Path(temporary) / "candidates",
+            )
+        self.assertEqual(calls, 1)
+        self.assertEqual(records[0]["status"], "validated")
+        self.assertEqual(receipt["candidate"]["state"], "needs_review")
+        self.assertEqual(receipt["selected_role"], "primary")
+
+    def test_attempt_namespace_separates_recovery_generations(self) -> None:
+        spec = WorkerSpec(
+            "primary",
+            "primary-v1",
+            "provider-a",
+            "model-a",
+            ("primary",),
+        )
+        first = WorkerOrchestrator(
+            primary=spec,
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            attempt_namespace="work-item/generation-2",
+        )._attempt_plan(
+            spec,
+            role="primary",
+            bundle_id="bundle-1",
+            prompt_sha256="a" * 64,
+            primary_attempt_id=None,
+            fallback_reason=None,
+        )
+        second = WorkerOrchestrator(
+            primary=spec,
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+            attempt_namespace="work-item/generation-3",
+        )._attempt_plan(
+            spec,
+            role="primary",
+            bundle_id="bundle-1",
+            prompt_sha256="a" * 64,
+            primary_attempt_id=None,
+            fallback_reason=None,
+        )
+        self.assertNotEqual(first["attempt_id"], second["attempt_id"])
+        self.assertEqual(
+            first["attempt_namespace"], "work-item/generation-2"
+        )
+        legacy = WorkerOrchestrator(
+            primary=spec,
+            fallback=WorkerSpec(
+                "fallback",
+                "fallback-v1",
+                "provider-b",
+                "model-b",
+                ("fallback",),
+            ),
+        )._attempt_plan(
+            spec,
+            role="primary",
+            bundle_id="bundle-1",
+            prompt_sha256="a" * 64,
+            primary_attempt_id=None,
+            fallback_reason=None,
+        )
+        self.assertEqual(
+            legacy["attempt_id"],
+            stable_id(
+                "nhi-worker-attempt",
+                "bundle-1",
+                "a" * 64,
+                "primary",
+                "primary",
+            ),
+        )
 
     def test_semantic_fingerprint_binds_contract_versions_and_blocks(self) -> None:
         source_packet = packet()

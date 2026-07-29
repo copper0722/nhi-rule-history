@@ -3149,17 +3149,27 @@ def reader_projections(
                 for row in dates_by_version[older_id]
                 if row["date_value"] is not None
             }
+            newly_observed_by_date: dict[str, dict[str, Any]] = {}
+            for row in dates_by_version[newer_id]:
+                if row["date_value"] is None:
+                    continue
+                date_value = str(row["date_value"])
+                if date_value in older_dates:
+                    continue
+                newly_observed_by_date.setdefault(date_value, row)
             newly_observed = sorted(
-                (
-                    row
-                    for row in dates_by_version[newer_id]
-                    if row["date_value"] is not None
-                    and str(row["date_value"]) not in older_dates
-                ),
+                newly_observed_by_date.values(),
                 key=lambda row: (
                     str(row["date_value"]),
                     str(row["raw_value"]),
                 ),
+            )
+            version_distance = max(1, len(newly_observed))
+            skipped_expected_version_count = version_distance - 1
+            comparison_label = (
+                "與舊版本差異"
+                if skipped_expected_version_count > 0
+                else "與上一版本差異"
             )
             if not newly_observed:
                 return {
@@ -3167,6 +3177,11 @@ def reader_projections(
                     "basis": "source_edition_fallback",
                     "raw_values": [],
                     "legal_effective_status": None,
+                    "version_distance": version_distance,
+                    "skipped_expected_version_count": (
+                        skipped_expected_version_count
+                    ),
+                    "comparison_label": comparison_label,
                 }
             selected = newly_observed[-1]
             match = ROC_DATE_PART_RE.search(str(selected["raw_value"]))
@@ -3186,6 +3201,11 @@ def reader_projections(
                 "legal_effective_status": selected[
                     "legal_effective_status"
                 ],
+                "version_distance": version_distance,
+                "skipped_expected_version_count": (
+                    skipped_expected_version_count
+                ),
+                "comparison_label": comparison_label,
             }
 
         transitions: list[dict[str, Any]] = []
@@ -3196,6 +3216,7 @@ def reader_projections(
         ):
             older_id = str(edge["older_clause_version_id"])
             newer_id = str(edge["newer_clause_version_id"])
+            display_date = transition_date_label(older_id, newer_id)
             transitions.append(
                 {
                     "edge_id": edge["edge_id"],
@@ -3218,10 +3239,14 @@ def reader_projections(
                         "legal_predecessor_status"
                     ],
                     "crosses_known_gap": edge["crosses_known_gap"],
-                    "display_date": transition_date_label(
-                        older_id,
-                        newer_id,
-                    ),
+                    "version_distance": display_date["version_distance"],
+                    "skipped_expected_version_count": display_date[
+                        "skipped_expected_version_count"
+                    ],
+                    "comparison_label": display_date[
+                        "comparison_label"
+                    ],
+                    "display_date": display_date,
                     "hunks": [
                         {
                             "hunk_order": hunk["hunk_order"],

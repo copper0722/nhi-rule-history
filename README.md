@@ -16,9 +16,15 @@
 **尚未完成完整歷史庫。**
 
 2026-07-28 起，條文整理的 Claude／其他模型派送已依 Copper 指示暫停。
-deterministic raw acquisition 可保留；在 v3 transition-evidence schema、
-queue converter、validator 與 10-unit pilot 完成前，不重新啟動 agent
-量產。
+deterministic raw acquisition 與 bounded public-source research可保留；
+在 transition-evidence schema、queue converter、validator 與 10-unit pilot
+完成前，不重新啟動 agent 量產。
+
+2026-07-29 的方法修正是：**年度整編檔是逐條 source observations**。
+「Git-like」只作內部比對譬喻；先記錄 appearance／text-change／
+disappearance，再由條文身分、民國年月及公文判斷新增、改寫、移動、刪除
+或恢復。找不到公文時保留明示觀察區間與來源缺口，不把快照日期冒充生效日，
+也不把兩個 snapshots 冒充直接相鄰法律版本。
 
 第一個 PG-first 可閱讀模板已完成：15 份官方 `通則` 累積版本先作為來源
 容器，再確定性切成 12 個專案條文 `0.1–0.12`。**一個條文才是一條獨立
@@ -77,12 +83,12 @@ checksum，用來要求每個 marker 都有終結的日期角色／transition �
 前後完整快照與直接相鄰 edge；不能用它逆推出已被刪除的舊文字。公告若能
 找到則另作補強 linkage，但不是完成必要條件。另「通則」
 是官方名稱，`chapter:00` 只是本專案排序碼，不是官方「第 0 章」。詳見
-[v2 方法學](docs/methodology-v2.md)與
+[公開方法學](docs/methodology.md)與
 [機器可讀稽核](docs/audits/2026-07-27-legacy-history-date-annotation-audit.json)。
 完整重建的 source-universe、bundle、marker resolution、snapshot/replay
 工作包與硬性分母見[逐條歷史重建計畫](docs/history-rebuild-plan.md)。目前
 6,366 個 slash-triplet occurrences 中，6 筆已確認是 Trelegy Ellipta
-劑量而非日期；其餘 6,360 個有效日期尚未依 v3 evidence-basis 契約完成
+劑量而非日期；其餘 6,360 個有效日期尚未依 evidence-basis 契約完成
 日期角色／transition adjudication；舊 resolver 的 `0/6,360 連到公告`
 不是完成 gate，也不能解讀為公告不存在。terminal
 current 整份／分章各重建 639 條後，也驗出 33 條全文不同。
@@ -115,11 +121,22 @@ source schema。這關閉的是 acquisition／schema 方法缺口；條文到 AT
 public mapping 仍須把 508 筆 legacy 未解析條文 link 與 snapshot parity
 處理完，不能宣稱 linkage 已完整。
 
-NHI 公告與 FINT 也已先按正規化文號對帳，但不能據此宣稱來源宇宙完整：
+NHI 公告與 FINT 也已先按正規化文號對帳，但不能據此宣稱法律歷史完整：
 NHI 858 筆形成 847 個文號鍵，FINT exact-phrase 366 筆形成 365 個文號鍵；
 交集只有 217，NHI-only 630、FINT-only 148，且有 7 個文號碰撞，不能做
-一對一 join。這個差異清冊讓後續逐筆裁決可重跑，卻同時證明「公告已抓完」
-仍不是目前可說的結論。
+一對一 join。2026-07-28 另確認 FINT 可用空關鍵字逐年度列舉；當時
+`1900-01-01..2026-07-28` 的官方分母為 17,497。年度廣抓在完成
+1900–1989 共 90 個 partitions／448 rows 後停止，保留作可選 recall audit；
+主流程改由快照差異與日期 marker 產生 targeted queries。
+
+NHI 父層雖將 `lp-3258` 標成「自103年4月3日以後生效之公告」，2026-07-29
+實測 target listing 只有 859 rows／43 頁，最舊可見為 111-09-06，且有
+「刊登期限」。因此它不是 2014 年後的完整檔案庫。84–87 年也必須用前身
+`全民健康保險藥品使用規範` 搜尋。這個歷史名稱已在 FINT 找到
+`健保醫字第84010140號` 及 25 頁完整掃描附件；raw bundle 與 live PG
+sealed run 已完成。仍未找到的是精確的 85/1/1 修正文：條文句子查詢為 0，
+日期 token 的命中都不相關。這只能寫「在宣告查詢範圍內未找到」，不能寫成
+公文不存在。
 
 實庫狀態不靠人工翻頁判斷；唯讀
 [`history-completeness-status.sql`](database/queries/history-completeness-status.sql)
@@ -141,6 +158,7 @@ diff。兩者都不冒充已驗證法律事件史。
 ## Repo 的重點
 
 - [資料取得與更新 workflow](docs/workflow.md)
+- [FINT 歷史公文研究 crawler](docs/fint-keyword-crawler.md)
 - [`通則` PG-first 模板與更新方法](docs/chapter-00-template.md)
 - [單頁歷史的讀者體驗契約](docs/reader-experience.md)
 - [逐條文歷史工作的 agent 方法學（v3）](docs/agent-work-methodology.md)
@@ -194,18 +212,17 @@ PYTHONPATH=src python3 tools/rebuild_chapter00_clauses.py \
   --reader-dir prototype/reader/data/clauses \
   --sqlite-output /tmp/nhi-rule-history-chapter-00-clauses.sqlite
 
-PYTHONPATH=src python3 -m nhi_rule_history.cli discover \
-  --plan sources/source-plan-v2.json --run-dir build/pass-a \
-  --allow-insecure-tls
-PYTHONPATH=src python3 -m nhi_rule_history.cli fetch \
-  --plan sources/source-plan-v2.json --run-dir build/pass-a \
-  --allow-insecure-tls
-PYTHONPATH=src python3 -m nhi_rule_history.cli verify-raw \
-  --run-dir build/pass-a
+PYTHONPATH=src python3 tools/crawl_fint_years.py \
+  --batch-dir /path/outside/git/fint-all-years \
+  --start-year 1900 \
+  --capture-cut 2026-07-28 \
+  --attachment-policy none
 ```
 
-`--allow-insecure-tls` 是 2026-07-27 對 MOHW FINT 實跑所需、必須明示的相容
-模式；預設仍驗證 TLS。能提供正確 CA bundle 時應改用 `--ca-file`。
+新 FINT crawler 不關閉 TLS。Python 3.14 會因官方舊憑證缺少 Subject Key
+Identifier 而拒絕該鏈；crawler 改用系統 `curl` 的驗證 trust stack，並
+禁止 redirect、核對 effective URL、限制檔案大小。舊版
+`--allow-insecure-tls` acquisition 只保留為歷史 receipt，不再是新跑法。
 
 ## 官方來源
 
