@@ -28,7 +28,7 @@ public_outputs:
   stage_v2_release: prepared_partial_evidence_bundle_not_published
   sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
-  source_transcript_84_release: pending_github_release_after_repo_merge
+  source_transcript_84_release: https://github.com/copper0722/nhi-rule-history/releases/tag/source-transcript-84-v1
   reader_prototype: prototype/reader/index.html
   reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
   reader_prototype_deployment:
@@ -132,6 +132,12 @@ source_transcript_84:
   current_history_inventory_changed: false
   current_missing_version_count: 2861
   live_receipt: docs/audits/2026-07-29-source-transcript-84-live-verification.json
+  public_release:
+    tag: source-transcript-84-v1
+    url: https://github.com/copper0722/nhi-rule-history/releases/tag/source-transcript-84-v1
+    target_commit: 6f325b1a14d7179fb401dc2bfbdc72aea6bc1ec4
+    assets_uploaded: 5
+    asset_digests_verified: true
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
