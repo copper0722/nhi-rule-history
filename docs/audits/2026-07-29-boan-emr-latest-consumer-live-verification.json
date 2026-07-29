@@ -1,0 +1,91 @@
+{
+  "schema": "nhi-rule-history/boan-emr-latest-consumer-live-verification/v1",
+  "verified_at": "2026-07-29T09:44:00+08:00",
+  "consumer": "boan-emr",
+  "network_boundary": {
+    "mode": "private_server_side",
+    "public_ingress_created": false,
+    "browser_calls_provider_directly": false,
+    "private_addresses_disclosed": false
+  },
+  "deployment": {
+    "pull_request": "https://github.com/Bo-An-Clinic/boan-emr/pull/7",
+    "merged_commit": "e53044b8bdce655adfb6cb7e49d7c1f931100471",
+    "process_state": "online",
+    "process_environment_persisted": true
+  },
+  "contract_gate": {
+    "list_contract": "nhi-reimbursement-rules/latest/v1",
+    "detail_contract": "nhi-reimbursement-rules/latest-detail/v1",
+    "requires_ok_true": true,
+    "requires_sealed_publication": true,
+    "requires_run_id": true,
+    "requires_output_fingerprint": true,
+    "rejects_mixed_publication_receipts": true,
+    "upstream_404_revives_legacy_text": false
+  },
+  "publication": {
+    "run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f",
+    "state": "sealed",
+    "output_fingerprint": "9e5cca2a72012012be356ede951f2b2c55a4766cccf10efa07b51482bd951c27",
+    "current_clause_count": 639,
+    "current_clause_block_count": 13874,
+    "current_clause_date_count": 3487
+  },
+  "live_probes": {
+    "status": {
+      "passed": true,
+      "configured": true,
+      "contract": "nhi-reimbursement-rules/latest/v1"
+    },
+    "search": {
+      "passed": true,
+      "query": "CAPD",
+      "result_count": 5,
+      "contains_clause_0_4": true
+    },
+    "detail": {
+      "passed": true,
+      "clause_code": "0.4",
+      "text_length": 2123,
+      "expected_version_count": 26,
+      "reconstructed_version_count": 10,
+      "missing_version_count": 16
+    },
+    "formulary_projection": {
+      "passed": true,
+      "internal_canary_identifier_redacted": true,
+      "source_mode": "nhi_latest_api",
+      "latest_only": true,
+      "current_clause_codes": [
+        "10.1",
+        "10.8.2",
+        "10.8.2.3"
+      ],
+      "single_publication_receipt": true
+    },
+    "caddy_proxy": {
+      "passed": true
+    },
+    "dynamic_page_source": {
+      "passed": true,
+      "current_label_present": true,
+      "fallback_warning_present": true,
+      "history_gap_label_present": true
+    }
+  },
+  "fallback_contract": {
+    "local_mirror_role": "product_to_clause_linkage_and_availability_only",
+    "mode": "local_mirror_fallback",
+    "latest_only": false,
+    "visible_warning_required": true
+  },
+  "tests": {
+    "focused_node_tests_passed": 5,
+    "focused_node_tests_failed": 0,
+    "dashboard_framework_drift_audit": "passed",
+    "shared_module_duplication_audit": "passed",
+    "formulary_page_script_parse": "passed",
+    "git_diff_check": "passed"
+  }
+}

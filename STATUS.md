@@ -25,11 +25,14 @@
   `hmj:8710` 提供 latest list/search、單條 detail、history inventory 與
   reviewed enrichment API；付費站
   `https://s.copper0722.com/member/tools/nhi-rules/` 已上線，頁面與
-  same-origin JSON 均經既有訂閱 gateway 保護；BOA／boan-emr 可使用
-  latest-only API contract，但 2026-07-29 尚未完成從 `boa` 主機發出的
-  實際讀取驗證，因本機 SSH key 被該主機拒絕。GitHub 的定位是公開方法學、
-  schema、crawler、exporter、稽核收據與可攜 JSON／SQLite release，不是
-  付費內容的 production static site。
+  same-origin JSON 均經既有訂閱 gateway 保護；BOA／boan-emr 已經由
+  既有跳板與 private network 完成 latest-only server-side consumer，
+  live status、CAPD search、0.4 detail 與一張含三條現行給付規定的院內
+  藥品卡均通過，且共用同一 sealed publication receipt。瀏覽器不直連
+  `hmj`；本地 `tw_drug` 只負責藥品到條文號的連結與明示的可用性降級，
+  不冒充現行正典。GitHub 的定位是公開方法學、schema、crawler、
+  exporter、稽核收據與可攜 JSON／SQLite release，不是付費內容的
+  production static site。
 - 現行分章正典已程式化切成 639 個單一條文 publication rows；每條保存
   exact text、13,874 個結構區塊、3,487 個 distinct valid ROC-date rows、
   官方 ODT URL/hash/locator 與版本缺口 inventory。依 owner 指定規則，
