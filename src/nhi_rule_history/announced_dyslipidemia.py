@@ -33,7 +33,7 @@ from nhi_rule_history.update.odt import inspect_odt_document
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.1.0"
+LOADER_VERSION = "nhi-rule-history/announced-dyslipidemia-loader/1.1.1"
 EVALUATOR_VERSION = "nhi-rule-history/table1-open-world-dnf/1.1.0"
 NOTICE_URL = "https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html"
 NOTICE_REFERENCE = "健保審字第1150671962號"
@@ -920,6 +920,35 @@ def load_announced_dyslipidemia(
         already_loaded = _insert_material(connection, material)
         if activate:
             with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT 1 FROM {SCHEMA}.patch_resolution_event
+                    WHERE run_id=%s AND patch_id=%s
+                    LIMIT 1
+                    """,
+                    (material.run_id, material.patch_id),
+                )
+                if cursor.fetchone() is None:
+                    cursor.execute(
+                        f"""
+                        SELECT {SCHEMA}.set_patch_resolution(
+                          %s, %s, 'verified_scheduled', %s, %s::jsonb
+                        )
+                        """,
+                        (
+                            material.run_id,
+                            material.patch_id,
+                            "official source verified before stated effective date",
+                            json_text(
+                                {
+                                    "loader_version": LOADER_VERSION,
+                                    "source_artifact_sha256": (
+                                        EXPECTED_ARTIFACT_SHA256
+                                    ),
+                                }
+                            ),
+                        ),
+                    )
                 cursor.execute(f"SELECT run_id FROM {SCHEMA}.v_active_run")
                 active = cursor.fetchone()
                 if not active or str(active[0]) != material.run_id:
