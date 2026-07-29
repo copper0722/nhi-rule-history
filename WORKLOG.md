@@ -1444,3 +1444,51 @@
   separately committed reactivate and exact restoration verification. No schema
   redesign, reparse or model rebuild is indicated. Full response:
   `docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-response.md`.
+
+## 2026-07-29 — Mechanical version promotion, shared rendering and audit loop
+
+- Recorded Copper's governance directive as an executable contract:
+  official publication acquisition triggers a deterministic single-clause
+  version transaction; the previous latest text version becomes the immediate
+  predecessor; the adjacent diff is generated in the same run; an audit agent
+  may identify boundary cases but may not edit clause text or add frontend
+  exceptions.
+- Added v24 append-only tables for composed-block tagging inputs, exact
+  terminology occurrences and adjacent diff hunks. Loader 1.3.0 activated run
+  `b190b59e-6812-55d8-b5da-1ce64c13d5ee`: 406 source blocks, 406 scan
+  receipts, six admitted terminology occurrences, one adjacent diff hunk and
+  609 reimbursement links. Sealed fingerprint:
+  `07518caac5b71bee1157c2d4a17773526ee3e4ab23d6b0a0847a1fd3e0878040`.
+- Exported the same render plan and adjacent-version diff through Copper Panel.
+  The API compiler accepts both current split-file and announced-ODT locator
+  shapes. Condition parsing now covers measurement thresholds and durations
+  such as `LDL-C≧55mg/dL`, `6~8週`, `每6個月` and `1~3個月內`.
+  `scripts/doctor.py` verified live commit `d884e092bd0e`.
+- Removed the paid reader's clause-specific condition regex. The exporter and
+  browser now require exact source block identity, order and text parity before
+  consuming the shared render plan. Addition-only transitions reject an
+  invented removed side. The newest published version is titled
+  `最新條文 2026.09.01`; the prior 2019.02.01 version and adjacent diff are
+  collapsed historical disclosures.
+- The adversarial browser audit found a rendering-boundary defect: Astro's
+  scoped selectors did not apply to JavaScript-created nodes, so compound
+  conditions fell back to the browser's yellow `mark` style and the closed
+  116-product directory remained visually expanded. Converted the page reader
+  stylesheet to page-local global CSS, added an explicit closed-details rule
+  and regression assertion, then replayed all 145 access tests and the 69-route
+  production build. At 390px the reader has one search field, a floating island,
+  red compound-condition styling, closed product/history disclosures and
+  `scrollWidth=clientWidth=390`.
+- Pushed paid-site commit
+  `a2ff58d3726399fbb8b2fc2a38ad50f12645b8d2`. The canonical deploy completed,
+  and the subscriber sync performed a second independent deployment and
+  authenticated artifact comparison. Production deployment:
+  `b32fd9ff-4885-447f-9c68-0470893e5026`; projection fingerprint:
+  `fcde763092b63cfe47315c33971549254abe96d015701f7873445a4e3c3a92b8`;
+  live subscriber JSON SHA-256:
+  `eb3a04288c8d9c3394b27634335b5a216155008f373e632f0ced387c6eb07aeb`.
+- Updated the public workflow and agentic lessons: audit findings must be
+  converted to parser/schema policy plus a regression test and whole-corpus
+  replay. Unsupported source layouts remain visible as acquired notices and
+  queued rule findings; they are never laundered into a successful projection
+  by site-only code.

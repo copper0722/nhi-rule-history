@@ -83,10 +83,11 @@ service_surfaces:
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: b0be75c
-      pages_deployment_id: 1ed7f4a7-bf50-4fbd-8d0f-5daac9199321
-      pages_production_url: https://1ed7f4a7.copper-s.pages.dev
-      api_commit: 5cf97d9
+      commit: a2ff58d3726399fbb8b2fc2a38ad50f12645b8d2
+      pages_deployment_id: b32fd9ff-4885-447f-9c68-0470893e5026
+      pages_production_url: https://b32fd9ff.copper-s.pages.dev
+      api_commit: d884e092bd0e
+      subscriber_json_sha256: eb3a04288c8d9c3394b27634335b5a216155008f373e632f0ced387c6eb07aeb
       live_verification_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-mobile-card-parity.json
       privacy_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-browser-privacy-canary.json
     status: live_verified
@@ -128,11 +129,23 @@ continuous_update:
     target_host: hm4
     trigger: meaningful_pg_projection_fingerprint_change
     source_contract_count: 5
-    projection_fingerprint: 78130c0a3873a76825c089a98b498e0ed6b5da5cb8b2fb6c7b7e633b879a2384
+    projection_fingerprint: fcde763092b63cfe47315c33971549254abe96d015701f7873445a4e3c3a92b8
     supported_announced_patch_loader: idempotent_hash_locked_2_6_1_2026_09_01
     next_announced_effective_on: "2026-09-01"
     live_verification: authenticated_exact_subscriber_json_sha256_parity
-    latest_controller_run: up_to_date
+    latest_controller_run: deployed_and_authenticated_exact_sha_verified
+  mechanical_version_governance:
+    canonical_version_unit: single_clause
+    publication_trigger: official_notice_and_attachment_acquired
+    structured_auto_materialization_scope: supported_deterministic_parsers
+    latest_published_version: rendered_first_with_effective_date_state
+    prior_latest_version: archived_as_immediate_predecessor
+    diff_policy: adjacent_text_version_only
+    render_policy: shared_pg_api_render_plan_only
+    frontend_clause_specific_tagging_or_diff: forbidden
+    audit_agent_role: detect_boundary_cases_and_open_rule_findings
+    accepted_remediation: parser_or_schema_rule_plus_regression_test_plus_full_replay
+    audit_agent_direct_text_edit: forbidden
   clause_history_agent_dispatch:
     task_id: 261
     status: skipped_gate
@@ -140,7 +153,7 @@ continuous_update:
     resume_requires: explicit_Copper_instruction
 
 announced_dyslipidemia_release:
-  status: live_complete_composed_clause_with_versioned_reimbursement_code_links
+  status: live_normalized_render_and_adjacent_diff_projection
   official_notice_reference: 健保審字第1150671962號
   official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
   published_on: "2026-07-28"
@@ -159,12 +172,14 @@ announced_dyslipidemia_release:
   migrations:
     release_gate: pg/migrations/2026-07-29_nhi_rule_history_announced_release_gate_v22.sql
     composed_clause_and_reimbursement_links: pg/migrations/2026-07-29_nhi_rule_history_announced_composite_v23.sql
-  run_id: b57b7f47-881c-592b-b541-d63ec3b08bee
+    render_terminology_and_adjacent_diff: pg/migrations/2026-07-29_nhi_rule_history_announced_version_projection_v24.sql
+  run_id: b190b59e-6812-55d8-b5da-1ce64c13d5ee
   patch_id: a66597ba-0d3d-5e29-888e-9dd78ba0686e
   model_id: ddb7d27d-1327-5af1-8b43-ea015e6fce36
   version_id: 5ec990c9-32c6-5159-bdb5-3925e761a21e
   complete_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
-  sealed_fingerprint: 196e28a39bf1eab6561969dca2059367415789b5cc6550e72491fe9e65d931af
+  output_fingerprint: 79f546fc80fc4550b2c75a2d7743cf8914dfefa3e954240bded4b5b3d11a90a7
+  sealed_fingerprint: 07518caac5b71bee1157c2d4a17773526ee3e4ab23d6b0a0847a1fd3e0878040
   current_resolution_state: verified_scheduled
   decision_aid_available: true
   live_counts:
@@ -185,12 +200,22 @@ announced_dyslipidemia_release:
     reimbursement_code_links: 609
     table_1_product_codes: 493
     table_2_product_codes: 116
+    tagging_scan_receipts: 406
+    admitted_terminology_occurrences: 6
+    adjacent_diff_hunks: 1
   linkage_contract:
     primary_legal_join: versioned_nhi_reimbursement_code
     atc_role: pharmacologic_classification_and_search
     table_2_link_basis: exact_notice_enumeration
     table_1_link_basis: current_C10_master_minus_exact_table_2_exception_set
     api_contract: nhi-reimbursement-rules/clause-reimbursement-code-links/v1
+  presentation_contract:
+    render_plan: nhi-reimbursement-rules/render-plan/v1
+    adjacent_diff: nhi-reimbursement-rules/adjacent-version-diff/v1
+    title: 最新條文 2026.09.01
+    predecessor_title: 上一版條文 2019.02.01
+    future_effective_warning: true
+    product_table_default_open: false
   decision_aid:
     title: 表一 LDL-C 起始治療門檻檢查
     evaluator: open_world_tri_state_dnf

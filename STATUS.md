@@ -665,3 +665,37 @@ PG 作 audit evidence，標記為 `superseded_by_methodology`，不作 release i
 - task 276 的 deploy 後 freshness race 已改成 cache-bypass 與 bounded
   retry；最新執行狀態為 `done`。這個 schema 可由後續 reviewed 公告 loader
   重用，不必為每條文另寫靜態網頁。
+
+### 機械版本治理、共用渲染與相鄰版本 diff
+
+- v24 把「發布新版」完成為單一條文版本交易：新版本、406/406 tagging
+  scan receipts、6 個 admitted terminology occurrences 與相鄰版本 diff
+  一起封存；active run =
+  `b190b59e-6812-55d8-b5da-1ce64c13d5ee`，sealed fingerprint =
+  `07518caac5b71bee1157c2d4a17773526ee3e4ab23d6b0a0847a1fd3e0878040`。
+- 版本單位固定為單一條文。最新發布版置頂並顯示生效狀態；原最新版本自動
+  成為 immediate predecessor，進入可收合的歷史區。Diff 只比較相鄰文字
+  版本；`ABC → ABCD` 只產生「本版新增 D」，不得虛構「本版刪除」。
+- API 同時提供共用
+  `nhi-reimbursement-rules/render-plan/v1` 與
+  `nhi-reimbursement-rules/adjacent-version-diff/v1`。付費前端不再自行
+  regex 標記或計算 diff；來源 block identity、順序與重組後文字任一不符
+  都 fail closed。`copper-panel` live commit =
+  `d884e092bd0e`，正式自檢通過。
+- 付費站 `2.6.1` 現以「最新條文 2026.09.01」呈現，未生效警示置於標題
+  下方；上一版 2019.02.01、歷史 diff、116 項逐碼表皆預設收合。桌面與
+  390px 手機均只有一個搜尋框，沒有橫向溢出；複合條件、日期與語意詞採
+  同一 render plan。
+- 前端對抗式稽核發現 Astro scoped CSS 沒有套用到 JavaScript 動態節點，
+  造成紅色條件退回瀏覽器黃色 mark、已收合的 116 項仍全部展開。修正不是
+  單條 hotfix，而是把本頁動態 reader 改成共用 global style，並加入
+  `details` 收合回歸測試。
+- 正式付費站 commit =
+  `a2ff58d3726399fbb8b2fc2a38ad50f12645b8d2`，production deployment =
+  `b32fd9ff-4885-447f-9c68-0470893e5026`。排程 controller 已重跑並以
+  authenticated exact SHA 驗證線上 JSON：
+  `eb3a04288c8d9c3394b27634335b5a216155008f373e632f0ced387c6eb07aeb`。
+- 治理規則已固定：稽核 agent 只找邊界案例並開 rule finding；修復必須
+  變成 parser／schema 規則、回歸測試與全量 replay。Agent 不直接改條文，
+  前端也不得為個別條文藏特例。未被既有 deterministic parser 支援的新
+  格式會停在公告 feed 與 audit queue，不會假裝已結構化。
