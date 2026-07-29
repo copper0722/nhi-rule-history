@@ -250,3 +250,54 @@ Code 本身不是密碼；這個邊界處理的是授權、內容再散布與關
 - 章節與歷史 designation。
 
 搜尋命中後回到 `rule_identity` 頁，再以 `rule_snapshot` 顯示時間序列。
+
+## Terminology master、alias 與條文命中必須分層
+
+「一個詞沒有出現在目前條文」不代表它不能存在於標籤系統。正規模型分成
+三層：
+
+```text
+authoritative terminology master
+  ATC + ICD-11 + NHI treatment/payment codes
+        |
+        v
+concept + alias proposal/admission
+  糖尿病 = Diabetes mellitus = Diabetes = DM
+        |
+        v
+deterministic clause occurrence
+  clause_version + block + start/end offsets + matched alias
+```
+
+第一層直接使用 PostgreSQL 已存在的正式底表，不讓 agent 重新抄一套：
+
+| master | 2026-07-29 PG rows | public release boundary |
+|---|---:|---|
+| `tw_drug.ref_atc` | 6,812 | 不鏡像完整 ATC 名稱／階層／DDD |
+| `medical_knowledge.icd11_who` | 34,663 | title／URI／definition 留在私有 PG |
+| `tw_health_open.nhi_payment_standard` | 6,151 | 由健保公開資料更新 |
+
+第二層保存 canonical concept 與多個 aliases。alias 可以沒有出現在條文；
+它仍可供搜尋、日後條文或別的資料集使用。每個 alias 必須分開保存：
+
+```text
+alias_text
+language_tag
+alias_type
+provenance              # official_source | source_observed | model_suggested
+match_rule              # exact | case_insensitive_token | context_required
+auto_match_admitted
+ambiguity_note
+review_status
+```
+
+第三層才是某個 alias 在某一版條文的實際命中。命中由程式計算，保存 block
+與起迄 offsets；採 longest-match、禁止重疊、英文 token boundary 與
+normalized collision gate。前端只讀 occurrence，不能在瀏覽器臨時猜詞。
+
+Gemini 適合第二層的高召回候選整理，不擁有第一層正式代碼，也不直接寫第三
+層 occurrence。2026-07-29 canary 將現有 82 個 reader tags 整併為 79 個
+concepts、提出 371 個 aliases；82/82 source tag IDs 守恆、0 個 code
+被改寫或捏造，但仍發現 8 個 normalized alias collisions。因此
+`auto_match` 仍只是 proposal。公開候選與 validation receipt 見
+[`data/proposals/gemini-semantic-alias-2026-07-29`](../data/proposals/gemini-semantic-alias-2026-07-29/)。

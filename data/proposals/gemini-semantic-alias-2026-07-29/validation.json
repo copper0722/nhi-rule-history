@@ -1,0 +1,85 @@
+{
+  "schema": "nhi-rule-history/gemini-seed-alias-validation/v1",
+  "source_semantic_tag_count": 82,
+  "candidate_concept_count": 79,
+  "alias_count": 371,
+  "auto_match_alias_count": 336,
+  "context_required_alias_count": 35,
+  "source_tag_ids_seen_count": 82,
+  "missing_source_tag_ids": [],
+  "duplicate_source_tag_ids": [],
+  "unknown_or_unbacked_error_count": 0,
+  "errors": [],
+  "normalized_alias_collision_count": 8,
+  "normalized_alias_collisions": [
+    {
+      "normalized_alias": "hgh",
+      "concepts": [
+        "drug_class|人類生長激素",
+        "drug_class|生長激素"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "gh",
+      "concepts": [
+        "drug_class|人類生長激素",
+        "drug_class|生長激素"
+      ],
+      "any_auto_match": false
+    },
+    {
+      "normalized_alias": "somatropin",
+      "concepts": [
+        "drug_class|人類生長激素",
+        "drug_class|生長激素"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "生長激素",
+      "concepts": [
+        "drug_class|人類生長激素",
+        "drug_class|生長激素"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "glp-1 receptor agonist",
+      "concepts": [
+        "drug_class|GLP-1受體促效劑",
+        "drug_ingredient|利拉魯肽"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "善寧",
+      "concepts": [
+        "drug_brand|善寧",
+        "drug_ingredient|奧曲肽"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "g-csf",
+      "concepts": [
+        "drug_class|顆粒球集落刺激因子",
+        "drug_ingredient|費格拉斯亭"
+      ],
+      "any_auto_match": true
+    },
+    {
+      "normalized_alias": "tpn",
+      "concepts": [
+        "drug_class|全靜脈營養",
+        "drug_class|靜脈營養輸液"
+      ],
+      "any_auto_match": true
+    }
+  ],
+  "input_parts": 4,
+  "producer_model": "Gemini 3.6 Flash (High)",
+  "provider_backend": "agy",
+  "admission_status": "candidate_only_not_loaded_to_pg",
+  "public_payload_policy": "candidate concepts and aliases only; official master rows, private ICD-11 titles/URIs/definitions, and code crosswalk payloads excluded"
+}

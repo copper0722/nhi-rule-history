@@ -1266,3 +1266,33 @@
   `6f18ae2c97a8ac2d95ba443e17fdb2807e75afd16fa1edf4fb3fe0fc3c39e326`，
   next due 正常前進。task 261 仍為 `skipped_gate`／2099；本輪沒有啟動
   Claude 條文整理或 canonical history promotion。
+
+## 2026-07-29 — Gemini terminology alias groundwork
+
+- 依 Copper 指示，修正原本把「標籤存在」綁死在「目前條文已出現」的
+  錯誤設計。正規化分為三層：PG authoritative terminology masters、
+  concept/alias、deterministic clause occurrences。ATC、ICD-11 與健保
+  治療／處置給付底表可獨立存在；只有 occurrence 必須實際命中條文。
+- Live PG 只讀盤點為 `tw_drug.ref_atc` 6,812 rows、
+  `medical_knowledge.icd11_who` 34,663 rows、以及
+  `tw_health_open.nhi_payment_standard` 6,151 rows。完整正式字典不交由
+  模型重建；ICD-11 title／URI／definition 仍留在私有 PG。
+- 透過 model-harness 明確呼叫 `agy / Gemini 3.6 Flash (High)`，以現有
+  82 個 reader semantic tags 產生 alias/concept bridge。首次 82-row
+  單批回覆 18,238 字但缺 end marker，harness 正確判失敗；保留原始失敗
+  後，以 21/21/21/19 個 immutable tag IDs 做一次 partitioned recovery，
+  四批全部通過 provider/model 與 begin/end marker contract。
+- Controller 對四批 JSONL 做 source identity/code 守恆與 collision
+  驗證：79 concepts、371 aliases、336 個 model-proposed auto-match、
+  35 個 context-required；82/82 source tag IDs 恰好一次、0 missing、
+  0 duplicate、0 unknown/unbacked code。另發現 8 個 normalized alias
+  collisions，所以 `auto_match` 尚未獲 production admission。
+- 公開 proposal 已寫入
+  `data/proposals/gemini-semantic-alias-2026-07-29/`，移除正式 master
+  payload 與 private ICD-11 content，只保留候選 concept／alias、
+  source-tag references 與 validation receipt。正式 PG 尚未更動。
+- 同一案例已回饋到 private `model-harness` skill：新增 expanding-inventory
+  預先拆批、missing end marker = structured truncation、source identity
+  denominator、master/alias/occurrence 分層及 alias collision gate；完整
+  prompt、首輪失敗、四批 recovery、候選與驗證收據均留在
+  `skills/model-harness/audit/2026-07-29-gemini-semantic-alias-inventory/`。

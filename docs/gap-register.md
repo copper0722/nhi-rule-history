@@ -23,6 +23,7 @@
 | G-DIFF-01 | adjacent diff 未建立 | blocked | direct edge、100% source mapping |
 | G-ATC-01 | ATC linkage 尚未完成 public rebuild | raw_fetch_schema_passed_mapping_resolution_open | NHI IODE `A21030000I-E41001-001` exact raw fetch／manifest、PostgreSQL↔SQLite row-level source schema 與 2026-07-27 live audit 已通過；尚缺每月 snapshot loader/parity、508 個 legacy 未解析品項→條文 edges、rule snapshot resolution、TFDA second-source reconcile 與 normalized release |
 | G-ICD-01 | ICD-11 crosswalk 未獲 WHO agreement | blocked | 書面 agreement 與 release citation |
+| G-TAG-01 | 全條文 concept／alias／occurrence 尚未完成 | candidate_alias_canary_validated_pg_admission_open | terminology master 已確認為獨立 PG 底表；Gemini 82-tag canary 得 79 concepts／371 aliases，source IDs 與 codes 守恆，但 8 個 normalized alias collisions 尚待裁決。下一步建立 master/concept/alias/occurrence PG schema，以 admitted aliases deterministic 掃描 639 條並通過 offset、longest-match、token-boundary、no-overlap 與 collision gates |
 | G-DATA-01 | normalized clause JSONL 未發布 | blocked | complete rule/version outputs |
 | G-SQLITE-01 | v1 SQLite snapshot 已準備；v2 尚缺 | partial | v1 typed parity passed；v2 row parity、integrity、checksum |
 | G-API-01 | reader API 未建立 | blocked | accepted read contract 與 canary |

@@ -181,6 +181,17 @@
   probe rows 已 rollback 為 0。v15 再新增 public ICD-code 與 private
   ICD mapping 兩個 count 欄位，因此九類 child 均在 seal gate 精確核對；
   最新兩者皆為 21。
+- 語意標籤方法已拆成三層：正式 terminology master、concept／alias、
+  clause occurrence。PG 現有 ATC 6,812 列、ICD-11 34,663 列、健保治療／
+  處置給付 6,151 列，這些獨立底表不要求先在條文出現，也不交由模型重抄。
+  Gemini 只處理 alias 與 concept bridge 的高召回候選。第一批以現有
+  82 個 reader tags 為分母，產出 79 個 concepts、371 個 aliases；
+  82/82 source tag IDs 恰好一次、0 個 code 被改寫或捏造。35 個 aliases
+  明列 `context_required`，另有 8 個 normalized alias collisions，故本批
+  維持 candidate-only、尚未寫入正式 PG。`糖尿病／Diabetes mellitus／
+  Diabetes／DM` 已同列；`DM` 因歧義不得無條件自動著色。公開候選與
+  validation receipt 位於
+  `data/proposals/gemini-semantic-alias-2026-07-29/`。
 - `0.4` 的歷史主標籤已改由「下一版首次新出現的文內日期註記」程式化產生，
   例如 99 年版顯示 `99/11`；同時保留來源版名，並明示日期尚未認定為法律
   生效日。

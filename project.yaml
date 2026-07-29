@@ -433,6 +433,23 @@ chapter_zero_template:
       live_loading_to_sealed_transactional_probe: passed_rolled_back
       deterministic_replay_after_migration: passed_hashes_unchanged
     browser_desktop_check: passed_no_horizontal_overflow
+  terminology_alias_groundwork:
+    status: candidate_inventory_validated_not_pg_admitted
+    authoritative_pg_masters:
+      atc_rows: 6812
+      icd11_rows: 34663
+      nhi_treatment_payment_rows: 6151
+    model_provider: agy
+    model: Gemini 3.6 Flash (High)
+    source_semantic_tag_count: 82
+    candidate_concept_count: 79
+    candidate_alias_count: 371
+    context_required_alias_count: 35
+    source_tag_identity_conservation: passed_82_of_82_exactly_once
+    source_code_conservation: passed_zero_changed_or_invented
+    normalized_alias_collision_count: 8
+    admission_boundary: candidate_only_until_collision_master_resolution_and_occurrence_gates
+    public_proposal: data/proposals/gemini-semantic-alias-2026-07-29
     browser_mobile_390x844_check: passed_coding_coverage_no_inline_codes_no_overlap_no_overflow
     browser_mobile_320x800_check: passed_no_horizontal_overflow
     deterministic_replay: passed_same_runtime_byte_identical_cross_runtime_logical_identical
