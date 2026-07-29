@@ -61,6 +61,21 @@ concept／alias review，再建立新的 immutable run；不在 HTML 手工補�
 母表扣除例外集合確定性產生。名稱與 ATC 可協助搜尋，但前端及 API 的分支
 判斷以版本化健保給付代碼連結為準。
 
+2.6.1 也提供第一份 v25 單條文正規化可攜資料：
+[`data/releases/clause-document-v25-2.6.1/`](data/releases/clause-document-v25-2.6.1/)。
+20 個 PostgreSQL relations 各自輸出 canonical JSONL，共 2,238 筆 logical
+rows。沒有 PostgreSQL 的使用者可直接重建 SQLite：
+
+```bash
+python -m nhi_rule_history.clause_document_portable build-sqlite \
+  --jsonl-dir data/releases/clause-document-v25-2.6.1 \
+  --output clause-document-v25-2.6.1.sqlite
+```
+
+SQLite 每張表保存 canonical `row_json` 與 `row_sha256`，可用 SQLite JSON
+functions 查詢；它不是另一套可寫正典。匯出器會逐表驗證
+PostgreSQL↔JSONL↔SQLite logical-row count 與 fingerprint。
+
 其餘全庫工作仍分成互不冒充的受限 staging：
 
 | 項目 | v1 年度整份檔 | 歷史公告 exact phrase | post-109 公告 exact phrase |
@@ -166,6 +181,7 @@ diff。兩者都不冒充已驗證法律事件史。
 ## Repo 的重點
 
 - [資料取得與更新 workflow](docs/workflow.md)
+- [條文正規化與版本比較：完整實作流程](docs/clause-normalization-and-diff.md)
 - [FINT 歷史公文研究 crawler](docs/fint-keyword-crawler.md)
 - [`通則` PG-first 模板與更新方法](docs/chapter-00-template.md)
 - [單頁歷史的讀者體驗契約](docs/reader-experience.md)

@@ -1,0 +1,46 @@
+{
+  "schema": "nhi-rule-history/clause-normalization-mutation-matrix/v1",
+  "observed_at": "2026-07-29",
+  "database": "hmj/vault_main",
+  "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+  "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+  "transaction_policy": "each probe used an independent savepoint and the outer session was rolled back",
+  "all_blocked": true,
+  "probes": {
+    "update_sealed_child": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "clause document normalization rows are immutable"
+    },
+    "delete_sealed_child": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "clause document normalization rows are immutable"
+    },
+    "insert_sealed_child": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "diff child insertion requires a loading run"
+    },
+    "upsert_sealed_child": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "diff child insertion requires a loading run"
+    },
+    "copy_into_sealed_child": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "diff child insertion requires a loading run"
+    },
+    "truncate_child_table": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "announced-rule evidence is append-only: nhi_rule_history_announced.clause_document_node_lineage"
+    },
+    "update_control_event": {
+      "blocked": true,
+      "sqlstate": "P0001",
+      "message": "announced-rule evidence is append-only: nhi_rule_history_announced.clause_document_diff_control_event"
+    }
+  }
+}

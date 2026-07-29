@@ -10,8 +10,8 @@ last_verified_date: "2026-07-29"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 479
-  public_tests_passed: 472
+  public_tests_run: 495
+  public_tests_passed: 488
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -24,6 +24,9 @@ public_outputs:
   source_manifests: tracked_in_git
   bounded_acquisition_manifest: data/manifests/mohw-fint-2021-2026-v2
   normalized_jsonl: chapter_00_single_clause_exported_legal_history_planned
+  clause_document_v25_jsonl: data/releases/clause-document-v25-2.6.1
+  clause_document_v25_manifest_fingerprint: a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2
+  clause_document_v25_logical_rows: 2238
   stage_v1_release: prepared_not_published
   stage_v2_release: prepared_partial_evidence_bundle_not_published
   sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
@@ -54,6 +57,8 @@ service_surfaces:
     official_notice_contract: nhi-reimbursement-rules/notices/v1
     announced_patch_endpoint: /api/drugs/reimbursement-rules/announced
     announced_patch_contract: nhi-reimbursement-rules/announced-decision/v1
+    clause_document_contract: nhi-reimbursement-rules/clause-document/v2
+    exact_diff_contract: nhi-reimbursement-rules/exact-expression-diff/v2
     announced_patch_count: 1
     status: live_verified
   subscriber_site:
@@ -173,13 +178,20 @@ announced_dyslipidemia_release:
     release_gate: pg/migrations/2026-07-29_nhi_rule_history_announced_release_gate_v22.sql
     composed_clause_and_reimbursement_links: pg/migrations/2026-07-29_nhi_rule_history_announced_composite_v23.sql
     render_terminology_and_adjacent_diff: pg/migrations/2026-07-29_nhi_rule_history_announced_version_projection_v24.sql
-  run_id: b190b59e-6812-55d8-b5da-1ce64c13d5ee
+    clause_document_normalization_and_exact_diff: pg/migrations/2026-07-29_nhi_rule_history_clause_components_v25.sql
+  run_id: ad59feb1-1891-5b92-b221-0cb15d3efbac
   patch_id: a66597ba-0d3d-5e29-888e-9dd78ba0686e
   model_id: ddb7d27d-1327-5af1-8b43-ea015e6fce36
   version_id: 5ec990c9-32c6-5159-bdb5-3925e761a21e
+  normalization_run_id: 16d5abd5-a8aa-5d35-8a4d-3e3edabb7598
+  normalization_output_fingerprint: 81af6a1bde643522a2cab68b8cd2a18dab3ccf9ce98d1e1a6437c1c63c3a7618
+  normalization_sealed_fingerprint: 6607e914922f4d31a08d539562ce4bc6cc66ff8674d53209035bb3bb5028ae3a
+  diff_run_id: cc4acbaf-559d-5148-9773-f5f023e36561
+  diff_output_fingerprint: 7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de
+  diff_sealed_fingerprint: a2200bfb03f39c0dbc71f4aea84ffcbc400449113bf3fd4911d57f76f1354aeb
   complete_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
-  output_fingerprint: 79f546fc80fc4550b2c75a2d7743cf8914dfefa3e954240bded4b5b3d11a90a7
-  sealed_fingerprint: 07518caac5b71bee1157c2d4a17773526ee3e4ab23d6b0a0847a1fd3e0878040
+  output_fingerprint: 3be28b613c353d8ada01d63bfa79ba0488cb63e0eda7300e0bfaba6d91d7d1c6
+  sealed_fingerprint: 24430be4b1a5c8a413739bb8f79316e8199867291297c859b6df8c0c60c0837d
   current_resolution_state: verified_scheduled
   decision_aid_available: true
   live_counts:
@@ -203,6 +215,14 @@ announced_dyslipidemia_release:
     tagging_scan_receipts: 406
     admitted_terminology_occurrences: 6
     adjacent_diff_hunks: 1
+    clause_expressions: 2
+    normalized_source_blocks: 478
+    normalized_nodes: 87
+    normalized_tables: 6
+    normalized_table_cells: 486
+    node_lineage_rows: 85
+    unresolved_node_lineage_rows: 83
+    exact_inline_diff_segments: 7
   linkage_contract:
     primary_legal_join: versioned_nhi_reimbursement_code
     atc_role: pharmacologic_classification_and_search
@@ -211,7 +231,10 @@ announced_dyslipidemia_release:
     api_contract: nhi-reimbursement-rules/clause-reimbursement-code-links/v1
   presentation_contract:
     render_plan: nhi-reimbursement-rules/render-plan/v1
-    adjacent_diff: nhi-reimbursement-rules/adjacent-version-diff/v1
+    clause_document: nhi-reimbursement-rules/clause-document/v2
+    adjacent_diff: nhi-reimbursement-rules/exact-expression-diff/v2
+    exact_diff_scope: complete_expression_work_level
+    unresolved_subnode_policy: preserve_lineage_without_invented_hunks
     title: 最新條文 2026.09.01
     predecessor_title: 上一版條文 2019.02.01
     future_effective_warning: true
@@ -223,9 +246,14 @@ announced_dyslipidemia_release:
     future_version_opt_in: true
     browser_storage_persistence: none
   pro_gate:
-    decision: REPAIR_reconciled
+    normalization_decision: REPAIR_reconciled
+    normalization_reaudit: pending_after_live_subscriber_verification
     post_verification_audit: REPAIR_three_of_four_closed
-    remaining_blocker: committed_two_step_end_to_end_deactivate_reactivate_drill
+    remaining_blocker: none_two_transaction_drill_passed
+    mutation_matrix: docs/audits/2026-07-29-clause-normalization-v25-mutation-matrix.json
+    two_transaction_drill: docs/audits/2026-07-29-clause-normalization-v25-two-transaction-drill.json
+    portable_parity: docs/audits/2026-07-29-clause-document-v25-portable-parity.json
+    normalization_decision_response: docs/audits/2026-07-29-clause-normalization-v25-pro-decision-response.md
     decision_response: docs/audits/2026-07-29-dyslipidemia-future-version-r3-decision-response.md
     audit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-post-audit-prompt.md
     reaudit_prompt: docs/audits/2026-07-29-dyslipidemia-future-version-r3-reaudit-prompt.md

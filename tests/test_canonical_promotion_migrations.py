@@ -16,6 +16,9 @@ import zipfile
 from pathlib import Path
 
 
+SQL_ROW_SEPARATOR = ",\n"
+
+
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = ROOT / "pg" / "migrations"
 OPS_FORWARD = MIGRATIONS / "2026-07-27_nhi_rule_history_update_ops.sql"
@@ -1376,7 +1379,7 @@ INSERT INTO nhi_rule_history_update_ops.content_artifact (
   artifact_sha256, byte_size, media_type, bundle_relative_path,
   first_observed_at
 ) VALUES
-{",\n".join(content_artifact_values)};
+{SQL_ROW_SEPARATOR.join(content_artifact_values)};
 INSERT INTO nhi_rule_history_update_ops.bundle_receipt (
   receipt_id, job_id, bundle_uid, manifest_sha256, bundle_relative_path,
   artifact_count, total_bytes, prepared_at, atomically_published_at,
@@ -1413,7 +1416,7 @@ INSERT INTO nhi_rule_history_candidate_stage.candidate_source_span (
   locator_key, char_start, char_end, raw_text, raw_text_sha256,
   raw_text_char_length, observed_at, statement
 ) VALUES
-{",\n".join(source_span_values)};
+{SQL_ROW_SEPARATOR.join(source_span_values)};
 INSERT INTO nhi_rule_history_candidate_stage.candidate_evidence (
   proposal_id, evidence_id, span_id, evidence_code, outcome,
   assertion_text, evidence_details, validator_version, recorded_at
@@ -1892,7 +1895,7 @@ INSERT INTO nhi_rule_history_promotion.effect_resolution_span (
   release_id, artifact_id, source_locator, char_start, char_end,
   raw_text, raw_text_sha256, covers_full_clause, evidence_status
 ) VALUES
-{",\n".join(effect_span_rows)};
+{SQL_ROW_SEPARATOR.join(effect_span_rows)};
 INSERT INTO nhi_rule_history_promotion.anchor_snapshot (
   case_id, anchor_role, release_id, artifact_id, anchor_date,
   whole_release_manifest_sha256, declared_rule_count,
@@ -1911,7 +1914,7 @@ INSERT INTO nhi_rule_history_promotion.anchor_clause (
   case_id, anchor_role, member_order, rule_id, designation_raw,
   raw_text, raw_text_sha256, source_locator, verification_status
 ) VALUES
-{",\n".join(anchor_clause_rows)};
+{SQL_ROW_SEPARATOR.join(anchor_clause_rows)};
 INSERT INTO nhi_rule_history_promotion.replay_run (
   case_id, replay_algorithm_version, pre_anchor_release_id,
   post_anchor_release_id, accepted_event_count,
@@ -1931,12 +1934,12 @@ INSERT INTO nhi_rule_history_promotion.replay_event (
   before_raw_sha256, after_raw_sha256,
   verification_status
 ) VALUES
-{",\n".join(replay_event_values)};
+{SQL_ROW_SEPARATOR.join(replay_event_values)};
 INSERT INTO nhi_rule_history_promotion.replay_rule_result (
   case_id, rule_id, before_raw_sha256, expected_after_raw_sha256,
   actual_after_raw_sha256, verification_status
 ) VALUES
-{",\n".join(replay_rows)};
+{SQL_ROW_SEPARATOR.join(replay_rows)};
 INSERT INTO nhi_rule_history_promotion.format_parity_receipt (
   case_id, proposal_id, release_id, format_policy,
   odt_artifact_id, pdf_artifact_id, format_declaration_artifact_id,

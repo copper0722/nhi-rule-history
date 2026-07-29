@@ -1492,3 +1492,34 @@
   replay. Unsupported source layouts remain visible as acquired notices and
   queued rule findings; they are never laundered into a successful projection
   by site-only code.
+
+## 2026-07-29 — v25 clause-document normalization and exact diff repair
+
+- Captured the first GPT Pro decision unchanged and reconciled every finding.
+  The methodology now separates persistent Work identity from expression-local
+  nodes, full expressions from patches, exact source text from display
+  projections, physical table cells from logical carried values, and
+  deterministic promotion from agentic anomaly review.
+- Applied the additive v25 migration to production and activated sealed
+  normalization run `16d5abd5-a8aa-5d35-8a4d-3e3edabb7598` plus exact-diff run
+  `cc4acbaf-559d-5148-9773-f5f023e36561`. The normalized projection contains
+  two expressions, 478 source blocks, 87 nodes, six tables and 486 cells.
+- Replaced misleading one-sided component hunks with one Work-level exact
+  expression diff. Node lineage stays separate: 83 of 85 lineage rows are
+  explicitly unresolved instead of being labeled deletion or insertion.
+  The exact expression diff replays both sides and contains seven segments;
+  its material changes are insertion-only, so the display classification is
+  `本版新增`.
+- Ran the production mutation matrix. UPDATE, DELETE, INSERT, UPSERT, COPY,
+  TRUNCATE and control-event mutation probes all failed with `P0001`; no probe
+  wrote state. Then committed deactivation, observed a fresh API 503, committed
+  reactivation in a separate transaction and proved byte-identical API
+  restoration. Receipts are preserved under `docs/audits/`.
+- Replayed all 495 Python tests: 488 passed and seven environment-gated tests
+  skipped. The remaining release work is subscriber deployment/live visual
+  verification followed by a second GPT Pro decision over the actual evidence.
+- Added a lossless portable exporter. The active 20-table PG projection emitted
+  2,238 canonical JSONL logical rows. A fresh SQLite 3.50.4 rebuild passed
+  integrity check and exact per-table count/fingerprint parity; only JSONL and
+  the builder are tracked, while the binary SQLite artifact remains
+  reproducible output.

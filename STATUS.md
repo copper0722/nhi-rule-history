@@ -699,3 +699,36 @@ PG 作 audit evidence，標記為 `superseded_by_methodology`，不作 release i
   變成 parser／schema 規則、回歸測試與全量 replay。Agent 不直接改條文，
   前端也不得為個別條文藏特例。未被既有 deterministic parser 支援的新
   格式會停在公告 feed 與 audit queue，不會假裝已結構化。
+
+## 2026-07-29 — v25 單條文正規化與 exact diff
+
+- 公開方法學已改寫為 Work／Expression／Manifestation、完整性狀態、
+  source span 守恆、實體／邏輯表格值分離，以及 deterministic／agentic／
+  human 三種工作邊界：
+  `docs/clause-normalization-and-diff.md`。
+- GPT Pro 第一輪架構稽核為 `REPAIR`。已補上 persistent Work 身分、
+  expression relation、scalar 與 UTF-8 byte source spans、table physical
+  與 logical state、append-only normalization／diff runs，以及 agent 不得
+  直接指定 verified identity／adjacency／completeness 的限制。
+- v25 additive shadow schema 已上正式 PG。active normalization =
+  `16d5abd5-a8aa-5d35-8a4d-3e3edabb7598`，保存 2 個完整 Expression、
+  478 個 source blocks、87 個 nodes、6 張表與 486 個 cells。active exact
+  diff = `cc4acbaf-559d-5148-9773-f5f023e36561`。
+- 版本全文以同一條文 Work 身分產生一筆可雙向重建的 exact diff；85 筆
+  node lineage 中，83 筆無唯一對應者留為 `alignment_unresolved`，不再
+  偽裝成 83 次新增／刪除。2.6.1 的七個 exact segments 全部只有
+  unchanged／inserted，因此顯示分類為「本版新增」，符合
+  `ABC → ABCD` 不製造刪除側的規則。
+- 正式 mutation matrix 已驗證 UPDATE、DELETE、INSERT、UPSERT、COPY、
+  TRUNCATE 與 control-event 改寫全部被 PG 擋下。兩段式操作演練另以一筆
+  committed deactivate 讓 fresh API 實際回傳 503，再以另一筆 committed
+  reactivate 恢復同一 sealed runs；前後 API bytes SHA-256 均為
+  `f14b6e32bb32e887e1fb19c00c7eb678f4f373342ab37fe62a4af585ff69f104`。
+- 全部 Python 測試 495 項通過 488、跳過 7；無失敗。Copper Panel 已以
+  v2 document／exact-diff contract 讀取正式 active views。付費站投影與
+  live reader 驗證完成後，將同一批實際收據交 GPT Pro 第二輪裁決。
+- 同一 active runs 已輸出 20 個 canonical JSONL relations、2,238 筆
+  logical rows；離線重建 SQLite 3.50.4 後 `integrity_check=ok`，逐表
+  PostgreSQL↔JSONL↔SQLite parity 全部通過。SQLite 檔本身不進 Git，
+  可由公開 JSONL 隨時重建；本次重建 SHA-256 =
+  `87512d7d2bb8c9cd4b8e1a79c8d332490db424f0105b7e49fec0db225a78085a`。

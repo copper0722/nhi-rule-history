@@ -1,0 +1,131 @@
+{
+  "clause_work_id": "d3e67ebc-558f-5b0d-b09c-06eabc4b1ab7",
+  "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+  "manifest_fingerprint": "a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2",
+  "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+  "schema": "nhi-rule-history/clause-document-portable/v1",
+  "table_order": [
+    "clause_document_work",
+    "clause_document_node_work",
+    "clause_document_normalization_run",
+    "clause_document_expression",
+    "clause_document_expression_relation",
+    "clause_document_source_block",
+    "clause_document_node",
+    "clause_document_node_identity",
+    "clause_document_table",
+    "clause_document_table_row",
+    "clause_document_table_cell",
+    "clause_document_table_cell_content",
+    "clause_document_source_span",
+    "clause_document_normalization_receipt",
+    "clause_document_diff_run",
+    "clause_document_node_lineage",
+    "clause_document_diff_hunk",
+    "clause_document_inline_diff_segment",
+    "clause_document_normalization_control_event",
+    "clause_document_diff_control_event"
+  ],
+  "tables": {
+    "clause_document_diff_control_event": {
+      "jsonl_sha256": "add814bd42597ab719646c630c9933c034a0eabd72533b211936d620741df6d2",
+      "logical_row_set_fingerprint": "8d6b7e08dae80b0b848cae14d7ff79f38224513b1b0274da0fcc8a02d599e3dd",
+      "row_count": 3
+    },
+    "clause_document_diff_hunk": {
+      "jsonl_sha256": "96a42fa39d45f380f3c36119f2a21640564333a39d8592ba3babba8a25d4df5d",
+      "logical_row_set_fingerprint": "f712646523d239026e4739685cf24feb264c3b1cfa1f60afe445488e6e692194",
+      "row_count": 1
+    },
+    "clause_document_diff_run": {
+      "jsonl_sha256": "8478442c86331fd34959030d4f1e3ed63f3b6c91e4123d9eb9637183598c4374",
+      "logical_row_set_fingerprint": "8a86aeb6b2fdb84dac7ba163995216a8ee3b872be04a46187167a2ffff8a08e2",
+      "row_count": 1
+    },
+    "clause_document_expression": {
+      "jsonl_sha256": "49bc7918a7df7ab98c3906a249f2487cc7b10c10a78c105e91fb18ea4752ee34",
+      "logical_row_set_fingerprint": "56abe78b5ff07570a0fa1594cdf1e4d1b50b79474d07242910fe605a78b20ddc",
+      "row_count": 2
+    },
+    "clause_document_expression_relation": {
+      "jsonl_sha256": "98fac8d128451e0c3a686b4ed32ee691998fccd63fc28770a808b8c2d908a361",
+      "logical_row_set_fingerprint": "f9fb925dabf988f662d092d539c21f8a080af569c42780341521aaf1d894470e",
+      "row_count": 1
+    },
+    "clause_document_inline_diff_segment": {
+      "jsonl_sha256": "be64164532cc3203903d91aa2ba17c859dee84fe96c7e7204a2e50f8a765c60f",
+      "logical_row_set_fingerprint": "ee96f2845e3994a3a0289043bf22991ecc6ac64dff8174a1b685494d17202796",
+      "row_count": 7
+    },
+    "clause_document_node": {
+      "jsonl_sha256": "32ec0bbabb02584c9539c45a4c1570735df4a5149f93c0e2d3b11ef12867342b",
+      "logical_row_set_fingerprint": "0e6842caffc2635e06694212cf97f01187d57a6fee7c9017d77feba31ee0fb2b",
+      "row_count": 87
+    },
+    "clause_document_node_identity": {
+      "jsonl_sha256": "6986f958469f179621629e5cc411ddec5f8f2a4bf651527b9a96bc19291bf29f",
+      "logical_row_set_fingerprint": "40d83b1caa037532d37e37b60390eae721c9c3cd95240de8befccdfeeb16c24f",
+      "row_count": 87
+    },
+    "clause_document_node_lineage": {
+      "jsonl_sha256": "539b01d6f65d930b6a336f5a3af00803b816b71297b800ae03a86492faf45bf1",
+      "logical_row_set_fingerprint": "0dd3baaebb2bd93bddc5e8c7b54521ea17e2138c5c6060575ff540eebe2b6a9a",
+      "row_count": 85
+    },
+    "clause_document_node_work": {
+      "jsonl_sha256": "b4b061ded066f1cb02bab7194ccf5457d6b9b84db9aa390fbd0ddb793d5dede2",
+      "logical_row_set_fingerprint": "4f5bfba6144e1e5756b8d4f2a5f10d855eb77ce612326bca50260d55d0fa3522",
+      "row_count": 1
+    },
+    "clause_document_normalization_control_event": {
+      "jsonl_sha256": "85dc6e3b63897202fb04028db490117a4bfa23a10bec1d155cdfd5ca7405a8a7",
+      "logical_row_set_fingerprint": "1d358a0bd51c7d2ae4d9c15acc5cb261549ac64ad3116b3d9aa81b44134e7d71",
+      "row_count": 3
+    },
+    "clause_document_normalization_receipt": {
+      "jsonl_sha256": "130ddebbdcaa9c76764f0ff501fba30dcf93ea030c29d32d26dfcd7767833538",
+      "logical_row_set_fingerprint": "292d164d5f6de90f9e65e5679d9c653ffecc6e4db1988ff97a878e33e66a19c8",
+      "row_count": 1
+    },
+    "clause_document_normalization_run": {
+      "jsonl_sha256": "1c4263406a55d8c2aecffbbced37de43f5afc39cf05259997e033b7390e802ad",
+      "logical_row_set_fingerprint": "91bd821a85f98665a257cab36bfe974e22467d87197895be6e4c95b18aef4a2e",
+      "row_count": 1
+    },
+    "clause_document_source_block": {
+      "jsonl_sha256": "1f9cb59d5d8761a8068061c2d93cc680c2652bd1f69e45cf84357ddb3c0c5ebe",
+      "logical_row_set_fingerprint": "17d4232fb5e6a8cbb682187c4323d134a2b688f374cdee151b506c30e7fce049",
+      "row_count": 478
+    },
+    "clause_document_source_span": {
+      "jsonl_sha256": "387e87922a21ff232c031d3a4227a6f10c6ec7fe67272d90b203cc05bc2762b9",
+      "logical_row_set_fingerprint": "f89f5879c83d12a6e49faf84706924f2b2276574f3f7626d917f438693cd82e2",
+      "row_count": 462
+    },
+    "clause_document_table": {
+      "jsonl_sha256": "a6f227c8337c6e38b421d98ba04b7b556f2956a0d1ec46ac6e6e1291e67cb0e7",
+      "logical_row_set_fingerprint": "cdc8326d96228541f437d13016359b0e604d00e1dfebaa38145f7956a02b4b06",
+      "row_count": 6
+    },
+    "clause_document_table_cell": {
+      "jsonl_sha256": "a85a2e834792f1c8d629cd75ad1fd694f1d22a6a4eade98fc9c872fdd0ce675b",
+      "logical_row_set_fingerprint": "64398927c09c0f435c9632c17b9894aa7388ab9936593850934e0634f7ce836b",
+      "row_count": 486
+    },
+    "clause_document_table_cell_content": {
+      "jsonl_sha256": "c290d2c63c7837293e53189ad1a6a9c15bc16d99553fd5b04e911eacdd27f77e",
+      "logical_row_set_fingerprint": "12665bc5f1a368bdeecb45c6997281977442e6537265efdd579ea0a70543e93e",
+      "row_count": 381
+    },
+    "clause_document_table_row": {
+      "jsonl_sha256": "943e23fd391449412a07faf541169d46f1340650dcc62d8e9bce7ba5a7b0d704",
+      "logical_row_set_fingerprint": "832ac17ed7453a4551eda943cec38234455ec33fe8ac484f78863133f99d1f17",
+      "row_count": 144
+    },
+    "clause_document_work": {
+      "jsonl_sha256": "dfaf1d58a3a9554b818391213ca162817279a56e4ef79bd8c1a169795202ae28",
+      "logical_row_set_fingerprint": "247c4cb4fe7c8796ce5ea4cab2ec6e3d1cd38d43a19b9d6f248122aaba0bed64",
+      "row_count": 1
+    }
+  }
+}

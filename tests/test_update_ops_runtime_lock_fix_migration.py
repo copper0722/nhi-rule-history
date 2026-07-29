@@ -265,6 +265,7 @@ TO CURRENT_USER WITH GRANT OPTION;
         assert first.stdout is not None
         first.stdin.write(first_sql)
         first.stdin.close()
+        first.stdin = None
         while True:
             line = first.stdout.readline()
             self.assertNotEqual(line, "")

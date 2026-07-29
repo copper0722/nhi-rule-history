@@ -1,0 +1,12 @@
+{
+  "builder_sqlite_version": "3.50.4",
+  "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+  "logical_row_count": 2238,
+  "logical_row_parity": "passed",
+  "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+  "schema": "nhi-rule-history/clause-document-sqlite/v1",
+  "source_manifest_fingerprint": "a00b063d5b342cf9bb319960781f6b2bcbe84678a55d34d4ea3922b1a26206f2",
+  "sqlite_integrity_check": "ok",
+  "sqlite_sha256": "87512d7d2bb8c9cd4b8e1a79c8d332490db424f0105b7e49fec0db225a78085a",
+  "table_count": 20
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "nhi-rule-history/clause-normalization-two-transaction-drill/v1",
+  "observed_at": "2026-07-29",
+  "api_url": "http://hmj:8710/api/drugs/reimbursement-rules/announced?clause=2.6.1",
+  "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+  "normalization_sealed_fingerprint": "6607e914922f4d31a08d539562ce4bc6cc66ff8674d53209035bb3bb5028ae3a",
+  "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+  "diff_sealed_fingerprint": "a2200bfb03f39c0dbc71f4aea84ffcbc400449113bf3fd4911d57f76f1354aeb",
+  "deactivate_transaction": {
+    "committed": true,
+    "fresh_api_observation": {
+      "http_status": 503,
+      "payload_sha256": "ab2d246db51c087e4b6b717e015139ad47057d8bdacb25f8c39e7bce745ed1ed",
+      "error": "sealed clause normalization is unavailable"
+    }
+  },
+  "reactivate_transaction": {
+    "separate_from_deactivate": true,
+    "committed": true,
+    "fresh_api_observation": {
+      "http_status": 200,
+      "payload_sha256": "f14b6e32bb32e887e1fb19c00c7eb678f4f373342ab37fe62a4af585ff69f104"
+    }
+  },
+  "before": {
+    "http_status": 200,
+    "payload_sha256": "f14b6e32bb32e887e1fb19c00c7eb678f4f373342ab37fe62a4af585ff69f104"
+  },
+  "exact_payload_restoration": true
+}
