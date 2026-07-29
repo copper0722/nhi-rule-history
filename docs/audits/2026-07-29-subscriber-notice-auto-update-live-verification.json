@@ -1,0 +1,102 @@
+{
+  "schema": "nhi-rule-history/subscriber-notice-auto-update-live-verification/v1",
+  "verified_at": "2026-07-29T11:45:10+08:00",
+  "public_safe": true,
+  "panel_api": {
+    "notices_contract": "nhi-reimbursement-rules/notices/v1",
+    "canonical_scope": "official_rss_drug_reimbursement_rule_notices",
+    "endpoint": "http://hmj:8710/api/drugs/reimbursement-rules/notices",
+    "deployed_commit": "ffcfad6b2f6f",
+    "test_result": {
+      "passed": 152,
+      "failed": 0
+    }
+  },
+  "subscriber_site": {
+    "canonical_url": "https://s.copper0722.com/member/tools/nhi-rules/",
+    "same_origin_json": "https://s.copper0722.com/api/nhi-rules/v1/current.json",
+    "source_commit": "2c88acb8d80a05efe5727b571a11e976f290df22",
+    "production_deployment_id": "1aa1de15-899e-4454-8505-97a9be42a01a",
+    "production_deployment_url": "https://1aa1de15.copper-s.pages.dev",
+    "anonymous_status": {
+      "page": 303,
+      "json": 303
+    },
+    "authenticated_status": {
+      "page": 200,
+      "json": 200
+    },
+    "projection_contract": "subscriber-nhi-reimbursement-rules/current/v1",
+    "subscriber_json_sha256": "cd3ee1a0ae5159f39df966bdc9251a55737044fa7e30e2e8a7405460585e0031",
+    "counts": {
+      "current_clauses": 639,
+      "latest_notices": 14,
+      "reviewed_semantic_tags": 82,
+      "compound_conditions": 5
+    },
+    "latest_notice": {
+      "notice_id": "85b31279-ca93-5caa-850a-a8db3e404079",
+      "title": "公告異動降血脂藥品支付價格及修訂其藥品給付規定。",
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html",
+      "rss_published_at": "2026-07-28T03:59:00Z",
+      "legal_effective_date_claimed": false
+    },
+    "ui_contract": {
+      "inline_semantic_codes": false,
+      "desktop_popover_triggers": [
+        "mouseenter",
+        "keyboard_focus"
+      ],
+      "coarse_pointer_contract": "first tap opens the popover; second tap follows the internal search link",
+      "multi_code_wrap_canary": {
+        "term": "insulin",
+        "code_system": "ATC",
+        "code_count": 7,
+        "wrapped_rows": 2,
+        "horizontal_overflow": false
+      },
+      "history_default": "collapsed",
+      "method_default": "collapsed"
+    },
+    "test_result": {
+      "passed": 135,
+      "failed": 0,
+      "built_pages": 69
+    }
+  },
+  "continuous_update": {
+    "source_poll_task": {
+      "id": 260,
+      "task_name": "nhi_rule_history_continuous_poll_acquire",
+      "cadence_minutes": 15,
+      "target_host": "hm4",
+      "auto_promotion_enabled": false
+    },
+    "subscriber_projection_task": {
+      "id": 276,
+      "task_name": "nhi_rule_history_subscriber_projection_sync",
+      "cadence_minutes": 15,
+      "target_host": "hm4",
+      "depends_on_task": "nhi_rule_history_continuous_poll_acquire",
+      "projection_fingerprint": "6f18ae2c97a8ac2d95ba443e17fdb2807e75afd16fa1edf4fb3fe0fc3c39e326",
+      "first_runner_result": "up_to_date",
+      "run_count": 1,
+      "last_run": "2026-07-29T11:45:10.166080+08:00",
+      "next_due": "2026-07-29T12:00:10.166080+08:00",
+      "live_verification": "authenticated exact subscriber JSON SHA-256 parity"
+    },
+    "history_agent_task": {
+      "id": 261,
+      "status": "skipped_gate",
+      "next_due": "2099-01-01T00:00:00+08:00",
+      "resumed": false
+    }
+  },
+  "claim_limits": {
+    "latest_current_rules_are_live": true,
+    "latest_official_notice_feed_is_live": true,
+    "notice_publication_time_is_a_legal_effective_date": false,
+    "official_notice_automatically_promotes_canonical_history": false,
+    "complete_clause_history_claimed": false
+  }
+}

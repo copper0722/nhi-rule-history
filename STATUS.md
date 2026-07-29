@@ -23,7 +23,8 @@
 
 - 現行條文已從同一個 sealed PG publication 投影到三個可用面：
   `hmj:8710` 提供 latest list/search、單條 detail、history inventory 與
-  reviewed enrichment API；付費站
+  reviewed enrichment API，另提供只含正式健保署 RSS 給付公告的
+  `notices/v1` contract；付費站
   `https://s.copper0722.com/member/tools/nhi-rules/` 已上線，頁面與
   same-origin JSON 均經既有訂閱 gateway 保護；BOA／boan-emr 已經由
   既有跳板與 private network 完成 latest-only server-side consumer，
@@ -33,6 +34,21 @@
   不冒充現行正典。GitHub 的定位是公開方法學、schema、crawler、
   exporter、稽核收據與可攜 JSON／SQLite release，不是付費內容的
   production static site。
+- 付費站最新公告區已直接投影正式 RSS 中的給付規定公告：2026-07-29
+  authenticated live JSON 含 14 則，首則為健保署 115-07-28
+  「公告異動降血脂藥品支付價格及修訂其藥品給付規定。」；公告日期明示
+  不是法律生效日，是否已併入現行全文仍以 sealed current publication
+  為準。疾病／藥物正文只顯示名稱，ATC、ICD-11 與健保治療碼移至
+  hover／鍵盤 focus 提示窗；粗指標裝置以首次點按開提示、第二次才進
+  站內搜尋，不再把長代碼直接塞進條文。
+- 正式更新鏈已全程程式化。PG task 260 每 15 分鐘 poll 健保署 RSS 並
+  保存 raw／queue evidence，仍維持 `auto_promotion_enabled=false`；
+  PG task 276 在其後計算 current clauses、history inventory、reviewed
+  enrichments、official notices 四個 contract 的 meaningful fingerprint，
+  只有內容變更才重建、測試、部署付費站，並以合法訂閱 session 比對正式
+  JSON 與本次 artifact 的 exact SHA-256。首輪 scheduled run 為
+  `up_to_date`；task 261 的條文歷史 agent dispatch 仍是
+  `skipped_gate`，沒有重新啟動 Claude。
 - 現行分章正典已程式化切成 639 個單一條文 publication rows；每條保存
   exact text、13,874 個結構區塊、3,487 個 distinct valid ROC-date rows、
   官方 ODT URL/hash/locator 與版本缺口 inventory。依 owner 指定規則，
@@ -300,14 +316,17 @@
   仍為 0、direct predecessor 與歷史 anchor replay 仍為 0，因此法律
   closure delta 是 0，逐條完整性仍是 0/1,548。
 - stage-only continuous updater 曾在真實 PostgreSQL 排程通過 scheduled
-  poll 與 proposal fires。來源 bundle／corpus bundle 會保留公告明列的
+  poll 與 proposal fires；現行 deterministic poll 已固定為 task 260、
+  每 15 分鐘執行。來源 bundle／corpus bundle會保留公告明列的
   全部附件，包括多 PDF、ODS 與 ODT；兩則真實工作均驗到 cm1 Claude
   failure／timeout 後只啟動一次 hm4 Codex fallback，並安全停在
   `staged_needs_review`。`AUTO_PROMOTION_ENABLED=false`，尚未寫 canonical
-  history。proposal dispatch 現已停用，不再呼叫 Claude。
-- 2026-07-28 最新 fresh live observation：21 個 update work items
-  分別為 2 `selected`、9 `staged_needs_review`、2 `failed_terminal`、
-  8 `ignored_non_rule`；`corpus_registered` 為 0。
+  history。proposal dispatch 現已停用，不再呼叫 Claude。付費站另由
+  task 276 依四個 read-only projection 的內容 fingerprint 判斷是否部署；
+  它不做法律裁決或 canonical promotion。
+- 2026-07-29 最新 fresh live observation：25 個 update work items
+  分別為 1 `corpus_registered`、9 `staged_needs_review`、
+  2 `failed_terminal`、2 `partition_required`、11 `ignored_non_rule`。
   9/9 candidate proposals 均需人工複核。兩個 terminal works 各自保有
   primary→fallback 的 immutable failure receipt；recovery-v2 additive
   migration 已套入 live，舊 queue／transition／attempt rows 與 fingerprints

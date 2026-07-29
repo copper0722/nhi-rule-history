@@ -1227,3 +1227,42 @@
   `source-transcript-84-v1` 已發布 proofread、114-row JSONL、
   lineage analysis、manifest 與 checksums 共五個 assets；GitHub 回報的
   asset sizes／SHA-256 全部與來源包相符。
+
+## 2026-07-29 — 最新公告投影、代碼提示窗與自動部署
+
+- `copper-panel` 新增 read-only
+  `/api/drugs/reimbursement-rules/notices`，contract =
+  `nhi-reimbursement-rules/notices/v1`。只輸出正式健保署 RSS 中已分類為
+  給付規定公告的 public-safe 欄位，不洩漏內部 queue state；並明列
+  `rss_published_at` 不是法律生效日。完整 API suite 152/152 通過，
+  commit `ffcfad6b2f6f` 已部署至 hmj。
+- `personal-website-s` build 現在 fail-closed 讀取 latest、history
+  summary、enrichments、notices 四個 typed contracts。正式 subscriber
+  JSON 含 639 個 current clauses、82 個 reviewed semantic tags、5 個
+  compound conditions、14 則最新給付公告；最新公告為健保署
+  115-07-28 降血脂藥品支付價格及給付規定修訂。
+- 依 Copper 指示，ATC／ICD-11／健保治療碼不再直接出現在條文正文。
+  桌機以 hover 或鍵盤 focus 顯示單一 tooltip；手機／粗指標裝置首次
+  點按顯示、第二次才跟隨站內連結。七個 insulin ATC 的提示窗經實際
+  browser adversarial check 後修成可換行、獨立 code chips，沒有水平
+  overflow。網站 135/135 tests、69-page build 通過。
+- 付費站 commit
+  `2c88acb8d80a05efe5727b571a11e976f290df22` 已部署為 Cloudflare Pages
+  production `1aa1de15-899e-4454-8505-97a9be42a01a`。正式站匿名
+  page／JSON = 303，合法訂閱 session page／JSON = 200；live subscriber
+  JSON SHA-256 =
+  `cd3ee1a0ae5159f39df966bdc9251a55737044fa7e30e2e8a7405460585e0031`。
+- 新增 deterministic handler
+  `nhi-rule-history-subscriber-sync.py`，commit `76a15961`。它在乾淨、
+  已推送的 main 上計算四個 PG-backed projection 的 meaningful
+  fingerprint；忽略每次 poll 都會變動但不影響頁面的 observation
+  timestamp。只有 fingerprint 改變才執行完整 subscriber deploy；
+  成功後以短效合法訂閱 session 抓正式 JSON，要求與本次 artifact
+  exact SHA-256 相等才更新部署 receipt。
+- PG `quality_audit_tasks.id=276`
+  `nhi_rule_history_subscriber_projection_sync` 已註冊為 task 260 的
+  dependent、hm4 target、15 分鐘 cadence。首輪經正式 runner 執行回
+  `up_to_date`，projection fingerprint =
+  `6f18ae2c97a8ac2d95ba443e17fdb2807e75afd16fa1edf4fb3fe0fc3c39e326`，
+  next due 正常前進。task 261 仍為 `skipped_gate`／2099；本輪沒有啟動
+  Claude 條文整理或 canonical history promotion。

@@ -48,6 +48,8 @@ service_surfaces:
     detail_endpoint: /api/drugs/reimbursement-rules/latest/{clause_code}
     history_summary_endpoint: /api/drugs/reimbursement-rules/history-summary
     reviewed_enrichment_endpoint: /api/drugs/reimbursement-rules/enrichments
+    official_notice_endpoint: /api/drugs/reimbursement-rules/notices
+    official_notice_contract: nhi-reimbursement-rules/notices/v1
     status: live_verified
   subscriber_site:
     canonical_url: https://s.copper0722.com/member/tools/nhi-rules/
@@ -57,6 +59,19 @@ service_surfaces:
     anonymous_json_status: 303
     authenticated_page_status: 200
     authenticated_json_status: 200
+    current_clause_count: 639
+    latest_notice_count: 14
+    latest_notice_title: 公告異動降血脂藥品支付價格及修訂其藥品給付規定。
+    latest_notice_rss_published_at: "2026-07-28T03:59:00Z"
+    semantic_code_presentation:
+      inline_codes: false
+      desktop: hover_or_keyboard_focus_popover
+      coarse_pointer: first_tap_popover_second_tap_link
+    deployment:
+      commit: 2c88acb8d80a05efe5727b571a11e976f290df22
+      pages_deployment_id: 1aa1de15-899e-4454-8505-97a9be42a01a
+      live_subscriber_json_sha256: cd3ee1a0ae5159f39df966bdc9251a55737044fa7e30e2e8a7405460585e0031
+      live_verification_receipt: docs/audits/2026-07-29-subscriber-notice-auto-update-live-verification.json
     status: live_verified
   boan_emr:
     intended_contract: nhi-reimbursement-rules/latest/v1
@@ -78,6 +93,32 @@ service_surfaces:
     pull_request: https://github.com/Bo-An-Clinic/boan-emr/pull/7
     live_verification: docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json
     integration_status: live_verified
+
+continuous_update:
+  source_poll:
+    task_id: 260
+    task_name: nhi_rule_history_continuous_poll_acquire
+    cadence_minutes: 15
+    target_host: hm4
+    official_feed: https://www.nhi.gov.tw/ch/rss-3258-1.xml
+    auto_promotion_enabled: false
+    last_verified_status: done
+  subscriber_projection:
+    task_id: 276
+    task_name: nhi_rule_history_subscriber_projection_sync
+    cadence_minutes: 15
+    depends_on_task: nhi_rule_history_continuous_poll_acquire
+    target_host: hm4
+    trigger: meaningful_pg_projection_fingerprint_change
+    source_contract_count: 4
+    projection_fingerprint: 6f18ae2c97a8ac2d95ba443e17fdb2807e75afd16fa1edf4fb3fe0fc3c39e326
+    live_verification: authenticated_exact_subscriber_json_sha256_parity
+    first_scheduled_run: up_to_date
+  clause_history_agent_dispatch:
+    task_id: 261
+    status: skipped_gate
+    next_due: "2099-01-01"
+    resume_requires: explicit_Copper_instruction
 
 current_publication:
   source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428

@@ -164,6 +164,53 @@ official notices + gazettes + archival holdings
 跳過上游 gate。PostgreSQL 是唯一可寫 authority；JSONL、SQLite 與前端不得
 回寫或各自維護第二份條文。
 
+## 現行條文與最新公告的 production update lane
+
+現行正典與公告事件是兩個不同物件，前端可以同頁呈現，但資料層不能混成
+一個「最新」：
+
+1. `current publication` 是由最新官方分章檔封存的 639 個單一條文；
+   API／付費站／BOA 的完整條文只讀這個 sealed publication。
+2. `official notice feed` 是健保署 RSS 中已分類為藥品給付規定公告的
+   事件清單。`rss_published_at` 只表示 RSS 公告時間，不是法律生效日；
+   公告是否已反映於 current publication 必須另行驗證。
+3. 公告附件進 raw／queue evidence 後，不自動寫 canonical history。
+   future-effective、old/new sides、stable identity 與 anchor replay 仍走
+   本文件的 transition gate。
+
+Production 更新分成兩個 deterministic PG tasks：
+
+```text
+task 260 / every 15 min
+  official RSS poll
+  -> immutable feed observation
+  -> classified work item + raw/corpus bundle
+  -> no automatic legal promotion
+
+task 276 / every 15 min, depends on task 260
+  hash meaningful contents of:
+    current clauses
+    history inventory
+    reviewed semantic enrichments
+    official notice feed
+  -> unchanged: no deployment
+  -> changed: rebuild + full subscriber tests + deploy
+  -> authenticate as a valid subscriber
+  -> require live JSON SHA-256 == deployed artifact SHA-256
+  -> only then record deployment receipt
+```
+
+每次 RSS poll 的 observation time 會變，但不影響頁面內容，因此不得納入
+deployment fingerprint。付費站 build 不保留 stale-file fallback：四個 typed
+contracts 任一失敗、截斷或 schema 漂移即停止建置。條文歷史 agent proposal
+task 261 另行維持 `skipped_gate`；更新公告與發布現行正典不等於恢復 agent
+裁決。
+
+前端呈現同樣遵守分層：現行條文全文是主要內容；最新公告是可見但簡短的
+official-event lane；歷史與方法預設收合。藥物／疾病名稱仍是站內搜尋連結，
+ATC、ICD-11 與健保治療碼不直接塞進正文，而在滑鼠 hover、鍵盤 focus 或
+手機首次點按的提示窗顯示。代碼是索引 metadata，不改寫官方條文文字。
+
 ## WP01：來源枚舉與取得
 
 ### FINT 全庫研究 crawler
