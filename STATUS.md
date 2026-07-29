@@ -55,6 +55,9 @@
   114 candidates。它明確只是 source observation：不宣告 stable legal
   identity、direct predecessor、每段精確生效日或完整歷史。故現存條文
   缺版總數仍是 2,861，待 84 段落經 identity adjudication 後才可減少。
+  同一份校對包已公開為 GitHub Release
+  [`source-transcript-84-v1`](https://github.com/copper0722/nhi-rule-history/releases/tag/source-transcript-84-v1)，
+  五個 assets 的遠端 SHA-256 與本機 manifest/checksums 均已核對。
 - FINT `FINTQRY03 → FINTQRY04` 可續跑研究 crawler 已實作。CAPD 真實
   canary 完成 1 個 query、6 個正式文號、6 份完整詳情文字、1 個宣告附件、
   8 個 raw observations、0 issues；所有 bytes 均 content-addressed。

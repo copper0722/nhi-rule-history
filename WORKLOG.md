@@ -1199,3 +1199,8 @@
   `docs/audits/2026-07-29-source-transcript-84-live-verification.json`。
 - 本輪全套回歸為 70 項 legacy tests（1 skip）與 473 項 public tests
   （466 passed、7 個環境性 skip），合計 543 項、535 項實際通過。
+- PR #10 通過兩組 CI 後已 merge，merge commit
+  `6f325b1a14d7179fb401dc2bfbdc72aea6bc1ec4`。公開 GitHub Release
+  `source-transcript-84-v1` 已發布 proofread、114-row JSONL、
+  lineage analysis、manifest 與 checksums 共五個 assets；GitHub 回報的
+  asset sizes／SHA-256 全部與來源包相符。
