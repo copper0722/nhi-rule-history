@@ -54,6 +54,13 @@ seed，**不能宣稱全書術語已涵蓋**。例如 2.6.3 的 ezetimibe、stat
 gemfibrozil 與高膽固醇血症目前仍是公開 negative canary。新增詞彙須先進
 concept／alias review，再建立新的 immutable run；不在 HTML 手工補字。
 
+條文與藥品的連結也已新增「健保給付代碼」維度。ATC 保留作藥理分類與
+搜尋，不再被當成唯一的法律適用 binding。第一個 production canary 是
+115/9/1 生效的 2.6.1：609 個 10 碼健保給付代碼直接連到完整條文版本與
+適用分支，其中 116 個表二例外由公告逐碼明列，493 個表一品項由當期 C10
+母表扣除例外集合確定性產生。名稱與 ATC 可協助搜尋，但前端及 API 的分支
+判斷以版本化健保給付代碼連結為準。
+
 其餘全庫工作仍分成互不冒充的受限 staging：
 
 | 項目 | v1 年度整份檔 | 歷史公告 exact phrase | post-109 公告 exact phrase |
@@ -167,7 +174,7 @@ diff。兩者都不冒充已驗證法律事件史。
 - [逐條歷史重建計畫](docs/history-rebuild-plan.md)
 - [日期／條號候選到正式文號的 machine-readable receipt](docs/audits/2026-07-27-history-marker-document-candidate-preflight.json)
 - [資料庫結構與 SQLite 轉換](database/README.md)
-- [ATC 與 ICD-11 linkage 設計](docs/linkage.md)
+- [健保給付代碼、ATC 與 ICD-11 linkage 設計](docs/linkage.md)
 - [Agentic 重建與 Grok pilot 心得](docs/agentic-lessons.md)
 - [原始資料與容量策略](data/README.md)
 - [完成契約](docs/completion-contract.md)

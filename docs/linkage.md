@@ -1,8 +1,56 @@
-# ATC 與 ICD-11 linkage
+# 健保給付代碼、ATC 與 ICD-11 linkage
 
 條文不是天然等於一個藥，也不是天然等於一個疾病。linkage 必須保留「哪段
 文字、哪個產品、哪個成分、哪個版本」的證據，而不能只在條文表上塞一個
 `atc_code` 或 `icd_code`。
+
+三個代碼維度的用途不同，不得互相取代：
+
+| 維度 | 用途 | 不代表 |
+|---|---|---|
+| 健保給付代碼 | 將特定支付品項連到特定條文版本與適用分支 | 同 ATC 的其他品項也適用同一分支 |
+| ATC | 藥理分類、搜尋與聚合 facet | 法律上的逐品項給付資格 |
+| ICD-11／治療碼 | 疾病或治療概念索引 | 條文判斷已完成 |
+
+## 健保給付代碼是版本化的直接適用連結
+
+給付規定可以在同一 ATC 類別內，依特定健保給付代碼分流。正規化關係因此
+不是 `ATC -> clause`，而是：
+
+```text
+reimbursement_product_snapshot
+  -> composed_clause_reimbursement_code
+       -> composed_clause_version
+       -> applicability_lane
+```
+
+`composed_clause_reimbursement_code` 至少保存：
+
+```text
+run_id
+version_id
+nhi_code                    # 10-character reimbursement code
+applicability_lane          # e.g. table1_default | table2_exception
+link_basis
+source_component_order      # exact notice row when directly enumerated
+source_row_sha256
+```
+
+連結必須綁 `version_id`，不能只綁穩定條號：同一代碼在不同生效版本可能
+改變分支、加入或退出適用集合。產品名稱、成分與 ATC 存在該次
+`reimbursement_product_snapshot`，供搜尋與對帳；它們不是 join key。
+
+第一個 production canary 是 115/9/1 生效的 2.6.1：
+
+- 609 個 C10 現行健保給付代碼連到該完整條文版本；
+- 116 個 `table2_exception` 是公告附件逐碼明列，保留 exact source row；
+- 493 個 `table1_default` 是同次品項母表扣除 116 個官方例外後的
+  deterministic default membership，`link_basis` 明示為推導；
+- API 可依健保代碼、品名、成分或 ATC 搜尋，但法律適用分支由健保給付
+  代碼連結決定，不由 ATC 猜測。
+
+這個 canary 同時證明：相同 ATC 的不同健保品項可以有不同適用分支，因此
+ATC 必須保留為分類維度，不能再當唯一的條文 binding。
 
 ## 官方品項來源
 
@@ -144,6 +192,9 @@ dataset_release + source_artifact
        -> drug_concept -> drug_identifier
        -> drug_atc_link
        -> nhi_drug_rule_reference -> rule_identity / rule_snapshot
+       -> reimbursement_product_snapshot
+            -> composed_clause_reimbursement_code
+                 -> composed_clause_version
 ```
 
 ### `drug_concept`

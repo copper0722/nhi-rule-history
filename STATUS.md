@@ -635,3 +635,33 @@ PG 作 audit evidence，標記為 `superseded_by_methodology`，不作 release i
   committed transactions，並由 fresh API／subscriber sessions 證明正式
   頁確實先撤下、再恢復。這是 recovery evidence 缺口，不是手機 UI 缺口。
   本輪依審核契約不再靜默進入第二個 remediation loop。
+
+### 完整條文合成與健保給付代碼連結
+
+- v23 新增 `composed_clause_version`、逐段
+  `composed_clause_block`、`reimbursement_product_snapshot` 與
+  `composed_clause_reimbursement_code`。2.6.1 不再停在
+  `patch_only`：完整未來版本由 336 段公告新文與 70 段未變更現行文
+  確定性合成，共 406 段；每段保留來源 lane、artifact hash、locator 與
+  raw text hash。完整文字 SHA-256 =
+  `7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f`。
+- 健保給付代碼成為獨立、版本化的 applicability dimension。609 個 10 碼
+  給付代碼連到 2.6.1 的特定 `version_id` 與分支：116 個表二例外是公告
+  逐碼明列；493 個表一 default 是當期 C10 母表扣除該官方例外集合。
+  ATC 仍供分類與搜尋，不再用來推論法律分支。
+- 修正後 active API release 是
+  `b57b7f47-881c-592b-b541-d63ec3b08bee`，loader 1.2.1，sealed
+  fingerprint =
+  `196e28a39bf1eab6561969dca2059367415789b5cc6550e72491fe9e65d931af`。
+  同一 ODT 即使換暫存檔名，input、output 與 sealed fingerprints 仍完全
+  相同。
+- API 在既有 announced contract 下增加
+  `composed_clause` 與
+  `nhi-reimbursement-rules/clause-reimbursement-code-links/v1`；
+  付費站可用健保代碼、品名、成分或 ATC 搜尋產品，但正文不直接塞代碼。
+- 正式付費頁已改成完整新版條文、直向卡片、116 品項例外目錄與產品代碼
+  查詢。390px 實機版 `scrollWidth=clientWidth=390`，0 個橫向溢出元素；
+  `AC46402100` 正確顯示為表二例外。
+- task 276 的 deploy 後 freshness race 已改成 cache-bypass 與 bounded
+  retry；最新執行狀態為 `done`。這個 schema 可由後續 reviewed 公告 loader
+  重用，不必為每條文另寫靜態網頁。

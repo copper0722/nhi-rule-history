@@ -454,7 +454,7 @@ canonical history。
 - 日期／條號同檔 preflight 只建立 evidence candidate；不得據此自動建立
   `official_event_effect`、選 canonical side 或把前一版移入 history。
 
-## WP05：藥品／ATC linkage
+## WP05：健保給付代碼／藥品／ATC linkage
 
 1. 從 NHI IODE `A21030000I-E41001-001` 取得整批 CSV；保存 exact bytes、
    retrieval time、HTTP metadata、SHA-256 與 source manifest。
@@ -468,14 +468,24 @@ canonical history。
    relation、品項／ATC／強度或跨來源 discrepancy 未解時才補充搜尋。
 5. 條文到 ATC 只由已解析產品列推導，保存 support count 與 source release；
    不把它宣稱成整個 ATC class 的適用範圍。
-6. 每月 IODE snapshot 是可重建基線；INAE3000
+6. 若公告按健保給付代碼列出適用例外，建立 versioned
+   `composed_clause_reimbursement_code`，直接連到
+   `composed_clause_version` 與 `applicability_lane`。逐碼明列與集合差集
+   推導必須使用不同 `link_basis`，不可把推導冒充 source-exact assertion。
+7. 健保給付代碼是法律適用與產品分支的 join key；ATC 只作藥理分類、
+   搜尋與聚合。同一 ATC 下不同代碼可以連到不同分支，不能由 ATC 自動
+   擴張適用範圍。
+8. 每月 IODE snapshot 是可重建基線；INAE3000
    `POST /api/INAE3000/INAE3000S01/SQL0001` 作每週 freshness
    reconciliation，不覆寫或刪除舊 snapshot。
-7. PostgreSQL 與 SQLite 使用相同
+9. PostgreSQL 與 SQLite 使用相同
    `linkage_import_run`／`nhi_drug_item_observation`／
-   `nhi_drug_rule_reference`／`drug_rule_link_evidence` logical contract。
+   `nhi_drug_rule_reference`／`drug_rule_link_evidence`／
+   `reimbursement_product_snapshot`／
+   `composed_clause_reimbursement_code` logical contract。
 
-實作與 live audit 見 [ATC 與 ICD-11 linkage](linkage.md)。
+實作與 live audit 見
+[健保給付代碼、ATC 與 ICD-11 linkage](linkage.md)。
 
 ## WP06：逐條 Git-like 重播與 diff
 

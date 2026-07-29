@@ -140,14 +140,14 @@ continuous_update:
     resume_requires: explicit_Copper_instruction
 
 announced_dyslipidemia_release:
-  status: live_bounded_release_with_open_rollback_drill
+  status: live_complete_composed_clause_with_versioned_reimbursement_code_links
   official_notice_reference: 健保審字第1150671962號
   official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
   published_on: "2026-07-28"
   effective_on: "2026-09-01"
   source_artifact_sha256: 207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44
   clause_code: 2.6.1
-  publication_kind: source_exact_amendment_patch
+  publication_kind: deterministic_owner_directed_complete_clause
   partial_event_projection: true
   unprocessed_effects:
     - clause_2_6_2
@@ -156,11 +156,15 @@ announced_dyslipidemia_release:
   table_2_body_omitted_by_source: true
   legally_auto_selectable: false
   pg_schema: nhi_rule_history_announced
-  migration: pg/migrations/2026-07-29_nhi_rule_history_announced_release_gate_v22.sql
-  run_id: 12484a94-7275-5199-97d1-d1876c45715f
+  migrations:
+    release_gate: pg/migrations/2026-07-29_nhi_rule_history_announced_release_gate_v22.sql
+    composed_clause_and_reimbursement_links: pg/migrations/2026-07-29_nhi_rule_history_announced_composite_v23.sql
+  run_id: b57b7f47-881c-592b-b541-d63ec3b08bee
   patch_id: a66597ba-0d3d-5e29-888e-9dd78ba0686e
   model_id: ddb7d27d-1327-5af1-8b43-ea015e6fce36
-  sealed_fingerprint: 3e3c299f0561cae600612a74d08e7a7cc5248b3945692ef03d55ce5e964e0cc8
+  version_id: 5ec990c9-32c6-5159-bdb5-3925e761a21e
+  complete_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
+  sealed_fingerprint: 196e28a39bf1eab6561969dca2059367415789b5cc6550e72491fe9e65d931af
   current_resolution_state: verified_scheduled
   decision_aid_available: true
   live_counts:
@@ -173,8 +177,20 @@ announced_dyslipidemia_release:
     risk_categories: 6
     risk_branches: 21
     risk_predicates: 34
+    composed_clause_versions: 1
+    composed_clause_blocks: 406
+    amendment_blocks: 336
+    inherited_blocks: 70
+    reimbursement_product_snapshots: 609
+    reimbursement_code_links: 609
     table_1_product_codes: 493
     table_2_product_codes: 116
+  linkage_contract:
+    primary_legal_join: versioned_nhi_reimbursement_code
+    atc_role: pharmacologic_classification_and_search
+    table_2_link_basis: exact_notice_enumeration
+    table_1_link_basis: current_C10_master_minus_exact_table_2_exception_set
+    api_contract: nhi-reimbursement-rules/clause-reimbursement-code-links/v1
   decision_aid:
     title: 表一 LDL-C 起始治療門檻檢查
     evaluator: open_world_tri_state_dnf
