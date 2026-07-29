@@ -1,0 +1,11 @@
+[
+  {
+    "id": "grok-fint-crawler-independent-audit",
+    "role": "independent-public-data-crawler-and-postgresql-critic",
+    "provider": "grok",
+    "model": "grok-4.5",
+    "effort": "high",
+    "search": false,
+    "timeout": 900
+  }
+]

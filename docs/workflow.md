@@ -8,15 +8,151 @@
 4. 如何從原始檔重建條文、版本、事件與 diff？
 5. 更新後哪些資料改變，哪些只是格式變動？
 
+## 截至 2026-07-29 的重建共識
+
+這一節是後續 agent 的工作起點。除非有新的官方證據推翻，不能再把流程
+改回「先找到所有公文，才開始建立歷史」，也不能把年度檔降格成只供參考
+的附件。
+
+### 1. Version unit 是單一條文
+
+- 整部、整章、年度 ODT 都是 `source edition`，不是 canonical version。
+- 每一個 top-level 條文各自有永久 `rule_identity`、版本鏈與 direct
+  predecessor。
+- 條號只是某一段時間的 designation。改號、移動、拆分、合併、刪除後
+  復活與條號重用都不能只靠字串相等自動裁決。
+- 前端每個條文一頁：最新版全文置頂；歷史列只顯示該版相對直接前版的
+  diff。
+
+### 2. 年度快照是 source observations；Git-like 只作工作比喻
+
+年度快照的角色不是提供精確修法日期，而是證明某個時間點整部規定的可見
+狀態。對每一個條文，依 edition time 排列所有 observation：
+
+```text
+official source editions
+  -> clause observations
+  -> adjacent observed states
+  -> appearance / text-change / disappearance observations
+  -> notice and date-marker reconciliation
+  -> stable identity and lineage resolution
+  -> accepted clause versions and direct edges
+```
+
+- 同一條文跨兩個快照全文相同：是兩筆 observations、同一個 text state，
+  不虛構新版本。
+- 前一快照存在、後一快照消失：建立 `disappearance_observed`。這能找回
+  日期 marker 無法顯示的整條消失，但在 identity review 前不能先叫刪除。
+- 前一快照不存在、後一快照出現：建立 `appearance_observed`；之後再判斷
+  create、restore、move、split 或只是較早來源缺漏。
+- 兩個相鄰快照文字不同：建立 `text_change_observed`。deterministic diff
+  只描述兩個 observations 的差異，不冒充 direct legal predecessor diff。
+- 快照間隔內找不到公文時，仍保存版本與
+  `effective_time_precision=interval`；區間起訖是前一 observation 之後到
+  後一 observation 當日。不能把公文缺口誤寫成「沒有變更」，也不能把
+  後一快照日期冒充生效日。
+
+### 3. 現存條文以民國年月作版本缺口 denominator
+
+- 原文括號內的 `85/1/1`、`103/9/1` 等日期逐一保存 exact span、來源
+  locator 與正規化候選日。
+- 對每一個**現存條文**，專案 owner 指定
+  `expected_version_count=max(1, count(distinct valid ROC dates))`；
+  已重建全文狀態至少含目前版本，再加上已接受的歷史全文狀態。
+- `missing_version_count=max(0, expected_version_count -
+  reconstructed_version_count)`。這可以立即回答「現存條文尚缺多少歷史
+  全文版本」，並用來排重建優先順序。
+- 已重建全文狀態多於日期推得數量時不產生負缺口，另標
+  `annotation_count_underflows_reconstructed_evidence`，保留方法上的
+  discrepancy。
+- 它們無法發現已整條刪除、刪除後未復活、舊條號被移除，或新版本未保留
+  舊日期的情形。因此這個 denominator 只回答現存條文的缺版 inventory，
+  不代表所有曾存在條文的 complete-history denominator。
+- 日期註記、年度快照、公告／附件三者互相校驗；任何單一路徑都不宣稱
+  已封閉公告或歷史條文宇宙。
+
+### 4. 公文是 transition 的精確證據，不是開始建版本鏈的先決條件
+
+- 公文 detail 與 old/new 對照附件可提供正式文號、公告日、明示生效日、
+  受影響條文及 before/after，找到時用來把 interval transition 升格成
+  exact transition。
+- 公文的 raw text 與附件先保存；版面、表格、略字、刪除線或 OCR 需要
+  agent 轉為 proofread evidence。agent 不得直接寫 canonical history；
+  其 proposal 經 deterministic hash/locator 驗證後才可進 PG。
+- 找不到公文時保留 bounded search receipt、查過的名稱／日期／條號／
+  藥名與官方入口；`notice_not_found` 只描述搜尋結果，不證明公文不存在。
+
+### 5. 來源策略是多路證據取聯集
+
+主要證據路徑如下：
+
+1. 最新分章官方檔：現行條文正典，可先獨立發布。
+2. 14 份年度 ODT：逐條 state anchors 與刪除偵測。
+3. 現行條文的民國年月：存活文字 amendment index。
+4. NHI 公告／RSS／detail／附件：較新 transition 的原始事件證據。
+5. MOHW FINT：依日期、文號、條號、藥名與前身名稱做 targeted notice
+   retrieval，亦補 NHI 現行 listing 已下架的公文。
+6. 行政院公報、總統府公報、國圖／臺灣記憶、政府出版品及其他正式館藏：
+   補早期與 born-paper sources。
+
+NHI 的父層選單雖寫「修正規定（自103年4月3日以後生效之公告）」，但
+2026-07-29 實測 target listing 共 859 筆、43 頁，最舊可見列為
+111-09-06，且表格有「刊登期限」。因此該 listing 不能作
+2014-04-03 以後的封閉歷史分母；它只是目前可列舉的存活公告表面。
+
+FINT 四個關鍵字全空的 17,497 筆全庫列舉是可選的研究／漏失稽核，不是
+主要重建前置條件。主流程從快照 diff、日期 marker 與 current-to-history
+gap 產生 targeted queries；只有當要估計某個查詢面的漏失率時，才啟動
+bounded broad crawl。
+
+### 6. 早期名稱必須納入 identity lineage
+
+健保開辦初期的同一規範系譜不是一開始就叫「藥品給付規定」：
+
+- 84-06-20：官方後來回顧為「全民健康保險藥品使用規範」；
+- 84-07-01：國圖數位典藏記錄一份函轉該規範並自此日實施的公文；
+- 87-03-04：官方回顧為重新編排並改名「全民健康保險藥品給付規定」，
+  自 87-04-01 實施。
+
+因此以後期名稱查 85–86 年得 0 筆，不得解讀成當時沒有給付條件。早期
+source state 分開標示：
+
+```text
+born_digital_official
+digitized_scan
+catalog_only
+later_official_reproduction
+paper_holding_not_digitized
+availability_unresolved
+```
+
+2026-07-29 已由 FINT 取得 `健保醫字第84010140號` 及其 25 頁官方附件
+`全民健康保險藥品使用規範.PDF`，並封存 raw bundle 與載入 append-only
+PostgreSQL acquisition stage。84 年全文不再是可得性 gap；未完成的是掃描
+逐頁 proofread，以及 `85/1/1` 精確修正文的定位。句子查詢為 0、日期變體
+亦未找到相關結果，只能寫 `not_found_after_declared_search`。取得收據見
+[`2026-07-29-fint-84-baseline-acquisition.json`](audits/2026-07-29-fint-84-baseline-acquisition.json)。
+早期證據分類與 claim limits 另見
+[`2026-07-29-early-rule-source-lineage-check.json`](audits/2026-07-29-early-rule-source-lineage-check.json)。
+
+國史館臺灣文獻館「臺灣省政府衛生處」全宗是另一條搜尋線，但也不能用
+寬查詢畫面直接判斷年代範圍。2026-07-29 的全宗查詢宣告 12,992 筆；使用者
+提供的遞增排序視窗是第 9,981–10,000 筆，因此畫面停在 1967 年。現行 UI
+只顯示到第 10,000 筆，直接請求更後範圍沒有結果；限定 1995 年只回一筆
+不相關卷，精確查 `84衛技字第052484號` 與規範全名皆為 0。這只形成
+bounded search receipt：目標未在目前索引命中，不證明館藏或紙本不存在。
+後續查此站必須以年代切片、文號、件名分別查，不能翻一個 10,000 筆寬表。
+
 ## 資料層
 
 ```text
-official pages
-  -> immutable source artifacts + manifest
-  -> structural parse + source occurrences
-  -> transition evidence ledger
-  -> optional official-notice linkage
-  -> PostgreSQL stable identity + version snapshots
+current official split files
+annual snapshots + inline date markers
+official notices + gazettes + archival holdings
+  -> immutable source artifacts + manifests
+  -> structural parse + per-clause observations
+  -> evidence-union transition candidates
+  -> PostgreSQL stable identity + accepted clause versions
   -> PostgreSQL adjacent comparisons + diffs
   -> sealed PostgreSQL import
        -> normalized JSONL public interchange
@@ -29,6 +165,27 @@ official pages
 回寫或各自維護第二份條文。
 
 ## WP01：來源枚舉與取得
+
+### FINT 全庫研究 crawler
+
+FINT 的主要角色是依 clause evidence 產生的日期、正式文號、條號、藥名、
+適應症及規範前身名稱做 targeted retrieval。每次 query 都保存完整結果頁，
+再逐一取得 `FINTQRY04 RowNo=1..N` 的詳情內文；同一 query 的 expected
+match 數必須和 fetched rows 相等。
+
+四個關鍵字欄位留空時會回傳廣泛公文表面，可按西元年度做 bounded
+enumeration，供 query recall 稽核或找無法預期的名稱變體。這條 broad
+lane 不再是逐條歷史的主流程，也不必在 current rules 或 snapshot-derived
+history 發布前完成。
+
+同一公文被不同 query 命中時，PG 保存不同 RowNo occurrences 與 detail
+snapshots；正式文號只作 grouping key。附件 declaration 必須綁到宣告它的
+detail snapshot；附件 bytes 依 `all`、`nhi_candidate` 或 `none` 另報
+coverage，不把「看見連結」和「已抓 bytes／已判相關」混為一談。
+
+流程、TLS 相容策略、CAPD canary 的錯掛附件案例、PG schema 與 frontier
+closure 定義見
+[FINT 歷史公文研究 crawler](fint-keyword-crawler.md)。
 
 ### 1. 枚舉
 
@@ -105,16 +262,18 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli verify-historical-bundles \
 
 它不推論法律生效日、不以條號建立 canonical identity，也不計算跨版 diff。
 
-## WP03：Transition evidence 與可選公告連結
+## WP03：Transition evidence union 與公告連結
 
-一個條文 transition 與公告是否仍可取得分開：
+一個條文 transition 與公告是否仍可取得分開，但 evidence strength 必須
+明示：
 
 - `rule_transition`：對某一條文的 create、amend、delete、restore、
   rename、move、split、merge 或 correction；
 - `transition_evidence`：官方 cumulative version、old/new 對照表、條文
   日期註記、archival snapshot 或公告 effect 的 exact locator；
-- `official_notice` 與 `transition_notice_link`：找到時保存的補強 provenance，
-  不是 mandatory transition foreign key。
+- `official_notice` 與 `transition_notice_link`：找到時保存 exact
+  transition provenance；沒有 notice 的 snapshot-derived transition 可
+  存在，但只能是 interval precision，不能假裝 exact effective event。
 
 每個 accepted effective date 必須指回官方 locator。公告列出的日期、附件
 正文日期與實際生效日分欄保存。不能證明所有歷史公告都仍存在或可由現行
@@ -199,14 +358,60 @@ canonical history。
 
 實作與 live audit 見 [ATC 與 ICD-11 linkage](linkage.md)。
 
-## WP06：重播與 diff
+## WP06：逐條 Git-like 重播與 diff
 
-1. 從 verified cumulative full release 建 baseline。
-2. 依官方 effective date 重播 event effects。
-3. 到下一個 cumulative release 時，比對 rule set 與全文 hash。
-4. 差異未解時，只阻擋受影響條文與時間區間。
-5. 每個版本只和直接前版比較。
-6. 同一 edge 在新版顯示「本版新增」，在舊版顯示「下一版刪除」。
+1. 以最早可驗證 snapshot 建立每條 clause 的第一個 observed state；這
+   不自動代表法律初始版本。
+2. 逐 edition 比對同一 stable identity 的 presence、designation、structure
+   與全文 hash，產生 create／amend／delete／restore／move candidates。
+3. 以條內日期與公文 old/new effect 將 candidate 的 interval date 升格為
+   exact date；若不一致則保留 conflict，不覆寫證據。
+4. 依 accepted exact 或 interval chronology 重播；到每一個 cumulative
+   snapshot 時，比對 rule set、designation 與全文 hash。
+5. 差異未解時，只阻擋受影響條文與時間區間；不阻擋已驗證的其他條文。
+6. 每個版本只和直接前版比較。純新增只顯示「本版新增」；純刪除只顯示
+   「本版刪除」，不製造不存在的另一側變更。
+7. 同一列若新文字只新增一個有效日期，顯示「與上一版本差異」；若新增
+   兩個以上有效日期，表示兩個已重建全文間跨過至少一個預期版本，顯示
+   「與舊版本差異」並列出中間缺少的全文版本數。
+8. 公開資料同時揭露 date precision、evidence basis、source coverage 與
+   unresolved gaps，讓 interval history 可以先使用而不冒充 exact history。
+
+## WP06A：現行 639 條 publication projection
+
+正式網站與 API 不直接讀 ODT 或 Git JSON。更新流程將 sealed current
+structural parse 單向載入 PostgreSQL
+`nhi_rule_history_publication`：
+
+```text
+official chapter ODTs
+  -> sealed structural blocks
+  -> one current_clause row per clause
+  -> current_clause_block / current_clause_date
+  -> expected / reconstructed / missing version inventory
+  -> sealed publication_run
+  -> publication_activation
+  -> read-only API and site projections
+```
+
+2026-07-29 的固定輸入為 parse run
+`baae912e-8d5f-46b0-9efd-77cf4d567428`。逐條 inventory 收據見
+[`2026-07-29-current-clause-history-inventory.json`](audits/2026-07-29-current-clause-history-inventory.json)。
+本輪統計為 639 條、3,512 個應有版本、656 個已重建全文狀態、2,861 個
+缺少全文狀態；440 條有缺版，199 條目前不缺，5 條的日期計數低於既有
+全文證據而另列 discrepancy。
+
+同一個 active sealed projection 的發布邊界如下：
+
+1. `copper-panel`／`hmj:8710` 是內部唯讀 API provider，提供 latest
+   list/search、單條 detail、history inventory 與 reviewed enrichment。
+2. 付費站在 build 時讀取 typed contracts，產生受訂閱 gateway 保護的
+   same-origin JSON 與 reader；不讓瀏覽器直接連 tailnet API。
+3. `boan-emr` 只讀 latest contract，不把歷史重建、agent summary 或私有
+   ICD-11 內容帶入臨床端。Provider 已上線；consumer 必須另外從 BOA
+   主機驗證，未完成前不得宣稱整合完成。
+4. GitHub 保存可重現 workflow、schema、程式、公開稽核收據及可攜
+   JSON／SQLite release。它不是付費 reader 的 production host。
 
 ## WP07：公開 release
 
@@ -268,6 +473,15 @@ PYTHONPATH=src python3 -m nhi_rule_history.cli release-v2 \
   --eligibility-receipt \
     data/manifests/mohw-fint-2021-2026-v2/release-eligibility.json \
   --output-dir build/v2-evidence-release
+
+PYTHONPATH=src python3 tools/build_current_history_inventory.py \
+  build/baae912e-8d5f-46b0-9efd-77cf4d567428 \
+  --dsn "$DATABASE_URL" \
+  --output docs/audits/current-clause-history-inventory.json
+
+PYTHONPATH=src python3 tools/load_current_publication.py \
+  build/baae912e-8d5f-46b0-9efd-77cf4d567428 \
+  --dsn "$DATABASE_URL"
 ```
 
 取得 NHI 藥品／ATC／給付章節 raw snapshot：

@@ -250,12 +250,16 @@
   "transitions": [
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "source_edition_fallback",
+        "comparison_label": "與上一版本差異",
         "label": null,
         "legal_effective_status": null,
-        "raw_values": []
+        "raw_values": [],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:b4609d5d3503df19afcdfd8bd89bd09554703f79eab60666f5fcfd3cb225d2a9",
       "hunks": [
@@ -489,20 +493,24 @@
           }
         ],
         "state_order": 2
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "97/12",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
-          "97/12 /1",
-          "97/12/1",
           "97/12/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:a73e16c0d3705698129856bfb6f9df638a37c76cb3d33aa37d9f9a549cc6fe94",
       "hunks": [
@@ -758,18 +766,24 @@
           }
         ],
         "state_order": 1
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     },
     {
       "adjacency_basis": "adjacent_distinct_text_state_across_official_editions",
+      "comparison_label": "與上一版本差異",
       "crosses_known_gap": true,
       "display_date": {
         "basis": "new_text_date_annotation",
+        "comparison_label": "與上一版本差異",
         "label": "97/3",
         "legal_effective_status": "candidate_unresolved",
         "raw_values": [
           "97/3/1"
-        ]
+        ],
+        "skipped_expected_version_count": 0,
+        "version_distance": 1
       },
       "edge_id": "clause-edge:2a96d96259bc6effe8527e98f33fc73263218079edb75010bc4b0cb8b427595c",
       "hunks": [
@@ -907,7 +921,9 @@
           }
         ],
         "state_order": 0
-      }
+      },
+      "skipped_expected_version_count": 0,
+      "version_distance": 1
     }
   ]
 }

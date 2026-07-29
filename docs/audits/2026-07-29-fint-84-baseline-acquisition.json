@@ -1,0 +1,108 @@
+{
+  "schema": "nhi-rule-history/fint-84-baseline-acquisition/v1",
+  "recorded_on": "2026-07-29",
+  "scope": {
+    "source": "MOHW FINT",
+    "query_start": "19950101",
+    "query_end": "19971231",
+    "target_document_number": "健保醫字第84010140號",
+    "target_document_date": "民國 84 年 06 月 20 日",
+    "target_attachment_label": "全民健康保險藥品使用規範.PDF"
+  },
+  "successful_bundle": {
+    "path": "external_bundle:fint-84-baseline-20260729-v2",
+    "query_keywords": [
+      "全民健康保險藥品使用規範"
+    ],
+    "manifest_sha256": "44caa140a4c81b700a9e54265e7f7489a6b818adf38f6bac49fc5080dc43ee57",
+    "crawler_version": "nhi-rule-history/fint-frontier-crawler/2.2.0",
+    "status": "complete_declared_keyword_set",
+    "counts": {
+      "queries": 1,
+      "documents": 2,
+      "snapshots": 2,
+      "matches": 2,
+      "attachment_declarations": 2,
+      "attachments": 2,
+      "observations": 5,
+      "issues": 0
+    },
+    "target_detail": {
+      "normalized_document_number": "健保醫字第84010140號",
+      "record_text_sha256": "8becf763e6c5b2eef259d32f999bffdca7760d982f4ecca53d2e1fb23089fd4c",
+      "declared_effect_text": "除有特別明定者外，自本（八十四）年七月一日起實施"
+    },
+    "target_attachment": {
+      "official_url": "https://mohwlaw.mohw.gov.tw/Flaw/GetFile.ashx?PFID=0000119369",
+      "content_sha256": "f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2",
+      "byte_size": 3802900,
+      "detected_media_type": "application/pdf",
+      "pages": 25,
+      "text_layer": "none_substantive",
+      "fidelity_state": "official_digitized_scan"
+    }
+  },
+  "postgresql": {
+    "host": "hmj",
+    "database": "vault_main",
+    "schema": "nhi_rule_history_edition",
+    "migration": "2026-07-28_nhi_rule_history_fint_keyword_crawl_v17.sql",
+    "run_id": "2fa58923-9a91-8c8a-9a8f-a4ee0010845d",
+    "state": "sealed",
+    "output_sha256": "44caa140a4c81b700a9e54265e7f7489a6b818adf38f6bac49fc5080dc43ee57",
+    "immutability_probe": {
+      "operation": "UPDATE fint_crawl_run SET sealed_at=now()",
+      "result": "rejected",
+      "error": "sealed FINT crawl runs are immutable"
+    }
+  },
+  "date_probe": {
+    "path": "external_bundle:fint-85-date-probes-20260729-v1",
+    "manifest_sha256": "0c411f38f72f181ca551801b66159343eb53005ead92ec8617a2a6b118e6f1c9",
+    "queries": [
+      {
+        "keywords": [
+          "85/1/1"
+        ],
+        "expected_rows": 11,
+        "disposition": "all_11_reviewed_as_unrelated_to_the_clause_transition"
+      },
+      {
+        "keywords": [
+          "85年1月1日"
+        ],
+        "expected_rows": 0
+      },
+      {
+        "keywords": [
+          "八十五年一月一日"
+        ],
+        "expected_rows": 0
+      },
+      {
+        "keywords": [
+          "民國85年1月1日"
+        ],
+        "expected_rows": 0
+      },
+      {
+        "keywords": [
+          "民國八十五年一月一日"
+        ],
+        "expected_rows": 0
+      }
+    ],
+    "clause_phrase_queries": {
+      "本保險處方用藥": 0,
+      "處方合理之含量或規格藥品": 0
+    },
+    "conclusion": "No query in the declared FINT probes located the exact 85/1/1 amendment event. This is a bounded not-found result, not proof that the instrument never existed."
+  },
+  "claims": {
+    "official_84_baseline_full_scan_acquired": true,
+    "official_84_baseline_raw_entered_postgresql": true,
+    "exact_85_01_01_amendment_notice_found": false,
+    "ocr_text_is_canonical": false,
+    "clause_history_complete": false
+  }
+}

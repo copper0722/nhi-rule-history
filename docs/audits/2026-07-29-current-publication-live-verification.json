@@ -1,0 +1,51 @@
+{
+  "schema": "nhi-rule-history/current-publication-live-verification/v1",
+  "verified_at_asia_taipei": "2026-07-29T08:14:21.019",
+  "database": "hmj/vault_main",
+  "source_policy": {
+    "policy_id": "nhi-current-chapter-page-v1",
+    "authority_role": "sole_current_text_authority",
+    "whole_role": "non_authoritative_quality_crosscheck",
+    "whole_mismatch_blocks_current_publication": false
+  },
+  "publication": {
+    "run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f",
+    "state": "sealed",
+    "active": true,
+    "whole_split_parity_status": "parity_failed",
+    "source_parse_run_id": "baae912e-8d5f-46b0-9efd-77cf4d567428",
+    "source_acquisition_run_id": "06fbf976-fa8c-4f7a-b682-c3e94f9bf23e",
+    "counts": {
+      "current_clause": 639,
+      "current_clause_block": 13874,
+      "current_clause_date": 3487
+    },
+    "inventory": {
+      "expected_version_count": 3512,
+      "reconstructed_version_count": 656,
+      "missing_version_count": 2861,
+      "clauses_with_missing_versions": 440,
+      "clauses_without_missing_versions": 199,
+      "annotation_underflow_clause_count": 5
+    },
+    "output_fingerprint": "9e5cca2a72012012be356ede951f2b2c55a4766cccf10efa07b51482bd951c27",
+    "sealed_fingerprint": "d81c698e198779d32e79673ed3ad7926a415e31e6b8e70190d68451f13ee32d9",
+    "table_fingerprints": {
+      "current_clause": "2f0b7c51b6e6c3b209603d6f5b7e6b7289cc095476d352e116ec6597f010234c",
+      "current_clause_block": "5e587d3730d1ba4e98ac997703cb836161a2fdb4064802191ca6491c65de9f85",
+      "current_clause_date": "bc1954ccd36bd91773cc22a10aca17a51021c49b1edc981981dfb937ef6846ab"
+    }
+  },
+  "verification": {
+    "independent_fable_gate": "ACCEPT_FOR_LIVE_STAGE",
+    "idempotent_replay": "same_run_already_loaded_true",
+    "activation_rows_after_replay": 1,
+    "information_schema_trigger_rows": 15,
+    "sealed_child_update_probe": "rejected",
+    "direct_sealed_run_insert_probe": "rejected",
+    "loading_run_activation_probe": "rejected_and_transaction_rolled_back",
+    "probe_rows_remaining": 0,
+    "clause_0_4_title_unchanged": true
+  },
+  "parity_interpretation": "The whole ODT differs from 33 chapter-authoritative clauses. Source policy v1 keeps this parity_failed receipt visible but does not block publication of the official chapter projection."
+}

@@ -108,7 +108,10 @@ class ReaderPrototypeTests(unittest.TestCase):
         )
         self.assertIn("edition-meta__badge", SCRIPT)
         self.assertIn("最新版", SCRIPT)
-        self.assertIn("前版 → 本版", SCRIPT)
+        self.assertIn("與上一版本差異", SCRIPT)
+        self.assertIn("與舊版本差異", SCRIPT)
+        self.assertIn('comparesOlderVersion ? "舊版" : "上一版"', SCRIPT)
+        self.assertIn("${olderVersionLabel} → 本版", SCRIPT)
         self.assertIn("由最新版往前排列", HTML)
         self.assertIn("本版刪除", HTML)
         self.assertIn("本版新增", HTML)
@@ -124,6 +127,17 @@ class ReaderPrototypeTests(unittest.TestCase):
         self.assertEqual(
             transition_to_99["display_date"]["basis"],
             "new_text_date_annotation",
+        )
+        self.assertEqual(
+            transition_to_99["version_distance"],
+            len(
+                {
+                    value
+                    for value in transition_to_99[
+                        "display_date"
+                    ]["raw_values"]
+                }
+            ),
         )
         self.assertIn("條文註記；尚未認定為法律生效日", SCRIPT)
 

@@ -12,6 +12,7 @@ build/
 dist/
 generated/
 licensed/
+tmp/
 *.sqlite
 *.sqlite3
 *.db

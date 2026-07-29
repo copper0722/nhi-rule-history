@@ -35,6 +35,10 @@ from nhi_rule_history.update.workers import (
     source_packet,
     worker_job_fingerprint,
 )
+from nhi_rule_history.update.pg_queue import (
+    UpdateQueueError,
+    partition_recovery_output_namespace,
+)
 
 
 OPS_SCHEMA = "nhi_rule_history_update_ops"
@@ -67,12 +71,80 @@ class PreparedUpdateLoad:
     expected_counts: Mapping[str, int]
     expected_fingerprint: str
     final_state: str
+    selected_role: str
+    selected_raw_attempt_id: str
+    selected_prompt_sha256: str
+    selected_output_sha256: str
+    selected_provider: str
+    selected_runtime: str
+    selected_model: str
+    selected_started_at: str
+    selected_completed_at: str
+
+
+@dataclass(frozen=True)
+class PreparedPartitionRecoveryCandidate:
+    recovery_job_id: str
+    lease_id: str
+    owner_key: str
+    dispatch_claim_id: str
+    work_item_id: str
+    generation: int
+    admission_id: str
+    producer_attempt_id: str
+    output_namespace: str
+    job_fingerprint: str
+    sealed_packet_manifest_sha256: str
+    bundle_id: str
+    manifest_sha256: str
+    receipt_id: str
+    proposal_id: str
+    original_candidate_state: str
+    final_state: str
+    selected_role: str
+    selected_raw_attempt_id: str
+    selected_prompt_sha256: str
+    selected_output_sha256: str
+    selected_provider: str
+    selected_runtime: str
+    selected_model: str
+    selected_started_at: str
+    selected_completed_at: str
+    expected_job: Mapping[str, Any]
+    rows: Mapping[str, tuple[dict[str, Any], ...]]
+    expected_tokens: Mapping[str, tuple[str, ...]]
+    expected_counts: Mapping[str, int]
+    expected_fingerprint: str
 
 
 def _deterministic_uuid(label: str, *fingerprints: str) -> str:
     return str(
         uuid.uuid5(_UUID_NAMESPACE, "\x1f".join((label, *fingerprints)))
     )
+
+
+def _canonical_uuid(value: Any, label: str) -> str:
+    if not isinstance(value, str):
+        raise UpdateStageLoadError(f"{label} must be a canonical UUID")
+    try:
+        normalized = str(uuid.UUID(value))
+    except ValueError as exc:
+        raise UpdateStageLoadError(f"{label} must be a canonical UUID") from exc
+    if value != normalized:
+        raise UpdateStageLoadError(f"{label} must be a canonical UUID")
+    return normalized
+
+
+def _sha256(value: Any, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise UpdateStageLoadError(
+            f"{label} must be a lowercase SHA-256 digest"
+        )
+    return value
 
 
 def _timestamp(value: Any, label: str) -> datetime:
@@ -1108,6 +1180,252 @@ def _prepare_update_load(
             canonical_json_bytes(expected_tokens)
         ),
         final_state=final_state,
+        selected_role=str(selected_attempt["role"]),
+        selected_raw_attempt_id=str(selected_attempt["attempt_id"]),
+        selected_prompt_sha256=str(selected_attempt["prompt_sha256"]),
+        selected_output_sha256=str(selected_attempt["output_sha256"]),
+        selected_provider=str(selected_attempt["provider"]),
+        selected_runtime=str(selected_attempt["runtime_id"]),
+        selected_model=str(selected_attempt["model"]),
+        selected_started_at=str(selected_attempt["started_at"]),
+        selected_completed_at=str(selected_attempt["completed_at"]),
+    )
+
+
+_PARTITION_RECOVERY_ATTACH_TABLES = (
+    "content_artifact",
+    "bundle_receipt",
+    "candidate_proposal",
+    "candidate_source_span",
+    "candidate_evidence",
+    "candidate_state_transition",
+)
+
+
+def _prepare_partition_recovery_candidate(
+    *,
+    bundle_path: Path,
+    candidate_receipt_path: Path,
+    bundle_relative_path: str,
+    activation_cut: str | date,
+    owner_key: str,
+    notification_window_start: str,
+    notification_window_end: str,
+    recovery_job_id: str,
+    lease_id: str,
+    producer_attempt_id: str,
+    dispatch_claim_id: str,
+    work_item_id: str,
+    generation: int,
+    admission_id: str,
+    sealed_packet_manifest_sha256: str,
+    output_namespace: str,
+) -> PreparedPartitionRecoveryCandidate:
+    """Prepare an attach-only candidate for one consumed recovery dispatch."""
+
+    recovery_job_id = _canonical_uuid(recovery_job_id, "recovery_job_id")
+    lease_id = _canonical_uuid(lease_id, "lease_id")
+    producer_attempt_id = _canonical_uuid(
+        producer_attempt_id, "producer_attempt_id"
+    )
+    dispatch_claim_id = _canonical_uuid(
+        dispatch_claim_id, "dispatch_claim_id"
+    )
+    work_item_id = _canonical_uuid(work_item_id, "work_item_id")
+    admission_id = _canonical_uuid(admission_id, "admission_id")
+    sealed_packet_manifest_sha256 = _sha256(
+        sealed_packet_manifest_sha256,
+        "sealed_packet_manifest_sha256",
+    )
+    if generation != 2:
+        raise UpdateStageLoadError(
+            "partition recovery candidate attach requires exact generation 2"
+        )
+    if not isinstance(owner_key, str) or not owner_key.strip():
+        raise UpdateStageLoadError("owner_key must be non-empty")
+    if owner_key != owner_key.strip():
+        raise UpdateStageLoadError(
+            "owner_key must not contain surrounding whitespace"
+        )
+
+    base = _prepare_update_load(
+        bundle_path=Path(bundle_path),
+        candidate_receipt_path=Path(candidate_receipt_path),
+        bundle_relative_path=bundle_relative_path,
+        activation_cut=activation_cut,
+        owner_key=owner_key,
+        notification_window_start=notification_window_start,
+        notification_window_end=notification_window_end,
+    )
+    try:
+        expected_namespace = partition_recovery_output_namespace(
+            work_item_id=work_item_id,
+            generation=generation,
+            job_fingerprint=base.job_fingerprint,
+        )
+    except UpdateQueueError as exc:
+        raise UpdateStageLoadError(
+            "partition recovery output namespace inputs are invalid"
+        ) from exc
+    if output_namespace != expected_namespace:
+        raise UpdateStageLoadError(
+            "output_namespace is not bound to the exact recovery generation"
+        )
+
+    receipt_id = _deterministic_uuid(
+        "partition-recovery-bundle-receipt",
+        recovery_job_id,
+        base.bundle_id,
+        base.manifest_sha256,
+    )
+    base_proposal = base.rows["candidate_proposal"][0]
+    proposal_fingerprint = str(base_proposal["proposal_fingerprint"])
+    proposal_id = _deterministic_uuid(
+        "partition-recovery-candidate-proposal",
+        recovery_job_id,
+        proposal_fingerprint,
+    )
+
+    receipt_row = {
+        **base.rows["bundle_receipt"][0],
+        "receipt_id": receipt_id,
+        "job_id": recovery_job_id,
+    }
+    proposal_row = {
+        **base_proposal,
+        "proposal_id": proposal_id,
+        "job_id": recovery_job_id,
+        "bundle_receipt_id": receipt_id,
+        "producer_attempt_id": producer_attempt_id,
+    }
+
+    span_id_map: dict[str, str] = {}
+    span_rows: list[dict[str, Any]] = []
+    for row in base.rows["candidate_source_span"]:
+        span_id = stable_id(
+            "nhi-pg-candidate-span",
+            proposal_id,
+            str(row["source_role"]),
+            str(row["locator_key"]),
+            str(row["char_start"]),
+            str(row["char_end"]),
+            str(row["raw_text_sha256"]),
+        )
+        span_id_map[str(row["span_id"])] = span_id
+        span_rows.append(
+            {
+                **row,
+                "proposal_id": proposal_id,
+                "span_id": span_id,
+            }
+        )
+    evidence_rows: list[dict[str, Any]] = []
+    for row in base.rows["candidate_evidence"]:
+        span_id = span_id_map[str(row["span_id"])]
+        evidence_id = stable_id(
+            "nhi-pg-candidate-evidence",
+            proposal_id,
+            span_id,
+            str(row["evidence_code"]),
+            str(row["outcome"]),
+            sha256_bytes(canonical_json_bytes(row["evidence_details"])),
+        )
+        evidence_rows.append(
+            {
+                **row,
+                "proposal_id": proposal_id,
+                "evidence_id": evidence_id,
+                "span_id": span_id,
+            }
+        )
+
+    forced_state = "needs_review"
+    transition_row = {
+        "proposal_id": proposal_id,
+        "transition_seq": 1,
+        "transition_id": _deterministic_uuid(
+            "partition-recovery-candidate-transition",
+            proposal_id,
+            forced_state,
+        ),
+        "state": forced_state,
+        "actor_kind": "system_gate",
+        "decision_basis_sha256": sha256_bytes(
+            canonical_json_bytes(
+                {
+                    "schema": (
+                        "nhi-rule-history/"
+                        "partition-recovery-candidate-boundary/v1"
+                    ),
+                    "dispatch_claim_id": dispatch_claim_id,
+                    "work_item_id": work_item_id,
+                    "generation": generation,
+                    "admission_id": admission_id,
+                    "recovery_job_id": recovery_job_id,
+                    "producer_attempt_id": producer_attempt_id,
+                    "proposal_fingerprint": proposal_fingerprint,
+                    "original_validator_state": base.final_state,
+                    "forced_state": forced_state,
+                    "automatic_promotion_allowed": False,
+                }
+            )
+        ),
+        "recorded_at": base.selected_completed_at,
+    }
+    rows: dict[str, tuple[dict[str, Any], ...]] = {
+        "content_artifact": base.rows["content_artifact"],
+        "bundle_receipt": (receipt_row,),
+        "candidate_proposal": (proposal_row,),
+        "candidate_source_span": tuple(span_rows),
+        "candidate_evidence": tuple(evidence_rows),
+        "candidate_state_transition": (transition_row,),
+    }
+    empty_full_rows = {
+        table: rows.get(table, ())
+        for table in base.rows
+    }
+    all_tokens = _tokens(empty_full_rows)
+    expected_tokens = {
+        table: all_tokens[table]
+        for table in _PARTITION_RECOVERY_ATTACH_TABLES
+    }
+    expected_counts = {
+        table: len(values) for table, values in expected_tokens.items()
+    }
+    return PreparedPartitionRecoveryCandidate(
+        recovery_job_id=recovery_job_id,
+        lease_id=lease_id,
+        owner_key=owner_key,
+        dispatch_claim_id=dispatch_claim_id,
+        work_item_id=work_item_id,
+        generation=generation,
+        admission_id=admission_id,
+        producer_attempt_id=producer_attempt_id,
+        output_namespace=output_namespace,
+        job_fingerprint=base.job_fingerprint,
+        sealed_packet_manifest_sha256=sealed_packet_manifest_sha256,
+        bundle_id=base.bundle_id,
+        manifest_sha256=base.manifest_sha256,
+        receipt_id=receipt_id,
+        proposal_id=proposal_id,
+        original_candidate_state=base.final_state,
+        final_state=forced_state,
+        selected_role=base.selected_role,
+        selected_raw_attempt_id=base.selected_raw_attempt_id,
+        selected_prompt_sha256=base.selected_prompt_sha256,
+        selected_output_sha256=base.selected_output_sha256,
+        selected_provider=base.selected_provider,
+        selected_runtime=base.selected_runtime,
+        selected_model=base.selected_model,
+        selected_started_at=base.selected_started_at,
+        selected_completed_at=base.selected_completed_at,
+        expected_job=base.rows["update_job"][0],
+        rows=rows,
+        expected_tokens=expected_tokens,
+        expected_counts=expected_counts,
+        expected_fingerprint=sha256_bytes(
+            canonical_json_bytes(expected_tokens)
+        ),
     )
 
 
@@ -1146,10 +1464,296 @@ def _insert_artifact(cursor: Any, row: Mapping[str, Any]) -> None:
         raise UpdateStageLoadError("content artifact metadata collision")
 
 
+def _verify_partition_recovery_prerequisites(
+    cursor: Any,
+    material: PreparedPartitionRecoveryCandidate,
+) -> None:
+    cursor.execute(
+        f"""
+        SELECT
+          job.job_id::text,
+          job.job_fingerprint,
+          job.feed_url,
+          job.request_profile_sha256,
+          to_jsonb(job.notification_window_start) #>> '{{}}',
+          to_jsonb(job.notification_window_end) #>> '{{}}',
+          job.activation_cut::text,
+          lease.lease_id::text,
+          lease.owner_key,
+          claim.work_item_id::text,
+          claim.generation,
+          claim.admission_id::text,
+          claim.source_job_id::text,
+          claim.lease_id::text,
+          claim.owner_key,
+          claim.job_fingerprint,
+          claim.prompt_sha256,
+          claim.sealed_packet_manifest_sha256,
+          reservation.reservation_id::text,
+          reservation.route,
+          reservation.source_job_id::text,
+          reservation.packet_sha256,
+          reservation.prompt_sha256,
+          reservation.attempt_namespace,
+          reservation.runtime,
+          reservation.provider,
+          reservation.model,
+          outcome.status,
+          outcome.failure_class,
+          outcome.attempt_id::text,
+          outcome.source_job_id::text,
+          outcome.candidate_proposal_id::text,
+          outcome.output_sha256,
+          outcome.receipt_json,
+          attempt.attempt_id::text,
+          attempt.job_id::text,
+          attempt.lease_id::text,
+          attempt.owner_key,
+          attempt.lane,
+          attempt.provider,
+          attempt.runtime,
+          attempt.model,
+          attempt.prompt_sha256,
+          attempt.output_sha256,
+          to_jsonb(attempt.started_at) #>> '{{}}',
+          to_jsonb(attempt.completed_at) #>> '{{}}',
+          attempt.status
+        FROM
+          nhi_rule_history_partition_recovery.dispatch_claim claim
+        JOIN {OPS_SCHEMA}.update_job job
+          ON job.job_id = claim.source_job_id
+        JOIN {OPS_SCHEMA}.job_lease lease
+          ON lease.job_id = claim.source_job_id
+         AND lease.lease_id = claim.lease_id
+        JOIN
+          nhi_rule_history_partition_recovery.worker_route_reservation
+            reservation
+          ON reservation.claim_id = claim.claim_id
+        JOIN
+          nhi_rule_history_partition_recovery.worker_route_outcome outcome
+          ON outcome.reservation_id = reservation.reservation_id
+         AND outcome.status = 'succeeded'
+        JOIN {OPS_SCHEMA}.worker_attempt attempt
+          ON attempt.attempt_id = outcome.attempt_id
+         AND attempt.job_id = outcome.source_job_id
+        WHERE claim.claim_id = %s
+        ORDER BY reservation.route_ordinal
+        """,
+        (material.dispatch_claim_id,),
+    )
+    rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise UpdateStageLoadError(
+            "recovery attach requires exactly one successful durable route"
+        )
+    row = rows[0]
+    exact_values = (
+        (row[0], material.recovery_job_id, "update job ID"),
+        (row[1], material.job_fingerprint, "update job fingerprint"),
+        (row[7], material.lease_id, "job lease ID"),
+        (row[8], material.owner_key, "job lease owner"),
+        (row[9], material.work_item_id, "dispatch work item"),
+        (row[10], material.generation, "dispatch generation"),
+        (row[11], material.admission_id, "dispatch admission"),
+        (row[12], material.recovery_job_id, "dispatch recovery job"),
+        (row[13], material.lease_id, "dispatch lease"),
+        (row[14], material.owner_key, "dispatch owner"),
+        (row[15], material.job_fingerprint, "dispatch job fingerprint"),
+        (row[16], material.selected_prompt_sha256, "dispatch prompt"),
+        (
+            row[17],
+            material.sealed_packet_manifest_sha256,
+            "dispatch sealed packet manifest",
+        ),
+        (row[19], material.selected_role, "reserved route"),
+        (row[20], material.recovery_job_id, "reserved recovery job"),
+        (
+            row[21],
+            material.sealed_packet_manifest_sha256,
+            "reserved sealed packet",
+        ),
+        (row[22], material.selected_prompt_sha256, "reserved prompt"),
+        (row[23], material.output_namespace, "reserved output namespace"),
+        (row[24], material.selected_runtime, "reserved runtime"),
+        (row[25], material.selected_provider, "reserved provider"),
+        (row[26], material.selected_model, "reserved model"),
+        (row[27], "succeeded", "route outcome status"),
+        (row[28], None, "route outcome failure class"),
+        (row[29], material.producer_attempt_id, "route outcome attempt"),
+        (row[30], material.recovery_job_id, "route outcome recovery job"),
+        (row[31], None, "route outcome candidate boundary"),
+        (row[32], material.selected_output_sha256, "route outcome output"),
+        (row[34], material.producer_attempt_id, "worker attempt ID"),
+        (row[35], material.recovery_job_id, "worker attempt job"),
+        (row[36], material.lease_id, "worker attempt lease"),
+        (row[37], material.owner_key, "worker attempt owner"),
+        (row[38], material.selected_role, "worker attempt lane"),
+        (row[39], material.selected_provider, "worker attempt provider"),
+        (row[40], material.selected_runtime, "worker attempt runtime"),
+        (row[41], material.selected_model, "worker attempt model"),
+        (row[42], material.selected_prompt_sha256, "worker attempt prompt"),
+        (row[43], material.selected_output_sha256, "worker attempt output"),
+        (row[46], "success", "worker attempt status"),
+    )
+    for actual, expected, label in exact_values:
+        if actual != expected:
+            raise UpdateStageLoadError(
+                f"persisted {label} does not match recovery candidate material"
+            )
+    if (
+        _timestamp(row[44], "database.worker_attempt.started_at")
+        != _timestamp(material.selected_started_at, "selected_started_at")
+        or _timestamp(row[45], "database.worker_attempt.completed_at")
+        != _timestamp(material.selected_completed_at, "selected_completed_at")
+    ):
+        raise UpdateStageLoadError(
+            "persisted worker attempt timestamps do not match candidate receipt"
+        )
+    receipt = row[33]
+    expected_receipt_fields = {
+        "lease_id",
+        "owner_key",
+        "started_at",
+        "completed_at",
+        "raw_worker_attempt_id",
+        "attempt_namespace",
+    }
+    if not isinstance(receipt, dict) or set(receipt) != expected_receipt_fields:
+        raise UpdateStageLoadError(
+            "persisted route outcome receipt has an invalid exact shape"
+        )
+    receipt_values = (
+        (receipt["lease_id"], material.lease_id),
+        (receipt["owner_key"], material.owner_key),
+        (
+            receipt["raw_worker_attempt_id"],
+            material.selected_raw_attempt_id,
+        ),
+        (receipt["attempt_namespace"], material.output_namespace),
+    )
+    if any(actual != expected for actual, expected in receipt_values):
+        raise UpdateStageLoadError(
+            "persisted route outcome receipt does not bind the local attempt"
+        )
+    _sha256(
+        receipt["raw_worker_attempt_id"],
+        "database.route_receipt.raw_worker_attempt_id",
+    )
+    if (
+        _timestamp(receipt["started_at"], "database.route_receipt.started_at")
+        != _timestamp(material.selected_started_at, "selected_started_at")
+        or _timestamp(
+            receipt["completed_at"], "database.route_receipt.completed_at"
+        )
+        != _timestamp(
+            material.selected_completed_at, "selected_completed_at"
+        )
+    ):
+        raise UpdateStageLoadError(
+            "persisted route outcome receipt timestamps do not match"
+        )
+
+
+def _insert_partition_recovery_receipt(
+    cursor: Any, row: Mapping[str, Any]
+) -> None:
+    cursor.execute(
+        f"""
+        INSERT INTO {OPS_SCHEMA}.bundle_receipt (
+          receipt_id, job_id, bundle_uid, manifest_sha256,
+          bundle_relative_path, artifact_count, total_bytes, prepared_at,
+          atomically_published_at, pg_received_at, fsync_verified,
+          receipt_status, rejection_code
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,
+        tuple(row.values()),
+    )
+
+
+def _insert_partition_recovery_candidate_rows(
+    cursor: Any, material: PreparedPartitionRecoveryCandidate
+) -> None:
+    proposal = material.rows["candidate_proposal"][0]
+    cursor.execute(
+        f"""
+        INSERT INTO {CANDIDATE_SCHEMA}.candidate_proposal (
+          proposal_id, proposal_fingerprint, contract_version, job_id,
+          bundle_receipt_id, producer_attempt_id, producer_output_sha256,
+          source_designation_text, raw_effective_expression, calendar_system,
+          effective_from, date_precision, date_role, date_scope,
+          conditionality, replacement_scope, omitted_text_present,
+          merged_cells_present, cross_row_dependency,
+          multiple_designations_present, odt_pdf_agreement,
+          identity_resolution, confidence, candidate_note
+        ) VALUES (
+          %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+          %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+        )
+        """,
+        tuple(proposal.values()),
+    )
+    for row in material.rows["candidate_source_span"]:
+        cursor.execute(
+            f"""
+            INSERT INTO {CANDIDATE_SCHEMA}.candidate_source_span (
+              proposal_id, span_id, artifact_sha256, source_role, locator,
+              locator_key, char_start, char_end, raw_text, raw_text_sha256,
+              raw_text_char_length, observed_at, statement
+            ) VALUES (%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s,%s,%s)
+            """,
+            (
+                row["proposal_id"],
+                row["span_id"],
+                row["artifact_sha256"],
+                row["source_role"],
+                json_text(row["locator"]),
+                row["locator_key"],
+                row["char_start"],
+                row["char_end"],
+                row["raw_text"],
+                row["raw_text_sha256"],
+                row["raw_text_char_length"],
+                row["observed_at"],
+                row["statement"],
+            ),
+        )
+    for row in material.rows["candidate_evidence"]:
+        cursor.execute(
+            f"""
+            INSERT INTO {CANDIDATE_SCHEMA}.candidate_evidence (
+              proposal_id, evidence_id, span_id, evidence_code, outcome,
+              assertion_text, evidence_details, validator_version, recorded_at
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            """,
+            (
+                row["proposal_id"],
+                row["evidence_id"],
+                row["span_id"],
+                row["evidence_code"],
+                row["outcome"],
+                row["assertion_text"],
+                json_text(row["evidence_details"]),
+                row["validator_version"],
+                row["recorded_at"],
+            ),
+        )
+    for row in material.rows["candidate_state_transition"]:
+        cursor.execute(
+            f"""
+            INSERT INTO {CANDIDATE_SCHEMA}.candidate_state_transition (
+              proposal_id, transition_seq, transition_id, state, actor_kind,
+              decision_basis_sha256, recorded_at
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """,
+            tuple(row.values()),
+        )
+
+
 def _apply_material(material: PreparedUpdateLoad, conninfo: str) -> bool:
     replayed = False
     with _connect(conninfo) as connection:
         with connection.cursor() as cursor:
+            cursor.execute("SET LOCAL TIME ZONE 'UTC'")
             cursor.execute(
                 "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
                 (f"nhi-rule-history-update-load:{material.job_fingerprint}",),
@@ -1168,6 +1772,250 @@ def _apply_material(material: PreparedUpdateLoad, conninfo: str) -> bool:
                 replayed = True
             else:
                 _insert_new_material(cursor, material)
+    return replayed
+
+
+def _fetch_partition_recovery_attach_tokens(
+    cursor: Any,
+    material: PreparedPartitionRecoveryCandidate,
+) -> dict[str, tuple[str, ...]]:
+    artifact_hashes = [
+        row["artifact_sha256"]
+        for row in material.rows["content_artifact"]
+    ]
+    queries: dict[str, tuple[str, tuple[Any, ...]]] = {
+        "content_artifact": (
+            f"""
+            SELECT artifact_sha256, byte_size, media_type
+            FROM {OPS_SCHEMA}.content_artifact
+            WHERE artifact_sha256::text = ANY(%s::text[])
+            """,
+            (artifact_hashes,),
+        ),
+        "bundle_receipt": (
+            f"""
+            SELECT receipt_id::text, bundle_uid, manifest_sha256,
+                   bundle_relative_path, artifact_count, total_bytes,
+                   to_jsonb(prepared_at) #>> '{{}}',
+                   to_jsonb(atomically_published_at) #>> '{{}}',
+                   fsync_verified, receipt_status, rejection_code
+            FROM {OPS_SCHEMA}.bundle_receipt
+            WHERE receipt_id = %s
+            """,
+            (material.receipt_id,),
+        ),
+        "candidate_proposal": (
+            f"""
+            SELECT proposal_id::text, proposal_fingerprint, contract_version,
+                   producer_attempt_id::text, producer_output_sha256,
+                   source_designation_text, raw_effective_expression,
+                   calendar_system, effective_from::text, date_precision,
+                   date_role, date_scope, conditionality, replacement_scope,
+                   omitted_text_present, merged_cells_present,
+                   cross_row_dependency, multiple_designations_present,
+                   odt_pdf_agreement, identity_resolution, confidence::float8,
+                   candidate_note
+            FROM {CANDIDATE_SCHEMA}.candidate_proposal
+            WHERE proposal_id = %s
+            """,
+            (material.proposal_id,),
+        ),
+        "candidate_source_span": (
+            f"""
+            SELECT span_id, artifact_sha256, source_role, locator_key,
+                   char_start, char_end, raw_text_sha256,
+                   raw_text_char_length,
+                   to_jsonb(observed_at) #>> '{{}}', statement
+            FROM {CANDIDATE_SCHEMA}.candidate_source_span
+            WHERE proposal_id = %s
+            """,
+            (material.proposal_id,),
+        ),
+        "candidate_evidence": (
+            f"""
+            SELECT evidence_id, span_id, evidence_code, outcome,
+                   assertion_text, validator_version,
+                   to_jsonb(recorded_at) #>> '{{}}'
+            FROM {CANDIDATE_SCHEMA}.candidate_evidence
+            WHERE proposal_id = %s
+            """,
+            (material.proposal_id,),
+        ),
+        "candidate_state_transition": (
+            f"""
+            SELECT transition_seq, transition_id::text, state, actor_kind,
+                   decision_basis_sha256,
+                   to_jsonb(recorded_at) #>> '{{}}'
+            FROM {CANDIDATE_SCHEMA}.candidate_state_transition
+            WHERE proposal_id = %s
+            """,
+            (material.proposal_id,),
+        ),
+    }
+    tokens: dict[str, tuple[str, ...]] = {}
+    for table in _PARTITION_RECOVERY_ATTACH_TABLES:
+        sql, parameters = queries[table]
+        cursor.execute(sql, parameters)
+        tokens[table] = tuple(
+            sorted(
+                sha256_bytes(canonical_json_bytes(list(row)))
+                for row in cursor.fetchall()
+            )
+        )
+    return tokens
+
+
+def _verify_partition_recovery_attach_identity(
+    cursor: Any,
+    material: PreparedPartitionRecoveryCandidate,
+) -> None:
+    cursor.execute(
+        f"""
+        SELECT receipt_id::text, job_id::text, bundle_uid, manifest_sha256
+        FROM {OPS_SCHEMA}.bundle_receipt
+        WHERE receipt_id = %s
+           OR (bundle_uid = %s AND manifest_sha256 = %s)
+        """,
+        (
+            material.receipt_id,
+            material.bundle_id,
+            material.manifest_sha256,
+        ),
+    )
+    receipt_rows = cursor.fetchall()
+    expected_receipt = (
+        material.receipt_id,
+        material.recovery_job_id,
+        material.bundle_id,
+        material.manifest_sha256,
+    )
+    if receipt_rows != [expected_receipt]:
+        raise UpdateStageLoadError(
+            "bundle receipt identity or recovery-job binding differs"
+        )
+    proposal = material.rows["candidate_proposal"][0]
+    cursor.execute(
+        f"""
+        SELECT proposal_id::text, proposal_fingerprint, job_id::text,
+               bundle_receipt_id::text, producer_attempt_id::text,
+               producer_output_sha256
+        FROM {CANDIDATE_SCHEMA}.candidate_proposal
+        WHERE proposal_id = %s OR proposal_fingerprint = %s
+        """,
+        (material.proposal_id, proposal["proposal_fingerprint"]),
+    )
+    proposal_rows = cursor.fetchall()
+    expected_proposal = (
+        material.proposal_id,
+        proposal["proposal_fingerprint"],
+        material.recovery_job_id,
+        material.receipt_id,
+        material.producer_attempt_id,
+        material.selected_output_sha256,
+    )
+    if proposal_rows != [expected_proposal]:
+        raise UpdateStageLoadError(
+            "candidate proposal identity or recovery attempt binding differs"
+        )
+
+
+def _assert_partition_recovery_attach_tokens(
+    actual_tokens: Mapping[str, tuple[str, ...]],
+    material: PreparedPartitionRecoveryCandidate,
+) -> dict[str, Any]:
+    actual_counts = {
+        table: len(values) for table, values in actual_tokens.items()
+    }
+    actual_fingerprint = sha256_bytes(
+        canonical_json_bytes(actual_tokens)
+    )
+    if (
+        actual_counts != dict(material.expected_counts)
+        or dict(actual_tokens) != dict(material.expected_tokens)
+        or actual_fingerprint != material.expected_fingerprint
+    ):
+        raise UpdateStageLoadError(
+            "partition recovery candidate count/fingerprint verification failed"
+        )
+    return {
+        "counts": actual_counts,
+        "fingerprint": actual_fingerprint,
+    }
+
+
+def _apply_partition_recovery_candidate(
+    material: PreparedPartitionRecoveryCandidate,
+    conninfo: str,
+) -> bool:
+    replayed = False
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SET LOCAL TIME ZONE 'UTC'")
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                (
+                    "nhi-rule-history-update-load:"
+                    f"{material.job_fingerprint}",
+                ),
+            )
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                (
+                    "nhi-rule-history-partition-recovery-attach:"
+                    f"{material.dispatch_claim_id}",
+                ),
+            )
+            _verify_partition_recovery_prerequisites(cursor, material)
+            for row in material.rows["content_artifact"]:
+                _insert_artifact(cursor, row)
+
+            cursor.execute(
+                f"""
+                SELECT receipt_id::text
+                FROM {OPS_SCHEMA}.bundle_receipt
+                WHERE receipt_id = %s
+                   OR (bundle_uid = %s AND manifest_sha256 = %s)
+                """,
+                (
+                    material.receipt_id,
+                    material.bundle_id,
+                    material.manifest_sha256,
+                ),
+            )
+            receipt_identities = cursor.fetchall()
+            if not receipt_identities:
+                _insert_partition_recovery_receipt(
+                    cursor, material.rows["bundle_receipt"][0]
+                )
+            elif receipt_identities != [(material.receipt_id,)]:
+                raise UpdateStageLoadError(
+                    "bundle receipt collision blocks recovery attach"
+                )
+
+            proposal = material.rows["candidate_proposal"][0]
+            cursor.execute(
+                f"""
+                SELECT proposal_id::text
+                FROM {CANDIDATE_SCHEMA}.candidate_proposal
+                WHERE proposal_id = %s OR proposal_fingerprint = %s
+                """,
+                (material.proposal_id, proposal["proposal_fingerprint"]),
+            )
+            proposal_identities = cursor.fetchall()
+            if not proposal_identities:
+                _insert_partition_recovery_candidate_rows(cursor, material)
+            elif proposal_identities == [(material.proposal_id,)]:
+                replayed = True
+            else:
+                raise UpdateStageLoadError(
+                    "candidate proposal collision blocks recovery attach"
+                )
+
+            _verify_partition_recovery_attach_identity(cursor, material)
+            _assert_partition_recovery_attach_tokens(
+                _fetch_partition_recovery_attach_tokens(cursor, material),
+                material,
+            )
     return replayed
 
 
@@ -1509,6 +2357,24 @@ def _verify_loaded(
     return {"counts": actual_counts, "fingerprint": actual_fingerprint}
 
 
+def _verify_partition_recovery_loaded(
+    material: PreparedPartitionRecoveryCandidate,
+    conninfo: str,
+) -> dict[str, Any]:
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute("SET LOCAL TIME ZONE 'UTC'")
+            _verify_partition_recovery_prerequisites(cursor, material)
+            _verify_partition_recovery_attach_identity(cursor, material)
+            tokens = _fetch_partition_recovery_attach_tokens(
+                cursor, material
+            )
+    return _assert_partition_recovery_attach_tokens(tokens, material)
+
+
 def load_update_candidate(
     conninfo: str,
     bundle_path: Path,
@@ -1540,6 +2406,78 @@ def load_update_candidate(
         "bundle_receipt_id": material.receipt_id,
         "candidate_proposal_id": material.proposal_id,
         "candidate_state": material.final_state,
+        "replayed": replayed,
+        "verification": verification,
+    }
+
+
+def load_partition_recovery_candidate(
+    conninfo: str,
+    bundle_path: Path,
+    candidate_receipt_path: Path,
+    bundle_relative_path: str,
+    activation_cut: str | date,
+    owner_key: str,
+    notification_window_start: str,
+    notification_window_end: str,
+    *,
+    recovery_job_id: str,
+    lease_id: str,
+    producer_attempt_id: str,
+    dispatch_claim_id: str,
+    work_item_id: str,
+    generation: int,
+    admission_id: str,
+    sealed_packet_manifest_sha256: str,
+    output_namespace: str,
+) -> dict[str, Any]:
+    """Attach a verified recovery output without duplicating acquisition rows.
+
+    The existing consumed dispatch, recovery job/lease, successful route,
+    generation-bound worker attempt, and immutable route receipt are verified
+    before the transaction registers deduplicated content artifacts, one
+    durable bundle receipt, and one candidate forced to ``needs_review``.
+    """
+
+    material = _prepare_partition_recovery_candidate(
+        bundle_path=Path(bundle_path),
+        candidate_receipt_path=Path(candidate_receipt_path),
+        bundle_relative_path=bundle_relative_path,
+        activation_cut=activation_cut,
+        owner_key=owner_key,
+        notification_window_start=notification_window_start,
+        notification_window_end=notification_window_end,
+        recovery_job_id=recovery_job_id,
+        lease_id=lease_id,
+        producer_attempt_id=producer_attempt_id,
+        dispatch_claim_id=dispatch_claim_id,
+        work_item_id=work_item_id,
+        generation=generation,
+        admission_id=admission_id,
+        sealed_packet_manifest_sha256=sealed_packet_manifest_sha256,
+        output_namespace=output_namespace,
+    )
+    replayed = _apply_partition_recovery_candidate(material, conninfo)
+    verification = _verify_partition_recovery_loaded(material, conninfo)
+    return {
+        "schema": "nhi-rule-history/update-pg-stage-receipt/v1",
+        "job_id": material.recovery_job_id,
+        "job_fingerprint": material.job_fingerprint,
+        "bundle_id": material.bundle_id,
+        "bundle_receipt_id": material.receipt_id,
+        "candidate_proposal_id": material.proposal_id,
+        "candidate_state": material.final_state,
+        "original_validator_state": material.original_candidate_state,
+        "recovery_boundary": {
+            "forced_state": material.final_state,
+            "automatic_promotion_allowed": False,
+            "work_item_id": material.work_item_id,
+            "generation": material.generation,
+            "dispatch_claim_id": material.dispatch_claim_id,
+            "admission_id": material.admission_id,
+            "producer_attempt_id": material.producer_attempt_id,
+            "output_namespace": material.output_namespace,
+        },
         "replayed": replayed,
         "verification": verification,
     }

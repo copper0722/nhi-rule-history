@@ -35,9 +35,13 @@ Ellipta 劑量而非日期。有效 amendment-date denominator 是 6,360，目�
 
 | 來源 | 已取得 | 現階段用途 | 不能推論 |
 |---|---|---|---|
-| 14 份 96 年 7 月版至 109 年版 ODT | 14/14、49,709,507 bytes | cumulative checkpoints | 檔名／metadata 不是法律生效日；年度 diff 不是公告 |
+| 84 年原始規範掃描 | FINT detail、2 attachments；規範 25 頁、3,802,900 bytes | 最早完整官方 source observation | 無文字層；OCR 未 proofread；不能單獨證明 85/1/1 修正文 |
+| 14 份 96 年 7 月版至 109 年版 ODT | 14/14、49,709,507 bytes | 逐條 source observations、文字變化與整條消失偵測 | 檔名／metadata 不是法律生效日；年度 diff 不是公告或 direct predecessor，兩快照間可能有中間版 |
 | FINT 1996–2020 exact phrase | 942 detail、1,178 attachments、91,694,925 bytes | 1999–2020 公告級候選；1996–1998 此查詢為 0 | exact phrase 不等於來源宇宙 |
 | FINT 2021–capture cut exact phrase | 366 detail、1,353 attachments、85,642,128 bytes | post-109 公告級候選 | 仍缺同義詞與跨來源 discrepancy |
+| FINT 1900–capture cut empty-keyword surface | 官方分母 17,497；1954 與 2026 canary passed；1900–1989 共 90 partitions／448 rows 後停止 | 可選的 bounded query-surface audit | 不是主重建前置條件；不能證明已撤下或從未建索引的公告 |
+| NHI `lp-3258` current listing | 2026-07-27 sealed capture 858 rows；2026-07-29 surface check 859 rows／43 頁、最舊 111-09-06 | 目前仍被 listing 列出的公告 | 父層「自103年4月3日」標題不等於完整保留範圍；表格含刊登期限 |
+| 84–87 年前身來源 | 84 年 FINT 原始 detail＋完整掃描、健保署後來紀實、國圖 `D9507418` catalog record | 84-06-20 公告前身、84-07-01 實施；87-03-04 改名及 87-04-01 實施 | 85/1/1、86/1/1 精確修正文仍未找到；bounded miss 不等於公文不存在 |
 | NHI current whole/chapter | 268 resources、267 artifacts | terminal cumulative anchor 候選 | 兩個 official surfaces 不一致 |
 
 歷史 exact-phrase 附件包含 240 ODT、431 PDF、347 OLE、147 ODS、9 JPEG、
@@ -105,21 +109,23 @@ byte-identical replay。兩個 bounded exact-phrase sets 合計 1,308 個正式
 格式 typed extraction／OCR、跨格式 marker matching、event/effect 與
 snapshot replay。
 
-Terminal current anchor 已各重建 639 條；606 條相同、33 條不同。因此在
-33 個 discrepancy 裁決前，整份檔與分章檔都不能單獨成為 canonical truth。
+Terminal current anchor 已各重建 639 條；606 條相同、33 條不同。官方
+最新版分章頁是 sole current-text authority，因此不再以 33 個 discrepancy
+作為現行條文發布 gate；整份檔只保留為 non-authoritative quality
+cross-check。
 重建採階層 subtree 條文邊界，子條文差異會向父條文 hash 傳播；33 是
 mismatch designations，其中 19 個是 leafmost mismatch；兩者都不直接等同
 獨立修正事件數。
 
 19 個 leafmost mismatches 的 exact character diff 已再分成 6 個版本／日期
 實質差異、6 個 list-marker 結構差異、6 個純標點與 1 個尾端補充表 layout。
-`8.2.16` 的分章檔含 115/8/1 future-effective 文字，顯示「較新公布檔」
-不能在生效日前當成 current。這項分類沒有選 canonical side；6 個
-version/date rows 仍需正式公告與 effect locator 才能裁決。
+`8.2.16` 的分章檔含 115/8/1 future-effective 文字，因此頁面必須區分
+「官方最新版文字」與「法律生效狀態」；它不改變分章頁的文字 authority。
+6 個 version/date rows 仍需正式公告與 effect locator 才能裁決日期角色。
 
-## WP1 — 封閉官方來源宇宙
+## WP1 — 建立多路 evidence union 與明示來源缺口
 
-1. NHI `lp-3258` adapter 已兩輪枚舉全部 43 頁／858 rows，listing 階段
+1. NHI `lp-3258` adapter 在 2026-07-27 已兩輪枚舉 43 頁／858 rows，listing 階段
    未先用關鍵詞刪除，兩輪 resource-key set 與 JSONL bytes 均相同。858
    個 details 也已各自兩輪抓取；因官方頁會改寫瀏覽計數與 Cloudflare
    challenge 欄位，858/858 paired HTML hashes 都不同，兩份 raw 都保留，
@@ -135,11 +141,21 @@ version/date rows 仍需正式公告與 effect locator 才能裁決。
    630、FINT-only 148，union 995；7 個 collision keys 使一對一 join
    不安全。這只是 discrepancy inventory，不能把任一 source-only row
    自動判成漏失或無關。
-2. FINT 從 1995-01-01 起按年 partition，因 1996-01-01 生效的事件可能在
-   前一年公告。
-3. 每個 query 各自形成可重播 source plan，最後以正式文號做 union，
-   同時保存所有 query/partition locators：
+   2026-07-29 再觀察為 859 rows／43 頁，最舊可見列仍是 111-09-06，
+   且 listing 有「刊登期限」。父層雖寫「自103年4月3日以後生效之公告」，
+   target listing 不能作 2014 年後歷史的封閉分母。
+2. 每個 clause 先由 84 年掃描、14 個年度快照及 current chapter 產生
+   source observations，
+   逐相鄰 edition 比對 presence、designation、structure 與完整 text：
+   只建立 `appearance_observed`、`text_change_observed`、
+   `disappearance_observed`、`designation_change_observed`。identity 與
+   event evidence 通過後，才可升格 create／restore／amend／delete／move。
+3. 條文內民國年月建立 surviving-text search index；它能縮小 transition
+   搜尋窗，不能發現已整條刪除的規定。
+4. FINT 以 clause evidence 產生的日期、文號、條號、成分、商品、適應症及
+   前身名稱做 targeted queries。推薦詞彙包含：
    - `藥品給付規定`
+   - `全民健康保險藥品使用規範`
    - `藥物給付項目及支付標準`
    - `第六編第八十三條`
    - `給付規定修訂對照表`
@@ -147,18 +163,24 @@ version/date rows 仍需正式公告與 effect locator 才能裁決。
    - `停止給付` + `藥品`
    - `取消給付` + `藥品`
    - `更正` + `給付規定`
-4. 加入法務部「支付標準第六編／附件六」修正來源。
-5. 比對 FINT union、NHI listing、14 個 historical anchors、terminal
-   whole/chapter delta；每個 FINT-only、NHI-only、anchor-delta-only row 都
-   要有裁決。
+5. NHI、FINT、行政院公報、檔案管理局、國圖／臺灣記憶、政府出版品及
+   法務來源取聯集。84–87 年搜尋必須包含前身 `全民健康保險藥品使用規範`。
+   這個名稱已成功找回 84 年原始附件，證明附件句子本身不是 FINT 搜尋
+   分母。
+6. 四個關鍵字全空的 FINT 17,497-row surface crawl 是可選的 recall audit。
+   已完成 1900–1989 共 90 個 manifests／448 match rows後停止，raw 保留；
+   它不阻擋逐條歷史，也不因未跑完而阻擋 current rules 發布。
+7. 每個 source-only 或 anchor-delta-only observation 都保留 evidence state，
+   但「搜尋沒有找到」永遠不能升格為「公文不存在」。
 
-Source-universe gate：
+Declared source-set gate：
 
 ```text
 pass A resource keys = pass B resource keys
 expected pages/rows/details/attachments = fetched
 unclassified relevant rows = 0
 cross-source discrepancies = 0 or explicitly adjudicated
+unresolved source gaps remain explicitly enumerable
 ```
 
 ## WP2 — 每份正式公文形成 deterministic corpus bundle
@@ -223,7 +245,7 @@ denominator 永遠保留 6,366 個 occurrence rows。
 
 ODT preflight 可用來排序搜尋工作，但不得自動 promotion：先處理 826 組
 同檔候選，再由 typed PDF／OLE／ODS／image extraction 補回 ODT miss；每一
-組最後仍須通過 v3 transition-evidence contract。
+組最後仍須通過 v4 transition-evidence contract。
 
 唯一 verified transition candidate 必須同時具備：
 
@@ -259,21 +281,30 @@ Inventory closure 可以保留明列 gap；「完整歷史」要求
 2. 另找 edition/as-of evidence，不能使用 filename 或最大 marker 日期代替；
 3. 跨版建立 stable identity crosswalk；
 4. split、merge、move、delete、restore、number reuse 形成 curation tickets；
-5. 年度 anchor delta 只生成「待找公告」ticket，不直接生成 legal event。
+5. 年度 anchor delta 只生成 observation-delta 與公文搜尋 ticket；前一版
+   存在而下一版消失時生成 `disappearance_observed`，不得先叫
+   `delete_candidate`。observation 不是 exact legal event，但也不能因
+   公文未找到而丟棄。
 
 ## WP6 — Snapshot、direct adjacency、diff 與 replay
 
-1. 從已驗證 cumulative anchor 建 baseline。
-2. 依官方 effective date 排 accepted effects；同日無法排序即 fail closed。
+1. 從最早可驗證 cumulative anchor 建每條 clause 的第一個 observed state；
+   這不自動宣稱是法規初始版本。
+2. 依 edition order 先建立相鄰 observed states；有 exact official
+   effective-date、identity 與 scope evidence 時再升格為 legal chronology，
+   否則只保留 source appearance window。
 3. 每個 operation 具備必要的完整 sides：
    - create：完整 new；
    - amend/correction/rename/move：完整 old + new；
    - delete：完整 old + deletion；
    - restore：完整 new + lineage；
    - split/merge：所有 input/output snapshots。
-4. 每個 version 使用半開區間 `[effective_from, effective_until_exclusive)`。
-5. 每個相鄰 anchor 重算完整 rule set 與逐條 hash；mismatch 轉成來源搜尋
-   ticket，不用 annual diff 捏造公告。
+4. exact legal episode 使用半開區間
+   `[effective_from, effective_until_exclusive)`；source observation window
+   另存 `observed_after`／`observed_by`，不把 snapshot date 偽裝成生效日。
+5. 每個相鄰 anchor 重算完整 rule set、presence、designation 與逐條 hash；
+   mismatch 同時保留 observation delta 與來源搜尋 ticket，不用 annual
+   diff 捏造公告。
 6. Reader diff 只比較直接相鄰版本；非 ambiguous mapping coverage 必須
    100%，不足時顯示歧義而非假 diff。
 
@@ -289,7 +320,8 @@ Inventory closure 可以保留明列 gap；「完整歷史」要求
 - 每條最多一個 open head；
 - 每個版本最多一個 direct predecessor，split/merge 另以明示 edge 表達；
 - 所有相鄰 cumulative anchors 的 rule-set/hash parity；
-- terminal whole/chapter 未裁決 discrepancy = 0；
+- canonical 最新分章頁 replay parity 通過；整份檔 discrepancy 只作
+  nonblocking quality metric；
 - PostgreSQL／JSONL／SQLite PK、FK、rows、logical hashes 一致；
 - SQLite `integrity_check` 與 `foreign_key_check` 通過。
 
@@ -313,7 +345,10 @@ Inventory closure 可以保留明列 gap；「完整歷史」要求
 ## 下一個可交付 milestone
 
 1,308 份已取得公文的 deterministic source-local bundles 已完成。下一個
-milestone 不是直接量產 agent proposal，而是完成 v3 transition-evidence
-schema、將舊 3,080-row discovery queue 轉成 direct-edge work units，並建立
-10-unit pilot packet。仍需補通 PDF/OLE/image typed extraction；其後才可在
-Copper 明示恢復 dispatch 後，按 anchor interval 建完整 snapshots 與 replay。
+milestone 是先把 84 年掃描與 14 份年度檔完整切成 source-segment／
+single-clause observations，建立 presence／absence 與相鄰 text-state
+observations；同步完成 v4 observation／identity／transition schema、將舊
+3,080-row discovery queue 轉成 source-segment comparison units。早年公文、
+typed extraction 與 proofread 可逐條補強 exact transition；來源觀察區間
+可先公開，但不能冒充法律版本。模型 proposal lane仍須 Copper
+明示恢復且通過 10-unit pilot 才能啟動。

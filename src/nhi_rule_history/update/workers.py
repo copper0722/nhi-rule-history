@@ -8,7 +8,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from nhi_rule_history.contracts import (
     ContractError,
@@ -48,6 +48,15 @@ WORKER_BLOCK_DIGEST_VERSION = "nhi-rule-history/source-block-digest/v1"
 WORKER_RUNTIME_CONTRACT_VERSION = (
     "nhi-rule-history/primary-once-fallback-once-runtime/v2"
 )
+WORKER_ROUTE_POLICY_SCHEMA = "nhi-rule-history/worker-route-policy/v1"
+WORKER_FALLBACK_ELIGIBLE_STATUSES = frozenset(
+    {
+        "transport_failed",
+        "execution_failed",
+        "timeout",
+        "contract_failed",
+    }
+)
 WORKER_BUDGET_VERSION = "bounded-document-v1"
 WORKER_BUDGET = {
     "prompt_bytes": 65_536,
@@ -77,6 +86,27 @@ _OLD_SIDE_HEADER_RE = re.compile(
 
 class WorkerFailure(RuntimeError):
     """Both bounded worker attempts failed or violated the proposal contract."""
+
+
+def worker_route_policy() -> dict[str, Any]:
+    """Return the canonical primary/fallback execution policy."""
+
+    return {
+        "schema": WORKER_ROUTE_POLICY_SCHEMA,
+        "primary_max_calls": 1,
+        "fallback_max_calls": 1,
+        "fallback_eligible_primary_statuses": sorted(
+            WORKER_FALLBACK_ELIGIBLE_STATUSES
+        ),
+        "fallback_for_validated_primary": False,
+        "fallback_requires_recorded_primary_result": True,
+        "reservation_required_before_call": True,
+        "unknown_execution_state_retry_allowed": False,
+    }
+
+
+def worker_route_policy_sha256() -> str:
+    return sha256_bytes(canonical_json_bytes(worker_route_policy()))
 
 
 def worker_job_fingerprint(
@@ -619,12 +649,62 @@ class WorkerOrchestrator:
         primary: WorkerSpec,
         fallback: WorkerSpec,
         runner: Any = subprocess.run,
+        attempt_namespace: str | None = None,
+        before_attempt: Callable[[Mapping[str, Any]], None] | None = None,
+        after_attempt: Callable[[Mapping[str, Any]], None] | None = None,
     ):
         if primary.worker_id == fallback.worker_id:
             raise ValueError("primary and fallback worker ids must differ")
         self.primary = primary
         self.fallback = fallback
         self._runner = runner
+        self._attempt_namespace = attempt_namespace
+        self._before_attempt = before_attempt
+        self._after_attempt = after_attempt
+
+    def _attempt_plan(
+        self,
+        spec: WorkerSpec,
+        *,
+        role: str,
+        bundle_id: str,
+        prompt_sha256: str,
+        primary_attempt_id: str | None,
+        fallback_reason: str | None,
+    ) -> dict[str, Any]:
+        """Return the exact durable reservation preimage for one route."""
+
+        identity_parts = [
+            "nhi-worker-attempt",
+            bundle_id,
+            prompt_sha256,
+            role,
+            spec.worker_id,
+        ]
+        if self._attempt_namespace is not None:
+            identity_parts.insert(1, self._attempt_namespace)
+        return {
+            "schema": "nhi-rule-history/worker-attempt-plan/v1",
+            "attempt_id": stable_id(*identity_parts),
+            "attempt_namespace": self._attempt_namespace,
+            "role": role,
+            "worker_id": spec.worker_id,
+            "runtime_id": spec.runtime_id,
+            "provider": spec.provider,
+            "model": spec.model,
+            "prompt_version": WORKER_PROMPT_VERSION,
+            "prompt_sha256": prompt_sha256,
+            "primary_attempt_id": primary_attempt_id,
+            "fallback_reason": fallback_reason,
+        }
+
+    def _reserve_attempt(self, plan: Mapping[str, Any]) -> None:
+        if self._before_attempt is not None:
+            self._before_attempt(plan)
+
+    def _record_attempt(self, record: Mapping[str, Any]) -> None:
+        if self._after_attempt is not None:
+            self._after_attempt(record)
 
     @staticmethod
     def _archive_attempt_streams(
@@ -674,13 +754,14 @@ class WorkerOrchestrator:
         controller_notice: Mapping[str, Any],
     ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
         started_at = utc_now()
-        attempt_id = stable_id(
-            "nhi-worker-attempt",
-            bundle_id,
-            prompt_sha256,
-            role,
-            spec.worker_id,
-        )
+        attempt_id = self._attempt_plan(
+            spec,
+            role=role,
+            bundle_id=bundle_id,
+            prompt_sha256=prompt_sha256,
+            primary_attempt_id=primary_attempt_id,
+            fallback_reason=fallback_reason,
+        )["attempt_id"]
         base = {
             "schema": WORKER_ATTEMPT_SCHEMA,
             "attempt_id": attempt_id,
@@ -695,6 +776,8 @@ class WorkerOrchestrator:
             "primary_attempt_id": primary_attempt_id,
             "fallback_reason": fallback_reason,
         }
+        if self._attempt_namespace is not None:
+            base["attempt_namespace"] = self._attempt_namespace
         try:
             completed = self._runner(
                 list(spec.command),
@@ -717,6 +800,17 @@ class WorkerOrchestrator:
             )
             output_sha = sha256_bytes(stdout_bytes)
             stderr_sha = sha256_bytes(stderr_bytes)
+            if getattr(completed, "nhi_execution_unknown", False):
+                record = {
+                    **base,
+                    "completed_at": completed_at,
+                    "status": "execution_unknown",
+                    "exit_code": completed.returncode,
+                    "output_sha256": output_sha,
+                    "stderr_sha256": stderr_sha,
+                    "validation_error_code": None,
+                }
+                return None, record
             if completed.returncode != 0:
                 record = {
                     **base,
@@ -775,7 +869,11 @@ class WorkerOrchestrator:
             record = {
                 **base,
                 "completed_at": utc_now(),
-                "status": "timeout",
+                "status": (
+                    "execution_unknown"
+                    if getattr(exc, "nhi_execution_unknown", False)
+                    else "timeout"
+                ),
                 "exit_code": None,
                 "output_sha256": (
                     sha256_bytes(stdout_bytes)
@@ -790,11 +888,15 @@ class WorkerOrchestrator:
                 "validation_error_code": None,
             }
             return None, record
-        except OSError:
+        except OSError as exc:
             record = {
                 **base,
                 "completed_at": utc_now(),
-                "status": "transport_failed",
+                "status": (
+                    "execution_unknown"
+                    if getattr(exc, "nhi_execution_unknown", False)
+                    else "transport_failed"
+                ),
                 "exit_code": None,
                 "output_sha256": None,
                 "stderr_sha256": None,
@@ -940,6 +1042,15 @@ class WorkerOrchestrator:
             else set()
         )
         controller_notice = packet["notice_binding_source"]
+        primary_plan = self._attempt_plan(
+            self.primary,
+            role="primary",
+            bundle_id=packet["bundle_id"],
+            prompt_sha256=prompt_sha,
+            primary_attempt_id=None,
+            fallback_reason=None,
+        )
+        self._reserve_attempt(primary_plan)
         validated, primary_record = self._invoke(
             self.primary,
             role="primary",
@@ -954,10 +1065,26 @@ class WorkerOrchestrator:
             required_true_document_flags=required_flags,
             controller_notice=controller_notice,
         )
+        if primary_record["attempt_id"] != primary_plan["attempt_id"]:
+            raise WorkerFailure("primary attempt identity drifted after reservation")
         append_jsonl(run_dir / "attempts.jsonl", primary_record)
+        self._record_attempt(primary_record)
         selected_record = primary_record
         if validated is None:
             fallback_reason = primary_record["status"]
+            if fallback_reason not in WORKER_FALLBACK_ELIGIBLE_STATUSES:
+                raise WorkerFailure(
+                    "primary outcome is not eligible for fallback"
+                )
+            fallback_plan = self._attempt_plan(
+                self.fallback,
+                role="fallback",
+                bundle_id=packet["bundle_id"],
+                prompt_sha256=prompt_sha,
+                primary_attempt_id=primary_record["attempt_id"],
+                fallback_reason=fallback_reason,
+            )
+            self._reserve_attempt(fallback_plan)
             validated, fallback_record = self._invoke(
                 self.fallback,
                 role="fallback",
@@ -972,7 +1099,12 @@ class WorkerOrchestrator:
                 required_true_document_flags=required_flags,
                 controller_notice=controller_notice,
             )
+            if fallback_record["attempt_id"] != fallback_plan["attempt_id"]:
+                raise WorkerFailure(
+                    "fallback attempt identity drifted after reservation"
+                )
             append_jsonl(run_dir / "attempts.jsonl", fallback_record)
+            self._record_attempt(fallback_record)
             selected_record = fallback_record
         if validated is None:
             failure = {

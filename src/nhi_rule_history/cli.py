@@ -50,9 +50,20 @@ from nhi_rule_history.update.pg_stage import (
     load_update_candidate,
 )
 from nhi_rule_history.update.pg_queue import (
+    PARTITION_RECOVERY_DISPATCH_CONTRACT,
     UpdateQueueError,
+    admit_partition_recovery,
     append_work_transition,
+    authorize_partition_recovery,
+    close_partition_recovery_generation,
+    consume_partition_recovery_dispatch,
+    finish_partition_recovery_route,
+    load_partition_recovery_evidence,
     load_poll_package,
+    reserve_partition_recovery_route,
+    revoke_partition_recovery,
+    show_partition_recovery,
+    verify_partition_recovery_admission,
 )
 from nhi_rule_history.update.proposal import ProposalError
 from nhi_rule_history.update.rss import OfficialNhiClient, parse_rss
@@ -353,6 +364,228 @@ def build_parser() -> argparse.ArgumentParser:
     update_transition.add_argument("--bundle-receipt-id")
     update_transition.add_argument("--candidate-proposal-id")
     update_transition.add_argument("--recorded-at")
+
+    partition_recovery = subparsers.add_parser(
+        "partition-recovery",
+        help="operator-only exact zero-call partition-recovery controls",
+    )
+    partition_commands = partition_recovery.add_subparsers(
+        dest="partition_recovery_command",
+        required=True,
+    )
+    partition_verify = partition_commands.add_parser(
+        "verify",
+        help="offline-verify one canonical typed admission payload",
+    )
+    partition_verify.add_argument(
+        "--evidence-json", type=Path, required=True
+    )
+    partition_verify.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    partition_admit = partition_commands.add_parser(
+        "admit",
+        help="operator-admit one verified immutable recovery preimage",
+    )
+    partition_admit.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    partition_admit.add_argument(
+        "--evidence-json", type=Path, required=True
+    )
+    partition_admit.add_argument("--actor-kind", required=True)
+    partition_admit.add_argument("--admitted-at")
+    partition_authorize = partition_commands.add_parser(
+        "authorize",
+        help="operator-authorize exact generation 2 with an expiry",
+    )
+    partition_authorize.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    partition_authorize.add_argument("--admission-id", required=True)
+    partition_authorize.add_argument("--work-item-id", required=True)
+    partition_authorize.add_argument(
+        "--generation", type=int, required=True
+    )
+    partition_authorize.add_argument(
+        "--admission-payload-sha256", required=True
+    )
+    partition_authorize.add_argument("--expires-at", required=True)
+    partition_authorize.add_argument("--actor-kind", required=True)
+    partition_authorize.add_argument("--authorized-at")
+    partition_show = partition_commands.add_parser(
+        "show",
+        help="operator-show one exact admission or authorization",
+    )
+    partition_show.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    partition_show_selector = partition_show.add_mutually_exclusive_group(
+        required=True
+    )
+    partition_show_selector.add_argument("--admission-id")
+    partition_show_selector.add_argument("--authorization-id")
+    partition_revoke = partition_commands.add_parser(
+        "revoke",
+        help="operator-revoke one exact unconsumed authorization",
+    )
+    partition_revoke.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    partition_revoke.add_argument("--authorization-id", required=True)
+    partition_revoke.add_argument("--reason", required=True)
+    partition_revoke.add_argument("--actor-kind", required=True)
+    partition_revoke.add_argument("--revoked-at")
+
+    dispatch_v2 = subparsers.add_parser(
+        "dispatch-v2",
+        help="runtime-only exact partition-recovery generation controls",
+    )
+    dispatch_commands = dispatch_v2.add_subparsers(
+        dest="dispatch_v2_command",
+        required=True,
+    )
+    dispatch_consume = dispatch_commands.add_parser(
+        "consume",
+        help="consume one exact admission/authorization/generation tuple",
+    )
+    dispatch_consume.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    dispatch_consume.add_argument("--work-item-id", required=True)
+    dispatch_consume.add_argument(
+        "--generation", type=int, required=True
+    )
+    dispatch_consume.add_argument("--authorization-id", required=True)
+    dispatch_consume.add_argument("--admission-id", required=True)
+    dispatch_consume.add_argument(
+        "--admission-payload-sha256", required=True
+    )
+    dispatch_consume.add_argument(
+        "--sealed-packet-manifest-sha256", required=True
+    )
+    dispatch_consume.add_argument(
+        "--suitability-v2-receipt-sha256", required=True
+    )
+    dispatch_consume.add_argument("--job-fingerprint", required=True)
+    dispatch_consume.add_argument("--prompt-sha256", required=True)
+    dispatch_consume.add_argument("--route-policy-sha256", required=True)
+    dispatch_consume.add_argument("--owner-key", required=True)
+    dispatch_consume.add_argument(
+        "--max-runtime-seconds", type=int, required=True
+    )
+    dispatch_consume.add_argument(
+        "--dispatch-contract-version",
+        default=PARTITION_RECOVERY_DISPATCH_CONTRACT,
+    )
+    dispatch_consume.add_argument("--consumed-at")
+
+    dispatch_reserve = dispatch_commands.add_parser(
+        "reserve-route",
+        help="durably reserve primary or fallback before any worker call",
+    )
+    dispatch_reserve.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    dispatch_reserve.add_argument("--dispatch-claim-id", required=True)
+    dispatch_reserve.add_argument("--work-item-id", required=True)
+    dispatch_reserve.add_argument(
+        "--generation", type=int, required=True
+    )
+    dispatch_reserve.add_argument("--authorization-id", required=True)
+    dispatch_reserve.add_argument("--admission-id", required=True)
+    dispatch_reserve.add_argument(
+        "--route-ordinal", type=int, choices=(1, 2), required=True
+    )
+    dispatch_reserve.add_argument("--packet-sha256", required=True)
+    dispatch_reserve.add_argument("--prompt-sha256", required=True)
+    dispatch_reserve.add_argument("--recovery-job-id", required=True)
+    dispatch_reserve.add_argument("--lease-id", required=True)
+    dispatch_reserve.add_argument("--owner-key", required=True)
+    dispatch_reserve.add_argument("--runtime-id", required=True)
+    dispatch_reserve.add_argument("--provider", required=True)
+    dispatch_reserve.add_argument("--model", required=True)
+    dispatch_reserve.add_argument(
+        "--controller-commit-sha256", required=True
+    )
+    dispatch_reserve.add_argument("--job-fingerprint", required=True)
+    dispatch_reserve.add_argument("--reserved-at")
+
+    dispatch_finish = dispatch_commands.add_parser(
+        "finish-route",
+        help="finish one reserved route with typed result evidence",
+    )
+    dispatch_finish.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    dispatch_finish.add_argument("--reservation-id", required=True)
+    dispatch_finish.add_argument("--dispatch-claim-id", required=True)
+    dispatch_finish.add_argument("--work-item-id", required=True)
+    dispatch_finish.add_argument(
+        "--generation", type=int, required=True
+    )
+    dispatch_finish.add_argument("--authorization-id", required=True)
+    dispatch_finish.add_argument("--admission-id", required=True)
+    dispatch_finish.add_argument(
+        "--route-ordinal", type=int, choices=(1, 2), required=True
+    )
+    dispatch_finish.add_argument("--attempt-namespace", required=True)
+    dispatch_finish.add_argument("--job-fingerprint", required=True)
+    dispatch_finish.add_argument("--recovery-job-id", required=True)
+    dispatch_finish.add_argument("--lease-id", required=True)
+    dispatch_finish.add_argument("--owner-key", required=True)
+    dispatch_finish.add_argument(
+        "--status",
+        choices=("succeeded", "failed", "execution_unknown"),
+        required=True,
+    )
+    dispatch_finish.add_argument("--failure-class")
+    dispatch_finish.add_argument("--worker-attempt-id")
+    dispatch_finish.add_argument("--stdout-sha256")
+    dispatch_finish.add_argument("--stderr-sha256")
+    dispatch_finish.add_argument("--output-sha256")
+    dispatch_finish.add_argument("--process-exit-code", type=int)
+    dispatch_finish.add_argument("--timed-out", action="store_true")
+    dispatch_finish.add_argument(
+        "--result-receipt-sha256", required=True
+    )
+    dispatch_finish.add_argument(
+        "--evidence-json", type=Path, required=True
+    )
+    dispatch_finish.add_argument("--completed-at")
+
+    dispatch_close = dispatch_commands.add_parser(
+        "close",
+        help="close exact generation 2 with typed terminal evidence",
+    )
+    dispatch_close.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    dispatch_close.add_argument("--dispatch-claim-id", required=True)
+    dispatch_close.add_argument("--work-item-id", required=True)
+    dispatch_close.add_argument(
+        "--generation", type=int, required=True
+    )
+    dispatch_close.add_argument("--authorization-id", required=True)
+    dispatch_close.add_argument("--admission-id", required=True)
+    dispatch_close.add_argument(
+        "--to-state",
+        choices=(
+            "staged_needs_review",
+            "failed_terminal",
+        ),
+        required=True,
+    )
+    dispatch_close.add_argument("--evidence-contract", required=True)
+    dispatch_close.add_argument("--evidence-sha256", required=True)
+    dispatch_close.add_argument(
+        "--evidence-json", type=Path, required=True
+    )
+    dispatch_close.add_argument("--terminal-receipt-id", required=True)
+    dispatch_close.add_argument("--source-job-id")
+    dispatch_close.add_argument("--bundle-receipt-id")
+    dispatch_close.add_argument("--candidate-proposal-id")
+    dispatch_close.add_argument("--closed-at")
     return parser
 
 
@@ -384,6 +617,16 @@ def _worker_spec(path: Path) -> WorkerSpec:
         command=tuple(command),
         timeout_seconds=value["timeout_seconds"],
     )
+
+
+def _json_object(path: Path, label: str) -> dict[str, object]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise UpdateQueueError(f"{label} JSON is unreadable") from exc
+    if not isinstance(value, dict) or not value:
+        raise UpdateQueueError(f"{label} must be a non-empty JSON object")
+    return value
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -634,6 +877,168 @@ def main(argv: Sequence[str] | None = None) -> int:
                 owner_key=args.owner_key,
                 poll_relative_root=args.poll_relative_root,
             )
+        elif args.command == "partition-recovery":
+            lane = args.partition_recovery_command
+            if lane == "verify":
+                if not args.dsn:
+                    raise UpdateQueueError(
+                        "--dsn or NHI_RULE_HISTORY_DSN is required"
+                    )
+                verified = load_partition_recovery_evidence(
+                    args.evidence_json
+                )
+                result = verify_partition_recovery_admission(
+                    args.dsn,
+                    evidence=verified["payload"],
+                )
+            else:
+                if not args.dsn:
+                    raise UpdateQueueError(
+                        "--dsn or NHI_RULE_HISTORY_DSN is required"
+                    )
+                if lane == "admit":
+                    verified = load_partition_recovery_evidence(
+                        args.evidence_json
+                    )
+                    result = admit_partition_recovery(
+                        args.dsn,
+                        evidence=verified["payload"],
+                        actor_kind=args.actor_kind,
+                        admitted_at=args.admitted_at,
+                    )
+                elif lane == "authorize":
+                    result = authorize_partition_recovery(
+                        args.dsn,
+                        admission_id=args.admission_id,
+                        work_item_id=args.work_item_id,
+                        generation=args.generation,
+                        admission_payload_sha256=(
+                            args.admission_payload_sha256
+                        ),
+                        expires_at=args.expires_at,
+                        actor_kind=args.actor_kind,
+                        authorized_at=args.authorized_at,
+                    )
+                elif lane == "show":
+                    result = show_partition_recovery(
+                        args.dsn,
+                        admission_id=args.admission_id,
+                        authorization_id=args.authorization_id,
+                    )
+                else:
+                    result = revoke_partition_recovery(
+                        args.dsn,
+                        authorization_id=args.authorization_id,
+                        reason=args.reason,
+                        actor_kind=args.actor_kind,
+                        revoked_at=args.revoked_at,
+                    )
+        elif args.command == "dispatch-v2":
+            if not args.dsn:
+                raise UpdateQueueError(
+                    "--dsn or NHI_RULE_HISTORY_DSN is required"
+                )
+            lane = args.dispatch_v2_command
+            if lane == "consume":
+                result = consume_partition_recovery_dispatch(
+                    args.dsn,
+                    work_item_id=args.work_item_id,
+                    generation=args.generation,
+                    authorization_id=args.authorization_id,
+                    admission_id=args.admission_id,
+                    admission_payload_sha256=(
+                        args.admission_payload_sha256
+                    ),
+                    sealed_packet_manifest_sha256=(
+                        args.sealed_packet_manifest_sha256
+                    ),
+                    suitability_v2_receipt_sha256=(
+                        args.suitability_v2_receipt_sha256
+                    ),
+                    job_fingerprint=args.job_fingerprint,
+                    prompt_sha256=args.prompt_sha256,
+                    route_policy_sha256=args.route_policy_sha256,
+                    owner_key=args.owner_key,
+                    max_runtime_seconds=args.max_runtime_seconds,
+                    consumed_at=args.consumed_at,
+                    dispatch_contract_version=(
+                        args.dispatch_contract_version
+                    ),
+                )
+            elif lane == "reserve-route":
+                result = reserve_partition_recovery_route(
+                    args.dsn,
+                    dispatch_claim_id=args.dispatch_claim_id,
+                    work_item_id=args.work_item_id,
+                    generation=args.generation,
+                    authorization_id=args.authorization_id,
+                    admission_id=args.admission_id,
+                    route_ordinal=args.route_ordinal,
+                    packet_sha256=args.packet_sha256,
+                    prompt_sha256=args.prompt_sha256,
+                    recovery_job_id=args.recovery_job_id,
+                    lease_id=args.lease_id,
+                    owner_key=args.owner_key,
+                    runtime_id=args.runtime_id,
+                    provider=args.provider,
+                    model=args.model,
+                    controller_commit_sha256=(
+                        args.controller_commit_sha256
+                    ),
+                    job_fingerprint=args.job_fingerprint,
+                    reserved_at=args.reserved_at,
+                )
+            elif lane == "finish-route":
+                result = finish_partition_recovery_route(
+                    args.dsn,
+                    reservation_id=args.reservation_id,
+                    dispatch_claim_id=args.dispatch_claim_id,
+                    work_item_id=args.work_item_id,
+                    generation=args.generation,
+                    authorization_id=args.authorization_id,
+                    admission_id=args.admission_id,
+                    route_ordinal=args.route_ordinal,
+                    attempt_namespace=args.attempt_namespace,
+                    job_fingerprint=args.job_fingerprint,
+                    recovery_job_id=args.recovery_job_id,
+                    lease_id=args.lease_id,
+                    owner_key=args.owner_key,
+                    status=args.status,
+                    failure_class=args.failure_class,
+                    worker_attempt_id=args.worker_attempt_id,
+                    stdout_sha256=args.stdout_sha256,
+                    stderr_sha256=args.stderr_sha256,
+                    output_sha256=args.output_sha256,
+                    process_exit_code=args.process_exit_code,
+                    timed_out=args.timed_out,
+                    result_receipt_sha256=(
+                        args.result_receipt_sha256
+                    ),
+                    evidence=_json_object(
+                        args.evidence_json, "route result evidence"
+                    ),
+                    completed_at=args.completed_at,
+                )
+            else:
+                result = close_partition_recovery_generation(
+                    args.dsn,
+                    dispatch_claim_id=args.dispatch_claim_id,
+                    work_item_id=args.work_item_id,
+                    generation=args.generation,
+                    authorization_id=args.authorization_id,
+                    admission_id=args.admission_id,
+                    to_state=args.to_state,
+                    evidence_contract=args.evidence_contract,
+                    evidence_sha256=args.evidence_sha256,
+                    evidence=_json_object(
+                        args.evidence_json, "terminal evidence"
+                    ),
+                    terminal_receipt_id=args.terminal_receipt_id,
+                    source_job_id=args.source_job_id,
+                    bundle_receipt_id=args.bundle_receipt_id,
+                    candidate_proposal_id=args.candidate_proposal_id,
+                    closed_at=args.closed_at,
+                )
         else:
             if not args.dsn:
                 raise UpdateQueueError(

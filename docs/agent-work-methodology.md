@@ -1,6 +1,6 @@
 # 逐條文歷史工作的 agent 方法學
 
-狀態：`canonical_method_v3`
+狀態：`canonical_method_v4`
 
 適用範圍：逐條文歷史重建、日期註記裁決、相鄰版本 diff 與完整度認證
 
@@ -32,20 +32,23 @@
 ## 正確的工作單位
 
 舊 queue 以 `條文 × 日期註記` 為工作單位，適合做 recall checklist，但不適合
-直接作法律 transition 的主鍵。v3 的工作單位是：
+直接作法律 transition 的主鍵。v4 在 identity 尚未裁決時的工作單位是：
 
 ```text
-stable-clause candidate
-× one proposed direct-predecessor edge
+one source-segment observation
+× one later source-segment observation or explicit event side
 × one declared source-universe cut
 ```
 
-日期註記是這個 edge 的 observation/evidence，可以是零筆、一筆或多筆。公告
-也只是 edge 的可選 evidence link。每個 work unit 必須 hash-bind：
+工作單先產生 `observation_delta`，不預設兩個 segments 是同一
+`clause_identity`，也不預設 direct predecessor。日期註記是
+observation/evidence，可以是零筆、一筆或多筆；公告也是可選 evidence
+link。每個 work unit 必須 hash-bind：
 
 - declared source set、query profiles、capture cut 與 source-universe status；
 - pre/post artifact SHA-256 與 exact source locators；
-- pre/post 完整條文候選文字及 normalized hash；
+- pre/post 完整 source-segment 候選文字、exact hash、comparison hash 與
+  normalization policy；
 - 關聯日期註記 occurrence IDs；
 - 候選公告 IDs（若有），以及 bounded notice-search ledger；
 - parser／normalizer／work-contract versions。
@@ -67,10 +70,18 @@ units。
 | `official_cumulative_annotation` | 官方條文內的日期註記能證明日期角色，且前後全文另由官方版本支持 |
 | `official_archival_snapshot` | 可驗證的官方 archival bytes、版本／as-of 與完整條文 locator |
 
-`official_cumulative_versions` 可證明「兩個官方版本之間文字改變」，但只有在
+`official_cumulative_versions` 可證明「兩個官方觀察之間文字改變」，但只有在
 declared source set 中已證明 direct adjacency，才能把它稱為直接 transition。
-若兩 anchor 間仍可能存在未取得的中間版本，結果必須是
-`source_gap`，不能把年度 diff 當成一次公告修正。
+若兩 anchor 間仍可能存在未取得的中間版本，仍應保存兩個 observations、
+deterministic diff 與 `source_appearance_window_only` 的 observation
+delta，同時標記 `source_gap`；不能把年度 diff 當成一次公告修正，也
+不能把後一 anchor 日期寫成法律生效日。這類 interval candidate 可供網站
+揭露「兩個可驗證截點之間曾改變」，但不得取得 exact-history completion。
+
+年度快照也是整條刪除的必要偵測面：前一 edition 存在、後一 edition
+消失時產生 `disappearance_observed`；後來重新出現則產生
+`appearance_observed`。條文內日期無法留下已消失條文的紀錄，因此
+日期 marker completeness 永遠要與 snapshot presence/absence replay 分開。
 
 ## Notice linkage 是獨立指標
 
@@ -100,6 +111,32 @@ anchor_replay_coverage
 不得再以 `0/6,360 連到確定公告事件` 作為完整度的主要分母。正確說法是：
 6,360 個有效日期 marker 已抽取；它們在 v3 evidence-basis 契約下尚待日期
 角色與 transition adjudication。公告連結率另計。
+
+## 外部研究模型的使用教訓（2026-07-29）
+
+早期 84–87 年來源追索以同一公開任務分派 Grok 4.5 與 Gemini 3.1 Pro：
+
+- Grok 兩次都只回傳「準備搜尋」的進度句，沒有 direct URL、locator 或
+  required sections；即使縮窄任務仍失敗。因此 Grok search lane 目前不得
+  擔任 archive-research terminal worker。一次重試失敗後停止，不以第三次
+  呼叫掩蓋 provider failure。
+- Gemini 完成格式，但 dispatcher `sources=[]`，答案以 generic homepage
+  代替 exact source，又把「本輪未找到完整全文」寫成「沒有公開下載」。
+  其輸出只能是 lead inventory；每一個 positive claim 與 absence claim 都
+  必須由 controller 開啟原頁重驗。
+- 多模型一致、語氣肯定或表格完整都不是 evidence。可 promotion 的最小單位
+  仍是 `direct URL + exact locator + retrieved observation + claim limit`。
+- Provider 能力也要留下 terminal receipt：`ok` 只表示 output contract
+  通過，不表示研究結論通過；另設 `evidentiary_disposition`。
+
+原始回答與採納裁決見
+[`2026-07-29-early-rule-multimodel-research-results.md`](audits/2026-07-29-early-rule-multimodel-research-results.md)。
+
+後續 controller 以歷史法規名稱重新查 FINT，成功取得 84-06-20 原始公告與
+25 頁規範掃描；這證明模型失敗不等於來源不存在，也證明早期查詢應先找
+instrument title／公文 metadata，再進附件。85/1/1 精確修正文仍是
+bounded not-found。取得與 live PG 收據見
+[`2026-07-29-fint-84-baseline-acquisition.json`](audits/2026-07-29-fint-84-baseline-acquisition.json)。
 
 ## Source selection：給付規定 RSS 優先
 
@@ -226,19 +263,25 @@ fallback 的同意都不是第二份官方證據。
 
 ```text
 source_artifact
-source_snapshot
+source_edition_observation
+source_segment_observation
 source_date_annotation
-rule_identity
-rule_designation
-rule_version
-rule_transition
+clause_identity
+identity_assertion
+designation_assignment
+clause_text_state
+clause_state_observation
+clause_state_episode
+observation_delta
+adjudicated_transition
 transition_evidence
 official_notice
 transition_notice_link
-comparison_edge
+lineage_relation
 diff_hunk
-history_coverage
-notice_search_observation
+coverage_assessment
+source_search_run
+replay_check
 drug_rule_link_evidence
 ```
 
@@ -253,10 +296,12 @@ foreign key。
 
 ## 對下一個 agent 的分期工作
 
-1. **M1 契約修正**：新增 v3 schema/migration 草案；把 mandatory event FK
-   改為 accepted transition evidence，保留舊 stage 不覆寫。
-2. **M2 Queue v3**：將 3,080 個 discovery pairs 轉成 direct-edge candidates，
-   對缺少 pre/post sides 的列明確產生 `source_gap`。
+1. **M1 契約修正**：新增 v4 observation／identity／transition
+   schema/migration 草案；把 mandatory event FK 改為 accepted transition
+   evidence，保留舊 stage 不覆寫。
+2. **M2 Queue v4**：將 3,080 個 discovery pairs 與官方全文 observations
+   轉成 source-segment comparison units；不先建立 direct edge。缺少
+   pre/post sides 的列明確產生 `source_gap`。
 3. **M3 Pilot 10**：人工可審的完整 packets、candidate results、review
    receipts 與 replay。
 4. **M4 Scale**：pilot 通過後才分批處理；每 25 units 做 drift/repetition/

@@ -1,20 +1,92 @@
 # 專案進度
 
-最後核對：2026-07-28
+最後核對：2026-07-29
 
 ## 目前操作狀態
 
 - 條文整理 agent dispatch 已依 Copper 指示暫停：PG proposal task =
   `skipped_gate`、next due = 2099；執行 wrapper 預設
   `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=false`。
-- deterministic RSS／raw acquisition 可保留，但不呼叫 Claude 或其他模型
-  整理條文。
-- canonical 方法已改為 v3 transition-evidence contract；公告 linkage 是
-  獨立補強 coverage，不是必要完成 gate。舊 3,080-row v1 queue 保留作
-  discovery provenance，不直接執行。
+- deterministic RSS／raw acquisition 與 bounded public-source research
+  可保留，但不呼叫 Claude 或其他模型批次整理／裁決條文。
+- canonical 方法已改為 v4 evidence-union contract：單一條文是 legal
+  version unit；年度快照只作 source observations 與整條消失偵測；
+  appearance／text-change／disappearance 不先冒充法律事件。條文日期與
+  公文用來解釋 transition，公告 linkage 與 exact-date coverage分開報。
+  GPT Pro 初審 `REPAIR_THEN_ACCEPT` 的 R1–R8 已全部納入，修後窄版複審
+  為 `ACCEPT`。84 年公文的一般實施日不得無條件下推為每條的精確生效日；
+  JSONL／SQLite／reader 的共同狀態與禁語 validator 仍待實作。
 
 ## 已完成
 
+- 現行條文已從同一個 sealed PG publication 投影到三個可用面：
+  `hmj:8710` 提供 latest list/search、單條 detail、history inventory 與
+  reviewed enrichment API；付費站
+  `https://s.copper0722.com/member/tools/nhi-rules/` 已上線，頁面與
+  same-origin JSON 均經既有訂閱 gateway 保護；BOA／boan-emr 可使用
+  latest-only API contract，但 2026-07-29 尚未完成從 `boa` 主機發出的
+  實際讀取驗證，因本機 SSH key 被該主機拒絕。GitHub 的定位是公開方法學、
+  schema、crawler、exporter、稽核收據與可攜 JSON／SQLite release，不是
+  付費內容的 production static site。
+- 現行分章正典已程式化切成 639 個單一條文 publication rows；每條保存
+  exact text、13,874 個結構區塊、3,487 個 distinct valid ROC-date rows、
+  官方 ODT URL/hash/locator 與版本缺口 inventory。依 owner 指定規則，
+  應有 3,512 個版本、已重建 656 個全文狀態、尚缺 2,861 個，分布於
+  440 條；199 條目前不缺，另有 5 條日期計數低於既有全文證據而明列
+  underflow。v18 migration/loader 已通過 disposable forward、
+  639-row active view、idempotent replay、sealed mutation rejection 與
+  rollback；兩輪 Fable 均為 `ACCEPT_FOR_LIVE_STAGE`。v16 authority
+  policy 與 v18 projection 已套入 `hmj/vault_main`，active sealed run 為
+  `a707d13a-0b06-5dfe-96b7-6d107ab8793f`；live replay、active view、
+  15 個 trigger rows、封存後 UPDATE、直插 sealed run、loading activation
+  rejection 均已核對。
+- 條文歷史列已程式化區分版本距離：日期差只涵蓋一版時顯示
+  「與上一版本差異」；跨過至少一個預期版本時顯示「與舊版本差異」及
+  缺少的中間全文版本數。
+- FINT `FINTQRY03 → FINTQRY04` 可續跑研究 crawler 已實作。CAPD 真實
+  canary 完成 1 個 query、6 個正式文號、6 份完整詳情文字、1 個宣告附件、
+  8 個 raw observations、0 issues；所有 bytes 均 content-addressed。
+- 2026-07-28 確認 FINT 四個關鍵字留空即可列舉官方目前仍公開的 record
+  surface：`1900-01-01..2026-07-28` 共 17,497 筆，年度日期分割可用。
+  1954 年 1/1 canary 已通過搜尋頁
+  index、RowNo、detail raw、manifest 與 disposable PG seal。2026 年
+  canary 亦完成 221/221 details、428 attachment declarations、0 issues，
+  並通過 disposable PG 221/428/0 seal。年度空查詢後來降為可選 recall
+  audit；1900–1989 共 90 個 manifests／448 match rows 後停止，partial raw
+  保留，正式 PG 未載入。
+- 2026-07-29 重新讀取 NHI `lp-3258`：即時 listing 為 859 rows／43 頁，
+  最舊可見列為 111-09-06，且表格含「刊登期限」。父層雖標示「自103年4月
+  3日以後生效之公告」，此 target 不能當作 2014 年後完整歷史分母。
+- 84–87 年來源系譜已補入方法學。FINT 現存的
+  `健保醫字第84010140號` 與附件二直接證明 84-06-20 公告
+  `全民健康保險藥品使用規範`、除特別明定外自 84-07-01 實施；25 頁
+  官方掃描已 content-addressed 封存並進 live append-only PG，sealed run
+  `2fa58923-9a91-8c8a-9a8f-a4ee0010845d`。原始 PDF SHA-256
+  `f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2`。
+  原檔無實質文字層，OCR 尚待逐頁 proofread。
+  87-03-04 改名及 87-04-01 實施仍由後來官方紀實支持；國圖
+  `D9507418`／`84衛技字第052484號` 提供函轉 metadata。
+  國史館臺灣文獻館衛生處全宗的 broad query 宣告 12,992 筆但可見導覽停在
+  第 10,000 筆（1967）；1995 年切片只得一筆不相關卷，精確文號／題名均
+  0 筆。85/1/1 精確修正文仍未找到；條文句子為 0，日期寫法命中亦均
+  不相關。這是 bounded not-found，不是不存在證明。
+- 現行分章 PG parse 的 661 個不同條文標題已程式化產生 1,946 筆 seed
+  provenance、1,446 組不重複 FINT queries。第一輪全期 baseline
+  `藥品給付規定` 共 1,309 筆；跑到 265 筆時因發現更強的空關鍵字全集而
+  停止，partial raw 保留但不得 sealed。關鍵字 queries 改作 discrepancy
+  與更新補漏。
+- append-only FINT PG schema 與 loader 已經 Fable 獨立複審接受並套用至
+  `hmj/vault_main`：正式文號分組、query 命中、
+  RowNo occurrence、詳情全文 snapshot、附件 declaration、附件 bytes
+  snapshot 分離；disposable PostgreSQL 已通過 forward reapply／空庫
+  rollback、完整 crawler projection load、逐 query 1..N、兩次同 seed
+  重跑、封存 count gate、idempotent reload 與封存後
+  INSERT／UPDATE／DELETE／TRUNCATE rejection。Grok 初審為
+  `REPAIR_THEN_REAUDIT`；其實質 findings 已修。2026-07-29 Fable 結論
+  `ACCEPT_FOR_BOUNDED_LIVE_STAGE`；84 年 bounded run 已 sealed，count、
+  RowNo `1..2`、附件 bytes 關聯與 sealed-row immutability 均已 live
+  驗證；18/18 FINT crawler／seed／PG tests passed，live replay 回
+  `already_sealed`。
 - 公開 GitHub repo 與資料授權邊界。
 - 14 份歷史 ODT 的 checksum manifest。
 - staging parser、PostgreSQL loader、migration 與 70 項 repo 測試。
@@ -106,8 +178,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 432 項 public tests
-  （425 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 453 項 public tests
+  （446 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
   響應式 reader controls 與真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
@@ -297,6 +369,11 @@
   resources，key-set 完全一致；266 個附件已全數實抓，267 個 unique
   artifacts／57,999,120 bytes 通過 raw verification。92/92 ODT 已解析為
   44,504 blocks／1,322 occurrence candidates，兩個 PG runs 均 sealed。
+- 現行文字 authority 已由 Copper 指定並寫入機器可讀契約：健保署
+  「最新版藥品給付規定內容（分章節）」頁是 sole current-text authority，
+  ODT 為主要結構解析格式；最新整份檔降為 non-authoritative quality
+  cross-check。639 條中的 33 個 whole/chapter 差異仍完整保存，但不再
+  阻擋 canonical 分章內容發布，也不要求逐條選邊。
 - NHI `lp-3258` 法規公告 listing adapter 已依 live DOM／query pagination
   修正並做兩輪全量、未先篩關鍵字的 enumeration：43/43 頁、858/858 rows，
   兩輪 resource JSONL byte-identical，resource-key set 完全一致；858/858
@@ -307,19 +384,18 @@
   join。這關閉可重跑的 source-surface discrepancy inventory，不關閉
   relevance、同義 query、法律來源或逐條 event/effect。
 - 同批 occurrence header multiset preflight 已完成：整份 662、分章 660，
-  其中 655 個相符、整份獨有 7、分章獨有 5。這是明確的 discrepancy
-  inventory；只比較條號／標題 occurrence，不是全文逐條 parity，故
-  whole↔chapter gate 仍為 open。
+  其中 655 個相符、整份獨有 7、分章獨有 5。這是非阻擋的 discrepancy
+  inventory；只比較條號／標題 occurrence，不是全文逐條 parity。
 - 後續已用 sealed lossless structural rows 重建現行整份／分章各 639 條
   完整條文並逐條比對；606 條全文相同、33 條不同，無結構 blocker。這
-  證明目前兩個官方 current surfaces 確實不一致，狀態為 `parity_failed`；
-  其中 19 個是 leafmost mismatches，其餘是子條文差異向父層傳播。仍須逐一
-  判讀何者為正確／何時生效，不能任選一側當 canonical anchor。
+  證明 whole cross-check 與 canonical 分章頁確實不一致；其中 19 個是
+  leafmost mismatches，其餘是子條文差異向父層傳播。現行投影固定使用
+  canonical 分章頁，不再把差異當成發布 blocker。
 - 19 個 leafmost mismatches 已逐條 exact diff 並暫分為：6 個版本／日期
   實質差異、6 個 list-marker 結構差異、6 個純標點、1 個尾端補充表 layout。
-  `8.2.16` 的分章檔包含 115/8/1 future-effective 版本，是不能把「最新
-  公布」直接當「今日生效」的實例。分類未選 canonical side，whole↔chapter
-  gate 仍 open。
+  `8.2.16` 的分章檔包含 115/8/1 future-effective 版本，因此 reader 必須
+  區分「官方最新版文字」與「法律生效狀態」；這不改變分章頁的文字
+  authority。
 - 已完成 PG-driven 單條文 reader template：`?rule=0.4` 只顯示 `0.4`
   最新全文及其 9 組歷史 diff；`0.2` 的 15 份相同來源觀察則正確折疊為
   1 個文字版本、0 組 diff。全域搜尋從 12 條 index 依藥名／條件選路。
@@ -329,15 +405,18 @@
 
 ## 尚未完成
 
-- 完整官方來源宇宙：MOHW FINT 仍只封閉「精確字串＋日期窗」；NHI current
-  whole／chapter 的 acquisition 已關閉；全文 parity 已執行但失敗（639
-  條中 33 條不同）；NHI listing 的 858-row index 與 858/858 detail HTML
+- 完整官方來源宇宙：MOHW FINT 仍只封閉已取得的 targeted
+  「精確字串＋日期窗」；空關鍵字 17,497-row surface 不是完整法律來源宇宙，
+  也不再是主取得 gate。NHI current
+  whole／chapter 的 acquisition 已關閉，canonical 分章頁已選定，整份
+  cross-check 的 33 個差異不阻擋現行投影；2026-07-27 sealed NHI listing
+  capture 的 858-row index 與 858/858 detail HTML
   皆已兩輪擷取，兩輪各解析出相同的 2,400 個附件 URL 與 5 個零附件頁；
   2,400/2,400 附件已抓取（476,139,573 bytes、2,396 unique artifacts、
   0 issues）並 sealed 到 append-only PG acquisition stage。NHI↔FINT
   文號分組對帳留下 NHI-only 630、FINT-only 148 及 7 個 collision keys；
-  相關性、附件語意、同義 query、法務來源與逐筆 discrepancy 裁決仍待
-  closure。
+  相關性、附件語意、同義 query與法務來源仍待 closure；2026-07-29 live
+  surface 已為 859 rows，證明 listing 會變動。
   歷史精確詞資料的 431 PDF 已完成 text＋geometry extraction，但 7 個
   zero-word pages 仍需 OCR／視覺覆核；147 ODS 已完成 typed cell
   extraction；13 images 已 render＋OCR 但仍有 13/13 visual review；347/347
@@ -347,6 +426,9 @@
   effect。OCR 只作非 authoritative 搜尋候選。
 - 法律生效日與 transition evidence ledger；公告以 optional notice link
   保存。
+- 14 份年度整編檔尚未全部 materialize 成 canonical single-clause
+  observations、presence/absence 與 create／amend／delete／restore／move
+  candidates；這是下一個主要 deterministic milestone。
 - 6,360 個有效 source date annotations 的日期角色／transition evidence
   adjudication；
   另 6 個 raw slash-triplet occurrences 已終結判為非日期劑量；
