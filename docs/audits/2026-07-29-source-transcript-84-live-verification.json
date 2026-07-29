@@ -1,0 +1,62 @@
+{
+  "schema": "nhi-rule-history/source-transcript-live-verification/v1",
+  "verified_at": "2026-07-29",
+  "database": "hmj/vault_main",
+  "source": {
+    "document_number": "健保醫字第84010140號",
+    "source_edition_label": "84年全民健康保險藥品使用規範",
+    "fint_run_id": "2fa58923-9a91-8c8a-9a8f-a4ee0010845d",
+    "attachment_snapshot_id": "1fe735ea3dbc407a392b55abe950fd5893788b42dafd804fa082a5d67582fb4b",
+    "attachment_sha256": "f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2",
+    "attachment_byte_size": 3802900
+  },
+  "transcript_run": {
+    "run_id": "03f3b55e-8a07-5efb-b3ec-f908fbd01575",
+    "state": "sealed",
+    "review_status": "agent_proofread_pending_independent_review",
+    "input_fingerprint": "c4e8e21f203a9e31168606aa5cb4d4cd1205a2f0bfe6cf0dcd747af827cf144f",
+    "output_fingerprint": "a02f9691a082e84178fcb7697cbee6b6132b92d0beaa1a84dc237ddb36801b44",
+    "sealed_fingerprint": "d0b74a7d0e2fe12d8addea3264902359460ae3a66db244d6cbe7facd570e8f96",
+    "migration_sha256": "c99b84df27f18d4c1a1bd829224cc510d575f576e19a6e1180a6bbb9e592bfc9",
+    "code_sha256": "5f196ea60d05e709404bd8d98c11fa3c4b9c0a26598f16bc8312bf911c30b538"
+  },
+  "counts": {
+    "proofread_artifact": 1,
+    "source_page": 25,
+    "source_segment": 114,
+    "lineage_analysis_artifact": 1,
+    "lineage_candidate": 114
+  },
+  "lineage_disposition_counts": {
+    "same_designation_text_continuity_candidate": 8,
+    "renumber_or_move_candidate": 86,
+    "absent_in_96_observation": 6,
+    "new_in_96_observation": 0,
+    "ambiguous": 14
+  },
+  "validation": {
+    "page_markers_exact_and_contiguous": true,
+    "all_segment_ids_unique": true,
+    "all_segment_exact_text_found_in_declared_page_span": true,
+    "lineage_candidates_exactly_cover_segments": true,
+    "manifest_hash_and_byte_size_checks": true,
+    "official_attachment_foreign_key_verified": true,
+    "disposable_forward_load_replay_and_rollback": true,
+    "sealed_update_delete_and_truncate_rejected": true,
+    "fresh_live_count_and_fingerprint_recalculation": true
+  },
+  "claims": {
+    "source_observation_only": true,
+    "legal_identity_adjudicated": false,
+    "direct_predecessor_claimed": false,
+    "legal_effective_date_assigned_per_segment": false,
+    "complete_history_claimed": false
+  },
+  "history_inventory_effect": {
+    "current_clause_expected_version_count": 3512,
+    "current_clause_reconstructed_version_count": 656,
+    "current_clause_missing_version_count": 2861,
+    "changed_by_this_source_observation_load": false,
+    "reason": "84-year source segments have not yet been adjudicated into stable current-clause identities or canonical legal versions"
+  }
+}

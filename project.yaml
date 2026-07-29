@@ -10,8 +10,8 @@ last_verified_date: "2026-07-29"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 465
-  public_tests_passed: 458
+  public_tests_run: 473
+  public_tests_passed: 466
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -28,6 +28,7 @@ public_outputs:
   stage_v2_release: prepared_partial_evidence_bundle_not_published
   sqlite_snapshot: v1_prepared_chapter_00_verified_v2_pending
   official_binary_archive: https://github.com/copper0722/nhi-rule-history/releases/tag/raw-odt-v1
+  source_transcript_84_release: pending_github_release_after_repo_merge
   reader_prototype: prototype/reader/index.html
   reader_prototype_url: https://copper0722.github.io/nhi-rule-history/?rule=0.4
   reader_prototype_deployment:
@@ -91,13 +92,46 @@ current_publication:
     sealed_mutation_probe: rejected
     disposable_rollback: passed
     focused_tests: passed_36_with_1_skip
-    full_tests: passed_527_with_8_skips_of_535
+    full_tests: passed_535_with_8_skips_of_543
     independent_fable_gate: ACCEPT_FOR_LIVE_STAGE
     independent_fable_reaudit: ACCEPT_FOR_LIVE_STAGE
     live_status: sealed_active_verified
     live_run_id: a707d13a-0b06-5dfe-96b7-6d107ab8793f
     live_output_fingerprint: 9e5cca2a72012012be356ede951f2b2c55a4766cccf10efa07b51482bd951c27
     live_verification: docs/audits/2026-07-29-current-publication-live-verification.json
+
+source_transcript_84:
+  source_role: source_observation_not_canonical_legal_version
+  source_document_number: 健保醫字第84010140號
+  source_attachment_sha256: f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2
+  producer: openai_gpt_pro
+  review_status: agent_proofread_pending_independent_review
+  transcript_sha256: 38f0bccaaf13aed3db8631e6b773001e4c85287130ceee1cc649b637b4284a5c
+  segment_jsonl_sha256: 5aed4268dae7f5a3b715609c17523c9cf1d4977d31c2a2a1db4bd93917beae2c
+  lineage_analysis_sha256: 9ade80430d00f36fbb2e06a73702794e3b3dbe1d00e13dbcb062537cc5ad7dc3
+  pg_run_id: 03f3b55e-8a07-5efb-b3ec-f908fbd01575
+  pg_state: sealed
+  counts:
+    source_pages: 25
+    source_segments: 114
+    lineage_candidates: 114
+    unresolved_visual_readings: 0
+    literal_deleted_markers: 0
+  validation:
+    all_exact_text_found_in_declared_page_span: true
+    candidate_ids_exactly_cover_segment_ids: true
+    idempotent_replay: passed
+    sealed_mutation_guards: passed_disposable
+    rollback: passed_disposable
+    fresh_live_fingerprint_verification: passed
+  legal_claims:
+    legal_identity_adjudicated: false
+    direct_predecessor_claimed: false
+    legal_effective_date_assigned_per_segment: false
+    complete_history_claimed: false
+  current_history_inventory_changed: false
+  current_missing_version_count: 2861
+  live_receipt: docs/audits/2026-07-29-source-transcript-84-live-verification.json
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
@@ -181,7 +215,7 @@ methodology_audit:
   final_pro_disposition: ACCEPT
   final_pro_response: docs/audits/2026-07-29-methodology-v4-pro-reaudit-response.md
   remaining_implementation:
-    - proofread_84_scan
+    - independent_review_of_84_proofread
     - shared_jsonl_sqlite_api_reader_status_and_wording_validator
     - clause_by_clause_identity_event_replay_and_diff_adjudication
   public_release_authorized: false
@@ -549,7 +583,8 @@ early_rule_source_lineage:
     document_number: 健保醫字第84010140號
     pg_run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
     attachment_sha256: f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2
-    proofread_state: pending
+    proofread_state: agent_proofread_completed_pending_independent_review
+    source_transcript_pg_run_id: 03f3b55e-8a07-5efb-b3ec-f908fbd01575
   exact_85_01_01_amendment: not_found_after_declared_search
   public_complete_original_1996_text: availability_unresolved
   paper_only_proved: false
@@ -1110,7 +1145,7 @@ methodology_v3:
       separate_drug_announcement_search_required: false
 
 methodology_v4:
-  status: pro_repair_applied_84_baseline_acquired_implementation_open
+  status: pro_repair_applied_84_transcript_loaded_implementation_open
   decided_on: "2026-07-29"
   documents:
     public_methodology: docs/methodology.md
@@ -1184,7 +1219,17 @@ methodology_v4:
     pg_run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
     pg_state: sealed
     receipt: docs/audits/2026-07-29-fint-84-baseline-acquisition.json
-    ocr_state: unproofread_observation_only
+    ocr_state: superseded_for_text_use_by_agent_proofread_pending_independent_review
+    source_transcript:
+      pg_run_id: 03f3b55e-8a07-5efb-b3ec-f908fbd01575
+      state: sealed
+      review_status: agent_proofread_pending_independent_review
+      pages: 25
+      segments: 114
+      lineage_candidates: 114
+      legal_identity_adjudicated: false
+      current_history_inventory_changed: false
+      receipt: docs/audits/2026-07-29-source-transcript-84-live-verification.json
   exact_85_01_01_event:
     status: not_found_after_declared_search
     absence_claim_allowed: false
@@ -1205,7 +1250,7 @@ methodology_v4:
       - reader_wording_validator
     residual_nonblocking_contracts:
       - document_general_effective_date_not_automatically_clause_effective_date
-      - ocr_remains_unproofread_observation_until_review
+      - agent_proofread_remains_source_observation_until_independent_review_and_identity_adjudication
       - 84_to_96_is_observation_delta_with_unknown_intermediate_events
       - shared_jsonl_sqlite_reader_status_validator_pending
   fint_live_gate:
@@ -1223,10 +1268,10 @@ current_work_package:
   title: Materialize official editions into source-segment observations
   next_action: >
     Do not dispatch clause-history proposal workers. Deterministically split
-    the 84 scan after proofread and every annual/current edition into
-    source-segment or single-clause observations; compare adjacent presence,
-    designation, structure and full-text hashes; create neutral appearance,
-    text-change and disappearance observations. In parallel add the
-    PostgreSQL/SQLite observation, identity-lineage, transition-evidence and
-    three-axis time contract. Freeze 10 representative pilot packets before
-    model-assisted proofread or identity work.
+    every annual/current edition into source-segment or single-clause
+    observations; the 84 scan is now sealed as 114 source observations pending
+    independent review. Compare adjacent presence, designation, structure and
+    full-text hashes; create neutral appearance, text-change and disappearance
+    observations. Next, independently review the 84 transcript and freeze 10
+    representative identity-adjudication pilot packets before canonical
+    promotion.

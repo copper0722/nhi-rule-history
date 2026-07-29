@@ -15,6 +15,8 @@
   公文用來解釋 transition，公告 linkage 與 exact-date coverage分開報。
   GPT Pro 初審 `REPAIR_THEN_ACCEPT` 的 R1–R8 已全部納入，修後窄版複審
   為 `ACCEPT`。84 年公文的一般實施日不得無條件下推為每條的精確生效日；
+  84 年 25 頁掃描的 GPT Pro 全頁校對與 114 段 source segmentation 已
+  完成並進 immutable PG source-observation layer；尚待獨立逐頁複核。
   JSONL／SQLite／reader 的共同狀態與禁語 validator 仍待實作。
 
 ## 已完成
@@ -43,6 +45,16 @@
 - 條文歷史列已程式化區分版本距離：日期差只涵蓋一版時顯示
   「與上一版本差異」；跨過至少一個預期版本時顯示「與舊版本差異」及
   缺少的中間全文版本數。
+- GPT Pro 已逐頁檢視 84 年 25 頁官方掃描，產出完整 proofread transcript、
+  114 個 source-local segments 與 114 個 84→96 lineage candidates；
+  114/114 段均經程式回查存在於宣告頁面範圍，0 個 unresolved visual
+  readings、0 個 literal deletion placeholders。這批資料以
+  `agent_proofread_pending_independent_review` 載入
+  `nhi_rule_history_transcript`，live sealed run
+  `03f3b55e-8a07-5efb-b3ec-f908fbd01575` 為 25 pages／114 segments／
+  114 candidates。它明確只是 source observation：不宣告 stable legal
+  identity、direct predecessor、每段精確生效日或完整歷史。故現存條文
+  缺版總數仍是 2,861，待 84 段落經 identity adjudication 後才可減少。
 - FINT `FINTQRY03 → FINTQRY04` 可續跑研究 crawler 已實作。CAPD 真實
   canary 完成 1 個 query、6 個正式文號、6 份完整詳情文字、1 個宣告附件、
   8 個 raw observations、0 issues；所有 bytes 均 content-addressed。
@@ -63,7 +75,8 @@
   官方掃描已 content-addressed 封存並進 live append-only PG，sealed run
   `2fa58923-9a91-8c8a-9a8f-a4ee0010845d`。原始 PDF SHA-256
   `f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2`。
-  原檔無實質文字層，OCR 尚待逐頁 proofread。
+  原檔無實質文字層；GPT Pro 全頁 proofread 已完成，但仍保留
+  pending independent review，不直接升格 canonical clause text。
   87-03-04 改名及 87-04-01 實施仍由後來官方紀實支持；國圖
   `D9507418`／`84衛技字第052484號` 提供函轉 metadata。
   國史館臺灣文獻館衛生處全宗的 broad query 宣告 12,992 筆但可見導覽停在
@@ -178,8 +191,8 @@
   API 回報 14,066 筆現行品項，schema 仍含品項代碼、ATC、給付代碼清單、
   給付文件清單與價格有效期。INAE3000 作每週 freshness；IODE 月檔仍是
   immutable clean-room rebuild 基線。
-- 最新全套驗證為 70 項 legacy tests（1 skip）與 453 項 public tests
-  （446 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
+- 最新全套驗證為 70 項 legacy tests（1 skip）與 473 項 public tests
+  （466 passed、7 skip；含 `通則` PG/JSONL/SQLite/reader contracts、
   響應式 reader controls 與真實 PostgreSQL linkage transaction test）；
   public-tree、SQLite integrity／foreign-key 與正式 IODE raw fetch smoke
   均通過。
