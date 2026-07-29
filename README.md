@@ -37,21 +37,22 @@ version chain**：目前共有 152 筆來源觀察、29 個不同文字狀態、
 詳見 [`通則` 方法學](docs/chapter-00-template.md)與
 [reader template](prototype/reader/index.html)。
 
-第 `0.4` 條另完成 reader enrichment：正文中的藥名與疾病詞只顯示可點擊
-的名稱，ATC、ICD-11 code 與「已確認／候選」狀態在站內 tag 頁顯示；限制
-條件詞以語意角色著色，`且`／`或`共用邏輯詞樣式，主觀的`需要`與低區辨力
-的`至多`／`應`不強調；`二週`、`六天`、`一個月`、`每週`等期間則程式化
-標為 duration，`15支`／`20支`等變更數量標為 quantity；單字`限`不會在
-`上限`內誤著色。
-文內民國日期縮小顯示，歷史前置一段由 stored diff 產生的 agent 摘要。ICD-11
-公開投影只含專案建立的 term→code 關係，不含 WHO 標題、URI、定義或完整
-參考資料；完整欄位仍留在私有 PostgreSQL。詳見
+條件式閱讀層已正規化成 PostgreSQL 的 concept／alias／occurrence schema，
+不再由前端手工逐條加標籤。第一個 sealed run 以既有 82 個 reviewed tags
+建立 79 concepts、371 aliases 與 92 public-code links，再以
+longest-match、token boundary、精確 Unicode／UTF-8 offsets 與 no-overlap
+規則掃描現行 639 條、13,874 個 source blocks。共保存 1,916 occurrences：
+1,294 admitted、192 candidate、430 blocked；無命中的 block 也有 scan
+receipt。0.4 的糖尿病、insulin、GLP-1、CAPD、透析液等可由同一 API 自動
+渲染；正文只顯示名稱，ATC、ICD-11 與健保治療支付碼留在 hover／鍵盤
+focus／手機點按提示窗。ICD-11 公開投影只含 code，WHO title、URI、
+definition 與 reference snapshot 仍留在私有 PostgreSQL。詳見
 [資料授權邊界](DATA_LICENSE.md)。
 
-條文詞彙只有在目前能可靠對應 ATC 或 ICD-11 時才上站內連結。此門檻已套用
-到最新版全文與歷史 diff：透析液、抗生素、抗凝血劑、凝血因子與歷史版
-exenatide／liraglutide 等均已補入；CAPD 等尚未接入可靠編碼系統的治療詞
-維持純文字。
+這個 run 已完整掃描既定 publication，但詞彙分母仍只是 82-tag reviewed
+seed，**不能宣稱全書術語已涵蓋**。例如 2.6.3 的 ezetimibe、statin、
+gemfibrozil 與高膽固醇血症目前仍是公開 negative canary。新增詞彙須先進
+concept／alias review，再建立新的 immutable run；不在 HTML 手工補字。
 
 其餘全庫工作仍分成互不冒充的受限 staging：
 

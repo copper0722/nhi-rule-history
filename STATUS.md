@@ -181,17 +181,34 @@
   probe rows 已 rollback 為 0。v15 再新增 public ICD-code 與 private
   ICD mapping 兩個 count 欄位，因此九類 child 均在 seal gate 精確核對；
   最新兩者皆為 21。
-- 語意標籤方法已拆成三層：正式 terminology master、concept／alias、
-  clause occurrence。PG 現有 ATC 6,812 列、ICD-11 34,663 列、健保治療／
-  處置給付 6,151 列，這些獨立底表不要求先在條文出現，也不交由模型重抄。
-  Gemini 只處理 alias 與 concept bridge 的高召回候選。第一批以現有
-  82 個 reader tags 為分母，產出 79 個 concepts、371 個 aliases；
-  82/82 source tag IDs 恰好一次、0 個 code 被改寫或捏造。35 個 aliases
-  明列 `context_required`，另有 8 個 normalized alias collisions，故本批
-  維持 candidate-only、尚未寫入正式 PG。`糖尿病／Diabetes mellitus／
-  Diabetes／DM` 已同列；`DM` 因歧義不得無條件自動著色。公開候選與
-  validation receipt 位於
-  `data/proposals/gemini-semantic-alias-2026-07-29/`。
+- 語意標籤方法已拆成正式 terminology master、concept／alias 與
+  clause occurrence 三層。PG 現有 ATC 6,812 列、ICD-11 34,663 列、健保
+  治療／處置給付 6,151 列；模型不重抄底表，只能提出 concept／alias
+  候選。v20 append-only schema 已把 79 個 concepts、371 個 aliases、
+  92 個 external-code rows 與 82 個 seed-tag links 正規化入庫；每個
+  alias 與 occurrence 各自保存 admitted／candidate／blocked。
+  deterministic matcher 以 longest-match、token boundary、精確 Unicode
+  scalar 與 UTF-8 byte offsets、no-overlap 規則掃描 639/639 條、
+  13,874/13,874 source blocks，得到 1,916 occurrences：1,294 admitted、
+  192 candidate、430 blocked；0 offset mismatch、0 admitted overlap。
+  sealed run `8d5b7f1d-01cf-5af6-932b-8bb2378f35ff` 已啟用，exact replay
+  回傳既有 run，封存後 parent／child／activation mutation 均遭拒絕。
+- `copper-panel` 已以
+  `nhi-reimbursement-rules/terminology-occurrences/v1` 輸出精確 occurrence
+  segments；付費站 fail-closed 驗證 run／publication／seed fingerprint
+  後才建置。0.4 的糖尿病、insulin、GLP-1、CAPD 等正文只顯示名稱，code
+  只在 hover／鍵盤 focus 提示窗顯示，實際 production browser 已通過。
+  但 v1 詞彙分母仍只是既有 82 個 reviewed tags；2.6.3 的 ezetimibe、
+  statin、gemfibrozil、高膽固醇血症尚未成為連結。故「639 條與 13,874
+  blocks 全掃描」已完成，「全書 terminology vocabulary」仍是公開缺口。
+- GPT Pro 的 post-release gate 先因缺少機器收據判 `REPAIR`；實庫重算後
+  證明 82/82 seed tags 守恆、七類 admission lineage 缺陷全為 0，95 個
+  source code links 精確正規化為 92 rows＋3 個明列 duplicate collapses，
+  且 unmapped／provenance gap／conflict／master miss／private exposure
+  全為 0。API golden gate 另證明既有 82-row `semantic_tags` payload
+  保留、公開 1,294 筆全來自 admitted view、candidate／blocked 與私有
+  ICD 欄位均未輸出。Pro 修後終判 `GO`，不需 migration、rescan 或撤換
+  active run。
 - `0.4` 的歷史主標籤已改由「下一版首次新出現的文內日期註記」程式化產生，
   例如 99 年版顯示 `99/11`；同時保留來源版名，並明示日期尚未認定為法律
   生效日。

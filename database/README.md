@@ -37,6 +37,7 @@ model:
 | `tw_drug_history_structural_stage` | v2 ODT blocks/occurrences/issues | 31,377 / 1,228 / 547 |
 | `nhi_rule_history_edition` | complete source-edition containers | `通則`: 15 cumulative editions |
 | `nhi_rule_history_clause` | canonical single-clause source-observed version chains | 12 clauses, 152 observations, 29 text states, 17 edges, 26 hunks |
+| `nhi_rule_history_terminology` | append-only concepts, aliases, external-code links, block scan receipts and exact clause occurrences | v1 reviewed seed: 79 concepts, 371 aliases, 13,874 blocks, 1,916 occurrences |
 
 `nhi_rule_history_edition` is upstream provenance, not the canonical version
 unit shown to readers. `nhi_rule_history_clause` gives every top-level clause
@@ -101,6 +102,24 @@ The reader-facing single-clause template uses this normalized group:
 | Text | `clause_version_block` |
 | Comparison | `clause_version_edge`, `clause_diff_hunk` |
 
+The terminology projection uses a separate append-only group:
+
+| Group | Tables |
+|---|---|
+| Stable registry | `concept_registry` |
+| Run and activation | `tagging_run`, `tagging_run_activation` |
+| Run-scoped concepts | `run_concept`, `concept_seed_tag_link` |
+| Match vocabulary | `concept_alias` |
+| Public code links | `concept_external_code` |
+| Complete scan denominator | `tagging_run_block_input` |
+| Exact text locations | `clause_occurrence` |
+
+`clause_occurrence` stores both Unicode-scalar and UTF-8-byte half-open offsets.
+The visible substring is therefore reproducible without rewriting official
+text. Each alias and occurrence has its own admission status; candidate and
+blocked matches remain auditable. A sealed run and all children are immutable,
+and activation appends a new pointer instead of mutating the earlier run.
+
 ## Files
 
 - [postgresql-schema.sql](postgresql-schema.sql): canonical build schema.
@@ -115,6 +134,15 @@ The reader-facing single-clause template uses this normalized group:
   additive PostgreSQL single-clause version schema.
 - [clause-sqlite-schema.sql](clause-sqlite-schema.sql): portable schema for the
   canonical single-clause JSONL projection.
+- [../pg/migrations/2026-07-29_nhi_rule_history_terminology_v20.sql](../pg/migrations/2026-07-29_nhi_rule_history_terminology_v20.sql):
+  append-only PostgreSQL terminology and occurrence schema.
+- [terminology-sqlite-schema.sql](terminology-sqlite-schema.sql): portable
+  SQLite schema for a released terminology run.
+- [terminology-disposable-source-fixture.sql](terminology-disposable-source-fixture.sql):
+  minimal source-publication fixture for forward/load/replay/rollback tests.
+- [queries/terminology-release-gates.sql](queries/terminology-release-gates.sql):
+  read-only reviewed-seed admission and 95→92 external-code reconciliation
+  receipt for any sealed tagging run.
 
 ## Conversion
 

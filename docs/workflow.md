@@ -211,6 +211,78 @@ official-event lane；歷史與方法預設收合。藥物／疾病名稱仍是�
 ATC、ICD-11 與健保治療碼不直接塞進正文，而在滑鼠 hover、鍵盤 focus 或
 手機首次點按的提示窗顯示。代碼是索引 metadata，不改寫官方條文文字。
 
+## Terminology：master、alias 與 occurrence 分層
+
+條文連結不是由模型直接在 HTML 上加標記。資料流固定如下：
+
+```text
+private authoritative masters
+  ATC / ICD-11 / NHI treatment-payment codes
+        |
+        +-> concept registry
+              |
+              +-> reviewed aliases
+                    |
+                    +-> deterministic scan of immutable clause blocks
+                          |
+                          +-> exact clause occurrences
+                                |
+                                +-> API render segments / paid-site links
+```
+
+模型只能提出 concept、alias 與 alias policy 的候選；正式 master code
+不得由模型重建或改寫。alias 與 occurrence 分別保存
+`admitted`、`candidate`、`blocked`，所以「這個別名一般可用」不等於
+「每一次字面命中都能自動上連結」。`DM` 等短字、歧義詞、collision 或
+需要語境的別名必須停在 candidate／blocked，直到有可重現的 admission
+依據。
+
+每次掃描綁定一個 sealed current publication 與一個 reviewed seed
+enrichment。matcher 只讀 immutable source blocks，依下列順序執行：
+
+1. 正規化搜尋字串，但輸出位置永遠回到未改寫的原始 block text。
+2. 採 longest-match；同起點先取較長 alias，再用固定 tie-breaker。
+3. 拉丁字母與數字 alias 必須通過 token-boundary，禁止在較長藥名內錯配。
+4. 每筆命中同時保存 Unicode scalar half-open 與 UTF-8 byte half-open
+   offsets，fresh verification 必須重切原文得到同一字串。
+5. 同一 block 的 admitted occurrences 不得重疊。candidate／blocked
+   仍保留作稽核，不能偷偷丟棄。
+6. 每個 source block 都寫入 scan receipt；無命中也必須有 `no_match`，
+   才能證明 denominator 完整。
+
+執行入口：
+
+```bash
+PYTHONPATH=src python3 -m nhi_rule_history.cli terminology-preview \
+  --dsn "$NHI_RULE_HISTORY_DSN"
+
+PYTHONPATH=src python3 -m nhi_rule_history.cli terminology-load \
+  --dsn "$NHI_RULE_HISTORY_DSN"
+
+PYTHONPATH=src python3 -m nhi_rule_history.cli terminology-verify \
+  --dsn "$NHI_RULE_HISTORY_DSN" \
+  --tagging-run-id <sealed-run-id>
+```
+
+`terminology-load` 在單一 transaction 內寫入、seal、fresh-verify，選擇啟用
+時再以 append-only activation 指向新 run。舊 run、舊 occurrences 與舊
+activation 不修改；新增 master snapshot、concept、alias 或條文 publication
+時建立新 run。相同輸入 fingerprint 的 replay 必須回到既有 sealed run，
+不得產生競爭版本。
+
+公開輸出可包含 concept ID、名稱、public alias、ATC／ICD-11 code 與健保
+治療支付碼；不得輸出私有 ICD-11 title、URI、definition 或 reference
+snapshot。SQLite 可攜 schema 見
+[`database/terminology-sqlite-schema.sql`](../database/terminology-sqlite-schema.sql)。
+
+完整性必須分開陳述：
+
+- `639/639 clauses`、`13,874/13,874 blocks` 表示指定 publication 的掃描
+  denominator 完整；
+- `82/82 seed tags` 表示本次 reviewed seed 已全部映射；
+- 兩者都不等於全書所有疾病、藥名與治療概念已枚舉。新增詞彙是一個新的
+  vocabulary coverage 工作，不得用「無命中」掩蓋。
+
 ## WP01：來源枚舉與取得
 
 ### FINT 全庫研究 crawler

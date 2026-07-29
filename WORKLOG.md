@@ -1296,3 +1296,67 @@
   denominator、master/alias/occurrence 分層及 alias collision gate；完整
   prompt、首輪失敗、四批 recovery、候選與驗證收據均留在
   `skills/model-harness/audit/2026-07-29-gemini-semantic-alias-inventory/`。
+
+## 2026-07-29 — concept／alias／occurrence v1 正式入 PG、API 與付費站
+
+- 依 GPT Pro R3 方法審查的 `REPAIR` 結論，新增 v20 append-only
+  `nhi_rule_history_terminology` schema。穩定 concept registry 與 run-scoped
+  concept、seed-tag link、alias、external code、完整 block scan receipt、
+  exact occurrence、activation 分表；alias 與 occurrence 各自保存
+  admitted／candidate／blocked。每筆 occurrence 同時保存 Unicode scalar
+  與 UTF-8 byte half-open offsets。
+- matcher 固定為 longest-match、拉丁 token boundary、stable tie-break、
+  source-offset recovery 與 no admitted overlap。所有 639 個現行條文、
+  13,874 個 immutable source blocks 均有 scan receipt，包含 12,706 個
+  `no_match` blocks，沒有只保存命中的 selection bias。
+- live sealed run
+  `8d5b7f1d-01cf-5af6-932b-8bb2378f35ff` 綁定 publication
+  `a707d13a-0b06-5dfe-96b7-6d107ab8793f` 與 seed enrichment
+  `44640535-2f19-51d2-afcf-1572fea9be63`。入庫 79 concepts、371 aliases、
+  92 external-code rows、82 seed links 與 1,916 occurrences；其中
+  1,294 admitted、192 candidate、430 blocked。fresh verification 為
+  0 offset mismatch、0 admitted overlap；exact replay 回 existing run，
+  sealed parent／children／activation mutation probes 全被拒絕。
+- 新增公開 SQLite projection schema 與 disposable source fixture。
+  `database/terminology-sqlite-schema.sql` 可在沒有 PostgreSQL 的環境保存
+  同一個 run、concept、alias、code、block denominator、occurrence 與
+  activation contract。repo 479 項 public tests 全部通過（7 skip）。
+- `copper-panel` commit `e44506b34ade` 已在 hmj 上線，detail API 新增
+  `nhi-reimbursement-rules/terminology-occurrences/v1`。API 只投影 admitted
+  occurrences、精確 offsets 與 public codes；private ICD-11 title、URI、
+  definition、reference snapshot 不輸出。153/153 tests 通過，live
+  `/healthz` 與 0.4／2.6.3 detail 均已重查。
+- `personal-website-s` commit `3ec7fb4` 已部署為 Cloudflare Pages
+  production `f2b673e8-5c00-4d6b-9889-ada6cfd4587b`。exporter fail-closed
+  驗證 terminology contract 與 run fingerprints，再把 normalized
+  occurrence segments 交給共同 renderer。135/135 tests 與 production
+  build 通過；正式付費頁 0.4 的糖尿病、insulin、GLP-1、CAPD 等名稱可
+  搜尋，代碼只在 hover／鍵盤 focus 提示窗顯示，不塞回正文。
+- 本輪刻意保留完整性界線：v1 只以既有 82 個 reviewed semantic tags
+  建立詞彙分母。2.6.3 雖完整掃描，但 ezetimibe、statin、gemfibrozil、
+  高膽固醇血症尚未在此 seed vocabulary，因此 occurrence 為 0。這證明
+  scanner 工作正常，也證明「全 publication 已掃描」不能宣稱「全書術語
+  已涵蓋」。G-TAG-01 改為 full-vocabulary expansion 缺口，不以 HTML
+  手工補字。
+- Live receipt：
+  `docs/audits/2026-07-29-terminology-occurrence-v20-live-verification.json`。
+- GPT Pro post-release audit 初判 `REPAIR`，要求把三個既有 invariant 改成
+  機器可重算收據。新增唯讀
+  `database/queries/terminology-release-gates.sql` 後，live PG 證明：
+  82/82 seed tags linked exactly once；admitted alias／occurrence 的七類
+  lineage defect 全為 0；三個 82→79 consolidation 均明列來源 tag、原詞、
+  entity type 與相同 reviewed code。
+- 同一收據完成 95→92 code reconciliation：70 ATC＋21 ICD-11＋4 NHI
+  treatment source links，恰由三組重複 concept/code relations 折疊為 92
+  rows；unmapped、缺 provenance、conflicting collapse、master unresolved、
+  non-public-safe 全為 0。
+- `copper-panel` golden gate commit `9dc4095f3897a0b9e087b9582063b4a48b02cd66`
+  精確鎖住既有 semantic-tag payload、admitted-only PG view、run/fingerprint
+  binding 與 private/candidate/blocked 欄位排除；完整 153/153 tests 重跑
+  通過。live enrichments contract 的 82-row `semantic_tags` canonical SHA-256
+  為 `7d48e85f…a00f74`，新 terminology public count 1,294，與 PG admitted
+  count 相等。
+- GPT Pro 讀取兩份修復收據後最終判定 `GO`：適用範圍仍是
+  reviewed-seed v1，完整掃描 639 條／13,874 blocks，但不宣稱全書
+  vocabulary complete。完整 audit trail 見
+  `docs/audits/2026-07-29-terminology-occurrence-v20-post-release-reconciliation.md`。

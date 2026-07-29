@@ -1,0 +1,90 @@
+{
+  "schema": "nhi-rule-history/terminology-live-verification/v1",
+  "verified_at": "2026-07-29T16:20:00+08:00",
+  "scope": "reviewed-seed-v1",
+  "postgresql": {
+    "schema": "nhi_rule_history_terminology",
+    "tagging_run_id": "8d5b7f1d-01cf-5af6-932b-8bb2378f35ff",
+    "publication_run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f",
+    "seed_enrichment_run_id": "44640535-2f19-51d2-afcf-1572fea9be63",
+    "input_fingerprint": "3f05030d6375811d2db3ee4e5dc39c71eab326f6ead4dda6b855bd50fa2b0791",
+    "output_fingerprint": "c7baaa2e4ffe50e8bc9635ef38bb77944b48a4e5fa761af3595374ef25dfb9d8",
+    "sealed_fingerprint": "130e23179f9883eb3115c3cfa0265883ba7ff9df521c2234678de557b924cdf0",
+    "counts": {
+      "concept_registry": 79,
+      "run_concept": 79,
+      "concept_alias": 371,
+      "concept_external_code": 92,
+      "concept_seed_tag_link": 82,
+      "tagging_run_block_input": 13874,
+      "clause_occurrence": 1916
+    },
+    "metrics": {
+      "publication_clause_count": 639,
+      "scanned_clause_count": 639,
+      "publication_block_count": 13874,
+      "scanned_block_count": 13874,
+      "scanned_with_match_block_count": 1168,
+      "scanned_no_match_block_count": 12706,
+      "admitted_alias_count": 76,
+      "candidate_alias_count": 245,
+      "blocked_alias_count": 50,
+      "admitted_occurrence_count": 1294,
+      "candidate_occurrence_count": 192,
+      "blocked_occurrence_count": 430,
+      "offset_mismatch_count": 0,
+      "admitted_overlap_pair_count": 0
+    },
+    "exact_replay": "already_loaded",
+    "sealed_mutation_probes": {
+      "run_update": "rejected",
+      "registry_update": "rejected",
+      "child_insert_update_delete_truncate": "rejected",
+      "activation_update": "rejected"
+    }
+  },
+  "api": {
+    "commit": "e44506b34ade53340eb738ac66e5536e30ca4cfe",
+    "healthz_commit": "e44506b34ade",
+    "contract": "nhi-reimbursement-rules/terminology-occurrences/v1",
+    "private_icd11_content_included": false,
+    "clause_0_4_occurrence_count": 82,
+    "clause_2_6_3_occurrence_count": 0
+  },
+  "subscriber_site": {
+    "commit": "3ec7fb467e12d4a16b7b303d54216d6941aa0600",
+    "pages_deployment_id": "f2b673e8-5c00-4d6b-9889-ada6cfd4587b",
+    "pages_production_url": "https://f2b673e8.copper-s.pages.dev",
+    "same_origin_projection_sha256": "276b904b46708b5829de6919b18e0ded207d805219d62ee9f3b7bf68631e9c49",
+    "production_browser": {
+      "clause_0_4": "passed: semantic names linked, codes absent from inline text, ICD-11 code visible on keyboard-focus popover",
+      "clause_2_6_3": "passed layout; zero terminology links exposes the reviewed-seed vocabulary boundary"
+    }
+  },
+  "tests": {
+    "nhi_rule_history": {
+      "run": 479,
+      "passed": 472,
+      "skipped": 7
+    },
+    "copper_panel": {
+      "run": 153,
+      "passed": 153
+    },
+    "personal_website_s": {
+      "run": 135,
+      "passed": 135
+    }
+  },
+  "claim_boundary": {
+    "active_publication_scan_complete": true,
+    "reviewed_seed_vocabulary_complete": true,
+    "full_book_terminology_vocabulary_complete": false,
+    "known_negative_canary_terms": [
+      "ezetimibe",
+      "statin",
+      "gemfibrozil",
+      "高膽固醇血症"
+    ]
+  }
+}

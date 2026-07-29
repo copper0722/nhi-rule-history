@@ -10,8 +10,8 @@ last_verified_date: "2026-07-29"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 473
-  public_tests_passed: 466
+  public_tests_run: 479
+  public_tests_passed: 472
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -48,6 +48,8 @@ service_surfaces:
     detail_endpoint: /api/drugs/reimbursement-rules/latest/{clause_code}
     history_summary_endpoint: /api/drugs/reimbursement-rules/history-summary
     reviewed_enrichment_endpoint: /api/drugs/reimbursement-rules/enrichments
+    terminology_occurrence_endpoint: /api/drugs/reimbursement-rules/latest/{clause_code}
+    terminology_occurrence_contract: nhi-reimbursement-rules/terminology-occurrences/v1
     official_notice_endpoint: /api/drugs/reimbursement-rules/notices
     official_notice_contract: nhi-reimbursement-rules/notices/v1
     status: live_verified
@@ -68,10 +70,11 @@ service_surfaces:
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: 2c88acb8d80a05efe5727b571a11e976f290df22
-      pages_deployment_id: 1aa1de15-899e-4454-8505-97a9be42a01a
-      live_subscriber_json_sha256: cd3ee1a0ae5159f39df966bdc9251a55737044fa7e30e2e8a7405460585e0031
-      live_verification_receipt: docs/audits/2026-07-29-subscriber-notice-auto-update-live-verification.json
+      commit: 3ec7fb4
+      pages_deployment_id: f2b673e8-5c00-4d6b-9889-ada6cfd4587b
+      pages_production_url: https://f2b673e8.copper-s.pages.dev
+      deployed_subscriber_json_sha256: 276b904b46708b5829de6919b18e0ded207d805219d62ee9f3b7bf68631e9c49
+      live_verification_receipt: docs/audits/2026-07-29-terminology-occurrence-v20-live-verification.json
     status: live_verified
   boan_emr:
     intended_contract: nhi-reimbursement-rules/latest/v1
@@ -434,7 +437,7 @@ chapter_zero_template:
       deterministic_replay_after_migration: passed_hashes_unchanged
     browser_desktop_check: passed_no_horizontal_overflow
   terminology_alias_groundwork:
-    status: candidate_inventory_validated_not_pg_admitted
+    status: reviewed_seed_v1_live_full_vocabulary_open
     authoritative_pg_masters:
       atc_rows: 6812
       icd11_rows: 34663
@@ -448,8 +451,56 @@ chapter_zero_template:
     source_tag_identity_conservation: passed_82_of_82_exactly_once
     source_code_conservation: passed_zero_changed_or_invented
     normalized_alias_collision_count: 8
-    admission_boundary: candidate_only_until_collision_master_resolution_and_occurrence_gates
+    admission_boundary: per_alias_and_per_occurrence_admitted_candidate_or_blocked
     public_proposal: data/proposals/gemini-semantic-alias-2026-07-29
+    pg_schema: nhi_rule_history_terminology
+    migration: pg/migrations/2026-07-29_nhi_rule_history_terminology_v20.sql
+    sqlite_schema: database/terminology-sqlite-schema.sql
+    live_tagging_run_id: 8d5b7f1d-01cf-5af6-932b-8bb2378f35ff
+    publication_run_id: a707d13a-0b06-5dfe-96b7-6d107ab8793f
+    seed_enrichment_run_id: 44640535-2f19-51d2-afcf-1572fea9be63
+    input_fingerprint: 3f05030d6375811d2db3ee4e5dc39c71eab326f6ead4dda6b855bd50fa2b0791
+    output_fingerprint: c7baaa2e4ffe50e8bc9635ef38bb77944b48a4e5fa761af3595374ef25dfb9d8
+    sealed_fingerprint: 130e23179f9883eb3115c3cfa0265883ba7ff9df521c2234678de557b924cdf0
+    matcher_version: nhi-rule-history/terminology-longest-match/1.0.0
+    offset_contract: unicode_scalar_half_open+utf8_byte_half_open/v1
+    live_counts:
+      concepts: 79
+      aliases: 371
+      external_codes: 92
+      seed_tag_links: 82
+      scanned_blocks: 13874
+      scanned_clauses: 639
+      occurrences_total: 1916
+      occurrences_admitted: 1294
+      occurrences_candidate: 192
+      occurrences_blocked: 430
+      admitted_aliases: 76
+      candidate_aliases: 245
+      blocked_aliases: 50
+      offset_mismatches: 0
+      admitted_overlap_pairs: 0
+    api_commit: e44506b34ade53340eb738ac66e5536e30ca4cfe
+    api_golden_gate_commit: 9dc4095f3897a0b9e087b9582063b4a48b02cd66
+    subscriber_site_commit: 3ec7fb4
+    release_audit:
+      initial_post_release_decision: REPAIR
+      final_decision: GO
+      reviewed_seed_receipt: docs/audits/2026-07-29-reviewed-seed-admission-reconciliation.json
+      api_golden_receipt: docs/audits/2026-07-29-terminology-api-compatibility-golden.json
+      final_reconciliation: docs/audits/2026-07-29-terminology-occurrence-v20-post-release-reconciliation.md
+    browser_canary:
+      clause_0_4: passed_links_popover_codes_not_inline
+      clause_2_6_3: passed_layout_but_vocabulary_gap_visible
+    completeness_boundary:
+      corpus_blocks_scanned: complete_for_active_639_clause_publication
+      reviewed_seed_vocabulary: complete_for_82_seed_tags
+      full_book_terminology_vocabulary: open
+      known_negative_canary:
+        - ezetimibe
+        - statin
+        - gemfibrozil
+        - 高膽固醇血症
     browser_mobile_390x844_check: passed_coding_coverage_no_inline_codes_no_overlap_no_overflow
     browser_mobile_320x800_check: passed_no_horizontal_overflow
     deterministic_replay: passed_same_runtime_byte_identical_cross_runtime_logical_identical

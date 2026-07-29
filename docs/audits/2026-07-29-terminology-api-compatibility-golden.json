@@ -1,0 +1,54 @@
+{
+  "schema": "nhi-rule-history/terminology-api-compatibility-golden/v1",
+  "verified_at": "2026-07-29T16:55:00+08:00",
+  "live_api": {
+    "base_url": "http://hmj:8710",
+    "deployed_source_commit": "e44506b34ade53340eb738ac66e5536e30ca4cfe",
+    "healthz_commit": "e44506b34ade",
+    "endpoint": "/api/drugs/reimbursement-rules/enrichments",
+    "contract": "nhi-reimbursement-rules/enrichments/v1"
+  },
+  "legacy_compatibility": {
+    "semantic_tags_field_present": true,
+    "semantic_tags_count": 82,
+    "semantic_tags_canonical_sha256": "7d48e85f0768d0cf46478988cbbf376c5dd3b3a988c0e705c9dcc27ae5a00f74",
+    "seed_enrichment_run_id": "44640535-2f19-51d2-afcf-1572fea9be63",
+    "golden_fixture_asserts_exact_legacy_semantic_tag_payload": true
+  },
+  "terminology_projection": {
+    "contract": "nhi-reimbursement-rules/terminology-occurrences/v1",
+    "tagging_run_id": "8d5b7f1d-01cf-5af6-932b-8bb2378f35ff",
+    "output_fingerprint": "c7baaa2e4ffe50e8bc9635ef38bb77944b48a4e5fa761af3595374ef25dfb9d8",
+    "sealed_fingerprint": "130e23179f9883eb3115c3cfa0265883ba7ff9df521c2234678de557b924cdf0",
+    "public_occurrence_count": 1294,
+    "pg_admitted_occurrence_count": 1294,
+    "pg_candidate_occurrence_count": 192,
+    "pg_blocked_occurrence_count": 430,
+    "public_candidate_occurrence_count": 0,
+    "public_blocked_occurrence_count": 0,
+    "selector": "nhi_rule_history_terminology.v_admitted_clause_occurrence",
+    "occurrence_status_keys_exposed": 0,
+    "production_status_keys_exposed": 0,
+    "all_occurrences_have_source_hash_and_dual_offsets": true
+  },
+  "privacy": {
+    "private_icd11_content_included": false,
+    "forbidden_key_paths": [],
+    "forbidden_keys_checked": [
+      "definition",
+      "uri",
+      "title",
+      "title_zh",
+      "title_en",
+      "reference_snapshot",
+      "icd11_private"
+    ]
+  },
+  "release_gate": {
+    "test_commit": "9dc4095f3897a0b9e087b9582063b4a48b02cd66",
+    "test": "CurrentReimbursementRuleEndpointTests.test_enrichments_export_reviewed_codes_without_private_icd_content",
+    "suite_run": 153,
+    "suite_passed": 153,
+    "result": "passed"
+  }
+}

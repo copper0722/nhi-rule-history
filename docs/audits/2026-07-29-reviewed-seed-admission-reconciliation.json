@@ -1,0 +1,162 @@
+{
+  "schema": "nhi-rule-history/reviewed-seed-admission-reconciliation/v1",
+  "verified_at": "2026-07-29T16:50:00+08:00",
+  "query": "database/queries/terminology-release-gates.sql",
+  "tagging_run_id": "8d5b7f1d-01cf-5af6-932b-8bb2378f35ff",
+  "publication_run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f",
+  "seed_enrichment_run_id": "44640535-2f19-51d2-afcf-1572fea9be63",
+  "input_fingerprint": "3f05030d6375811d2db3ee4e5dc39c71eab326f6ead4dda6b855bd50fa2b0791",
+  "output_fingerprint": "c7baaa2e4ffe50e8bc9635ef38bb77944b48a4e5fa761af3595374ef25dfb9d8",
+  "sealed_fingerprint": "130e23179f9883eb3115c3cfa0265883ba7ff9df521c2234678de557b924cdf0",
+  "alias_admission_policy": "reviewed_source_observed_only/v1",
+  "reviewed_seed_admission": {
+    "reviewed_seed_tag_count": 82,
+    "linked_seed_tag_count": 82,
+    "distinct_linked_seed_tag_count": 82,
+    "admitted_alias_without_reviewed_seed_link": 0,
+    "admitted_alias_from_model_only_source": 0,
+    "admitted_context_required_alias": 0,
+    "admitted_collision_involved_alias": 0,
+    "admitted_occurrence_via_nonadmitted_alias": 0,
+    "admitted_occurrence_via_unreviewed_concept": 0,
+    "consolidation_count": 3,
+    "consolidation_policy": "same seed concept type and identical reviewed external-code set",
+    "consolidations": [
+      {
+        "concept_id": "1bf35aa6-1105-5cd6-b406-890327a889f1",
+        "canonical_label_zh": "阿朴嗎啡",
+        "canonical_label_en": "Apomorphine",
+        "concept_type": "drug_ingredient",
+        "members": [
+          {
+            "legacy_tag_id": "semantic-tag:10c466f7a60197ba1b2094ca2a8c7deb91545b0bcb58ba61da7d977014c42c14",
+            "tag_text": "apomorphine",
+            "entity_type": "ingredient",
+            "external_codes": [
+              {
+                "system": "ATC",
+                "code": "N04BC07"
+              }
+            ]
+          },
+          {
+            "legacy_tag_id": "semantic-tag:2eca4d830c8ea632d780ed8ebd8f7eeb9742033eed7db009471129ae7e203ef5",
+            "tag_text": "Apomorphine hydrochloride",
+            "entity_type": "ingredient",
+            "external_codes": [
+              {
+                "system": "ATC",
+                "code": "N04BC07"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "concept_id": "8b1fb025-fd89-5428-bd07-bf5ac35a55cc",
+        "canonical_label_zh": "靜脈血栓栓塞症",
+        "canonical_label_en": "Venous thromboembolism",
+        "concept_type": "disease",
+        "members": [
+          {
+            "legacy_tag_id": "semantic-tag:21e5b9e087b7977d93331e87d9bba5e50c55f41b5ff998836f78d6c29ed00247",
+            "tag_text": "靜脈血栓",
+            "entity_type": "disease",
+            "external_codes": [
+              {
+                "system": "ICD11",
+                "code": "BD72"
+              }
+            ]
+          },
+          {
+            "legacy_tag_id": "semantic-tag:71c5df7e6f2a4895d275e2a715a90d2caee5bd6f10f819858959db2dd9e6cd79",
+            "tag_text": "VTE",
+            "entity_type": "abbreviation",
+            "external_codes": [
+              {
+                "system": "ICD11",
+                "code": "BD72"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "concept_id": "bd77283f-90cc-5cd0-bb24-0d3df973e4c8",
+        "canonical_label_zh": "費格拉斯亭",
+        "canonical_label_en": "filgrastim",
+        "concept_type": "drug_ingredient",
+        "members": [
+          {
+            "legacy_tag_id": "semantic-tag:6a87049faaa2b94669cb5eaa78247937ccb51c958fda2dc1291026c30331b986",
+            "tag_text": "filgrastim",
+            "entity_type": "ingredient",
+            "external_codes": [
+              {
+                "system": "ATC",
+                "code": "L03AA02"
+              }
+            ]
+          },
+          {
+            "legacy_tag_id": "semantic-tag:caffa3b0520790953d31392d0ef74f46e6bba3069e9b58654935bf38c67a2e7e",
+            "tag_text": "filgrastin",
+            "entity_type": "ingredient",
+            "external_codes": [
+              {
+                "system": "ATC",
+                "code": "L03AA02"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "external_code_conservation": {
+    "source_external_code_links": 95,
+    "source_by_system": {
+      "ATC": 70,
+      "ICD11": 21,
+      "NHI_TREATMENT": 4
+    },
+    "normalized_external_code_rows": 92,
+    "explicit_duplicate_collapses": 3,
+    "unmapped_source_links": 0,
+    "source_links_without_output_provenance": 0,
+    "conflicting_collapses": 0,
+    "unresolved_master_rows": 0,
+    "non_public_safe_rows": 0,
+    "duplicate_collapses": [
+      {
+        "concept_id": "1bf35aa6-1105-5cd6-b406-890327a889f1",
+        "system": "ATC",
+        "code": "N04BC07",
+        "legacy_tag_ids": [
+          "semantic-tag:10c466f7a60197ba1b2094ca2a8c7deb91545b0bcb58ba61da7d977014c42c14",
+          "semantic-tag:2eca4d830c8ea632d780ed8ebd8f7eeb9742033eed7db009471129ae7e203ef5"
+        ]
+      },
+      {
+        "concept_id": "8b1fb025-fd89-5428-bd07-bf5ac35a55cc",
+        "system": "ICD11",
+        "code": "BD72",
+        "legacy_tag_ids": [
+          "semantic-tag:21e5b9e087b7977d93331e87d9bba5e50c55f41b5ff998836f78d6c29ed00247",
+          "semantic-tag:71c5df7e6f2a4895d275e2a715a90d2caee5bd6f10f819858959db2dd9e6cd79"
+        ]
+      },
+      {
+        "concept_id": "bd77283f-90cc-5cd0-bb24-0d3df973e4c8",
+        "system": "ATC",
+        "code": "L03AA02",
+        "legacy_tag_ids": [
+          "semantic-tag:6a87049faaa2b94669cb5eaa78247937ccb51c958fda2dc1291026c30331b986",
+          "semantic-tag:caffa3b0520790953d31392d0ef74f46e6bba3069e9b58654935bf38c67a2e7e"
+        ]
+      }
+    ]
+  },
+  "gate_result": "passed"
+}

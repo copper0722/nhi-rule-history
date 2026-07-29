@@ -23,7 +23,7 @@
 | G-DIFF-01 | adjacent diff 未建立 | blocked | direct edge、100% source mapping |
 | G-ATC-01 | ATC linkage 尚未完成 public rebuild | raw_fetch_schema_passed_mapping_resolution_open | NHI IODE `A21030000I-E41001-001` exact raw fetch／manifest、PostgreSQL↔SQLite row-level source schema 與 2026-07-27 live audit 已通過；尚缺每月 snapshot loader/parity、508 個 legacy 未解析品項→條文 edges、rule snapshot resolution、TFDA second-source reconcile 與 normalized release |
 | G-ICD-01 | ICD-11 crosswalk 未獲 WHO agreement | blocked | 書面 agreement 與 release citation |
-| G-TAG-01 | 全條文 concept／alias／occurrence 尚未完成 | candidate_alias_canary_validated_pg_admission_open | terminology master 已確認為獨立 PG 底表；Gemini 82-tag canary 得 79 concepts／371 aliases，source IDs 與 codes 守恆，但 8 個 normalized alias collisions 尚待裁決。下一步建立 master/concept/alias/occurrence PG schema，以 admitted aliases deterministic 掃描 639 條並通過 offset、longest-match、token-boundary、no-overlap 與 collision gates |
+| G-TAG-01 | 全書 terminology vocabulary 尚未完成 | reviewed_seed_v1_live_full_vocabulary_open | v20 append-only PG schema 已封存並啟用第一個 run：79 concepts、371 aliases、92 external-code rows；639/639 條、13,874/13,874 source blocks 均已掃描，產生 1,916 occurrences（1,294 admitted、192 candidate、430 blocked），0 offset mismatch、0 admitted overlap。這只證明既有 82-tag reviewed seed 已全量執行，不代表全書詞彙已枚舉；2.6.3 的 ezetimibe、statin、gemfibrozil、高膽固醇血症是公開 negative canary。關閉本缺口須以正式 master 為基礎擴充概念／alias 分母、保留 collision 與人工 admission，重跑新 immutable run 並報新增詞彙與未命中率 |
 | G-DATA-01 | normalized clause JSONL 未發布 | blocked | complete rule/version outputs |
 | G-SQLITE-01 | v1 SQLite snapshot 已準備；v2 尚缺 | partial | v1 typed parity passed；v2 row parity、integrity、checksum |
 | G-API-01 | reader API 未建立 | blocked | accepted read contract 與 canary |

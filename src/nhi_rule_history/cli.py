@@ -38,6 +38,13 @@ from nhi_rule_history.release import (
     prepare_release,
     prepare_v2_evidence_release,
 )
+from nhi_rule_history.terminology import (
+    DEFAULT_ALIAS_PROPOSAL,
+    TerminologyError,
+    load_terminology,
+    preview_terminology,
+    verify_terminology,
+)
 from nhi_rule_history.update.bundle import acquire_notice_bundle
 from nhi_rule_history.update.corpus_bundle import prepare_corpus_bundle
 from nhi_rule_history.update.historical_bundle import (
@@ -157,6 +164,54 @@ def build_parser() -> argparse.ArgumentParser:
         "--stage-dir", type=Path, required=True
     )
     anchor_clause_parity.add_argument("--output", type=Path)
+
+    terminology_preview = subparsers.add_parser(
+        "terminology-preview",
+        help=(
+            "scan every active current-clause source block without writing "
+            "PostgreSQL"
+        ),
+    )
+    terminology_preview.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    terminology_preview.add_argument(
+        "--alias-proposal",
+        type=Path,
+        default=DEFAULT_ALIAS_PROPOSAL,
+    )
+    terminology_preview.add_argument("--publication-run-id")
+    terminology_preview.add_argument("--seed-enrichment-run-id")
+
+    terminology_load = subparsers.add_parser(
+        "terminology-load",
+        help=(
+            "scan, transactionally seal, fresh-verify, and activate one "
+            "normalized terminology run"
+        ),
+    )
+    terminology_load.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    terminology_load.add_argument(
+        "--alias-proposal",
+        type=Path,
+        default=DEFAULT_ALIAS_PROPOSAL,
+    )
+    terminology_load.add_argument("--publication-run-id")
+    terminology_load.add_argument("--seed-enrichment-run-id")
+    terminology_load.add_argument(
+        "--no-activate", action="store_true"
+    )
+
+    terminology_verify = subparsers.add_parser(
+        "terminology-verify",
+        help="fresh-verify one sealed terminology run from PostgreSQL",
+    )
+    terminology_verify.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    terminology_verify.add_argument("--tagging-run-id", required=True)
 
     load_acquisition = subparsers.add_parser(
         "load-acquisition",
@@ -681,6 +736,37 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = analyze_current_anchor_clause_parity(args.stage_dir)
             if args.output is not None:
                 write_json(args.output, result)
+        elif args.command == "terminology-preview":
+            if not args.dsn:
+                raise TerminologyError(
+                    "--dsn or NHI_RULE_HISTORY_DSN is required"
+                )
+            result = preview_terminology(
+                conninfo=args.dsn,
+                alias_proposal_path=args.alias_proposal,
+                publication_run_id=args.publication_run_id,
+                seed_enrichment_run_id=args.seed_enrichment_run_id,
+            )
+        elif args.command == "terminology-load":
+            if not args.dsn:
+                raise TerminologyError(
+                    "--dsn or NHI_RULE_HISTORY_DSN is required"
+                )
+            result = load_terminology(
+                conninfo=args.dsn,
+                alias_proposal_path=args.alias_proposal,
+                publication_run_id=args.publication_run_id,
+                seed_enrichment_run_id=args.seed_enrichment_run_id,
+                activate=not args.no_activate,
+            )
+        elif args.command == "terminology-verify":
+            if not args.dsn:
+                raise TerminologyError(
+                    "--dsn or NHI_RULE_HISTORY_DSN is required"
+                )
+            result = verify_terminology(
+                args.tagging_run_id, conninfo=args.dsn
+            )
         elif args.command == "load-acquisition":
             result = load_acquisition_run(args.run_dir, conninfo=args.dsn)
         elif args.command == "load-structural":
@@ -1079,6 +1165,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         AcquisitionLoadError,
         StructuralLoadError,
         AnnotationStageError,
+        TerminologyError,
         UpdateStageLoadError,
         UpdateQueueError,
         ProposalError,
