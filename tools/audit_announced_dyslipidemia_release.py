@@ -73,7 +73,7 @@ def _branch_state(
             f"""
             SELECT {SCHEMA}.evaluate_predicate_v1(
               %s, %s, %s::jsonb, %s::jsonb
-            )
+            ) AS predicate_state
             """,
             (
                 predicate["operator"],
@@ -81,7 +81,7 @@ def _branch_state(
                 _json(predicate["operand"]),
                 _json(facts),
             ),
-        ).fetchone()[0]
+        ).fetchone()["predicate_state"]
         if value == 0:
             return 0
         if value == -1:
@@ -114,9 +114,9 @@ def _evaluate(
     facts: dict[str, Any],
 ) -> dict[str, Any]:
     return connection.execute(
-        f"SELECT {SCHEMA}.evaluate_table1_v1(%s,%s::jsonb)",
+        f"SELECT {SCHEMA}.evaluate_table1_v1(%s,%s::jsonb) AS result",
         (model_id, _json(facts)),
-    ).fetchone()[0]
+    ).fetchone()["result"]
 
 
 def audit(conninfo: str, *, drill_release_control: bool) -> dict[str, Any]:
@@ -420,14 +420,14 @@ def audit(conninfo: str, *, drill_release_control: bool) -> dict[str, Any]:
                 f"""
                 SELECT {SCHEMA}.set_release_control(
                   %s,'deactivate',%s,%s::jsonb
-                )
+                ) AS control_id
                 """,
                 (
                     run_id,
                     "R3 production rollback drill",
                     _json({"audit": "2026-07-29-dyslipidemia-r3"}),
                 ),
-            ).fetchone()[0]
+            ).fetchone()["control_id"]
             if connection.execute(
                 f"SELECT count(*) AS n FROM {SCHEMA}.v_active_run"
             ).fetchone()["n"] != 0:
@@ -449,7 +449,7 @@ def audit(conninfo: str, *, drill_release_control: bool) -> dict[str, Any]:
                 f"""
                 SELECT {SCHEMA}.set_release_control(
                   %s,'activate',%s,%s::jsonb
-                )
+                ) AS control_id
                 """,
                 (
                     run_id,
@@ -461,7 +461,7 @@ def audit(conninfo: str, *, drill_release_control: bool) -> dict[str, Any]:
                         }
                     ),
                 ),
-            ).fetchone()[0]
+            ).fetchone()["control_id"]
             restored = connection.execute(
                 f"SELECT * FROM {SCHEMA}.v_active_run"
             ).fetchone()
