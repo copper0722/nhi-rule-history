@@ -1,0 +1,17 @@
+[
+  {
+    "id": "grok-fint-frontier-repair-reaudit",
+    "role": "independent-repair-and-completeness-contract-critic",
+    "provider": "grok",
+    "model": "grok-4.5",
+    "effort": "high",
+    "search": false,
+    "timeout": 900,
+    "min_answer_chars": 6000,
+    "required_markers": [
+      "VERDICT",
+      "Previous-finding reconciliation",
+      "Remaining gates"
+    ]
+  }
+]

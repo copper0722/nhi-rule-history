@@ -933,7 +933,7 @@
   load、seal counts 與 post-seal immutability。正式 PG 等完整 crawl
   manifest 產生後才載入，不把半套 run 標成完成。
 - 啟動全期 `藥品給付規定` baseline；FINT 搜尋分母為 1,309。run 位置：
-  `/Users/copper/agent-share/nhi-rule-history/fint-crawl-20260728-baseline-v1`。
+  `external_bundle:fint-crawl-20260728-baseline-v1`。
   執行中狀態不是 sealed receipt。
 - 本輪全套回歸：70 項 legacy tests（1 skip）及 453 項 public tests
   （446 passed、7 個環境性 skip）通過。
@@ -993,7 +993,7 @@
   Disposable PG sealed run
   `bfaa5cb5-cb1b-82c1-9cac-5fb74f40023d`，counts 221/428/0。
 - 啟動 1900–2026 yearly batch：
-  `/Users/copper/agent-share/nhi-rule-history/fint-all-years-20260728-v1`。
+  `external_bundle:fint-all-years-20260728-v1`。
   一開始為節省時間複製的 2026 canary seed locator 仍寫 1954 partition；
   已在 batch 到達 2026 前移至
   `preseed-2026-wrong-origin-preserved`，不作 batch input。Crawler 2.1.1
@@ -1059,7 +1059,7 @@
   `健保醫字第84010140號`（84-06-20）詳情明載附件二及「除有特別明定者
   外，自本（八十四）年七月一日起實施」。
 - 官方附件二已完成 durable content-addressed acquisition：
-  `/Users/copper/agent-share/nhi-rule-history/fint-84-baseline-20260729-v2`。
+  `external_bundle:fint-84-baseline-20260729-v2`。
   Run 為 1 query、2 documents、2 snapshots、2 matches、2 attachment
   declarations、2 attachment byte snapshots、5 observations、0 issues；
   manifest SHA-256
@@ -1070,7 +1070,7 @@
   沒有實質文字層。OCR 已做研究性試跑，但錯字明顯，只能是
   unproofread observation，未進 canonical clause text。
 - 另封存日期探測
-  `/Users/copper/agent-share/nhi-rule-history/fint-85-date-probes-20260729-v1`：
+  `external_bundle:fint-85-date-probes-20260729-v1`：
   四種中文日期寫法為 0；`85/1/1` 得 11 筆但逐筆皆與本條修正無關。
   因此 `85/1/1` 精確事件狀態是
   `not_found_after_declared_search`，不是 absence proof。
@@ -1125,9 +1125,43 @@
 - 新增 `nhi_rule_history_publication` v18 immutable PG projection 與 loader：
   639 clauses、13,874 blocks、3,487 clause-date rows。Disposable PG
   forward、load/seal/activate、active views、same-run replay、sealed UPDATE
-  rejection、rollback 均通過；full suite 為 legacy 70/1 skip、public
-  463/7 skip。正式 `vault_main` 套用前已送 Claude Fable 只讀獨立 gate。
+  rejection、rollback 均通過；2026-07-29 最新 full suite 為 legacy
+  70/1 skip、public 465/7 skip（合計 535，527 non-skipped pass）。
+  正式 `vault_main` 套用前已送 Claude Fable 只讀獨立 gate。
 - Reader transition 由新文字首次新增的 distinct date 數推版本距離：
   一個日期顯示「與上一版本差異」；兩個以上顯示「與舊版本差異」並明列
   中間缺少全文版數。0.4 例如 98 年版跨 2 個、109 年版跨 4 個、最新版
   跨 2 個預期版本。
+- Claude Fable 首審與修後窄版複審均回
+  `ACCEPT_FOR_LIVE_STAGE`。依其 non-blocking findings，補上 INSERT
+  column lists、可逆 activation event log、active target reread、
+  parity status receipt、sealed-import denominator 與 direct-sealed-insert
+  guard。`parity_failed` 是已知 whole-vs-chapter 33 條差異；依 owner
+  source policy，分章 ODT 為唯一現行正典，故入庫揭露而不阻擋。
+- 正式 `hmj/vault_main` 已依序套用 v16 authority policy 與 v18
+  publication schema，sealed/active run =
+  `a707d13a-0b06-5dfe-96b7-6d107ab8793f`。Live counts、inventory 與
+  fingerprints 完全等於 disposable receipt；replay 回
+  `already_loaded=true` 且 activation 仍 1 列。sealed child UPDATE、
+  direct sealed-run INSERT、loading-run activation 三個 adversarial
+  probes 均被拒，probe rows 為 0。Live receipt：
+  `docs/audits/2026-07-29-current-publication-live-verification.json`。
+
+## 2026-07-29 — 現行條文多表面發布
+
+- `copper-panel` 已從 active sealed PG publication 提供四組 read-only
+  contract：latest list/search、single-clause detail、history inventory
+  與 reviewed enrichment。Live API 回報 639 條、3,512 個應有版本、
+  656 個已重建全文狀態、2,861 個缺少全文狀態；enrichment 僅輸出
+  ATC、ICD-11 code 與健保治療碼，不輸出私有 ICD-11 內容。
+- `personal-website-s` 已部署
+  `https://s.copper0722.com/member/tools/nhi-rules/`。production probe
+  證實匿名 page/JSON 均為 303，合法訂閱 session 下 page/JSON 均為
+  200；same-origin dataset 含 639 條、82 個 reviewed semantic tags 與
+  5 個 compound conditions。
+- BOA 端預定只使用 latest-only API。由目前主機對 `ssh boa` 的驗證被
+  `Permission denied (publickey,password)` 拒絕，因此 provider ready，
+  consumer call 尚未實機證明；明列為部署缺口。
+- GitHub 專案定位固定為公開方法學、schema、crawler/exporter、稽核收據
+  與 JSON／SQLite 可攜 release；付費條文 reader 留在 subscriber site，
+  GitHub Pages 只保留原型／回饋用途，不作 production content surface。

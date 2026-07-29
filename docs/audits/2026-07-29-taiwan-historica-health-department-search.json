@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-29T00:40:00+08:00",
+  "source": {
+    "name": "國史館臺灣文獻館典藏管理系統",
+    "url": "https://onlinearchives.th.gov.tw/",
+    "fonds": "臺灣省政府衛生處",
+    "fonds_number": "061"
+  },
+  "surface_observation": {
+    "declared_records": 12992,
+    "supplied_result_window": "9981-10000",
+    "sort": "date_from ascending",
+    "dates_visible_in_supplied_window": {
+      "first": "1967-07-28",
+      "last": "1967-08-03"
+    },
+    "navigation_observation": "The result UI ended at page 500 / record 10000. Direct result-window attempts above 10000 returned no result rows.",
+    "interpretation": "The supplied broad query reaches 1967 only because it is an ascending result window capped at the first 10000 visible rows. This does not establish that the fonds ends in 1967 or lacks later holdings."
+  },
+  "bounded_queries": [
+    {
+      "conditions": [
+        ["fonds_number", "061"],
+        ["all_fields", "84衛技字第052484號"]
+      ],
+      "result_count": 0
+    },
+    {
+      "conditions": [
+        ["fonds_number", "061"],
+        ["all_fields", "全民健康保險藥品使用規範"]
+      ],
+      "result_count": 0
+    },
+    {
+      "conditions": [
+        ["fonds_number", "061"],
+        ["date_range", "1995-01-01..1995-12-31"]
+      ],
+      "result_count": 1,
+      "result": {
+        "catalog_number": "061-12707",
+        "title": "賴美滿申請註銷管理國立成功大學醫學院附設醫院等案",
+        "date_range": "1995-09-27..1996-08-15",
+        "relevant": false,
+        "access": "原件／國史館臺灣文獻館"
+      }
+    }
+  ],
+  "claim_limits": {
+    "target_document_found": false,
+    "target_document_absence_proved": false,
+    "paper_only_proved": false,
+    "public_digitized_fulltext_found": false
+  }
+}

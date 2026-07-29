@@ -1,0 +1,16 @@
+[
+  {
+    "id": "claude-fable-current-publication-reaudit",
+    "role": "independent_postgresql_repair_confirmation",
+    "provider": "claude",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeout": 600,
+    "min_answer_chars": 300,
+    "required_markers": [
+      "VERDICT:",
+      "blocking findings",
+      "remaining limitations"
+    ]
+  }
+]

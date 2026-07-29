@@ -10,8 +10,8 @@ last_verified_date: "2026-07-29"
 latest_verification:
   legacy_tests_passed: 70
   legacy_tests_skipped: 1
-  public_tests_run: 453
-  public_tests_passed: 446
+  public_tests_run: 465
+  public_tests_passed: 458
   public_tests_skipped: 7
   public_tree_gate: passed
   sqlite_integrity_check: passed
@@ -20,6 +20,7 @@ latest_verification:
 
 public_outputs:
   code_repo: https://github.com/copper0722/nhi-rule-history
+  github_role: public_methodology_schema_crawler_exporter_audit_receipts_and_portable_releases_not_paid_production_site
   source_manifests: tracked_in_git
   bounded_acquisition_manifest: data/manifests/mohw-fint-2021-2026-v2
   normalized_jsonl: chapter_00_single_clause_exported_legal_history_planned
@@ -37,6 +38,32 @@ public_outputs:
     browser_verified: true
     verified_reader_enrichment_run: c3280b44-067f-5624-b661-bc1ec9959335
     verified_semantic_tag: apomorphine_to_N04BC07
+
+service_surfaces:
+  canonical_content_store: PostgreSQL_nhi_rule_history_publication
+  personal_drug_database:
+    base_url: http://hmj:8710
+    latest_endpoint: /api/drugs/reimbursement-rules/latest
+    detail_endpoint: /api/drugs/reimbursement-rules/latest/{clause_code}
+    history_summary_endpoint: /api/drugs/reimbursement-rules/history-summary
+    reviewed_enrichment_endpoint: /api/drugs/reimbursement-rules/enrichments
+    status: live_verified
+  subscriber_site:
+    canonical_url: https://s.copper0722.com/member/tools/nhi-rules/
+    same_origin_projection: /api/nhi-rules/v1/current.json
+    access_boundary: existing_subscriber_gateway_default_deny
+    anonymous_page_status: 303
+    anonymous_json_status: 303
+    authenticated_page_status: 200
+    authenticated_json_status: 200
+    status: live_verified
+  boan_emr:
+    intended_contract: nhi-reimbursement-rules/latest/v1
+    intended_endpoint: http://hmj:8710/api/drugs/reimbursement-rules/latest
+    scope: latest_only
+    api_provider_status: live_verified
+    boa_host_consumer_probe: blocked_ssh_permission_denied
+    integration_status: not_yet_verified_from_boa
 
 current_publication:
   source_parse_run_id: baae912e-8d5f-46b0-9efd-77cf4d567428
@@ -64,9 +91,13 @@ current_publication:
     sealed_mutation_probe: rejected
     disposable_rollback: passed
     focused_tests: passed_36_with_1_skip
-    full_tests: passed_533_with_8_skips
-    independent_fable_gate: pending
-    live_status: not_applied_pending_independent_gate
+    full_tests: passed_527_with_8_skips_of_535
+    independent_fable_gate: ACCEPT_FOR_LIVE_STAGE
+    independent_fable_reaudit: ACCEPT_FOR_LIVE_STAGE
+    live_status: sealed_active_verified
+    live_run_id: a707d13a-0b06-5dfe-96b7-6d107ab8793f
+    live_output_fingerprint: 9e5cca2a72012012be356ede951f2b2c55a4766cccf10efa07b51482bd951c27
+    live_verification: docs/audits/2026-07-29-current-publication-live-verification.json
 
 repository_code:
   loader_version: nhi-rule-history-stage-loader/1.0.4
@@ -1149,7 +1180,7 @@ methodology_v4:
     attachment_sha256: f773cf6eeb9c413a92fae9bf543c5f1ff161726142fff802848292d00064b4d2
     attachment_bytes: 3802900
     attachment_pages: 25
-    raw_bundle_path: /Users/copper/agent-share/nhi-rule-history/fint-84-baseline-20260729-v2
+    raw_bundle_path: external_bundle:fint-84-baseline-20260729-v2
     pg_run_id: 2fa58923-9a91-8c8a-9a8f-a4ee0010845d
     pg_state: sealed
     receipt: docs/audits/2026-07-29-fint-84-baseline-acquisition.json

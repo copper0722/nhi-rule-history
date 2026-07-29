@@ -1,0 +1,20 @@
+[
+  {
+    "id": "gemini-google-archives",
+    "role": "google_grounded_archive_and_library_discovery",
+    "provider": "agy",
+    "model": "Gemini 3.1 Pro (High)",
+    "effort": "high",
+    "grounding": true,
+    "timeout": 900
+  },
+  {
+    "id": "grok-independent-forensics",
+    "role": "independent_document_and_attachment_forensics",
+    "provider": "grok",
+    "model": "grok-4.5",
+    "effort": "high",
+    "search": true,
+    "timeout": 900
+  }
+]

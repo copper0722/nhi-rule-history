@@ -1,0 +1,31 @@
+[
+  {
+    "id": "grok-early-government-trace",
+    "role": "government_notice_and_legacy_web_forensics",
+    "provider": "grok",
+    "model": "grok-4.5",
+    "effort": "high",
+    "search": true,
+    "timeout": 900,
+    "min_answer_chars": 1800,
+    "required_markers": [
+      "SOURCE LEDGER",
+      "COVERAGE VERDICT",
+      "NEXT QUERIES"
+    ]
+  },
+  {
+    "id": "gemini-early-archive-trace",
+    "role": "library_archive_and_publication_forensics",
+    "provider": "agy",
+    "model": "Gemini 3.1 Pro (High)",
+    "grounding": true,
+    "timeout": 900,
+    "min_answer_chars": 1800,
+    "required_markers": [
+      "SOURCE LEDGER",
+      "COVERAGE VERDICT",
+      "NEXT QUERIES"
+    ]
+  }
+]

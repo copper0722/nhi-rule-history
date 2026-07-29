@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-07-29",
+  "claims": {
+    "instrument_existed_by_1995": true,
+    "instrument_name_1995": "全民健康保險藥品使用規範",
+    "established_on": "1995-06-20",
+    "general_effective_from": "1995-07-01",
+    "renamed_on": "1998-03-04",
+    "renamed_effective_from": "1998-04-01",
+    "complete_original_1995_1996_public_download_found": false,
+    "complete_original_1995_1996_public_download_absence_proved": false,
+    "paper_only_proved": false,
+    "availability_state": "availability_unresolved"
+  },
+  "evidence": [
+    {
+      "source_type": "later_official_reproduction",
+      "publisher": "衛生福利部中央健康保險署",
+      "title": "全民健保醫療品質與藥物管理施政紀實",
+      "url": "https://media.nhi.gov.tw/md/dl-51929-1ebbcd26f26c40efbe82725d00304fb5-3.pdf",
+      "byte_length": 20264407,
+      "sha256": "cfa2a0ffc51f72dbd6e23cb976edf11b163c613d3c4a5dfbe9c228d9b03750b7",
+      "locators": [
+        "藥品管理章，藥品給付政策發展歷程圖",
+        "書頁 94–95 附近的 84/06、87/03 事紀"
+      ],
+      "supports": [
+        "1995-06-20 establishment under the earlier name",
+        "1995-07-01 general implementation",
+        "1998-03-04 reorganization and renaming",
+        "1998-04-01 implementation of the renamed rules"
+      ],
+      "does_not_support": [
+        "complete original 1995 or 1996 text",
+        "all clauses or deleted clauses"
+      ]
+    },
+    {
+      "source_type": "catalog_only",
+      "publisher": "國家圖書館／數位典藏與數位學習聯合目錄",
+      "title": "函轉中央健康保險局公告「全民健康保險特約醫院及診所辦理醫療業務須知」暨「全民健康保險藥品使用規範」，除有特別明定者外，自本年7月1日起實施",
+      "url": "https://catalog.digitalarchives.tw/item/00/13/13/07.html",
+      "catalog_id": "D9507418",
+      "document_number": "84衛技字第052484號",
+      "publication_date": "1995-07",
+      "publisher_metadata": "臺灣省政府",
+      "rights_manager": "國家圖書館",
+      "supports": [
+        "forwarding-letter identity",
+        "earlier instrument name and 1995-06-20 rule date",
+        "general implementation from 1995-07-01"
+      ],
+      "does_not_support": [
+        "publicly accessible attachment bytes",
+        "complete original rule text"
+      ]
+    },
+    {
+      "source_type": "later_official_reproduction",
+      "publisher": "衛生福利部中央健康保險署",
+      "title": "全民健康保險醫療費用專業審查不予支付理由代碼表",
+      "url": "https://www.nhi.gov.tw/ch/dl-34977-34d654635747483f85db41dc008f5039-1.pdf",
+      "version_label": "90.01.11修訂版",
+      "locators": [
+        "code 302: 不符全民健康保險藥品使用規範之通則",
+        "codes 303–314, 335, 349: named drug-rule families"
+      ],
+      "supports": [
+        "later official persistence of the earlier instrument terminology",
+        "named historical rule families by 2001"
+      ],
+      "does_not_support": [
+        "1995 or 1996 wording",
+        "effective dates for each named family"
+      ]
+    }
+  ],
+  "related_receipts": [
+    "docs/audits/2026-07-29-taiwan-historica-health-department-search.json",
+    "docs/audits/2026-07-29-early-rule-multimodel-research-results.md"
+  ]
+}

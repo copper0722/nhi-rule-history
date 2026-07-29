@@ -1,0 +1,16 @@
+[
+  {
+    "id": "claude-fable-current-publication-gate",
+    "role": "independent_postgresql_publication_gate",
+    "provider": "claude",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeout": 900,
+    "min_answer_chars": 500,
+    "required_markers": [
+      "VERDICT:",
+      "blocking findings",
+      "minimum live verification"
+    ]
+  }
+]

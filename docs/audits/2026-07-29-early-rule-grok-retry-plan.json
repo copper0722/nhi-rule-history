@@ -1,0 +1,17 @@
+[
+  {
+    "id": "grok-early-source-retry",
+    "role": "bounded_legacy_source_verification",
+    "provider": "grok",
+    "model": "grok-4.5",
+    "effort": "high",
+    "search": true,
+    "timeout": 900,
+    "min_answer_chars": 1200,
+    "required_markers": [
+      "VERIFIED HITS",
+      "FAILED SURFACES",
+      "VERDICT"
+    ]
+  }
+]

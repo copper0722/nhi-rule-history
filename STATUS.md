@@ -19,6 +19,15 @@
 
 ## 已完成
 
+- 現行條文已從同一個 sealed PG publication 投影到三個可用面：
+  `hmj:8710` 提供 latest list/search、單條 detail、history inventory 與
+  reviewed enrichment API；付費站
+  `https://s.copper0722.com/member/tools/nhi-rules/` 已上線，頁面與
+  same-origin JSON 均經既有訂閱 gateway 保護；BOA／boan-emr 可使用
+  latest-only API contract，但 2026-07-29 尚未完成從 `boa` 主機發出的
+  實際讀取驗證，因本機 SSH key 被該主機拒絕。GitHub 的定位是公開方法學、
+  schema、crawler、exporter、稽核收據與可攜 JSON／SQLite release，不是
+  付費內容的 production static site。
 - 現行分章正典已程式化切成 639 個單一條文 publication rows；每條保存
   exact text、13,874 個結構區塊、3,487 個 distinct valid ROC-date rows、
   官方 ODT URL/hash/locator 與版本缺口 inventory。依 owner 指定規則，
@@ -26,7 +35,11 @@
   440 條；199 條目前不缺，另有 5 條日期計數低於既有全文證據而明列
   underflow。v18 migration/loader 已通過 disposable forward、
   639-row active view、idempotent replay、sealed mutation rejection 與
-  rollback；live apply 等獨立 Fable gate。
+  rollback；兩輪 Fable 均為 `ACCEPT_FOR_LIVE_STAGE`。v16 authority
+  policy 與 v18 projection 已套入 `hmj/vault_main`，active sealed run 為
+  `a707d13a-0b06-5dfe-96b7-6d107ab8793f`；live replay、active view、
+  15 個 trigger rows、封存後 UPDATE、直插 sealed run、loading activation
+  rejection 均已核對。
 - 條文歷史列已程式化區分版本距離：日期差只涵蓋一版時顯示
   「與上一版本差異」；跨過至少一個預期版本時顯示「與舊版本差異」及
   缺少的中間全文版本數。

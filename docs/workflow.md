@@ -401,6 +401,18 @@ official chapter ODTs
 缺少全文狀態；440 條有缺版，199 條目前不缺，5 條的日期計數低於既有
 全文證據而另列 discrepancy。
 
+同一個 active sealed projection 的發布邊界如下：
+
+1. `copper-panel`／`hmj:8710` 是內部唯讀 API provider，提供 latest
+   list/search、單條 detail、history inventory 與 reviewed enrichment。
+2. 付費站在 build 時讀取 typed contracts，產生受訂閱 gateway 保護的
+   same-origin JSON 與 reader；不讓瀏覽器直接連 tailnet API。
+3. `boan-emr` 只讀 latest contract，不把歷史重建、agent summary 或私有
+   ICD-11 內容帶入臨床端。Provider 已上線；consumer 必須另外從 BOA
+   主機驗證，未完成前不得宣稱整合完成。
+4. GitHub 保存可重現 workflow、schema、程式、公開稽核收據及可攜
+   JSON／SQLite release。它不是付費 reader 的 production host。
+
 ## WP07：公開 release
 
 每個資料 release 至少包含：

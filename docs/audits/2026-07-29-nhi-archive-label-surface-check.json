@@ -1,0 +1,50 @@
+{
+  "schema": "nhi-rule-history/nhi-archive-label-surface-check/v1",
+  "observed_at": "2026-07-29T00:33:02+08:00",
+  "status": "scope_claim_not_supported_by_current_listing",
+  "parent_navigation": {
+    "url": "https://www.nhi.gov.tw/ch/np-2505-1.html",
+    "label": "修正規定 (自103年4月3日以後生效之公告)",
+    "label_observed_in_current_search_index": true
+  },
+  "target_listing": {
+    "url": "https://www.nhi.gov.tw/ch/lp-3258-1.html",
+    "visible_rows": 859,
+    "visible_pages_at_20_rows": 43,
+    "earliest_visible_row": {
+      "row_number": 859,
+      "title": "修正「健保資訊網管理要點」部分規定，並自即日生效。",
+      "document_number": "健保資字第1110690467A號",
+      "document_date_roc": "111-09-06",
+      "listing_date_roc": "111-09-06",
+      "listing_end_roc": "122-12-31"
+    },
+    "has_listing_end_column": true,
+    "contains_2014_04_03_label_text": false,
+    "contains_rows_before_2022_09_06": false
+  },
+  "bounded_search_checks": [
+    {
+      "query": "site:nhi.gov.tw/ch/cp-3258 \"健保審字第1030035925號\"",
+      "result": "no_matching_old_detail_page"
+    },
+    {
+      "query": "site:nhi.gov.tw \"健保審字第1030035925號\"",
+      "result": "no_matching_old_detail_page"
+    },
+    {
+      "query": "site:nhi.gov.tw \"健保審字第1090076004號\"",
+      "result": "no_matching_old_detail_page"
+    }
+  ],
+  "claims": {
+    "intentional_deception_proved": false,
+    "current_listing_is_complete_from_2014_04_03": false,
+    "current_listing_can_close_historical_notice_universe": false,
+    "old_detail_pages_do_not_exist": false,
+    "label_is_objectively_misleading_as_an_archive_scope": true
+  },
+  "interpretation": "The parent label states a 2014-04-03 start, but the current target listing exposes only rows back to 2022-09-06 and includes a listing-expiry field. This supports a retention-filtered current publication surface, not a closed archive. The check cannot establish intent or prove that older detail pages and attachments were deleted.",
+  "method_effect": "Treat the NHI listing as one live evidence surface. Reconstruct clause history from the union of current split files, annual snapshots, inline ROC date markers, notices found through NHI or FINT, gazettes, and archival holdings.",
+  "workflow_sha256_after_consensus_update": "3cee6b1adf9e1e810ad1d30af86fa89bfd9bf2454d5fbdee1121cd847cfaa474"
+}

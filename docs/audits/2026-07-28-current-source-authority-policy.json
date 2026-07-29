@@ -1,0 +1,35 @@
+{
+  "schema": "nhi-rule-history/current-source-authority-policy/v1",
+  "recorded_on": "2026-07-28",
+  "canonical_current_source": {
+    "page_url": "https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html",
+    "official_page_title": "最新版藥品給付規定內容(分章節)",
+    "surface": "current_chapters",
+    "role": "sole_current_text_authority",
+    "primary_structured_format": "odt",
+    "scope": "chapter and appendix file groups declared on the page"
+  },
+  "secondary_source": {
+    "page_url": "https://www.nhi.gov.tw/ch/cp-13108-67ddf-2508-1.html",
+    "surface": "current_whole",
+    "role": "non_authoritative_quality_crosscheck",
+    "mismatch_blocks_current_publication": false
+  },
+  "rules": {
+    "current_text_projection_uses_chapter_page_only": true,
+    "whole_chapter_mismatches_remain_auditable": true,
+    "whole_chapter_mismatches_require_canonical_adjudication": false,
+    "page_update_label_is_legal_effective_date": false,
+    "historical_transition_evidence_is_unchanged": true
+  },
+  "decision_basis": [
+    "The official page identifies itself as the latest reimbursement-rule content by chapter.",
+    "The project owner confirmed this page as the only canonical current-text surface."
+  ],
+  "postgresql_contract": {
+    "migration": "2026-07-28_nhi_rule_history_current_source_authority_v16.sql",
+    "table": "nhi_rule_history_edition.current_source_authority_policy",
+    "view": "nhi_rule_history_edition.v_current_source_authority",
+    "append_only": true
+  }
+}
