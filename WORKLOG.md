@@ -15,6 +15,14 @@
 - 開始將 profile 接入 Copper Panel read-only API 與付費網站專屬頁；官方
   完整條文、exact diff、公告附件逐字文字與完整合成逐字文字保持獨立，
   agent 解說不覆寫 canonical data。
+- Copper Panel commit `9e9c8da8477e` 已 fast-forward 至 hmj、重啟並通過
+  doctor；正式 announced API 回傳 `agentic_specialized` profile，且
+  source version、完整條文 SHA 與 exact diff fingerprint 均和 PG 相符。
+- 付費站 commit `6af928bb4004` 通過 146 項 access suite、dist audit 與
+  Cloudflare 正式授權邊界驗證，部署為
+  `69656742-b4cc-4bf9-9bf8-8d1a537f3a97`。登入瀏覽器驗證 2.6.1 專屬編排、
+  收合完整條文、左右 exact diff、公告附件逐字附錄與完整合成條文附錄；
+  390px 無橫向溢出。另以 2.6.3 驗證沒有 profile 時仍走通用頁。
 
 ## 2026-07-28
 

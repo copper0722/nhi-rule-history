@@ -17,6 +17,7 @@ latest_verification:
   sqlite_integrity_check: passed
   sqlite_foreign_key_check: passed
   clause_normalization_v25_pro_gate: PASS
+  clause_reader_profile_v26_live_gate: PASS
   live_nhi_drug_linkage_fetch: passed
   github_pages_reader: passed_http_200_and_browser_verified
 
@@ -92,12 +93,12 @@ service_surfaces:
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: 3a4eb25ed7bc320b0d356c9388b342ca20ecb497
-      pages_deployment_id: bafa486d-0854-4796-b833-27ac94f87381
-      pages_production_url: https://bafa486d.copper-s.pages.dev
-      api_commit: f5ffd5bef5d2ab59a2bf1d5289451ff6c73cc6b3
-      subscriber_json_sha256: e00acb98c25b96ac5791c92ee4cab4616c63522601673fed083806c6f9c4b9d4
-      live_verification_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-mobile-card-parity.json
+      commit: 6af928bb4004dcf22c0e677fc344a3cde9a9709d
+      pages_deployment_id: 69656742-b4cc-4bf9-9bf8-8d1a537f3a97
+      pages_production_url: https://69656742.copper-s.pages.dev
+      api_commit: 9e9c8da8477e80960ca91034638841b13d2ef249
+      subscriber_json_sha256: 5f624cc022e350e78405f0d46e423e0fc31c13a8afdbf2f6982013fb2a219780
+      live_verification_receipt: docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json
       privacy_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-browser-privacy-canary.json
     status: live_verified
   boan_emr:
@@ -162,7 +163,7 @@ continuous_update:
     resume_requires: explicit_Copper_instruction
 
 announced_dyslipidemia_release:
-  status: source_bound_specialized_reader_profile_loaded_pending_site_deploy
+  status: source_bound_specialized_reader_profile_live_verified
   official_notice_reference: 健保審字第1150671962號
   official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
   published_on: "2026-07-28"
@@ -255,6 +256,17 @@ announced_dyslipidemia_release:
     predecessor_title: 上一版條文 2019.02.01
     future_effective_warning: true
     product_table_default_open: false
+    specialized_reader:
+      title: 先分流藥品，再看病人門檻
+      pathway_cards: 4
+      threshold_cards: 6
+      change_digest_cards: 5
+      full_official_text_default_open: false
+      official_attachment_text_at_page_end: true
+      complete_composed_text_at_page_end: true
+      mobile_390px_horizontal_overflow: false
+      generic_fallback_verified_with_clause: 2.6.3
+      live_verification: docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json
   decision_aid:
     title: 表一 LDL-C 起始治療門檻檢查
     evaluator: open_world_tri_state_dnf

@@ -16,8 +16,15 @@
   canonical PG rows 即時渲染。
 - 專頁順序改為「健保碼分流 → 表一／表二 → 病人風險與數值 → 處方追蹤
   → 結構變更總覽」。通用完整條文與左右 exact diff 收合；頁尾另附公告
-  附件逐字文字與完整合成條文逐字文字。API、付費站 build／deploy 與正式
-  瀏覽器驗證仍在本輪進行，未先宣稱 live。
+  附件逐字文字與完整合成條文逐字文字。
+- Copper Panel commit `9e9c8da8477e` 已在 hmj 通過 doctor 並由正式 API
+  回傳 source-bound profile；付費站 commit `6af928bb4004` 已部署為
+  production `69656742-b4cc-4bf9-9bf8-8d1a537f3a97`。正式登入頁顯示
+  「最新條文 2026.09.01」與「先分流藥品，再看病人門檻」；390px
+  `scrollWidth=clientWidth=390`，4 個流程卡、6 個門檻卡、5 個變更摘要卡
+  均可讀，頁尾保存 8,127 字公告附件與 9,249 字完整合成條文。2.6.3
+  無 profile 時仍自動走通用 renderer。完整收據：
+  `docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json`。
 
 ## 目前操作狀態
 
