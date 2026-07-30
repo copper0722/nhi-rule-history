@@ -1,0 +1,65 @@
+{
+  "contract": "nhi-rule-history/patient-first-reader-order-verification/v1",
+  "verified_at": "2026-07-30T20:54:23+08:00",
+  "clause_code": "2.6.1",
+  "effective_on": "2026-09-01",
+  "owner_correction": "Clinical use starts with patient assessment, not drug routing.",
+  "pg_receipt": {
+    "append_only": true,
+    "previous_profile_preserved": true,
+    "active_profile_run_id": "e3b98c8d-699d-5301-864e-66958b2a486f",
+    "active_profile_id": "045254d2-51f0-52b0-9878-be9df78575f8",
+    "content_sha256": "38bcce1c65af7ae737039479a5035a0d9875764a73dd6276c440195f28895407",
+    "title": "先定位病人風險，再確認藥品適用表別",
+    "pathway_titles": [
+      "先看病人條件",
+      "記錄 LDL-C",
+      "再查健保藥品代碼",
+      "套用給付軌並核對追蹤"
+    ]
+  },
+  "source_repository": {
+    "repository": "nhi-rule-history",
+    "commit": "ca184e8a78fe5b619bca73e0b56104b09a7c3174",
+    "tests": {
+      "passed": 493,
+      "skipped": 7,
+      "total": 500
+    }
+  },
+  "subscriber_site": {
+    "repository": "personal-website-s",
+    "commit": "6402e0ce6aa052d854d1b9178fc95653774687d7",
+    "deployment_id": "b45212b3-6672-4fc0-a805-2d231133f01d",
+    "deployment_origin": "https://b45212b3.copper-s.pages.dev",
+    "production_url": "https://s.copper0722.com/member/tools/nhi-rules/?clause=2.6.1",
+    "tests": {
+      "passed": 155,
+      "failed": 0
+    },
+    "build_page_count": 69
+  },
+  "live_browser_verification": {
+    "backend": "Codex in-app Browser",
+    "desktop": {
+      "viewport_width": 1280,
+      "heading": "先定位病人風險，再確認藥品適用表別",
+      "first_section": "第一步 · 先看病人",
+      "second_section": "第二步 · 再看藥品",
+      "first_top_px": 1010.953125,
+      "second_top_px": 1189.109375,
+      "old_copy_absent": true,
+      "horizontal_overflow": false
+    },
+    "mobile": {
+      "viewport_width": 390,
+      "first_top_px": 1805.4375,
+      "second_top_px": 2213.78125,
+      "scroll_width": 390,
+      "client_width": 390,
+      "horizontal_overflow": false
+    },
+    "visible_error": false,
+    "console_errors": []
+  }
+}

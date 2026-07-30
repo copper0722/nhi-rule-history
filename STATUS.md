@@ -19,13 +19,14 @@
   → 結構變更總覽」。通用完整條文與左右 exact diff 收合；頁尾另附公告
   附件逐字文字與完整合成條文逐字文字。
 - Copper Panel commit `9e9c8da8477e` 已在 hmj 通過 doctor 並由正式 API
-  回傳 source-bound profile；付費站 commit `6af928bb4004` 已部署為
-  production `69656742-b4cc-4bf9-9bf8-8d1a537f3a97`。正式登入頁顯示
+  回傳 source-bound profile；付費站 commit `6402e0ce6aa0` 已部署為
+  production `b45212b3-6672-4fc0-a805-2d231133f01d`。正式登入頁顯示
   「最新條文 2026.09.01」與「先定位病人風險，再確認藥品適用表別」；390px
   `scrollWidth=clientWidth=390`，4 個流程卡、6 個門檻卡、5 個變更摘要卡
   均可讀，頁尾保存 8,127 字公告附件與 9,249 字完整合成條文。2.6.3
-  無 profile 時仍自動走通用 renderer。完整收據：
-  `docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json`。
+  無 profile 時仍自動走通用 renderer。初版與病人優先換版收據：
+  `docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json`、
+  `docs/audits/2026-07-30-patient-first-reader-order-live-verification.json`。
 
 ## 目前操作狀態
 
