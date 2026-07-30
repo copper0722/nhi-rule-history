@@ -130,6 +130,41 @@ sealed, independently reviewed, strictly character-equivalent presentation
 revision replace the raw block layout. See
 [`presentation-proofread.md`](presentation-proofread.md).
 
+## 專屬閱讀編排（opt-out presentation）
+
+通用 renderer 是預設，不是目的本身。若一條正式條文同時交織多個表格、
+分流維度與判斷順序，通用 renderer 即使逐字正確，仍可能迫使讀者自行重建
+臨床路徑。這時可以讓「該條文的該一版本」退出通用呈現，但不能退出資料
+正規化、版本、diff 或來源稽核。
+
+可啟用專屬編排的條件：
+
+1. 完整 Expression、文件樹、表格、健保碼連結與 exact diff 已封存；
+2. 問題是認知負荷，不是漏字、錯表或 parser 尚未完成；
+3. Copper 明確授權 agentic presentation；
+4. profile 綁定該版 `source_version_id`、完整文字 SHA-256、
+   `source_diff_run_id` 與 diff output fingerprint；
+5. profile 只保存閱讀順序、結構層級變更解說與介面模板 key，不保存另一份
+   可競爭的官方條文。
+
+PG 的 `clause_reader_profile_run` 與 `clause_reader_profile` 是 append-only
+發行 lane。前端只能使用 allowlisted template，所有文字以 `textContent`
+輸出，不能從 PG 注入 HTML。當 API 取得的新版本、全文 hash 或 diff
+fingerprint 與 profile 不同時，profile 查詢必須回空值；網站退回通用
+renderer，不得沿用舊解說。
+
+專屬頁的閱讀順序可以不同於附件順序。例如 2.6.1 先呈現：
+
+1. 健保藥品代碼分流；
+2. 表一／表二給付軌；
+3. 病人風險與數值門檻；
+4. 處方與追蹤條件；
+5. 結構層級的變更總覽；
+6. 收合的完整正規化條文、左右逐字 diff、公告附件原文與完整合成原文。
+
+其中第 1–4 項的藥品、門檻與判斷資料仍從同一個 sealed PG version 讀取。
+agent 只決定怎麼說明與排序，不能另造藥品名單或數值。
+
 Index projection:
 
 ```json

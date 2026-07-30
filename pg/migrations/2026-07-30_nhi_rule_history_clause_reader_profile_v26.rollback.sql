@@ -1,0 +1,37 @@
+BEGIN;
+
+DROP VIEW IF EXISTS
+  nhi_rule_history_announced.v_public_clause_reader_profile;
+
+DROP TRIGGER IF EXISTS clause_reader_profile_control_truncate_guard
+  ON nhi_rule_history_announced.clause_reader_profile_control_event;
+DROP TRIGGER IF EXISTS clause_reader_profile_control_mutation_guard
+  ON nhi_rule_history_announced.clause_reader_profile_control_event;
+DROP TRIGGER IF EXISTS clause_reader_profile_control_insert_guard
+  ON nhi_rule_history_announced.clause_reader_profile_control_event;
+DROP TRIGGER IF EXISTS clause_reader_profile_run_truncate_guard
+  ON nhi_rule_history_announced.clause_reader_profile_run;
+DROP TRIGGER IF EXISTS clause_reader_profile_run_delete_guard
+  ON nhi_rule_history_announced.clause_reader_profile_run;
+DROP TRIGGER IF EXISTS clause_reader_profile_run_seal_guard
+  ON nhi_rule_history_announced.clause_reader_profile_run;
+DROP TRIGGER IF EXISTS clause_reader_profile_truncate_guard
+  ON nhi_rule_history_announced.clause_reader_profile;
+DROP TRIGGER IF EXISTS clause_reader_profile_mutation_guard
+  ON nhi_rule_history_announced.clause_reader_profile;
+DROP TRIGGER IF EXISTS clause_reader_profile_insert_guard
+  ON nhi_rule_history_announced.clause_reader_profile;
+
+DROP FUNCTION IF EXISTS
+  nhi_rule_history_announced.guard_clause_reader_profile_control_insert();
+DROP FUNCTION IF EXISTS
+  nhi_rule_history_announced.guard_clause_reader_profile_run_seal();
+DROP FUNCTION IF EXISTS
+  nhi_rule_history_announced.guard_clause_reader_profile_insert();
+
+DROP TABLE IF EXISTS
+  nhi_rule_history_announced.clause_reader_profile_control_event;
+DROP TABLE IF EXISTS nhi_rule_history_announced.clause_reader_profile;
+DROP TABLE IF EXISTS nhi_rule_history_announced.clause_reader_profile_run;
+
+COMMIT;

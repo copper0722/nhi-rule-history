@@ -5,7 +5,7 @@ title_en: Taiwan NHI Drug Reimbursement Rule History
 status: in_progress
 risk_class: R3
 privacy: public
-last_verified_date: "2026-07-29"
+last_verified_date: "2026-07-30"
 
 latest_verification:
   legacy_tests_passed: 70
@@ -62,6 +62,7 @@ service_surfaces:
     announced_patch_contract: nhi-reimbursement-rules/announced-decision/v1
     clause_document_contract: nhi-reimbursement-rules/clause-document/v2
     exact_diff_contract: nhi-reimbursement-rules/exact-expression-diff/v2
+    reader_profile_contract: nhi-reimbursement-rules/reader-profile/v1
     announced_patch_count: 1
     status: live_verified
   subscriber_site:
@@ -149,7 +150,7 @@ continuous_update:
     latest_published_version: rendered_first_with_effective_date_state
     prior_latest_version: archived_as_immediate_predecessor
     diff_policy: adjacent_text_version_only
-    render_policy: shared_pg_api_render_plan_only
+    render_policy: shared_pg_api_render_plan_with_source_bound_opt_out_profile
     frontend_clause_specific_tagging_or_diff: forbidden
     audit_agent_role: detect_boundary_cases_and_open_rule_findings
     accepted_remediation: parser_or_schema_rule_plus_regression_test_plus_full_replay
@@ -161,7 +162,7 @@ continuous_update:
     resume_requires: explicit_Copper_instruction
 
 announced_dyslipidemia_release:
-  status: live_normalized_render_and_adjacent_diff_projection
+  status: source_bound_specialized_reader_profile_loaded_pending_site_deploy
   official_notice_reference: 健保審字第1150671962號
   official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
   published_on: "2026-07-28"
@@ -182,6 +183,18 @@ announced_dyslipidemia_release:
     composed_clause_and_reimbursement_links: pg/migrations/2026-07-29_nhi_rule_history_announced_composite_v23.sql
     render_terminology_and_adjacent_diff: pg/migrations/2026-07-29_nhi_rule_history_announced_version_projection_v24.sql
     clause_document_normalization_and_exact_diff: pg/migrations/2026-07-29_nhi_rule_history_clause_components_v25.sql
+    source_bound_reader_profile: pg/migrations/2026-07-30_nhi_rule_history_clause_reader_profile_v26.sql
+  reader_profile:
+    profile_run_id: a37e90aa-604d-56c8-a514-7fb0367281be
+    profile_id: 092a5d4e-e1be-55c5-b290-9fc56794af53
+    contract: nhi-reimbursement-rules/reader-profile/v1
+    presentation_mode: agentic_specialized
+    template_key: dyslipidemia_pathway_v1
+    review_status: owner_authorized
+    content_sha256: b9c70592dd36ff274e04108f6f554c2b4a912c636eb771b7758cc38c65b6e812
+    source_composed_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
+    source_diff_output_fingerprint: 7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de
+    stale_policy: fail_closed_to_general_renderer
   run_id: ad59feb1-1891-5b92-b221-0cb15d3efbac
   patch_id: a66597ba-0d3d-5e29-888e-9dd78ba0686e
   model_id: ddb7d27d-1327-5af1-8b43-ea015e6fce36

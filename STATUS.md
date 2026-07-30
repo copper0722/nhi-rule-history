@@ -1,6 +1,23 @@
 # 專案進度
 
-最後核對：2026-07-29
+最後核對：2026-07-30
+
+## 2026-07-30 — 2.6.1 source-bound 專屬閱讀編排
+
+- Copper 明確核准 2.6.1 的 115/9/1 版本退出通用呈現，但不退出 PG
+  正規化、版本、健保碼連結與 exact diff。新增 v26 append-only
+  `clause_reader_profile_run`／`clause_reader_profile`／control event；
+  profile 必須同時綁定完整條文 SHA-256 與 exact diff output
+  fingerprint，任一來源變更即 fail closed 回通用 renderer。
+- 正式 PG 已封存並啟用 `dyslipidemia_pathway_v1`：
+  profile run `a37e90aa-604d-56c8-a514-7fb0367281be`、profile
+  `092a5d4e-e1be-55c5-b290-9fc56794af53`。內容只保存閱讀順序、分流說明與
+  結構層級變更摘要；藥品清單、六層風險門檻、表格與判斷仍由同一版
+  canonical PG rows 即時渲染。
+- 專頁順序改為「健保碼分流 → 表一／表二 → 病人風險與數值 → 處方追蹤
+  → 結構變更總覽」。通用完整條文與左右 exact diff 收合；頁尾另附公告
+  附件逐字文字與完整合成條文逐字文字。API、付費站 build／deploy 與正式
+  瀏覽器驗證仍在本輪進行，未先宣稱 live。
 
 ## 目前操作狀態
 

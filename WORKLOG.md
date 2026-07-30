@@ -1,5 +1,21 @@
 # Worklog
 
+## 2026-07-30
+
+- Copper 指出 2.6.1 雖已完成 deterministic 正規化，通用呈現仍讓醫師必須
+  同時理解新舊給付軌、風險分層、數值門檻與健保碼品項集合；授權該一版本
+  採 agentic specialized reader。Facebook 討論的反覆回饋包括「太複雜」、
+  「看不懂」及無法判斷藥品走新制或舊制，因此問題被定位為認知路徑，而非
+  來源文字或 parser 缺漏。
+- 實作 v26 source-bound profile lane、rollback、JSON profile、generic
+  loader 與契約測試；正式 PG migration、seal、activation 成功。Profile
+  綁定 2.6.1 115/9/1 完整文字 SHA
+  `7f371d56…0e57f` 與 exact diff fingerprint
+  `7fae168e…e64de`，不能在下一版沿用。
+- 開始將 profile 接入 Copper Panel read-only API 與付費網站專屬頁；官方
+  完整條文、exact diff、公告附件逐字文字與完整合成逐字文字保持獨立，
+  agent 解說不覆寫 canonical data。
+
 ## 2026-07-28
 
 - Copper 指定健保署「最新版藥品給付規定內容（分章節）」

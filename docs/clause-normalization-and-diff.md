@@ -9,13 +9,16 @@
 
 - **D — Deterministic（機械式）**：同一輸入必須得到同一輸出；可用程式、
   雜湊、資料庫限制與測試重播。
-- **A — Agentic audit（代理稽核）**：模型只找異常、反例與新格式，提出
-  「應增加哪一條機械規則」。模型不能直接改正式資料。
+- **A — Agentic audit / presentation（代理稽核／閱讀編排）**：模型找
+  異常、反例與新格式，提出「應增加哪一條機械規則」。當 Copper 明確核准
+  某一複雜版本退出通用 renderer 時，模型也可撰寫來源綁定的閱讀順序與
+  結構解說；模型仍不能改官方文字、表格、代碼、門檻或 exact diff。
 - **H — Human gate（人工裁決）**：只處理來源互相矛盾、條文身分不明或
   會改變法律意義的決定。
 
 正常更新應幾乎全部走 **D**。**A** 和 **H** 是例外處理，不是每次公告的
-必經人工編輯。
+必經人工編輯。Agentic reader profile 是 presentation lane，不會成為另一個
+條文 Expression。
 
 ## 五條不變原則
 
@@ -179,6 +182,25 @@ source mapping 不是「一個 block 對一個 node」。正式規則是：
 `has_table` 不另行手填；它由該版本的 table node 數量計算。
 
 ## 新公告上線的完整流程
+
+### Default renderer 與 opt-out renderer 的分界
+
+完成正規化與 exact diff 後，預設由通用 renderer 直接上線，這是 **D**。
+只有在資料正確但閱讀任務仍要求讀者同時跨越多張表、多個代碼集合與多層
+條件時，才開 opt-out：
+
+1. **D**：計算完整文字、表格、健保碼集合、decision model 與 exact diff。
+2. **A**：以同一版資料撰寫閱讀路徑與結構層級的變更摘要。
+3. **H**：Copper 核准該版採 `agentic_specialized`。
+4. **D**：loader 驗證 source version／全文 hash／diff fingerprint，
+   封存 profile 並透過 control event 啟用。
+5. **D**：API 只在所有 source bindings 相等時回傳 profile；不相等時
+   fail closed，前端使用通用 renderer。
+
+Profile 不得包含自行抄寫的門檻表、藥品清單或官方全文。專屬模板應從
+canonical `decision_model`、`reimbursement_code_links` 與 normalized tables
+即時渲染數值；profile 只保存人類閱讀順序、標題、說明與 source-role
+references。正式原始附件文字與完整合成條文仍放在頁尾供逐字核對。
 
 ### Step 0 — 發現公告
 
