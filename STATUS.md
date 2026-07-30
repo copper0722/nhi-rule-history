@@ -10,17 +10,18 @@
   profile 必須同時綁定完整條文 SHA-256 與 exact diff output
   fingerprint，任一來源變更即 fail closed 回通用 renderer。
 - 正式 PG 已封存並啟用 `dyslipidemia_pathway_v1`：
-  profile run `a37e90aa-604d-56c8-a514-7fb0367281be`、profile
-  `092a5d4e-e1be-55c5-b290-9fc56794af53`。內容只保存閱讀順序、分流說明與
+  profile run `e3b98c8d-699d-5301-864e-66958b2a486f`、profile
+  `045254d2-51f0-52b0-9878-be9df78575f8`。上一版仍保留於 append-only
+  歷史。內容只保存閱讀順序、分流說明與
   結構層級變更摘要；藥品清單、六層風險門檻、表格與判斷仍由同一版
   canonical PG rows 即時渲染。
-- 專頁順序改為「健保碼分流 → 表一／表二 → 病人風險與數值 → 處方追蹤
+- 專頁順序改為「病人風險 → LDL-C → 健保碼分流 → 對應給付軌與追蹤
   → 結構變更總覽」。通用完整條文與左右 exact diff 收合；頁尾另附公告
   附件逐字文字與完整合成條文逐字文字。
 - Copper Panel commit `9e9c8da8477e` 已在 hmj 通過 doctor 並由正式 API
   回傳 source-bound profile；付費站 commit `6af928bb4004` 已部署為
   production `69656742-b4cc-4bf9-9bf8-8d1a537f3a97`。正式登入頁顯示
-  「最新條文 2026.09.01」與「先分流藥品，再看病人門檻」；390px
+  「最新條文 2026.09.01」與「先定位病人風險，再確認藥品適用表別」；390px
   `scrollWidth=clientWidth=390`，4 個流程卡、6 個門檻卡、5 個變更摘要卡
   均可讀，頁尾保存 8,127 字公告附件與 9,249 字完整合成條文。2.6.3
   無 profile 時仍自動走通用 renderer。完整收據：

@@ -186,13 +186,13 @@ announced_dyslipidemia_release:
     clause_document_normalization_and_exact_diff: pg/migrations/2026-07-29_nhi_rule_history_clause_components_v25.sql
     source_bound_reader_profile: pg/migrations/2026-07-30_nhi_rule_history_clause_reader_profile_v26.sql
   reader_profile:
-    profile_run_id: a37e90aa-604d-56c8-a514-7fb0367281be
-    profile_id: 092a5d4e-e1be-55c5-b290-9fc56794af53
+    profile_run_id: e3b98c8d-699d-5301-864e-66958b2a486f
+    profile_id: 045254d2-51f0-52b0-9878-be9df78575f8
     contract: nhi-reimbursement-rules/reader-profile/v1
     presentation_mode: agentic_specialized
     template_key: dyslipidemia_pathway_v1
     review_status: owner_authorized
-    content_sha256: b9c70592dd36ff274e04108f6f554c2b4a912c636eb771b7758cc38c65b6e812
+    content_sha256: 38bcce1c65af7ae737039479a5035a0d9875764a73dd6276c440195f28895407
     source_composed_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
     source_diff_output_fingerprint: 7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de
     stale_policy: fail_closed_to_general_renderer
@@ -257,7 +257,7 @@ announced_dyslipidemia_release:
     future_effective_warning: true
     product_table_default_open: false
     specialized_reader:
-      title: 先分流藥品，再看病人門檻
+      title: 先定位病人風險，再確認藥品適用表別
       pathway_cards: 4
       threshold_cards: 6
       change_digest_cards: 5

@@ -34,6 +34,9 @@ class ReaderProfileTest(unittest.TestCase):
         self.assertGreaterEqual(
             len(payload["content"]["change_digest"]), 5
         )
+        steps = payload["content"]["pathway_steps"]
+        self.assertEqual(steps[0]["title"], "先看病人條件")
+        self.assertIn("健保藥品代碼", steps[2]["title"])
 
     def test_profile_rejects_executable_copy(self) -> None:
         payload = json.loads(PROFILE.read_text(encoding="utf-8"))

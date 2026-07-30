@@ -16,32 +16,32 @@
   },
   "content": {
     "eyebrow": "2.6.1 專屬閱讀版",
-    "title": "先分流藥品，再看病人門檻",
-    "lead": "這次改版不是只換一組數字。第一步先用健保藥品代碼決定走表一或表二，第二步才依病人的風險層級與血脂值判斷。",
+    "title": "先定位病人風險，再確認藥品適用表別",
+    "lead": "臨床判讀先從病人的疾病、病史與風險因子開始，定位心血管風險並記錄 LDL-C；確認病人條件後，再用 10 碼健保藥品代碼判斷適用表一或表二。",
     "pathway_steps": [
       {
         "step": "1",
-        "title": "查健保藥品代碼",
-        "body": "藥名只能幫忙找到品項；真正決定新舊給付軌的是 10 碼健保藥品代碼。",
-        "source_roles": ["applicability", "table2_code_set"]
+        "title": "先看病人條件",
+        "body": "由最高風險條件依序判讀疾病、病史與風險因子，定位病人的六層心血管風險。",
+        "source_roles": ["risk_definition"]
       },
       {
         "step": "2",
-        "title": "決定表一或表二",
-        "body": "公告表列品項僅適用表二；其餘降膽固醇藥物適用表一。",
-        "source_roles": ["applicability", "table2_code_set"]
+        "title": "記錄 LDL-C",
+        "body": "記錄目前 LDL-C，作為後續套用表一或表二給付門檻的共同輸入。",
+        "source_roles": ["table1_matrix", "table2_heading"]
       },
       {
         "step": "3",
-        "title": "再看病人條件",
-        "body": "表一改以六層心血管風險對應 LDL-C 起始治療門檻；表二沿用原有的疾病與危險因子分組。",
-        "source_roles": ["table1_matrix", "risk_definition", "table2_heading"]
+        "title": "再查健保藥品代碼",
+        "body": "藥名可協助找到品項；真正決定適用表一或表二的是 10 碼健保藥品代碼。",
+        "source_roles": ["applicability", "table2_code_set"]
       },
       {
         "step": "4",
-        "title": "最後核對處方與追蹤",
-        "body": "達到起始門檻不等於完成全部給付條件，仍要核對非藥物治療、目標值、處方與追蹤規定。",
-        "source_roles": ["table1_matrix", "assessment_note"]
+        "title": "套用給付軌並核對追蹤",
+        "body": "表一依六層風險判斷起始門檻；表二沿用原疾病與危險因子分組，兩者仍須核對非藥物治療、目標值、處方與追蹤規定。",
+        "source_roles": ["applicability", "table1_matrix", "table2_heading", "assessment_note"]
       }
     ],
     "lane_labels": {
