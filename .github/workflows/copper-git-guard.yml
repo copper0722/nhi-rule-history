@@ -80,10 +80,30 @@ jobs:
           SARIF="$RUNNER_TEMP/copper-git-guard.sarif"
           SCANNER="$RUNNER_TEMP/copper_git_guard.py"
           CONFIG="$RUNNER_TEMP/copper-git-guard.toml"
+          # `github.event.before` is the tip GitHub saw when the push arrived, and
+          # a rebase can orphan it before this job checks out: two pushes seconds
+          # apart, the first one rewritten by `pull --rebase`, and `before` names a
+          # commit that is no longer reachable. The scanner then failed closed on
+          # `Invalid revision range` (exit 3) — measured 2026-08-28,
+          # copper0722/_admin-private run 33175855784. Failing closed there is not
+          # a safety property: it scans NOTHING and blocks everything. Falling back
+          # to the default-branch merge-base scans strictly MORE.
+          BEFORE_USABLE=0
+          # Reachability is not enough: `A..B` is only meaningful when A is an
+          # ANCESTOR of B. A full-history fetch can hold an orphaned commit, so
+          # cat-file alone would accept a parent that rev-list still refuses.
+          if [[ -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]] \
+             && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null \
+             && git merge-base --is-ancestor "$BEFORE_SHA" "$HEAD_SHA" 2>/dev/null; then
+            BEFORE_USABLE=1
+          elif [[ -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "::notice::push parent $BEFORE_SHA is unreachable (rewritten history); scanning from the default-branch merge-base instead"
+          fi
+
           TRUSTED_REF=""
           if [[ "$EVENT_NAME" == "pull_request_target" ]]; then
             TRUSTED_REF="${PR_BASE_SHA:-}"
-          elif [[ "$EVENT_NAME" == "push" && -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+          elif [[ "$EVENT_NAME" == "push" && "$BEFORE_USABLE" == "1" ]]; then
             TRUSTED_REF="$BEFORE_SHA"
           elif git rev-parse --verify "origin/$DEFAULT_BRANCH" >/dev/null 2>&1; then
             TRUSTED_REF="origin/$DEFAULT_BRANCH"
@@ -125,8 +145,17 @@ jobs:
 
           if [[ "$EVENT_NAME" == "pull_request_target" && -n "${PR_BASE_SHA:-}" && -n "${PR_HEAD_SHA:-}" ]]; then
             python "$SCANNER" "${COMMON[@]}" range --base "$PR_BASE_SHA" --head "$PR_HEAD_SHA"
-          elif [[ "$EVENT_NAME" == "push" && -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+          elif [[ "$EVENT_NAME" == "push" && "$BEFORE_USABLE" == "1" ]]; then
             python "$SCANNER" "${COMMON[@]}" range --base "$BEFORE_SHA" --head "$HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" && -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            # The parent GitHub reported was rewritten away. The merge-base with
+            # the default branch is NOT a safe base here: on a push to the default
+            # branch itself the checkout's origin/<default> IS this head, so the
+            # range comes out EMPTY and the job would scan nothing while passing.
+            # Scan the whole tree instead — strictly more than the range it
+            # replaces, which is the only acceptable direction for a fallback.
+            echo "::notice::scanning the full tree at $HEAD_SHA because the reported push parent is unreachable"
+            python "$SCANNER" "${COMMON[@]}" tree --ref "$HEAD_SHA"
           elif [[ "$EVENT_NAME" == "push" && "${BEFORE_SHA:-}" =~ ^0+$ ]]; then
             # New branch/tag: scan only commits newly reachable relative to the
             # default branch, not unrelated --all history.
