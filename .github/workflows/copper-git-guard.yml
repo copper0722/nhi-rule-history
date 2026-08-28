@@ -1,0 +1,154 @@
+name: Copper Git Boundary Guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: copper-git-guard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan-git-boundary:
+    name: Scan every outgoing Git blob
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # pull_request_target intentionally checks out untrusted head bytes as
+          # data only. The workflow executes the trusted base scanner/config,
+          # exposes no secrets, and has a read-only token.
+          allow-unsafe-pr-checkout: true
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Only the canonical repository carries tools/copper-git-guard; everywhere
+      # else this step is a no-op. It exists because the vendored copy is what CI
+      # actually executes, and nothing else notices when it falls behind: on
+      # 2026-08-25 all 26 vendored copies were one scanner version stale, still
+      # enforcing a PHI rule that had already been narrowed at the source. Byte
+      # comparison only — under pull_request_target both paths are untrusted data.
+      - name: Verify the vendored scanner matches its canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANONICAL="tools/copper-git-guard/copper_git_guard.py"
+          VENDORED=".github/copper-git-guard/copper_git_guard.py"
+          if [[ ! -f "$CANONICAL" ]]; then
+            echo "not the canonical repository; nothing to compare"
+            exit 0
+          fi
+          if [[ ! -f "$VENDORED" ]]; then
+            echo "::error file=$VENDORED::vendored scanner is missing; run install.py ci"
+            exit 1
+          fi
+          if ! cmp -s "$CANONICAL" "$VENDORED"; then
+            echo "::error file=$VENDORED::vendored scanner is stale ($(sha256sum "$VENDORED" | cut -c1-12)) against $CANONICAL ($(sha256sum "$CANONICAL" | cut -c1-12)); redeploy it in this same commit with tools/copper-git-guard/install.py ci"
+            exit 1
+          fi
+          echo "vendored scanner matches canonical source"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Scan exact changed Git objects
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          GIT_REF: ${{ github.ref }}
+          COPPER_GIT_GUARD_EXPECTED_REPOSITORY: ${{ github.repository }}
+          COPPER_GIT_GUARD_EXPECTED_VISIBILITY: ${{ github.event.repository.visibility }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          RECEIPT="$RUNNER_TEMP/copper-git-guard.json"
+          SARIF="$RUNNER_TEMP/copper-git-guard.sarif"
+          SCANNER="$RUNNER_TEMP/copper_git_guard.py"
+          CONFIG="$RUNNER_TEMP/copper-git-guard.toml"
+          TRUSTED_REF=""
+          if [[ "$EVENT_NAME" == "pull_request_target" ]]; then
+            TRUSTED_REF="${PR_BASE_SHA:-}"
+          elif [[ "$EVENT_NAME" == "push" && -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            TRUSTED_REF="$BEFORE_SHA"
+          elif git rev-parse --verify "origin/$DEFAULT_BRANCH" >/dev/null 2>&1; then
+            TRUSTED_REF="origin/$DEFAULT_BRANCH"
+          fi
+
+          # Never let the object under review replace the scanner that judges it.
+          # The sole bootstrap exception is the first installation, when no trusted
+          # parent/default-branch projection exists yet; that rollout is manual.
+          if [[ -n "$TRUSTED_REF" ]] && git cat-file -e "$TRUSTED_REF:.github/copper-git-guard/copper_git_guard.py" 2>/dev/null; then
+            git show "$TRUSTED_REF:.github/copper-git-guard/copper_git_guard.py" > "$SCANNER"
+            # Say so when the judging scanner is not the one in the tree. The rule above
+            # is right and stays, but it has a consequence that is invisible in the log:
+            # a commit that UPDATES the scanner is judged by the version it replaces, so
+            # an improvement can be blocked by exactly the defect it fixes. That happened
+            # on copper0722/proofread-agent run 32956054188 -- the vendored copy predated
+            # the 2026-08-23 environment-read exemption, so the commit teaching the guard
+            # about `context.env.*` was refused for containing the words `context.env.*`.
+            # Thirty minutes went into a BLOCK whose cause was one line of context.
+            if ! cmp -s "$SCANNER" .github/copper-git-guard/copper_git_guard.py; then
+              echo "::notice::judging scanner is $TRUSTED_REF ($(sha256sum "$SCANNER" | cut -c1-12)), tree has $(sha256sum .github/copper-git-guard/copper_git_guard.py | cut -c1-12). A finding here may be the OLD scanner's behaviour, not the new code's. Land a scanner update on its own commit, then the text that demonstrates it."
+            fi
+            TRUSTED_VER="$(grep -m1 '^VERSION = ' "$SCANNER" | cut -d'"' -f2 || true)"
+            TREE_VER="$(grep -m1 '^VERSION = ' .github/copper-git-guard/copper_git_guard.py | cut -d'"' -f2 || true)"
+            if [[ -n "$TRUSTED_VER" && -n "$TREE_VER" && "$TRUSTED_VER" != "$TREE_VER" \
+                  && "$(printf '%s\n%s\n' "$TRUSTED_VER" "$TREE_VER" | sort -V | head -1)" == "$TRUSTED_VER" ]]; then
+              echo "::warning::the scanner judging this commit is $TRUSTED_VER, OLDER than the $TREE_VER in the tree; a finding below may be behaviour this very commit fixes"
+            fi
+          else
+            cp .github/copper-git-guard/copper_git_guard.py "$SCANNER"
+            echo "::warning::bootstrap scanner: no trusted prior projection exists"
+          fi
+          if [[ -n "$TRUSTED_REF" ]] && git cat-file -e "$TRUSTED_REF:.copper-git-guard.toml" 2>/dev/null; then
+            git show "$TRUSTED_REF:.copper-git-guard.toml" > "$CONFIG"
+          else
+            cp .copper-git-guard.toml "$CONFIG"
+          fi
+          chmod 700 "$SCANNER"
+          COMMON=(--repo "$GITHUB_WORKSPACE" --config "$CONFIG" --receipt "$RECEIPT" --sarif "$SARIF")
+
+          if [[ "$EVENT_NAME" == "pull_request_target" && -n "${PR_BASE_SHA:-}" && -n "${PR_HEAD_SHA:-}" ]]; then
+            python "$SCANNER" "${COMMON[@]}" range --base "$PR_BASE_SHA" --head "$PR_HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" && -n "${BEFORE_SHA:-}" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            python "$SCANNER" "${COMMON[@]}" range --base "$BEFORE_SHA" --head "$HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" && "${BEFORE_SHA:-}" =~ ^0+$ ]]; then
+            # New branch/tag: scan only commits newly reachable relative to the
+            # default branch, not unrelated --all history.
+            if BASE_SHA="$(git merge-base "$HEAD_SHA" "origin/$DEFAULT_BRANCH" 2>/dev/null)"; then
+              python "$SCANNER" "${COMMON[@]}" range --base "$BASE_SHA" --head "$HEAD_SHA"
+            else
+              python "$SCANNER" "${COMMON[@]}" range --base "0000000000000000000000000000000000000000" --head "$HEAD_SHA"
+            fi
+          else
+            python "$SCANNER" "${COMMON[@]}" tree --ref "$HEAD_SHA"
+          fi
+          if [[ "$EVENT_NAME" == "push" && "$GIT_REF" == refs/tags/* ]]; then
+            python "$SCANNER" "${COMMON[@]}" tree --ref "$GIT_REF"
+          fi
+
+      - name: Upload redacted scan receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: copper-git-guard-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/copper-git-guard.json
+            ${{ runner.temp }}/copper-git-guard.sarif
+          if-no-files-found: error
+          retention-days: 14

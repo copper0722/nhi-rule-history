@@ -1,0 +1,26 @@
+# Managed by Copper Git Boundary Guard installer.
+repository = "copper0722/nhi-rule-history"
+visibility = "public"
+require_roster = false
+fail_closed = true
+warnings_as_errors = false
+binary_mode = "deny"
+lfs_mode = "deny"
+external_gitleaks = "auto"
+gitleaks_archive_depth = 2
+gitleaks_decode_depth = 2
+allow_external_symlink_globs = []
+allow_submodule_globs = []
+deny_path_globs = []
+
+[limits]
+warn_blob_bytes = 1048576
+max_text_bytes = 10485760
+max_blob_bytes = 104857600
+max_scan_bytes = 33554432
+max_commits = 5000
+archive_max_depth = 3
+archive_max_members = 5000
+archive_max_unpacked_bytes = 536870912
+archive_max_ratio = 200.0
+archive_member_scan_bytes = 8388608
