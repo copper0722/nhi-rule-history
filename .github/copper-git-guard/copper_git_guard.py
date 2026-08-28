@@ -56,7 +56,7 @@ try:
 except ModuleNotFoundError as exc:  # pragma: no cover - Python <3.11
     raise SystemExit("Copper Git Boundary Guard requires Python 3.11+") from exc
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 MAX_EMBEDDED_DECODE_BYTES = 8 * 1024 * 1024
 ZERO_SHA = "0" * 40
 DEFAULT_CONFIG = ".copper-git-guard.toml"
@@ -589,6 +589,14 @@ SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("SECRET_GITHUB_TOKEN", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b")),
     ("SECRET_GOOGLE_API_KEY", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
     ("SECRET_SLACK_TOKEN", re.compile(r"\bxox[baprs]-[0-9A-Za-z-]{20,}\b")),
+    # A live bot token sat in a tracked file for months and this guard passed it:
+    # the assignment was `BOT="..."`, which GENERIC_SECRET_ASSIGNMENT does not
+    # match (no api_key/secret/token/password in the name), and there was no
+    # Telegram rule. Found 2026-08-28 by asking why an outbound message was not
+    # archived. The token shape is unusually precise -- bot id, colon, then a
+    # 35-character body that Telegram always begins `AA` -- so anchoring on it
+    # costs no false positives on timestamps, ratios or `sha256:` digests.
+    ("SECRET_TELEGRAM_BOT_TOKEN", re.compile(r"\b\d{6,12}:AA[A-Za-z0-9_-]{30,}\b")),
     ("SECRET_STRIPE_LIVE_KEY", re.compile(r"\b(?:sk|rk)_live_[0-9A-Za-z]{16,}\b")),
     ("SECRET_OPENAI_STYLE_KEY", re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b")),
     ("SECRET_BASIC_AUTH_URL", re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@", re.I)),
