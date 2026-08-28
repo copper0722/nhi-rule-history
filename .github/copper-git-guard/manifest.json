@@ -2,7 +2,7 @@
   "canonical_source": "copper0722/_admin-private:tools/copper-git-guard",
   "files": {
     ".copper-git-guard.toml": "826ed482813c2e162b1a1cb5f4f7face76eeda0f2e9b9e6a1420dbe0747df128",
-    ".github/copper-git-guard/copper_git_guard.py": "e03c7a87179548e5ce1f19db6d57341eb016823e31c0c41c614ad66e6c5a23bf",
+    ".github/copper-git-guard/copper_git_guard.py": "6c6d0d66c40a9fb8fc8110be8862ddc3fa0394e73e9bf43a90aca020257847ed",
     ".github/workflows/copper-git-guard.yml": "fc1e555558eb225d29f6f346ccfe80b9c9088b26e8bad2086ca5355ec9738bd5"
   },
   "repository": "copper0722/nhi-rule-history",

@@ -56,7 +56,7 @@ try:
 except ModuleNotFoundError as exc:  # pragma: no cover - Python <3.11
     raise SystemExit("Copper Git Boundary Guard requires Python 3.11+") from exc
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 MAX_EMBEDDED_DECODE_BYTES = 8 * 1024 * 1024
 ZERO_SHA = "0" * 40
 DEFAULT_CONFIG = ".copper-git-guard.toml"
@@ -638,12 +638,25 @@ PHI_CJK_NAME_PATTERN = re.compile(r"[一-鿿]{2,}")
 PHI_CODE_CALL_VALUE = re.compile(r"^[A-Za-z_$][\w$.]*\s*\(")
 
 
+# A personal name is one unbroken run of characters. A captured value carrying a
+# list or path separator is prose describing the field, not a patient carried in
+# it. Real case, 2026-08-28: a clinic dashboard comment reading
+# "有 mrn = <two words>/<six words>, <five words>/<six words>, <eleven words>"
+# blocked every commit that touched the file, because PHI_CJK_NAME_PATTERN reads
+# any run of two or more CJK characters as a name and ordinary Chinese prose is
+# made of those. Bounded deliberately: it clears a value only when a separator is
+# present, so a bare 陳X名-shaped value is still judged.
+PHI_PROSE_SEPARATORS = frozenset("/、，,。|；;")
+
+
 def phi_value_is_patient_data(value: str) -> bool:
     """True when the captured value looks like a record number or a CJK name."""
     stripped = value.strip().strip("\"'`,;:)]}")
     if not stripped:
         return False
     if PHI_CJK_NAME_PATTERN.search(stripped):
+        if any(ch in PHI_PROSE_SEPARATORS for ch in stripped):
+            return False
         return True
     if re.fullmatch(r"[0-9]{1,12}", stripped):
         return True
