@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import base64
 import email.utils
 import http.cookiejar
+import json
+import os
 import re
+import time
 import shutil
 import ssl
 import subprocess
@@ -45,6 +49,10 @@ NHI_ACCEPT = (
 )
 NHI_ACCEPT_LANGUAGE = "zh-TW,zh;q=0.9,en;q=0.5"
 HTTP_PROFILE_ID = "nhi-official-safari-http11/v1"
+CDP_PROFILE_ID = "nhi-official-resident-chrome-cdp/v1"
+TRANSPORT_ENV = "NHI_RULE_HISTORY_TRANSPORT"
+CDP_ENDPOINT_ENV = "NHI_RULE_HISTORY_CDP_ENDPOINT"
+_TRANSPORTS = ("curl", "resident-chrome-cdp")
 
 _DETAIL_PATH_RE = re.compile(r"^/ch/cp-[^?#]+\.html$")
 _ATTACHMENT_PATH_RE = re.compile(r"^/ch/dl-[^?#]+$")
@@ -61,7 +69,42 @@ RSS_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/2.0.0"
 RSS_LEGACY_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/1.0.0"
 
 
+def active_transport() -> str:
+    """Deployment-selected transport; one profile per process, never mixed.
+
+    The Safari/curl profile started drawing Cloudflare 403 challenges from
+    www.nhi.gov.tw in 2026-07. A resident, signed-in Chrome on the same host
+    passes the same challenge, so the deployment may pin this process to the
+    resident-Chrome DevTools transport instead. The choice is environment
+    configuration, not a silent per-request fallback: request_profile_sha256
+    in every queue row records which profile produced the bytes.
+    """
+    value = (os.environ.get(TRANSPORT_ENV) or "curl").strip() or "curl"
+    if value not in _TRANSPORTS:
+        raise ContractError(
+            f"{TRANSPORT_ENV} must be one of {_TRANSPORTS}, got {value!r}"
+        )
+    return value
+
+
 def http_profile_contract() -> dict[str, object]:
+    if active_transport() == "resident-chrome-cdp":
+        return {
+            "profile_id": CDP_PROFILE_ID,
+            "method": "GET",
+            "protocol": "browser-negotiated",
+            "redirect_policy": "reject",
+            "allowed_hosts": list(NHI_ALLOWED_HOSTS),
+            "headers": {
+                "User-Agent": "resident-chrome-browser-managed",
+                "Accept": "per-request-fetch-header",
+                "Accept-Language": "browser-managed",
+            },
+            "cookies": "resident-chrome-profile-managed",
+            "status_policy": "HTTP-200-only",
+            "transport": "in-page fetch over Chrome DevTools Protocol; "
+                         "body bytes via arrayBuffer, base64 over the wire",
+        }
     return {
         "profile_id": HTTP_PROFILE_ID,
         "method": "GET",
@@ -214,6 +257,19 @@ class OfficialNhiClient:
         self.ca_file = ca_file
         self.allow_insecure_tls = allow_insecure_tls
         self._curl_temp: tempfile.TemporaryDirectory[str] | None = None
+        self._transport = active_transport()
+        if self._transport == "resident-chrome-cdp":
+            endpoint = (os.environ.get(CDP_ENDPOINT_ENV) or "").strip()
+            if not endpoint.startswith("http://127.0.0.1:") and not endpoint.startswith(
+                "http://localhost:"
+            ):
+                raise ContractError(
+                    f"{CDP_ENDPOINT_ENV} must name a loopback DevTools endpoint"
+                )
+            self._cdp_endpoint = endpoint.rstrip("/")
+            self._cdp_target: dict[str, str] | None = None
+            self._opener = None
+            return
         if opener is not None:
             self._opener = opener
             return
@@ -251,6 +307,8 @@ class OfficialNhiClient:
         referer: str | None = None,
     ) -> OfficialResponse:
         request_url = assert_allowed_url(url, NHI_ALLOWED_HOSTS)
+        if self._transport == "resident-chrome-cdp":
+            return self._cdp_get(request_url, accept=accept)
         request = Request(
             request_url,
             method="GET",
@@ -413,6 +471,156 @@ class OfficialNhiClient:
             body=body,
             observed_at=utc_now(),
         )
+
+    # ------------------------------------------------------------------
+    # resident-chrome-cdp transport (profile nhi-official-resident-chrome-cdp/v1)
+    #
+    # The page is opened AT the NHI origin and the request is an in-page,
+    # same-origin fetch: same TLS/JA3, same cookies, same fingerprint as the
+    # signed-in resident browser that demonstrably passes the Cloudflare
+    # challenge the curl profile fails. Bytes come back via arrayBuffer ->
+    # base64, so the stored artifact is byte-identical to what the browser
+    # received. Rules of the shared browser: open ONE tab, read, close ONLY
+    # that tab; never touch the rest of the runtime.
+    # ------------------------------------------------------------------
+
+    def _cdp_call(self, ws, call_id: int, method: str, timeout: float, **params):
+        ws.send(json.dumps({"id": call_id, "method": method, "params": params}))
+        deadline = time.monotonic() + timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ContractError(f"cdp call {method} timed out")
+            message = json.loads(ws.recv(timeout=remaining))
+            if message.get("id") == call_id:
+                if "error" in message:
+                    raise ContractError(
+                        f"cdp call {method} failed: {message['error'].get('message', '?')}"
+                    )
+                return message.get("result", {})
+
+    def _cdp_eval(self, ws, call_id: int, expression: str, timeout: float):
+        result = self._cdp_call(
+            ws, call_id, "Runtime.evaluate", timeout,
+            expression=expression, awaitPromise=True, returnByValue=True,
+        )
+        if "exceptionDetails" in result:
+            detail = result["exceptionDetails"].get("text", "evaluation failed")
+            raise ContractError(f"cdp evaluation failed: {detail}")
+        return result.get("result", {}).get("value")
+
+    def _cdp_get(self, request_url: str, *, accept: str) -> OfficialResponse:
+        try:
+            from websockets.sync.client import connect as ws_connect
+        except ImportError as exc:  # pragma: no cover - deployment prerequisite
+            raise ContractError(
+                "resident-chrome-cdp transport requires the websockets package"
+            ) from exc
+        from urllib.request import urlopen as _urlopen
+
+        parts = urlsplit(request_url)
+        origin = f"{parts.scheme}://{parts.netloc}/"
+        from urllib.parse import quote as _quote
+        open_req = Request(
+            f"{self._cdp_endpoint}/json/new?{_quote(origin, safe='')}", method="PUT"
+        )
+        with _urlopen(open_req, timeout=10) as response:
+            target = json.loads(response.read().decode("utf-8"))
+        target_id = target.get("id")
+        ws_url = target.get("webSocketDebuggerUrl")
+        if not target_id or not ws_url:
+            raise ContractError("cdp target creation returned no debugger URL")
+
+        fetch_js = (
+            "fetch(%s, {credentials:'include', redirect:'error', cache:'no-store',"
+            " headers:{'Accept': %s, 'Cache-Control':'no-cache'},"
+            " signal: AbortSignal.timeout(%d)})"
+            ".then(async r => {"
+            " const buf = new Uint8Array(await r.arrayBuffer());"
+            " if (buf.length > %d) return '\x00ERR body exceeds max_bytes';"
+            " let bin = ''; const step = 0x8000;"
+            " for (let i = 0; i < buf.length; i += step)"
+            "   bin += String.fromCharCode.apply(null, buf.subarray(i, i + step));"
+            " const names = ['content-type','content-length','content-disposition',"
+            "'etag','last-modified'];"
+            " const headers = {};"
+            " for (const name of names) {"
+            "   const value = r.headers.get(name);"
+            "   if (value !== null) headers[name] = value; }"
+            " return JSON.stringify({status: r.status, final_url: r.url,"
+            " headers: headers, b64: btoa(bin)});"
+            "})"
+            ".catch(e => '\x00ERR ' + e.message)"
+        ) % (
+            json.dumps(request_url), json.dumps(accept),
+            int(self.timeout_seconds * 1000), self.max_bytes,
+        )
+
+        try:
+            with ws_connect(ws_url, max_size=None,
+                            open_timeout=15, close_timeout=5) as ws:
+                last = "no attempt ran"
+                for attempt in range(1, 5):
+                    # The challenged origin can re-navigate after load and the
+                    # first in-page fetch can fire before the document settles
+                    # (both measured on this origin, 2026-08-31): settle, then
+                    # confirm readiness, then fetch; every failure mode is one
+                    # more retryable outcome.
+                    time.sleep(2)
+                    try:
+                        ready = self._cdp_eval(
+                            ws, attempt * 10, "document.readyState", 30
+                        )
+                        if ready not in ("interactive", "complete"):
+                            last = f"document not ready: {ready!r}"
+                            continue
+                        value = self._cdp_eval(
+                            ws, attempt * 10 + 1, fetch_js,
+                            self.timeout_seconds + 30,
+                        )
+                    except ContractError as exc:
+                        last = str(exc)[:160]
+                        continue
+                    if isinstance(value, str) and value.startswith("\x00ERR "):
+                        last = value[1:]
+                        continue
+                    if not isinstance(value, str) or not value:
+                        last = "empty evaluation result"
+                        continue
+                    payload = json.loads(value)
+                    status = int(payload["status"])
+                    if status != 200:
+                        raise ContractError(
+                            f"official NHI request returned HTTP {status}"
+                        )
+                    body = base64.b64decode(payload["b64"])
+                    if len(body) > self.max_bytes:
+                        raise ContractError("official response exceeds max_bytes")
+                    final_url = assert_allowed_url(
+                        payload.get("final_url") or request_url, NHI_ALLOWED_HOSTS
+                    )
+                    headers = {
+                        str(name).lower(): str(value_)
+                        for name, value_ in dict(payload.get("headers", {})).items()
+                    }
+                    return OfficialResponse(
+                        request_url=request_url,
+                        final_url=final_url,
+                        status_code=status,
+                        headers=headers,
+                        body=body,
+                        observed_at=utc_now(),
+                    )
+                raise ContractError(f"official NHI request failed: {last}")
+        finally:
+            try:
+                close_req = Request(
+                    f"{self._cdp_endpoint}/json/close/{target_id}", method="GET"
+                )
+                with _urlopen(close_req, timeout=10):
+                    pass
+            except Exception:  # noqa: BLE001 - closing our own tab, best effort
+                pass
 
     def get_feed(self, url: str = NHI_RSS_URL) -> OfficialResponse:
         response = self.get(url, accept=NHI_ACCEPT)
