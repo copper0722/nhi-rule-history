@@ -1,5 +1,52 @@
 # Worklog
 
+## 2026-09-14 — 2.6.1 post-effective-date reconciliation receipt and decision-aid restoration
+
+- Context: the 2.6.1 dyslipidemia amendment (健保審字第1150671962號) took effect on
+  2026-09-01. By the v22 design, `v_public_clause_patch` then computed
+  `effective_date_reached_unresolved` and the Table 1 LDL-C decision aid switched
+  off until a reviewed `effective_unconsolidated` or `reconciled` receipt existed.
+  No receipt had been written for 13 days; the official chapter page had meanwhile
+  been refreshed to 第二節 心臟血管及腎臟藥物 (115.8.21更新).
+- Review performed before writing the receipt. (1) The refreshed official chapter
+  ODT (dl-55675, SHA-256 `6e30ecf1a59d0180c8a10f6a0962dd6644c0139eb351ba4f2b0ee22f788e2f41`,
+  69,319 B; same URL as the sealed predecessor artifact `3017546f…`, new bytes) and
+  DOCX (dl-55674, SHA-256 `6f3ee623e8c11f0ed0bd5423ee8ecd47654908d5d915d2a73c7a60ec7e3d0bc9`,
+  68,840 B) were fetched from the authority page; their 2.6.1 clause equals the
+  sealed composed clause `5ec990c9-32c6-5159-bdb5-3925e761a21e` (`7f371d56…`) under
+  `unicode-nfkc-remove-all-whitespace/1.0.0`: 8,053 normalized characters, SHA-256
+  `c85cbcdd206234bc183e2aac4902aac61c86c04c0d7b8400dd3ce181794c1332` on all three
+  sides. (2) The composed clause's predecessor hash `5c6cbaaa…` matches the active
+  publication run `a707d13a-0b06-5dfe-96b7-6d107ab8793f`. (3) The 57 distinct
+  official RSS items observed from 2026-07-27 to 2026-09-14 contain one
+  dyslipidemia notice and no correction, withdrawal, or competing 2.6.1 effect.
+  (4) The chapter-document watch last ran on 2026-09-07 and the RSS poll on
+  2026-09-14.
+- Wrote resolution event 40 (`reconciled`) through `set_patch_resolution` inside
+  one transaction with a read-back gate; a fresh connection then returned
+  `effective_reconciled`, `decision_aid_available=true`,
+  `legally_auto_selectable=false`, and decision model `ddb7d27d…` visible again.
+  Receipt: `docs/audits/2026-09-14-dyslipidemia-2-6-1-effective-reconciliation-receipt.json`.
+- `tools/audit_announced_dyslipidemia_release.py` passes again without the
+  release-control drill (34/34 predicates, 21/21 branches, six LDL boundaries):
+  `docs/audits/2026-09-14-dyslipidemia-effective-reconciliation-audit.json`.
+- Subscriber projection: the 15-minute projection sync detected the fingerprint
+  change (`1924342f5d3716741923fb51fbdbaae42fbace4632b0d37c1692b91b1ee4cf02`) and deployed the paid site from commit
+  `0a42fa15bcc61bb20fc5f330d6d52b3c9f5bbbed` as Pages deployment `73badfc0-89bb-47eb-a793-5d9fc1e1013c`
+  (https://73badfc0.copper-s.pages.dev); the authenticated live JSON SHA-256
+  `2cba1dc81fb1d3e0f9501f453d5b59078909f03590f69dea15f5d3d706141c1b` equals the built artifact. `announced_versions[0]`
+  now reads `effective_reconciled` with the decision model present, and the
+  composed 2.6.1 text (9,249 characters) carries `115/9/1` and 表二. Receipt:
+  `docs/audits/2026-09-14-dyslipidemia-effective-reconciliation-live-verification.json`.
+- Not done, deliberately: the sealed current publication `a707d13a…` still
+  projects 第二節 (115.5.22更新), so `clauses[2.6.1]` remains the 108/2/1
+  predecessor text and is shown as 上一版 beneath the effective announced version.
+  Refreshing the current publication from the 115.8.21 chapter set is a separate
+  current-publication load with its own parity gates, and the reader needs an
+  explicit consolidated-state presentation before that load is activated. The
+  remaining effects of the same notice (2.6.2, 2.6.3, reimbursed item changes)
+  stay unprocessed as declared by `partial_event_projection`.
+
 ## 2026-07-30
 
 - Copper 指出 2.6.1 雖已完成 deterministic 正規化，通用呈現仍讓醫師必須

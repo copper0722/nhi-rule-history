@@ -1,6 +1,28 @@
 # 專案進度
 
-最後核對：2026-07-30
+最後核對：2026-09-14
+
+## 2026-09-14 — 2.6.1 生效後 reconciliation 收據，判讀工具恢復
+
+- 115/9/1 生效後，v22 設計使 2.6.1 進入 `effective_date_reached_unresolved`、
+  表一 LDL-C 判讀工具關閉，等待審閱後的 `effective_unconsolidated`／`reconciled`
+  收據；13 天內無人寫入。
+- 本日審閱：官方分章頁第二節已更新為 115.8.21 版，ODT（dl-55675，SHA-256
+  `6e30ecf1…`，69,319 B）與 DOCX（dl-55674，`6f3ee623…`，68,840 B）的 2.6.1
+  條文與 sealed 合成條文 `7f371d56…` 在 `unicode-nfkc-remove-all-whitespace/1.0.0`
+  下完全相等（8,053 字，`c85cbcdd…`）；前版 hash `5c6cbaaa…` 與 active
+  publication `a707d13a…` 一致；07-27 至 09-14 觀測的 57 則官方 RSS 沒有更正、
+  撤回或競合公告；章節文件 watch 09-07、RSS poll 09-14 皆新鮮。
+- 寫入 resolution event 40 `reconciled`；fresh readback 為 `effective_reconciled`、
+  `decision_aid_available=true`、`legally_auto_selectable=false`，決策模型
+  `ddb7d27d…` 重新可見。稽核工具 34/34 predicates、21/21 branches 通過。
+- 付費站：projection sync 偵測 fingerprint 變更並部署，commit `0a42fa15bcc6`、
+  Pages `73badfc0-89bb-47eb-a793-5d9fc1e1013c`、authenticated live JSON SHA-256 `2cba1dc81fb1d3e0…` 與建置
+  產物相同；頁面標籤改為「最新條文 · 已生效」，合成全文含 `115/9/1` 與表二。
+- 未做：sealed current publication `a707d13a…` 仍投影 115.5.22 版第二節，
+  `clauses[2.6.1]` 仍是 108/2/1 前版（頁面顯示為上一版）；以 115.8.21 分章檔重載
+  current publication，以及合併狀態的 reader 呈現，另案處理。同一公告的 2.6.2／
+  2.6.3／藥品品項異動仍未處理。
 
 ## 2026-07-30 — 2.6.1 source-bound 專屬閱讀編排
 

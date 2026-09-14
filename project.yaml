@@ -81,7 +81,7 @@ service_surfaces:
     announced_patch_count: 1
     announced_patch_clause: 2.6.1
     announced_patch_effective_on: "2026-09-01"
-    announced_patch_lifecycle: future
+    announced_patch_lifecycle: effective_reconciled
     announced_patch_legally_auto_selectable: false
     wide_table_reader:
       narrow_container: vertical_row_cards
@@ -93,12 +93,12 @@ service_surfaces:
       desktop: hover_or_keyboard_focus_popover
       coarse_pointer: first_tap_popover_second_tap_link
     deployment:
-      commit: 6af928bb4004dcf22c0e677fc344a3cde9a9709d
-      pages_deployment_id: 69656742-b4cc-4bf9-9bf8-8d1a537f3a97
-      pages_production_url: https://69656742.copper-s.pages.dev
+      commit: 0a42fa15bcc61bb20fc5f330d6d52b3c9f5bbbed
+      pages_deployment_id: 73badfc0-89bb-47eb-a793-5d9fc1e1013c
+      pages_production_url: https://73badfc0.copper-s.pages.dev
       api_commit: 9e9c8da8477e80960ca91034638841b13d2ef249
-      subscriber_json_sha256: 5f624cc022e350e78405f0d46e423e0fc31c13a8afdbf2f6982013fb2a219780
-      live_verification_receipt: docs/audits/2026-07-30-clause-reader-profile-v26-live-verification.json
+      subscriber_json_sha256: 2cba1dc81fb1d3e0f9501f453d5b59078909f03590f69dea15f5d3d706141c1b
+      live_verification_receipt: docs/audits/2026-09-14-dyslipidemia-effective-reconciliation-live-verification.json
       privacy_receipt: docs/audits/2026-07-29-subscriber-nhi-rules-browser-privacy-canary.json
     status: live_verified
   boan_emr:
@@ -139,7 +139,7 @@ continuous_update:
     target_host: hm4
     trigger: meaningful_pg_projection_fingerprint_change
     source_contract_count: 5
-    projection_fingerprint: 145d84b351290f8be6da9fc768b62fed1ee8bceb4deb8e30ac926f98fe37605a
+    projection_fingerprint: 1924342f5d3716741923fb51fbdbaae42fbace4632b0d37c1692b91b1ee4cf02
     supported_announced_patch_loader: idempotent_hash_locked_2_6_1_2026_09_01
     next_announced_effective_on: "2026-09-01"
     live_verification: authenticated_exact_subscriber_json_sha256_parity
@@ -163,7 +163,7 @@ continuous_update:
     resume_requires: explicit_Copper_instruction
 
 announced_dyslipidemia_release:
-  status: source_bound_specialized_reader_profile_live_verified
+  status: effective_reconciled_live_verified
   official_notice_reference: 健保審字第1150671962號
   official_notice_url: https://www.nhi.gov.tw/ch/cp-20300-7968a-3258-1.html
   published_on: "2026-07-28"
@@ -209,8 +209,24 @@ announced_dyslipidemia_release:
   complete_text_sha256: 7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f
   output_fingerprint: 3be28b613c353d8ada01d63bfa79ba0488cb63e0eda7300e0bfaba6d91d7d1c6
   sealed_fingerprint: 24430be4b1a5c8a413739bb8f79316e8199867291297c859b6df8c0c60c0837d
-  current_resolution_state: verified_scheduled
+  current_resolution_state: reconciled
+  display_lifecycle: effective_reconciled
   decision_aid_available: true
+  post_effective_reconciliation:
+    resolution_id: 40
+    resolution_state: reconciled
+    recorded_at: "2026-09-14T17:13:45+08:00"
+    review_basis: normalized_text_parity_with_refreshed_official_chapter_plus_rss_sweep_plus_lane_freshness
+    official_chapter_label: 第二節 心臟血管及腎臟藥物(115.8.21更新)
+    official_chapter_odt_sha256: 6e30ecf1a59d0180c8a10f6a0962dd6644c0139eb351ba4f2b0ee22f788e2f41
+    official_chapter_docx_sha256: 6f3ee623e8c11f0ed0bd5423ee8ecd47654908d5d915d2a73c7a60ec7e3d0bc9
+    parity_normalizer: unicode-nfkc-remove-all-whitespace/1.0.0
+    parity_normalized_sha256: c85cbcdd206234bc183e2aac4902aac61c86c04c0d7b8400dd3ce181794c1332
+    correction_withdrawal_or_competing_notice_found: false
+    current_publication_refreshed: false
+    receipt: docs/audits/2026-09-14-dyslipidemia-2-6-1-effective-reconciliation-receipt.json
+    audit_receipt: docs/audits/2026-09-14-dyslipidemia-effective-reconciliation-audit.json
+    live_verification: docs/audits/2026-09-14-dyslipidemia-effective-reconciliation-live-verification.json
   live_counts:
     notice_events: 1
     notice_effects: 4

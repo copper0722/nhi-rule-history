@@ -1,0 +1,68 @@
+{
+  "schema": "nhi-rule-history/subscriber-live-verification/v1",
+  "generated_at": "2026-09-14T17:20:42+08:00",
+  "subject": "2.6.1 post-effective-date reconciliation (resolution event 40) projected to the paid subscriber site",
+  "projection_sync": {
+    "schema": "nhi-rule-history/subscriber-sync/v1",
+    "status": "deployed",
+    "projection_fingerprint": "1924342f5d3716741923fb51fbdbaae42fbace4632b0d37c1692b91b1ee4cf02",
+    "clause_count": 639,
+    "semantic_tag_count": 82,
+    "condition_count": 5,
+    "notice_count": 20,
+    "announced_patch_count": 1,
+    "announced_loader_replay": {
+      "already_loaded": true,
+      "sealed_fingerprint": "24430be4b1a5c8a413739bb8f79316e8199867291297c859b6df8c0c60c0837d"
+    }
+  },
+  "subscriber_site": {
+    "branch": "main",
+    "commit": "0a42fa15bcc61bb20fc5f330d6d52b3c9f5bbbed",
+    "pages_deployment_id": "73badfc0-89bb-47eb-a793-5d9fc1e1013c",
+    "pages_production_url": "https://73badfc0.copper-s.pages.dev",
+    "canonical_url": "https://s.copper0722.com/member/tools/nhi-rules/",
+    "same_origin_projection": "/api/nhi-rules/v1/current.json"
+  },
+  "live_parity": {
+    "method": "authenticated subscriber session fetch of the same-origin JSON, cache-bypassed, compared with the built artifact by canonical JSON SHA-256; repeated independently after the deployment",
+    "subscriber_json_sha256": "2cba1dc81fb1d3e0f9501f453d5b59078909f03590f69dea15f5d3d706141c1b",
+    "built_artifact_sha256": "2cba1dc81fb1d3e0f9501f453d5b59078909f03590f69dea15f5d3d706141c1b",
+    "equal": true,
+    "contract": "subscriber-nhi-reimbursement-rules/current/v1"
+  },
+  "announced_version_2_6_1": {
+    "display_lifecycle": "effective_reconciled",
+    "current_resolution_state": "reconciled",
+    "decision_aid_available": true,
+    "legally_auto_selectable": false,
+    "effective_on": "2026-09-01",
+    "resolution_recorded_at": "2026-09-14T17:13:45.606598+08:00",
+    "decision_model": {
+      "model_id": "ddb7d27d-1327-5af1-8b43-ea015e6fce36",
+      "model_status": "future_opt_in",
+      "scope_label": "表一 LDL-C 起始治療門檻檢查"
+    },
+    "reader_profile_template": "dyslipidemia_pathway_v1",
+    "composed_clause": {
+      "composed_text_sha256": "7f371d5669da201c6dd7733d7883b81a851f961edd339773297ac04bb240e57f",
+      "length": 9249,
+      "contains_115_9_1": true,
+      "contains_表二": true
+    }
+  },
+  "current_clause_2_6_1": {
+    "publication_run_id": "a707d13a-0b06-5dfe-96b7-6d107ab8793f",
+    "sealed_at": "2026-07-29T08:13:24.339741+08:00",
+    "text_sha256": "5c6cbaaae104aaed9427080168c38ff25afc38667063c29eb04981fbdee56e3a",
+    "contains_115_9_1": false,
+    "contains_108_2_1": true,
+    "note": "sealed current publication not refreshed; shown as 上一版 beneath the effective announced version"
+  },
+  "access_boundary": {
+    "anonymous_json_status": 303,
+    "anonymous_page_status": 303,
+    "redirect_target": "/access-required/"
+  },
+  "non_claim": "This receipt verifies projection parity and the 2.6.1 announced-version state only. It does not verify other clauses, the specialized reader rendering, or mobile layout."
+}
