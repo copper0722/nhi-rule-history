@@ -34,7 +34,32 @@ ODT_STRUCTURAL_FACTS_SCHEMA = "nhi-rule-history/odt-structural-facts/v1"
 
 
 def _text(element: ElementTree.Element) -> str:
-    return "".join(element.itertext())
+    """Return this paragraph's own text, excluding nested source paragraphs.
+
+    A paragraph can anchor a ``draw:frame``/``draw:text-box`` whose own
+    ``text:p`` children are separate source paragraphs.  ``itertext()`` would
+    fold that text into the anchoring paragraph and leave the nested
+    paragraph unaccounted for; the traversal emits it as its own block
+    instead.  Without nested paragraphs or tables this equals ``itertext()``.
+    """
+
+    parts: list[str] = []
+
+    def visit(parent: ElementTree.Element) -> None:
+        if parent.text:
+            parts.append(parent.text)
+        for child in parent:
+            if isinstance(child.tag, str) and child.tag not in {
+                _TAG_P,
+                _TAG_H,
+                _TAG_TABLE,
+            }:
+                visit(child)
+            if child.tail:
+                parts.append(child.tail)
+
+    visit(element)
+    return "".join(parts)
 
 
 def _positive_integer_attribute(
@@ -244,27 +269,30 @@ def inspect_odt_document(
         if element.tag in {_TAG_P, _TAG_H}:
             if table is None or row is None or cell is None:
                 emit(element, kind="paragraph")
-                return
-            if paragraph_counter is None or cell_index is None:
-                raise ContractError("ODT table paragraph context is incomplete")
-            paragraph_index = paragraph_counter[0]
-            paragraph_counter[0] += 1
-            emit(
-                element,
-                kind=(
-                    "covered_table_cell"
-                    if cell.tag == _TAG_COVERED_CELL
-                    else "table_cell"
-                ),
-                table_index=table_index_by_id[id(table)],
-                table_depth_value=table_depth(table),
-                parent_table_index_value=parent_table_index(table),
-                row_index=row_index_by_table_and_id[(id(table), id(row))],
-                row_kind_value=row_kind(row),
-                cell_index=cell_index,
-                paragraph_index=paragraph_index,
-            )
-            return
+            else:
+                if paragraph_counter is None or cell_index is None:
+                    raise ContractError(
+                        "ODT table paragraph context is incomplete"
+                    )
+                paragraph_index = paragraph_counter[0]
+                paragraph_counter[0] += 1
+                emit(
+                    element,
+                    kind=(
+                        "covered_table_cell"
+                        if cell.tag == _TAG_COVERED_CELL
+                        else "table_cell"
+                    ),
+                    table_index=table_index_by_id[id(table)],
+                    table_depth_value=table_depth(table),
+                    parent_table_index_value=parent_table_index(table),
+                    row_index=row_index_by_table_and_id[(id(table), id(row))],
+                    row_kind_value=row_kind(row),
+                    cell_index=cell_index,
+                    paragraph_index=paragraph_index,
+                )
+            # Fall through: a paragraph may anchor a draw:text-box whose own
+            # paragraphs are separate source blocks following the anchor.
 
         if element.tag == _TAG_TABLE:
             for child in element:

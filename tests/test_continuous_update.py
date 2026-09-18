@@ -120,6 +120,35 @@ def fixture_nested_table_odt() -> bytes:
     return buffer.getvalue()
 
 
+def fixture_text_box_paragraph_odt() -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "mimetype",
+            "application/vnd.oasis.opendocument.text",
+            compress_type=zipfile.ZIP_STORED,
+        )
+        archive.writestr(
+            "content.xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+ xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0">
+ <office:body><office:text>
+  <text:p><text:span><draw:frame><draw:text-box><text:p>附表</text:p></draw:text-box></draw:frame></text:span><text:span>「藥品給付規定」修訂對照表</text:span></text:p>
+  <table:table>
+   <table:table-row>
+    <table:table-cell><text:p>儲存格<draw:frame><draw:text-box><text:p>框內</text:p></draw:text-box></draw:frame>文字</text:p></table:table-cell>
+   </table:table-row>
+  </table:table>
+ </office:text></office:body>
+</office:document-content>""",
+        )
+    return buffer.getvalue()
+
+
 def fixture_structural_table_odt() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
@@ -416,6 +445,33 @@ class ContinuousUpdateTests(unittest.TestCase):
             extract_odt_blocks(fixture_nested_table_odt(), "a" * 64),
             blocks,
         )
+
+    def test_text_box_paragraph_anchored_in_paragraph_is_its_own_block(
+        self,
+    ) -> None:
+        from nhi_rule_history.update.odt import inspect_odt_document
+
+        inspected = inspect_odt_document(
+            fixture_text_box_paragraph_odt(),
+            "d" * 64,
+        )
+        blocks = inspected["blocks"]
+        self.assertEqual(
+            [block["raw_text"] for block in blocks],
+            ["「藥品給付規定」修訂對照表", "附表", "儲存格文字", "框內"],
+        )
+        self.assertEqual(
+            [block["locator"]["kind"] for block in blocks],
+            ["paragraph", "paragraph", "table_cell", "table_cell"],
+        )
+        self.assertEqual(
+            [block["locator"]["paragraph_index"] for block in blocks[2:]],
+            [0, 1],
+        )
+        facts = inspected["structural_facts"]
+        self.assertEqual(facts["source_paragraph_count"], 4)
+        self.assertEqual(facts["emitted_block_count"], 4)
+        self.assertTrue(facts["exact_once_verified"])
 
     def test_odt_structural_facts_preserve_distinct_equal_text(self) -> None:
         from nhi_rule_history.update.odt import inspect_odt_document
