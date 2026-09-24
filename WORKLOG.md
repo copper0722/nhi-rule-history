@@ -22,7 +22,19 @@
   disposable initdb cluster: plan, five refused inserts, reselect once, the
   same version cannot reopen twice, rollback). Full suite with disposable
   clusters enabled: 512 tests, OK (7 skipped).
-- Pending: independent review, then live apply and one reselection.
+- Independent review (Codex, separate model family; read-only; its own disposable
+  clusters): `SHIP`, C/H/M/L = 0/0/0/2. It ran 13 extra guard probes (every
+  missing/null evidence field, sequence, from-state, backdated time, bundle and
+  candidate identifiers): all refused. L1: the private runner still wrote the
+  classifier-2 label on selected -> ignored, which the resolver reads as 2.0.0;
+  the runner now writes the classifier version string. L2: a present but
+  malformed `feed_observation_id` passed the loose UUID precheck and its cast
+  aborted the whole plan; the planner now requires a canonical UUID and treats a
+  malformed one as an unknown prior classifier (test added). The applier now
+  verifies its committed row by transition id, so a runner advancing the item
+  right after the commit no longer reads as a failed write. Noted limit: the
+  guard binds evidence shape and title, not classifier semantics; the planner and
+  applier own that decision inside the trusted stage-only writer boundary.
 
 
 ## 2026-09-24 — RSS drug-rule classifier 3.0.0: clause-code titles without 藥品

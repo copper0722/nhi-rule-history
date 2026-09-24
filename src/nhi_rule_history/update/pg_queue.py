@@ -1409,15 +1409,17 @@ _IGNORED_ITEMS_SQL = f"""
     FROM {QUEUE_SCHEMA}.v_work_item_current AS current
     JOIN {QUEUE_SCHEMA}.rss_work_item AS item
       ON item.work_item_id = current.work_item_id
+    -- A deciding observation named in the evidence must be a canonical UUID;
+    -- a malformed one joins nothing, so that item's prior classifier is
+    -- unknown instead of borrowed from its first observation.
     LEFT JOIN {OPS_SCHEMA}.feed_observation AS decided_by
-      ON decided_by.feed_observation_id = coalesce(
-           CASE
-             WHEN current.evidence_json ->> 'feed_observation_id'
-                  ~ '^[0-9a-f-]{{36}}$'
+      ON decided_by.feed_observation_id = CASE
+           WHEN NOT current.evidence_json ? 'feed_observation_id'
+             THEN item.first_feed_observation_id
+           WHEN current.evidence_json ->> 'feed_observation_id'
+                ~ '^[0-9a-f]{{8}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{12}}$'
              THEN (current.evidence_json ->> 'feed_observation_id')::uuid
-           END,
-           item.first_feed_observation_id
-         )
+         END
     WHERE current.current_state = 'ignored_non_rule'
       AND (%s::uuid IS NULL OR current.work_item_id = %s::uuid)
     ORDER BY current.first_observed_at, current.work_item_id
@@ -1577,25 +1579,30 @@ def reselect_ignored_work_item(
             cursor.execute(
                 "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
             )
+            # Verify the committed row itself; the runner may already have
+            # moved the item on, so its current state is reported, not
+            # required.
             cursor.execute(
                 f"""
-                SELECT current.current_state, current.transition_seq,
-                       transition.transition_id::text,
-                       transition.evidence_sha256
-                FROM {QUEUE_SCHEMA}.v_work_item_current AS current
-                JOIN {QUEUE_SCHEMA}.work_item_transition AS transition
-                  ON transition.work_item_id = current.work_item_id
-                 AND transition.transition_seq = current.transition_seq
-                WHERE current.work_item_id = %s
+                SELECT transition.work_item_id::text,
+                       transition.transition_seq, transition.from_state,
+                       transition.to_state, transition.actor_kind,
+                       transition.evidence_sha256, current.current_state
+                FROM {QUEUE_SCHEMA}.work_item_transition AS transition
+                JOIN {QUEUE_SCHEMA}.v_work_item_current AS current
+                  ON current.work_item_id = transition.work_item_id
+                WHERE transition.transition_id = %s
                 """,
-                (work_item_id,),
+                (transition_id,),
             )
-            current = cursor.fetchone()
-    if (
-        current is None
-        or str(current[0]) != "selected"
-        or int(current[1]) != transition_seq
-        or str(current[2]) != transition_id
+            stored = cursor.fetchone()
+    if stored is None or tuple(stored[:6]) != (
+        work_item_id,
+        transition_seq,
+        "ignored_non_rule",
+        "selected",
+        RESELECTION_ACTOR,
+        sha256_bytes(canonical_json_bytes(evidence)),
     ):
         raise UpdateQueueError(
             "fresh-connection reselection verification failed"
@@ -1606,7 +1613,8 @@ def reselect_ignored_work_item(
         "transition_id": transition_id,
         "transition_seq": transition_seq,
         "to_state": "selected",
-        "evidence_sha256": str(current[3]),
+        "current_state": str(stored[6]),
+        "evidence_sha256": str(stored[5]),
         "evidence": evidence,
     }
 

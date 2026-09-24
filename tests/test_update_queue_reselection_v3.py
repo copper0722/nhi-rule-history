@@ -42,6 +42,7 @@ FEED_OBSERVATION_ID = "40000000-0000-0000-0000-000000000004"
 SECTION_ITEM_ID = "40000000-0000-0000-0000-000000000010"
 MATERIAL_ITEM_ID = "40000000-0000-0000-0000-000000000011"
 FAILED_ITEM_ID = "40000000-0000-0000-0000-000000000012"
+MALFORMED_ITEM_ID = "40000000-0000-0000-0000-000000000013"
 
 
 def guard_block(path: Path) -> str:
@@ -181,6 +182,7 @@ class ReselectionLiveTests(unittest.TestCase):
             (SECTION_ITEM_ID, 0, "section-4-2", SECTION_4_2, "6"),
             (MATERIAL_ITEM_ID, 1, "material-1", SPECIAL_MATERIAL, "7"),
             (FAILED_ITEM_ID, 2, "failed-1", "公告修訂8.1.3.高單位免疫球蛋白之藥品給付規定。", "8"),
+            (MALFORMED_ITEM_ID, 3, "malformed-1", "公告修訂5.6.1.抗骨質再吸收劑之給付規定。", "9"),
         )
         feed_items = ",\n".join(
             f"('{FEED_OBSERVATION_ID}', {index}, repeat('{digit}', 64), "
@@ -204,6 +206,7 @@ class ReselectionLiveTests(unittest.TestCase):
             '{"classifier":"rss-item-keywords/v1","event":"ignored_non_rule",'
             f'"feed_observation_id":"{FEED_OBSERVATION_ID}"}}'
         )
+        malformed = ignored.replace(FEED_OBSERVATION_ID, "-" * 36)
         return f"""
 INSERT INTO nhi_rule_history_update_ops.update_job (
   job_id, job_fingerprint, contract_version, runner_version, feed_url,
@@ -254,7 +257,7 @@ INSERT INTO nhi_rule_history_update_ops.feed_observation (
 ) VALUES (
   '{FEED_OBSERVATION_ID}', '{POLL_JOB_ID}',
   '40000000-0000-0000-0000-000000000003', repeat('5', 64),
-  'nhi-rule-history-rss/1.1.0', 'parsed', 'fixture', 3, repeat('0', 64),
+  'nhi-rule-history-rss/1.1.0', 'parsed', 'fixture', 4, repeat('0', 64),
   '2026-09-16 06:12:40+00', NULL
 );
 INSERT INTO nhi_rule_history_update_ops.feed_item_observation (
@@ -297,7 +300,13 @@ INSERT INTO nhi_rule_history_update_queue.work_item_transition (
  '{{"event":"selected"}}', '{POLL_JOB_ID}', '2026-09-16 06:12:40+00'),
 ('{FAILED_ITEM_ID}', 3, '41000000-0000-0000-0000-000000000007', 'selected',
  'failed_terminal', 'fixture', repeat('0', 64),
- '{{"event":"failed"}}', '{POLL_JOB_ID}', '2026-09-16 06:13:00+00');
+ '{{"event":"failed"}}', '{POLL_JOB_ID}', '2026-09-16 06:13:00+00'),
+('{MALFORMED_ITEM_ID}', 1, '41000000-0000-0000-0000-000000000008', NULL,
+ 'observed', 'deterministic_poll_loader', repeat('1', 64),
+ '{{"event":"observed"}}', '{POLL_JOB_ID}', '2026-09-16 06:12:40+00'),
+('{MALFORMED_ITEM_ID}', 2, '41000000-0000-0000-0000-000000000009', 'observed',
+ 'ignored_non_rule', 'deterministic_poll_classifier', repeat('2', 64),
+ '{malformed}', '{POLL_JOB_ID}', '2026-09-16 06:12:40+00');
 """
 
     def raw_reselection(self, work_item_id: str, seq: int, **overrides: str) -> str:
@@ -343,10 +352,23 @@ INSERT INTO nhi_rule_history_update_queue.work_item_transition (
             entry["work_item_id"]: entry["decision"]
             for entry in plan_classifier_reselection(self.pg.dsn)
         }
+        # The malformed deciding-observation id makes only that item's prior
+        # classifier unknown; it neither aborts the plan nor borrows the
+        # first observation's parser version.
         self.assertEqual(
             plan,
-            {SECTION_ITEM_ID: "reselect", MATERIAL_ITEM_ID: "still_not_selected"},
+            {
+                SECTION_ITEM_ID: "reselect",
+                MATERIAL_ITEM_ID: "still_not_selected",
+                MALFORMED_ITEM_ID: "unknown_prior_classifier",
+            },
         )
+        with self.assertRaisesRegex(UpdateQueueError, "unknown_prior_classifier"):
+            reselect_ignored_work_item(
+                self.pg.dsn,
+                work_item_id=MALFORMED_ITEM_ID,
+                source_job_id=V3_JOB_ID,
+            )
 
     def test_02_guard_refuses_incomplete_or_foreign_reselection(self) -> None:
         material_title = sha256_bytes(SPECIAL_MATERIAL.encode("utf-8"))
@@ -391,6 +413,7 @@ INSERT INTO nhi_rule_history_update_queue.work_item_transition (
             recorded_at="2026-09-24T07:00:00+00:00",
         )
         self.assertEqual(receipt["transition_seq"], 3)
+        self.assertEqual(receipt["current_state"], "selected")
         self.assertEqual(receipt["evidence"]["prior_classifier_version"], RSS_V2_CLASSIFIER_VERSION)
         self.assertEqual(receipt["evidence"]["classifier_version"], RSS_CLASSIFIER_VERSION)
         self.assertEqual(self.current(SECTION_ITEM_ID), "selected:3")
