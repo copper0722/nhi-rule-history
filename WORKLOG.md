@@ -35,6 +35,15 @@
   right after the commit no longer reads as a failed write. Noted limit: the
   guard binds evidence shape and title, not classifier semantics; the planner and
   applier own that decision inside the trusted stage-only writer boundary.
+- Live, 2026-09-24 (+08): migration applied at 15:13:55; receipt
+  `docs/audits/2026-09-24-update-queue-reselection-v3-live-migration.json`
+  (69 items, 220 transitions, 528 attempts and 2 generations unchanged; guard
+  digest `50ca65eb…` -> `159fde4c…`). The read-only plan over 42 ignored items
+  found 1 to reselect (the section 4.2 notice) and 41 still unselected. The
+  notice was reselected at 15:14:12 (seq 3); the next scheduled run acquired it
+  and registered corpus bundle `gov_健保審字第1150672381號` at 15:25:28 (seq 4-5).
+  Its ODT is the same file (SHA-256 `1c5829bf…`) the 2026-09-24 comparison cards
+  used. Receipt: `docs/audits/2026-09-24-section-4-2-classifier-reselection-receipt.json`.
 
 
 ## 2026-09-24 — RSS drug-rule classifier 3.0.0: clause-code titles without 藥品

@@ -1,0 +1,105 @@
+{
+  "schema": "nhi-rule-history/classifier-reselection-live-receipt/v1",
+  "work_item_id": "032c851a-a2c1-520b-ae1d-cc787255e159",
+  "official_detail_url": "https://www.nhi.gov.tw/ch/cp-20417-e7781-3258-1.html",
+  "title": "公告修訂4.2.血液代用製劑及血液成分製劑及附表十八之五重型血友病患醫療評估追蹤紀錄表之給付規定。",
+  "reference_number": "健保審字第1150672381號",
+  "reselection": {
+    "transition_id": "b0b1d06c-e2bc-5147-a2d0-36ad633e8037",
+    "transition_seq": 3,
+    "evidence_sha256": "ff2b0a281a6bc6fb01f886ecfe9b8945cb2d719e5fd6d07d3d256e255e6d95f3",
+    "evidence": {
+      "classifier_version": "nhi-rule-history-drug-rule-classifier/3.0.0",
+      "contract": "nhi-rule-history/rss-poll-pg-queue/v1",
+      "decision": "classifier_version_reselection",
+      "event": "selected",
+      "ignored_transition_seq": 2,
+      "item_identity_kind": "official_detail_url",
+      "item_identity_value": "https://www.nhi.gov.tw/ch/cp-20417-e7781-3258-1.html",
+      "prior_classifier_version": "nhi-rule-history-drug-rule-classifier/2.0.0",
+      "title_sha256": "98a7bff10e779206e570a9c1b1a5c7a3053702db53494a34bf1f3833a9d3b0b3"
+    },
+    "source_job": "first poll under parser nhi-rule-history-rss/1.2.0 (classifier 3.0.0)"
+  },
+  "ledger_after": [
+    {
+      "seq": 1,
+      "transition_id": "13c0c4ad-3d4e-5da3-9741-ef2b2ca24bff",
+      "from": null,
+      "to": "observed",
+      "actor_kind": "deterministic_poll_loader",
+      "evidence_sha256": "419c15448ff06522966d2f72c7d2ec31db0574fbdb5ef444dbb522d610002d50",
+      "recorded_at": "2026-09-16T14:12:40+08:00"
+    },
+    {
+      "seq": 2,
+      "transition_id": "a50dbf52-0a14-504b-bc90-8ee6ceb81fbf",
+      "from": "observed",
+      "to": "ignored_non_rule",
+      "actor_kind": "deterministic_poll_classifier",
+      "evidence_sha256": "91c666d780486f9223e15f255735deb1b7c02dbec81c2208e4182a2dc4370581",
+      "recorded_at": "2026-09-16T14:12:40+08:00"
+    },
+    {
+      "seq": 3,
+      "transition_id": "b0b1d06c-e2bc-5147-a2d0-36ad633e8037",
+      "from": "ignored_non_rule",
+      "to": "selected",
+      "actor_kind": "deterministic_classifier_reselection",
+      "evidence_sha256": "ff2b0a281a6bc6fb01f886ecfe9b8945cb2d719e5fd6d07d3d256e255e6d95f3",
+      "recorded_at": "2026-09-24T15:14:12+08:00"
+    },
+    {
+      "seq": 4,
+      "transition_id": "34a5e033-2809-5128-a18f-ec6c5d0da759",
+      "from": "selected",
+      "to": "acquired",
+      "actor_kind": "private-scheduled-stage-controller",
+      "evidence_sha256": "6bf10a7fd1edc320e4abd8a426337c37fe363b4d6f5e3fd076964a4bfd433ccb",
+      "recorded_at": "2026-09-24T15:25:28+08:00"
+    },
+    {
+      "seq": 5,
+      "transition_id": "6c65c6f2-1088-53a2-9be1-302068f66ba4",
+      "from": "acquired",
+      "to": "corpus_registered",
+      "actor_kind": "private-scheduled-stage-controller",
+      "evidence_sha256": "a37b323da8462fbe63db936793398bfa75a8d3b3b5bebdf51aaaf597b1ebf205",
+      "recorded_at": "2026-09-24T15:25:28+08:00"
+    }
+  ],
+  "attempts_after": [
+    {
+      "kind": "acquisition",
+      "outcome": "success",
+      "state": "selected",
+      "recorded_at": "2026-09-24T15:25:28.592224+08:00"
+    },
+    {
+      "kind": "corpus_registration",
+      "outcome": "success",
+      "state": "acquired",
+      "recorded_at": "2026-09-24T15:25:28.831227+08:00"
+    }
+  ],
+  "claims": {
+    "ignored_transition_preserved": true,
+    "canonical_history_mutated": false,
+    "stage_only": true
+  },
+  "corpus_registration": {
+    "source_uid": "gov_健保審字第1150672381號",
+    "corpus_manifest_sha256": "0b650afa148933b0966bbc6b090c125b51167464928872752c56ca09097397ac",
+    "comparison_odt_sha256": "1c5829bf5a447080a2222e4bc0fb486eee55137a100e053c8e4a96ef15ff4fb4",
+    "files": [
+      "attachment-000.odt",
+      "attachment-001.pdf",
+      "manifest.json",
+      "raw.md",
+      "source-rss.xml",
+      "source.html"
+    ],
+    "corpus_state_at_receipt": "raw_ready (same as the batch's other rule notices; proofreading and indexing are tracked outside this lane)"
+  },
+  "redaction": "actor_kind of the private scheduled controller is replaced by a generic label; evidence hashes are unchanged."
+}

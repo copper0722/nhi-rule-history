@@ -1,0 +1,84 @@
+{
+  "schema": "nhi-rule-history/update-queue-reselection-v3-live-migration-receipt/v1",
+  "statement": "Guard replacement only: adds the ignored_non_rule -> selected reselection exit and its marker table. No queue, transition, attempt, generation, or canonical-history row changed during migration.",
+  "migration": {
+    "id": "2026-09-24_nhi_rule_history_update_queue_reselection_v3",
+    "contract_marker": "managed=nhi_rule_history_update_queue/reselection-v3",
+    "path": "pg/migrations/2026-09-24_nhi_rule_history_update_queue_reselection_v3.sql",
+    "sha256": "2265e4c90f93c6fe819583528cd27c912037a4b7d549bb4e79106edbb497ee84"
+  },
+  "rollback": {
+    "path": "pg/migrations/2026-09-24_nhi_rule_history_update_queue_reselection_v3.rollback.sql",
+    "sha256": "0ab202c8d25477aeb925370b87877c2fc06e45239d33e78dd683a28aeb8ad2d6",
+    "restores": "recovery-v2 guard verbatim"
+  },
+  "code_identity": {
+    "public_commit": "1aceb54e9d16eac80cb68869cb28c731512a396c"
+  },
+  "pre_apply": {
+    "observed_at": "2026-09-24T07:13:55.395456+00:00",
+    "work_items": {
+      "rows": 69,
+      "sha256": "942bc4e2b6820b2a9b47660aaf632fca450950ad2e5c4e0742a1f0e422e25bad"
+    },
+    "transitions": {
+      "rows": 220,
+      "sha256": "c0d1fdcdd7e5e27828f2fc40badde6b453e49ea4c4c4dccb9e13757387215439"
+    },
+    "attempts": {
+      "rows": 528,
+      "sha256": "a5bfbca43fc2378f82526cc4f29346ba0e3a5135883f66a6097fa1620f5a6379"
+    },
+    "generations": {
+      "rows": 2,
+      "sha256": "016a9e553a9a13f95f2771c61298e137aa82e4a1ec472848dc166abfa3120043"
+    },
+    "guard_functiondef_sha256": "50ca65eb4bdc66ca73d2304975450361a403568e96bb04ed5394ba7358085b57",
+    "reselection_marker_table_exists": false,
+    "section_4_2_item": {
+      "state": "ignored_non_rule",
+      "transition_seq": 2
+    },
+    "canonical_history_schema_exists": false
+  },
+  "post_apply": {
+    "observed_at": "2026-09-24T07:13:55.892971+00:00",
+    "work_items": {
+      "rows": 69,
+      "sha256": "942bc4e2b6820b2a9b47660aaf632fca450950ad2e5c4e0742a1f0e422e25bad"
+    },
+    "transitions": {
+      "rows": 220,
+      "sha256": "c0d1fdcdd7e5e27828f2fc40badde6b453e49ea4c4c4dccb9e13757387215439"
+    },
+    "attempts": {
+      "rows": 528,
+      "sha256": "a5bfbca43fc2378f82526cc4f29346ba0e3a5135883f66a6097fa1620f5a6379"
+    },
+    "generations": {
+      "rows": 2,
+      "sha256": "016a9e553a9a13f95f2771c61298e137aa82e4a1ec472848dc166abfa3120043"
+    },
+    "guard_functiondef_sha256": "159fde4c529e24da488525e04399f970dd3e83d579e0d33244dc1ae0a2a78d86",
+    "reselection_marker_table_exists": true,
+    "reselection_marker_rows": [
+      [
+        "2026-09-24_nhi_rule_history_update_queue_reselection_v3",
+        "managed=nhi_rule_history_update_queue/reselection-v3"
+      ]
+    ],
+    "section_4_2_item": {
+      "state": "ignored_non_rule",
+      "transition_seq": 2
+    },
+    "canonical_history_schema_exists": false
+  },
+  "claims": {
+    "migration_applied_once": true,
+    "existing_rows_unchanged": true,
+    "guard_changed": true,
+    "marker_present": true,
+    "canonical_history_mutated": false,
+    "stage_only": true
+  }
+}
