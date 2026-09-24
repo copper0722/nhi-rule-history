@@ -1,5 +1,30 @@
 # Worklog
 
+## 2026-09-24 — Classifier-version reselection lane for ignored RSS work items
+
+- Gap: `docs/continuous-update.md` requires a review lane for nonmatching items,
+  but `guard_transition_insert` refuses every exit from a terminal state, so the
+  section 4.2 notice (work item `032c851a-a2c1-520b-ae1d-cc787255e159`) could not
+  be reopened after classifier 3.0.0 selected its title.
+- Migration `2026-09-24_nhi_rule_history_update_queue_reselection_v3` (with
+  rollback) replaces the recovery-v2 guard with one added exit:
+  `ignored_non_rule -> selected` for actor `deterministic_classifier_reselection`,
+  whose evidence carries `decision=classifier_version_reselection`, two distinct
+  classifier versions, and the SHA-256 of the item's first title; the same
+  classifier version cannot reselect an item twice. The rollback restores the
+  recovery-v2 guard byte for byte and drops only the new marker table.
+- `plan_classifier_reselection` (read-only) and `reselect_ignored_work_item`
+  derive the prior classifier from the ignoring evidence (poll label plus the
+  poll's parser version, or the runner's label) and re-run the title classifier;
+  CLI `update-queue-reselect` plans by default and applies one item with
+  `--apply`.
+- Tests: 9 new (static guard parity, decision table, and live tests on a
+  disposable initdb cluster: plan, five refused inserts, reselect once, the
+  same version cannot reopen twice, rollback). Full suite with disposable
+  clusters enabled: 512 tests, OK (7 skipped).
+- Pending: independent review, then live apply and one reselection.
+
+
 ## 2026-09-24 — RSS drug-rule classifier 3.0.0: clause-code titles without 藥品
 
 - Miss: 健保審字第1150672381號 (2026-09-15), titled

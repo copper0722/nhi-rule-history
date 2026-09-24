@@ -67,13 +67,19 @@ from nhi_rule_history.update.pg_queue import (
     finish_partition_recovery_route,
     load_partition_recovery_evidence,
     load_poll_package,
+    plan_classifier_reselection,
+    reselect_ignored_work_item,
     reserve_partition_recovery_route,
     revoke_partition_recovery,
     show_partition_recovery,
     verify_partition_recovery_admission,
 )
 from nhi_rule_history.update.proposal import ProposalError
-from nhi_rule_history.update.rss import OfficialNhiClient, parse_rss
+from nhi_rule_history.update.rss import (
+    RSS_CLASSIFIER_VERSION,
+    OfficialNhiClient,
+    parse_rss,
+)
 from nhi_rule_history.update.workers import (
     WorkerFailure,
     WorkerOrchestrator,
@@ -385,6 +391,24 @@ def build_parser() -> argparse.ArgumentParser:
     update_poll_stage.add_argument("--poll-path", type=Path, required=True)
     update_poll_stage.add_argument("--owner-key", required=True)
     update_poll_stage.add_argument("--poll-relative-root")
+
+    update_reselect = subparsers.add_parser(
+        "update-queue-reselect",
+        help=(
+            "plan, or with --apply reopen, one ignored_non_rule work item "
+            "that the current RSS classifier selects"
+        ),
+    )
+    update_reselect.add_argument(
+        "--dsn", default=os.environ.get("NHI_RULE_HISTORY_DSN")
+    )
+    update_reselect.add_argument("--work-item-id")
+    update_reselect.add_argument(
+        "--source-job-id",
+        help="update job whose classifier version decided the reselection",
+    )
+    update_reselect.add_argument("--recorded-at")
+    update_reselect.add_argument("--apply", action="store_true")
 
     update_transition = subparsers.add_parser(
         "update-queue-transition",
@@ -963,6 +987,27 @@ def main(argv: Sequence[str] | None = None) -> int:
                 owner_key=args.owner_key,
                 poll_relative_root=args.poll_relative_root,
             )
+        elif args.command == "update-queue-reselect":
+            if not args.dsn:
+                raise UpdateQueueError(
+                    "--dsn or NHI_RULE_HISTORY_DSN is required"
+                )
+            if not args.apply:
+                result = {
+                    "classifier_version": RSS_CLASSIFIER_VERSION,
+                    "plan": plan_classifier_reselection(args.dsn),
+                }
+            elif not args.work_item_id or not args.source_job_id:
+                raise UpdateQueueError(
+                    "--apply needs --work-item-id and --source-job-id"
+                )
+            else:
+                result = reselect_ignored_work_item(
+                    args.dsn,
+                    work_item_id=args.work_item_id,
+                    source_job_id=args.source_job_id,
+                    recorded_at=args.recorded_at,
+                )
         elif args.command == "partition-recovery":
             lane = args.partition_recovery_command
             if lane == "verify":

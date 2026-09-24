@@ -89,6 +89,16 @@ materials (特殊材料, 特材) stay unselected. A sealed poll package is re-ve
 with the classifier of its own parser version, so packages written under
 parser 1.1.0 keep their 2.0.0 selection.
 
+An item that an older classifier closed as `ignored_non_rule` stays in the
+ledger. When a newer classifier selects its stored title, the review lane
+`update-queue-reselect` (plan by default, `--apply` for one item) appends
+`ignored_non_rule -> selected` with actor `deterministic_classifier_reselection`;
+the evidence names both classifier versions and the SHA-256 of the item's
+first title. The database guard (migration
+`2026-09-24_nhi_rule_history_update_queue_reselection_v3`) accepts that exit
+once per classifier version and no other exit from a terminal state.
+Acquisition then rebuilds the item from its first stored RSS response.
+
 ## 2. Immutable notice source bundle
 
 Acquisition of one selected item starts again from the exact current RSS

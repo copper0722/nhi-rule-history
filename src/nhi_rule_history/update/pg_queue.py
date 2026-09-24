@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 from xml.etree import ElementTree
 
 from nhi_rule_history.contracts import (
@@ -34,6 +34,8 @@ from nhi_rule_history.update.poll import (
 )
 from nhi_rule_history.update.rss import (
     NHI_RSS_URL,
+    RSS_CLASSIFIER_VERSION,
+    RSS_V2_CLASSIFIER_VERSION,
     RssItem,
     http_profile_sha256,
     parse_rss,
@@ -1353,6 +1355,259 @@ def append_work_transition(
         "fingerprint": sha256_bytes(
             canonical_json_bytes(normalized_row)
         ),
+    }
+
+
+RESELECTION_ACTOR = "deterministic_classifier_reselection"
+RESELECTION_DECISION = "classifier_version_reselection"
+RESELECTION_RECEIPT_SCHEMA = "nhi-rule-history/classifier-reselection-receipt/v1"
+# Labels that earlier writers put in ignored_non_rule evidence.  The poll
+# classifier label says "the poll's own parser version decided"; the runner's
+# selected -> ignored label predates its switch to a version string.
+_POLL_CLASSIFIER_LABEL = "rss-item-keywords/v1"
+_RUNNER_V2_CLASSIFIER_LABEL = "drug-noun-and-reimbursement-term-required"
+_RESELECTION_TARGETS = (RSS_V2_CLASSIFIER_VERSION, RSS_CLASSIFIER_VERSION)
+
+
+def _ignoring_classifier_version(
+    evidence: Any, parser_version: str | None
+) -> str | None:
+    """The classifier version that closed a work item as ignored_non_rule."""
+
+    label = evidence.get("classifier") if isinstance(evidence, Mapping) else None
+    if label == _POLL_CLASSIFIER_LABEL:
+        return RSS_CLASSIFIER_BY_PARSER_VERSION.get(parser_version or "")
+    if label == _RUNNER_V2_CLASSIFIER_LABEL:
+        return RSS_V2_CLASSIFIER_VERSION
+    if label in RSS_CLASSIFIER_BY_PARSER_VERSION.values():
+        return str(label)
+    return None
+
+
+_IGNORED_ITEMS_SQL = f"""
+    SELECT current.work_item_id::text,
+           current.transition_seq,
+           current.state_recorded_at,
+           current.evidence_json,
+           current.item_identity_kind,
+           current.item_identity_value,
+           current.first_title_raw,
+           current.first_link_raw,
+           decided_by.parser_version,
+           coalesce(
+             (
+               SELECT array_agg(
+                        earlier.evidence_json ->> 'classifier_version'
+                        ORDER BY earlier.transition_seq
+                      )
+               FROM {QUEUE_SCHEMA}.work_item_transition AS earlier
+               WHERE earlier.work_item_id = current.work_item_id
+                 AND earlier.actor_kind = %s
+             ),
+             ARRAY[]::text[]
+           ) AS reselected_by
+    FROM {QUEUE_SCHEMA}.v_work_item_current AS current
+    JOIN {QUEUE_SCHEMA}.rss_work_item AS item
+      ON item.work_item_id = current.work_item_id
+    LEFT JOIN {OPS_SCHEMA}.feed_observation AS decided_by
+      ON decided_by.feed_observation_id = coalesce(
+           CASE
+             WHEN current.evidence_json ->> 'feed_observation_id'
+                  ~ '^[0-9a-f-]{{36}}$'
+             THEN (current.evidence_json ->> 'feed_observation_id')::uuid
+           END,
+           item.first_feed_observation_id
+         )
+    WHERE current.current_state = 'ignored_non_rule'
+      AND (%s::uuid IS NULL OR current.work_item_id = %s::uuid)
+    ORDER BY current.first_observed_at, current.work_item_id
+"""
+
+
+def _reselection_decision(
+    row: Sequence[Any], classifier_version: str
+) -> dict[str, Any]:
+    (
+        work_item_id,
+        transition_seq,
+        state_recorded_at,
+        evidence,
+        identity_kind,
+        identity_value,
+        title,
+        link,
+        parser_version,
+        reselected_by,
+    ) = row
+    prior = _ignoring_classifier_version(evidence, parser_version)
+    item = RssItem(
+        guid=str(identity_value),
+        title=str(title),
+        link=str(link),
+        description="",
+        published_at=None,
+        sequence=0,
+    )
+    if prior is None:
+        decision = "unknown_prior_classifier"
+    elif prior == classifier_version:
+        decision = "same_classifier_version"
+    elif classifier_version in (reselected_by or []):
+        decision = "already_reselected"
+    elif not item.is_likely_drug_rule_for(classifier_version):
+        decision = "still_not_selected"
+    else:
+        decision = "reselect"
+    return {
+        "work_item_id": str(work_item_id),
+        "ignored_transition_seq": int(transition_seq),
+        "ignored_recorded_at": state_recorded_at,
+        "item_identity_kind": str(identity_kind),
+        "item_identity_value": str(identity_value),
+        "title_sha256": sha256_bytes(str(title).encode("utf-8")),
+        "prior_classifier_version": prior,
+        "classifier_version": classifier_version,
+        "decision": decision,
+    }
+
+
+def _check_reselection_target(classifier_version: str) -> None:
+    if classifier_version not in _RESELECTION_TARGETS:
+        raise UpdateQueueError(
+            "reselection needs a title-only RSS classifier version"
+        )
+
+
+def plan_classifier_reselection(
+    conninfo: str,
+    *,
+    classifier_version: str = RSS_CLASSIFIER_VERSION,
+) -> list[dict[str, Any]]:
+    """Read-only: what ``classifier_version`` decides for every ignored item."""
+
+    _check_reselection_target(classifier_version)
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(_IGNORED_ITEMS_SQL, (RESELECTION_ACTOR, None, None))
+            rows = cursor.fetchall()
+    plan = [_reselection_decision(row, classifier_version) for row in rows]
+    for entry in plan:
+        entry["ignored_recorded_at"] = _iso(entry["ignored_recorded_at"])
+    return plan
+
+
+def reselect_ignored_work_item(
+    conninfo: str,
+    *,
+    work_item_id: str,
+    source_job_id: str,
+    classifier_version: str = RSS_CLASSIFIER_VERSION,
+    recorded_at: str | None = None,
+) -> dict[str, Any]:
+    """Reopen one ignored item that a newer classifier version selects.
+
+    The ignored_non_rule transition stays in the ledger.  The new transition
+    ignored_non_rule -> selected names both classifier versions and the item's
+    title hash; the database guard accepts it once per classifier version.
+    """
+
+    _check_reselection_target(classifier_version)
+    try:
+        work_item_id = str(uuid.UUID(work_item_id))
+        source_job_id = str(uuid.UUID(source_job_id))
+    except ValueError as exc:
+        raise UpdateQueueError("reselection identifiers must be UUIDs") from exc
+    transition_time = _timestamp(recorded_at or utc_now(), "recorded_at")
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                (f"nhi-rule-history-work-item:{work_item_id}",),
+            )
+            cursor.execute(
+                _IGNORED_ITEMS_SQL,
+                (RESELECTION_ACTOR, work_item_id, work_item_id),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                raise UpdateQueueError(
+                    "work item is not currently ignored_non_rule"
+                )
+            plan = _reselection_decision(row, classifier_version)
+            if plan["decision"] != "reselect":
+                raise UpdateQueueError(
+                    f"work item is not reselectable: {plan['decision']}"
+                )
+            if transition_time < _timestamp(
+                _iso(plan["ignored_recorded_at"]), "ignored.recorded_at"
+            ):
+                raise UpdateQueueError(
+                    "reselection time precedes the ignored transition"
+                )
+            evidence = {
+                "contract": CONTRACT_VERSION,
+                "event": "selected",
+                "decision": RESELECTION_DECISION,
+                "prior_classifier_version": plan["prior_classifier_version"],
+                "classifier_version": classifier_version,
+                "title_sha256": plan["title_sha256"],
+                "ignored_transition_seq": plan["ignored_transition_seq"],
+                "item_identity_kind": plan["item_identity_kind"],
+                "item_identity_value": plan["item_identity_value"],
+            }
+            transition_seq = plan["ignored_transition_seq"] + 1
+            transition_id = _insert_transition(
+                cursor,
+                work_item_id=work_item_id,
+                transition_seq=transition_seq,
+                from_state="ignored_non_rule",
+                to_state="selected",
+                actor_kind=RESELECTION_ACTOR,
+                evidence=evidence,
+                source_job_id=source_job_id,
+                recorded_at=_iso(transition_time),
+            )
+
+    with _connect(conninfo) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+            )
+            cursor.execute(
+                f"""
+                SELECT current.current_state, current.transition_seq,
+                       transition.transition_id::text,
+                       transition.evidence_sha256
+                FROM {QUEUE_SCHEMA}.v_work_item_current AS current
+                JOIN {QUEUE_SCHEMA}.work_item_transition AS transition
+                  ON transition.work_item_id = current.work_item_id
+                 AND transition.transition_seq = current.transition_seq
+                WHERE current.work_item_id = %s
+                """,
+                (work_item_id,),
+            )
+            current = cursor.fetchone()
+    if (
+        current is None
+        or str(current[0]) != "selected"
+        or int(current[1]) != transition_seq
+        or str(current[2]) != transition_id
+    ):
+        raise UpdateQueueError(
+            "fresh-connection reselection verification failed"
+        )
+    return {
+        "schema": RESELECTION_RECEIPT_SCHEMA,
+        "work_item_id": work_item_id,
+        "transition_id": transition_id,
+        "transition_seq": transition_seq,
+        "to_state": "selected",
+        "evidence_sha256": str(current[3]),
+        "evidence": evidence,
     }
 
 
