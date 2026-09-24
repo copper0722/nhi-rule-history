@@ -29,14 +29,11 @@ from nhi_rule_history.pg.common import json_text
 from nhi_rule_history.fetch.runner import media_type
 from nhi_rule_history.update.poll import (
     POLL_SCHEMA,
-    RSS_LEGACY_PARSER_VERSION,
-    RSS_PARSER_VERSION,
+    RSS_CLASSIFIER_BY_PARSER_VERSION,
     verify_poll,
 )
 from nhi_rule_history.update.rss import (
     NHI_RSS_URL,
-    RSS_CLASSIFIER_VERSION,
-    RSS_LEGACY_CLASSIFIER_VERSION,
     RssItem,
     http_profile_sha256,
     parse_rss,
@@ -438,10 +435,7 @@ def _prepare_poll_load(
     if manifest.get("feed_url") != manifest.get("final_url"):
         raise UpdateQueueError("poll package violates the no-redirect feed contract")
     parser_version = manifest.get("parser_version")
-    classifier_version = {
-        RSS_LEGACY_PARSER_VERSION: RSS_LEGACY_CLASSIFIER_VERSION,
-        RSS_PARSER_VERSION: RSS_CLASSIFIER_VERSION,
-    }.get(parser_version)
+    classifier_version = RSS_CLASSIFIER_BY_PARSER_VERSION.get(parser_version)
     if classifier_version is None:
         raise UpdateQueueError("poll package parser version is unsupported")
     response_headers = manifest.get("response_headers")

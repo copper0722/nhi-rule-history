@@ -81,6 +81,14 @@ poll retains every parsed feed item even when only likely drug-rule items are
 selected automatically. New nonmatching items require a discrepancy or manual
 review lane; they must not disappear from the observation record.
 
+The title is the selection surface. Classifier 3.0.0 (parser 1.2.0) selects a
+title that carries a reimbursement-rule term (給付規定, 給付條件, 給付範圍)
+together with either a drug noun (藥品, 藥物) or a drug-rule clause code written
+directly after 修訂, such as `公告修訂4.2.…之給付規定`; titles naming special
+materials (特殊材料, 特材) stay unselected. A sealed poll package is re-verified
+with the classifier of its own parser version, so packages written under
+parser 1.1.0 keep their 2.0.0 selection.
+
 ## 2. Immutable notice source bundle
 
 Acquisition of one selected item starts again from the exact current RSS

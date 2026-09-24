@@ -20,6 +20,7 @@ from nhi_rule_history.contracts import (
 from nhi_rule_history.update.rss import (
     RSS_CLASSIFIER_VERSION,
     RSS_LEGACY_CLASSIFIER_VERSION,
+    RSS_V2_CLASSIFIER_VERSION,
     OfficialResponse,
     RssItem,
     parse_rss,
@@ -27,8 +28,16 @@ from nhi_rule_history.update.rss import (
 
 
 POLL_SCHEMA = "nhi-rule-history/rss-poll-observation/v1"
-RSS_PARSER_VERSION = "nhi-rule-history-rss/1.1.0"
+RSS_PARSER_VERSION = "nhi-rule-history-rss/1.2.0"
+RSS_V2_PARSER_VERSION = "nhi-rule-history-rss/1.1.0"
 RSS_LEGACY_PARSER_VERSION = "nhi-rule-history-rss/1.0.0"
+# A sealed poll package is re-verified with the classifier its parser version
+# was written under, so an older package keeps its original selection.
+RSS_CLASSIFIER_BY_PARSER_VERSION = {
+    RSS_LEGACY_PARSER_VERSION: RSS_LEGACY_CLASSIFIER_VERSION,
+    RSS_V2_PARSER_VERSION: RSS_V2_CLASSIFIER_VERSION,
+    RSS_PARSER_VERSION: RSS_CLASSIFIER_VERSION,
+}
 
 
 @dataclass(frozen=True)
@@ -173,10 +182,7 @@ def verify_poll(path: Path) -> dict[str, Any]:
         raise ContractError("RSS poll feed artifact mismatch")
     items = parse_rss(feed_path.read_bytes())
     parser_version = manifest.get("parser_version")
-    classifier_version = {
-        RSS_LEGACY_PARSER_VERSION: RSS_LEGACY_CLASSIFIER_VERSION,
-        RSS_PARSER_VERSION: RSS_CLASSIFIER_VERSION,
-    }.get(parser_version)
+    classifier_version = RSS_CLASSIFIER_BY_PARSER_VERSION.get(parser_version)
     if classifier_version is None:
         raise ContractError("unsupported RSS poll parser version")
     item_payloads = [

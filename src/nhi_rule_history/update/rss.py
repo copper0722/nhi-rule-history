@@ -65,7 +65,19 @@ _REIMBURSEMENT_RULE_TERMS = (
     "給付條件",
     "給付範圍",
 )
-RSS_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/2.0.0"
+# A drug-rule clause code written directly after 修訂, as in
+# 公告修訂4.2.血液代用製劑…之給付規定: the section names a drug class and never
+# says 藥品.  Special-material notices share the rule terms, so they are
+# excluded by name.
+_DRUG_RULE_CLAUSE_CODE_RE = re.compile(
+    r"修訂\s*\d{1,2}(?:\.\d{1,3}){1,3}\.\s*[^\d\s.]"
+)
+_SPECIAL_MATERIAL_TERMS = (
+    "特殊材料",
+    "特材",
+)
+RSS_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/3.0.0"
+RSS_V2_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/2.0.0"
 RSS_LEGACY_CLASSIFIER_VERSION = "nhi-rule-history-drug-rule-classifier/1.0.0"
 
 
@@ -161,18 +173,28 @@ class RssItem:
                     "全民健康保險藥物給付",
                 )
             )
-        if classifier_version != RSS_CLASSIFIER_VERSION:
+        if classifier_version not in (
+            RSS_V2_CLASSIFIER_VERSION,
+            RSS_CLASSIFIER_VERSION,
+        ):
             raise ContractError("unsupported RSS drug-rule classifier version")
         # Descriptions contain breadcrumb boilerplate such as
         # ``健保藥品與特材`` even for special-material notices.  The title is
-        # the stable public selection surface, so both signals must occur
+        # the stable public selection surface, so every signal must occur
         # there.  This only selects work for review; it does not adjudicate
         # the legal content.
+        title = self.title
+        has_rule_term = any(
+            term in title for term in _REIMBURSEMENT_RULE_TERMS
+        )
+        if has_rule_term and any(noun in title for noun in _DRUG_NOUNS):
+            return True
+        if classifier_version == RSS_V2_CLASSIFIER_VERSION:
+            return False
         return (
-            any(noun in self.title for noun in _DRUG_NOUNS)
-            and any(
-                term in self.title for term in _REIMBURSEMENT_RULE_TERMS
-            )
+            has_rule_term
+            and _DRUG_RULE_CLAUSE_CODE_RE.search(title) is not None
+            and not any(term in title for term in _SPECIAL_MATERIAL_TERMS)
         )
 
     def as_dict(

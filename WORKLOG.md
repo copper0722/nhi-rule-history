@@ -1,5 +1,29 @@
 # Worklog
 
+## 2026-09-24 — RSS drug-rule classifier 3.0.0: clause-code titles without 藥品
+
+- Miss: 健保審字第1150672381號 (2026-09-15), titled
+  `公告修訂4.2.血液代用製劑及血液成分製劑及附表十八之五重型血友病患醫療評估追蹤紀錄表之給付規定。`,
+  was observed on 2026-09-16 and closed as `ignored_non_rule` because classifier
+  2.0.0 needs a drug noun (藥品/藥物) in the title; section 4.2 names a drug class
+  instead. The same batch's other rule notices reached `corpus_registered`.
+- Classifier 3.0.0 (parser `nhi-rule-history-rss/1.2.0`) keeps every 2.0.0
+  selection and also selects a rule term plus a drug-rule clause code written
+  directly after 修訂; titles naming 特殊材料/特材 stay unselected. Poll packages
+  are re-verified with the classifier of their own parser version (1.0.0, 1.1.0,
+  1.2.0), so sealed 1.1.0 packages keep their 2.0.0 selection.
+- Replay over all 69 distinct RSS titles observed from 2026-07-27 to 2026-09-24:
+  2.0.0 selects 27, 3.0.0 selects 28; the only change is the 4.2 notice. Both
+  special-material titles with 給付規定 stay unselected.
+- Tests: positive control (the 4.2 title), selections kept from 2.0.0, and six
+  confusable negatives (two observed special-material titles, a clause code
+  followed by 特殊材料, a clause code without a rule term, a date after 修訂, and a
+  給付原則 title); a sealed 1.1.0 package keeps its 2.0.0 selection and rejects a
+  3.0.0-only selection.
+- Not done here: the observed 4.2 item stays terminal `ignored_non_rule`, since
+  terminal states refuse any further transition and no reclassification lane
+  exists yet. Re-driving it needs a design-gated queue change.
+
 ## 2026-09-14 — 2.6.1 post-effective-date reconciliation receipt and decision-aid restoration
 
 - Context: the 2.6.1 dyslipidemia amendment (健保審字第1150671962號) took effect on

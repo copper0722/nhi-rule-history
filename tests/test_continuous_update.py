@@ -34,6 +34,8 @@ from nhi_rule_history.update.proposal import (
 )
 from nhi_rule_history.update.poll import observe_feed, verify_poll
 from nhi_rule_history.update.rss import (
+    RSS_CLASSIFIER_VERSION,
+    RSS_V2_CLASSIFIER_VERSION,
     OfficialResponse,
     RssItem,
     filter_new_items,
@@ -539,6 +541,42 @@ class ContinuousUpdateTests(unittest.TestCase):
         items = parse_rss(payload)
         self.assertEqual(len(items), 1)
         self.assertFalse(items[0].is_likely_drug_rule)
+
+    def test_clause_code_rule_notice_without_drug_noun_is_selected(self) -> None:
+        def likely(title: str, version: str = RSS_CLASSIFIER_VERSION) -> bool:
+            item = RssItem(
+                guid="g",
+                title=title,
+                link="https://www.nhi.gov.tw/ch/cp-1-example-3258-1.html",
+                description="健保藥品與特材",
+                published_at=None,
+                sequence=0,
+            )
+            return item.is_likely_drug_rule_for(version)
+
+        # 健保審字第1150672381號 (2026-09-15): drug rule 4.2 names a drug
+        # class, never 藥品, and classifier 2.0.0 left it ignored_non_rule.
+        section_4_2 = (
+            "公告修訂4.2.血液代用製劑及血液成分製劑及附表十八之五"
+            "重型血友病患醫療評估追蹤紀錄表之給付規定。"
+        )
+        self.assertTrue(likely(section_4_2))
+        self.assertFalse(likely(section_4_2, RSS_V2_CLASSIFIER_VERSION))
+        for selected_before in (
+            "公告修訂8.1.3.高單位免疫球蛋白之藥品給付規定。",
+            "公告修訂含gemtuzumab ozogamicin成分藥品(如Mylotarg) 之給付規定。",
+        ):
+            self.assertTrue(likely(selected_before))
+            self.assertTrue(likely(selected_before, RSS_V2_CLASSIFIER_VERSION))
+        for confusable in (
+            "公告暫予支付特殊材料「可控式導引鞘」計9項暨其給付規定。",
+            "公告修正既有功能類別特殊材料「特殊材質縫合錨釘」給付規定。",
+            "公告修訂3.1.特殊材料人工髖關節之給付規定。",
+            "公告修訂4.2.血液代用製劑之支付價格。",
+            "公告修訂115.10.1.生效之給付規定。",
+            "修正「115年適用牙醫相對合理門診點數給付原則之鄉鎮名單」",
+        ):
+            self.assertFalse(likely(confusable), confusable)
 
     def test_poll_observation_is_immutable_and_collapse_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
