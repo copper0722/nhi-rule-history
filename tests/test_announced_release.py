@@ -15,6 +15,7 @@ import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from nhi_rule_history import announced_dyslipidemia as dyslipidemia
 from nhi_rule_history.announced_notice import sha256_text
 from nhi_rule_history.announced_release import (
     AnnouncedReleaseError,
@@ -329,8 +330,44 @@ class OverlayReleaseLiveTest(unittest.TestCase):
         )
         self.assertEqual(self._served(), [("9.9", "patch_only")])
 
+        # The stored seal must have exactly the 2.6.1 loader's shape: the
+        # subscriber sync re-verifies the active run with dict equality over
+        # SEALED_COUNT_TABLES every tick (2026-09-28 finding: carrying the
+        # legacy document tables into table_fingerprints broke that check).
+        self.assertEqual(set(release.table_fingerprints), set(SEALED_COUNT_TABLES))
+        self.assertEqual(set(release.expected_counts), set(SEALED_COUNT_TABLES))
+        self.assertEqual(
+            release.output_fingerprint,
+            object_fingerprint(
+                {
+                    "counts": dict(release.expected_counts),
+                    "table_fingerprints": dict(release.table_fingerprints),
+                }
+            ),
+        )
+
         receipt = load_overlay_release(self.pg.dsn, release)
         self.assertFalse(receipt["replayed"])
+        with _connect(self.pg.dsn, read_only=True) as connection:
+            stored = connection.execute(
+                """
+                SELECT expected_counts, verified_counts, table_fingerprints
+                FROM nhi_rule_history_announced.release_run WHERE run_id=%s
+                """,
+                (release.run_id,),
+            ).fetchone()
+        self.assertEqual(stored["table_fingerprints"], dict(release.table_fingerprints))
+        self.assertEqual(stored["expected_counts"], dict(release.expected_counts))
+        self.assertEqual(stored["verified_counts"], dict(release.expected_counts))
+        # The subscriber sync's own check: its core receipt replay must pass.
+        # This fixture has no 2.6.1 clause normalization, so the check may
+        # only stop at that later step, never at the sealed receipt.
+        with self.assertRaises(dyslipidemia.AnnouncedDyslipidemiaError) as caught:
+            dyslipidemia.verify_announced_material(
+                release.run_id, conninfo=self.pg.dsn
+            )
+        self.assertNotIn("does not replay", str(caught.exception))
+        self.assertIn("normalization", str(caught.exception))
         self.assertEqual(receipt["resolved_patch_count"], 5)
         # Loading changes nothing that is served.
         self.assertEqual(self._served(), [("9.9", "patch_only")])

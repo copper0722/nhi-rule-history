@@ -699,6 +699,7 @@ class OverlayRelease:
     expected_counts: Mapping[str, int]
     all_counts: Mapping[str, int]
     table_fingerprints: Mapping[str, str]
+    all_table_fingerprints: Mapping[str, str]
     input_fingerprint: str
     output_fingerprint: str
     sealed_fingerprint: str
@@ -1270,14 +1271,26 @@ def prepare_overlay_release(
         for name, value in rows.items()
     }
     all_counts = {name: len(value) for name, value in frozen.items()}
-    expected_counts = {name: all_counts[name] for name in SEALED_COUNT_TABLES}
-    table_fingerprints = {
+    all_table_fingerprints = {
         name: row_set_fingerprint(row["source_row_sha256"] for row in value)
         for name, value in frozen.items()
         if value and "source_row_sha256" in value[0]
     }
+    # The stored seal follows the 2.6.1 loader's convention exactly: counts,
+    # table fingerprints and output cover SEALED_COUNT_TABLES only.  The
+    # subscriber sync re-runs announced_dyslipidemia.verify_announced_material
+    # on the active run every tick and requires dict equality with these keys;
+    # the legacy document tables stay proven by their own carried receipt, and
+    # verify_overlay_release still checks every carried table at load time.
+    expected_counts = {name: all_counts[name] for name in SEALED_COUNT_TABLES}
+    table_fingerprints = {
+        name: row_set_fingerprint(
+            row["source_row_sha256"] for row in frozen.get(name, ())
+        )
+        for name in SEALED_COUNT_TABLES
+    }
     output_fingerprint = object_fingerprint(
-        {"counts": all_counts, "table_fingerprints": table_fingerprints}
+        {"counts": expected_counts, "table_fingerprints": table_fingerprints}
     )
     evaluator_version = str(base.run["evaluator_version"])
     sealed_fingerprint = object_fingerprint(
@@ -1350,6 +1363,7 @@ def prepare_overlay_release(
         expected_counts=expected_counts,
         all_counts=all_counts,
         table_fingerprints=table_fingerprints,
+        all_table_fingerprints=all_table_fingerprints,
         input_fingerprint=input_fingerprint,
         output_fingerprint=output_fingerprint,
         sealed_fingerprint=sealed_fingerprint,
@@ -1662,6 +1676,7 @@ def verify_overlay_release(dsn: str, release: OverlayRelease) -> dict[str, Any]:
             raise AnnouncedReleaseError("fresh read found no sealed overlay run")
         counts: dict[str, int] = {}
         fingerprints: dict[str, str] = {}
+        table_hashes: dict[str, list[str]] = {}
         for shape in _run_scoped_tables(connection):
             hashes = [
                 row.get("source_row_sha256")
@@ -1673,12 +1688,22 @@ def verify_overlay_release(dsn: str, release: OverlayRelease) -> dict[str, Any]:
             counts[shape.name] = len(hashes)
             if hashes and hashes[0] is not None:
                 fingerprints[shape.name] = row_set_fingerprint(hashes)
+                table_hashes[shape.name] = hashes
+        sealed_counts = {name: counts[name] for name in SEALED_COUNT_TABLES}
+        sealed_fingerprints = {
+            name: row_set_fingerprint(table_hashes.get(name, ()))
+            for name in SEALED_COUNT_TABLES
+        }
         output = object_fingerprint(
-            {"counts": counts, "table_fingerprints": fingerprints}
+            {"counts": sealed_counts, "table_fingerprints": sealed_fingerprints}
         )
         if (
             counts != dict(release.all_counts)
-            or fingerprints != dict(release.table_fingerprints)
+            or fingerprints != dict(release.all_table_fingerprints)
+            or sealed_fingerprints != dict(release.table_fingerprints)
+            or sealed_fingerprints != dict(run["table_fingerprints"])
+            or sealed_counts != dict(run["expected_counts"])
+            or sealed_counts != dict(run["verified_counts"])
             or output != run["output_fingerprint"]
             or run["sealed_fingerprint"] != release.sealed_fingerprint
         ):
@@ -1790,6 +1815,24 @@ def activate_overlay_release(
             raise AnnouncedReleaseError(
                 "the served run is not the expected base run"
             )
+        carries_dyslipidemia = connection.execute(
+            f"""
+            SELECT 1 FROM {SCHEMA}.composed_clause_version
+            WHERE run_id=%s AND clause_code=%s
+            LIMIT 1
+            """,
+            (run_id, DYSLIPIDEMIA_CLAUSE),
+        ).fetchone()
+        if carries_dyslipidemia is not None:
+            # The subscriber sync runs this exact read-only check on the
+            # active run every tick; a run it rejects must never be served.
+            try:
+                dyslipidemia.verify_announced_material(run_id, conninfo=dsn)
+            except dyslipidemia.AnnouncedDyslipidemiaError as exc:
+                raise AnnouncedReleaseError(
+                    "the 2.6.1 receipt check that the subscriber sync runs "
+                    f"rejects this run: {exc}"
+                ) from exc
         previous = _served_chain(connection)
         patches = connection.execute(
             f"""
