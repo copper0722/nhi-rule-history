@@ -49,6 +49,7 @@ from zoneinfo import ZoneInfo
 from nhi_rule_history import announced_dyslipidemia as dyslipidemia
 from nhi_rule_history import reader_profile
 from nhi_rule_history.announced_notice import (
+    LIST_LABEL_RULE_VERSION,
     PARSER_VERSION,
     PATCH_TEXT_JOIN,
     TEXT_RULE_VERSION,
@@ -56,6 +57,7 @@ from nhi_rule_history.announced_notice import (
     AnnouncedNoticeError,
     ParsedNotice,
     exact_in_rendering,
+    projection_block_reason,
     sha256_text,
     stable_uuid,
 )
@@ -103,12 +105,16 @@ STATUS_PASSED_WITH_HOLDS = "passed_with_holds"
 STATUS_NO_CHANGE = "no_change"
 STATUS_NO_CHANGE_WITH_HOLDS = "no_change_with_holds"
 _BLOCK_NOTES = {
-    "generated_list_label": (
-        "ODF list numbering draws labels that are not in the document "
-        "character data"
+    "unsupported_list_numbering": (
+        "ODF list numbering uses a feature whose printed labels are not "
+        "reproduced"
     ),
     "official_rendering_mismatch": (
         "parsed text differs from the independent office rendering"
+    ),
+    "official_rendering_unverified": (
+        "reconstructed list labels are not confirmed by an independent "
+        "office rendering"
     ),
 }
 
@@ -484,11 +490,7 @@ def clause_block_reason(
 ) -> str | None:
     """Fail-closed projection gate for one parsed clause."""
 
-    if clause.blocked_reason:
-        return clause.blocked_reason
-    if rendering_check == "mismatch":
-        return "official_rendering_mismatch"
-    return None
+    return projection_block_reason(clause, rendering_check)
 
 
 def notice_rows(
@@ -631,6 +633,7 @@ def notice_rows(
             "loader_version": LOADER_VERSION,
             "parser_version": PARSER_VERSION,
             "text_rule_version": TEXT_RULE_VERSION,
+            "list_label_rule_version": LIST_LABEL_RULE_VERSION,
             "patch_text_join": PATCH_TEXT_JOIN,
             "source_uid": notice.bundle.source_uid,
             "reference_number": notice.bundle.reference_number,
@@ -763,7 +766,11 @@ class OverlayRelease:
 
 def _code_sha256() -> str:
     here = Path(__file__).resolve()
-    return code_fingerprint(here, here.with_name("announced_notice.py"))
+    return code_fingerprint(
+        here,
+        here.with_name("announced_notice.py"),
+        here.with_name("odf_list_numbering.py"),
+    )
 
 
 def _carry(
@@ -1374,9 +1381,10 @@ def compose_overlay_release(
 
     ``official_renderings`` maps a reference number to an independent office
     rendering of its comparison-table attachment.  A clause whose parsed text
-    is not found verbatim there, or whose revised column draws generated list
-    labels, is kept as a pending effect instead of a patch.  A notice whose
-    every clause is held back still enters the run with pending effects only.
+    is not found verbatim there, whose list numbering is not reproduced, or
+    whose reconstructed list labels are not confirmed by that rendering, is
+    kept as a pending effect instead of a patch.  A notice whose every clause
+    is held back still enters the run with pending effects only.
 
     Failures are isolated per notice: a notice that is listed twice, lacks a
     required rendering, cannot be bound to the served clauses, would give a
