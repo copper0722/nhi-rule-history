@@ -1,0 +1,896 @@
+{
+  "notices": [
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品已收載項目異動明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準-第六編第八十三條之藥品給付規定第2節心臟血管及腎臟藥物 Cardiovascular-renal drugs 2.1.4.2.Rivaroxaban(如Xarelto)」給付規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 2,
+        "file_name": "attachment-002.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 70983,
+        "official_sha256": "792ce0e3c2bff525063882c2e732b587f233adde21587aaf53d25f2263e23334"
+      },
+      "expected": {
+        "block_count": 38,
+        "clauses": [
+          {
+            "clause_code": "2.1.4.2",
+            "component_manifest_sha256": "0f71432341d7cc2adf99dab1fb8830daba35973dd0af948e974a8f07f688412d",
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "e648ab964856c65a95cc273c5773dd88dca7cd97765697eb2287a32859008fec",
+            "revised_block_count": 19,
+            "revised_text_sha256": "4f45bd4b305322d6d2e8e420dfa50ce846cae8bdb5b5beb6d3e40ab69731e03c",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ],
+            "whitespace_element_blocks": 2
+          }
+        ],
+        "comparison_tables": [
+          {
+            "kind": "clause",
+            "original_header": "原給付規定",
+            "revised_header": "修訂後給付規定",
+            "table_index": 0
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "other_effects": [
+          "reimbursed_item_change"
+        ]
+      },
+      "fixture": {
+        "byte_size": 12254,
+        "derivation": "official content.xml: XML declaration, root start tag and exact office:body bytes; automatic styles and fonts dropped",
+        "file_name": "1150056995.content.xml",
+        "sha256": "5c2ce6ded034917b7f27181617aa0412c42b6a8bfde63f3e19c31ff8d65aa35c"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20416-6a97b-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_receipts": [
+        [
+          "4599d3512fa3769af3470ef55a10086086f5322e43c872755bc282f973098caf",
+          "6c60d4ee4f50e5fbbea78dde27d108e2cdb090b4650d2077d4551c09101fd66a"
+        ],
+        [
+          "daf3cfeb412df80b73eb0897010d24f47ff5f1cb22a52479d492bfd9d83499d3",
+          "5f145cbba183a0e39cfbb9746a477e80de5f7bcdf277e3148fc1ea8ea150992f"
+        ],
+        [
+          "944cf69d451a73c412c072d07f8abc226c01798d2334e620720e366e6b726817",
+          "d5af6ce5c55f3a77af60af5c44f756af99347a747fa516c26e1427e69fe08989"
+        ],
+        [
+          "41dc23fd9fc869add473900d828941e6dd6a4fdd9e2323233f761def8b64b8a6",
+          "c1b032e0563b7cd578df57b0cfc25812e6718824cb632d3e24568828b5687dcd"
+        ],
+        [
+          "06bed7391de0b119f0da1533027805701fa2561e73ed399beef9d9c50d91b22b",
+          "9bf33dd57157649110bc774a773756cf4d34e048902079b6d01ab0b3fbc5a3f4"
+        ],
+        [
+          "a3b6da5ca35ff5c7caaf3c07aa1e226ec8679a371c2645f0b693e0f8fb78d713",
+          "055c48bfb317dd6429fa951006c13cca818ae568c90f247a622743e5a4b151a1"
+        ],
+        [
+          "95d7effd3d6d864cca9859d73e3162c54b29e67561f5a133a2b7cad8dc324dac",
+          "d1a0aff2c389f71adc6dbc9d14d68ffeaded5a6acaa2910e81cdee821251cf5a"
+        ],
+        [
+          "165ed59e2ec7f552d714a70ade3732e8686361ef10c6de5c6ab984f24e41eb3e",
+          "155ae5ee77568f769de85562a494511d0fec022c49db3f724915585a3cd7a66d"
+        ],
+        [
+          "cbd4ec007f55c68e8fe8fd1c1baae8765e9cdb07e7e1be119afd0eb6a044eeba",
+          "7a0b3b710e9589d31faf5ea4bf7d1df135138cd17e0e0416e4c5819f1f558d47"
+        ],
+        [
+          "0425f97d482ce7ce5e746439ef315ae999aaa14ba01f008b6e7d6b032487c84a",
+          "40ef98bc4ab4a6e562de092862a9cefb494cf508e6280d050740eb1e68629637"
+        ],
+        [
+          "56333ad2b19ba2b697553655a8969a1d0e087a588e8da74d9bec3d39fcc2a33b",
+          "3ec4a8fbcf81f8e52627f48b8aee8e4ef4c538e96722c6b9656cb36c21589b02"
+        ],
+        [
+          "f4b7966ebdaaa3f38ca5d165372bed24fec2bb43490ea4a8269f9240582d5583",
+          "3dce6cba88a8c50ff68ef92f21be607c0edd58c3c30235522fbe32d5abcd2360"
+        ],
+        [
+          "e9ea63be817ba1acbe70fb2d0006f6542ef1b785d540f2641eb0f7fe0e1f9973",
+          "0802bce82782e0b16edc0d5a340a6db88dc2de3e32460df092e91adb42bcc5b2"
+        ],
+        [
+          "6e301038974fa97b8e564e47212ab005c23c0318723c6ebf04f3d961ef9f826d",
+          "5b331f7b4c2eb129215ed2bdc6f0299d4ba45c720c3145affff5f207b7e3b9ed"
+        ],
+        [
+          "715817ea722a2a89b9897739ff320df3b9b0230135c094469a380c9f2588921d",
+          "bcee918ba56023cca94bebb8f12c7d4d2679c904224290c61a438b2dcb6e0d56"
+        ],
+        [
+          "f09d69553496e45a9715fdbe084a9ba14a4e2e50d60a6e13c2411f70cf3e851b",
+          "b93383d455041aefd115a8dae5d9ffde9a25aa60bd2e9a6e5933ff889e3135bf"
+        ],
+        [
+          "8b4deecb5f43ac7f229b6eb2a1aafae82ceead4695c97e04c27aafd00b8a1103",
+          "5b4f2f8a854bd2be4aaa2d931872ff3af8b0d2387d10ce6e5ee41dbd7170c97d"
+        ],
+        [
+          "c4cffaa47b1076aac2d692e89776bc2174607a1fa5bc099326c4792f94a6141c",
+          "7029a45972c274be9e38f3cc1c17276641ee2c72523c51da620f0b6c6dae14b7"
+        ],
+        [
+          "a2e46ccae3a37c4ebc8ac44a3974206f2986a74de1a40bcf70de747d61fd8f72",
+          "3f9636d1127df6fe4cedfc43d002497b1e968e0fdf8269018e7e7f32051d1bc6"
+        ],
+        [
+          "91b3f8dbb3d5340dfba0b417f413c7cf37dd8f3dbf520d4f1a6257e3ccadb58f",
+          "016bfcf7add92d966990675bbfd33cd201f23d782d9eacbc43d8850737230aa0"
+        ],
+        [
+          "d334c605031c4c4353c253c10a16425a4d7ba456e6fd4afffdcfeb5c97a0cfc8",
+          "cadac695a0c5dd8a0a420c17602ea43b3a2b73414e77d1a0f6fbfef1cd593a84"
+        ],
+        [
+          "728140e0b16292a579f319bd5d6ee503d128a48aeb472c75c5a0a542eff2fb21",
+          "c1c8dda81cd9e1ac34bbc0f6c93dad2bbe5433f75b17775974760da72fae5972"
+        ],
+        [
+          "5f52060c8f0d2992eb340d7b785acd5819412f00ff4d6011d98029fc4ad5cd34",
+          "6f756513028fff6f624bf677981ea14b7e5cd6843a2b47e36cee2425e1ac3953"
+        ],
+        [
+          "71d70226b8156c9d688927b16b5638b4c4c6a2ebfa7453d85680e64a0e876ebe",
+          "ec087abcf2c94201304e7b1fab105d9ad684e83d0a34c4ecd066530a067c62ab"
+        ],
+        [
+          "94a0615b57d966b91ce3b15cb7a458b2c60194987ab151784a0231851e4b9d25",
+          "0130e1e08b5b24e371d4913b93fcae5a9b7c01c3a3fa623bd47429d4dc508323"
+        ],
+        [
+          "9fecd2f028892415bad738395ab58abe50af3c78b741a72bad94830220488f3c",
+          "d1a0aff2c389f71adc6dbc9d14d68ffeaded5a6acaa2910e81cdee821251cf5a"
+        ],
+        [
+          "b86ec4fbfcf99ac4ff2d17e34cbbca818aaf0cb325a25156cf1803179f31b3ca",
+          "155ae5ee77568f769de85562a494511d0fec022c49db3f724915585a3cd7a66d"
+        ],
+        [
+          "548c9e1cb685aeb452748127a729cece0fde12e5c69c77028757de120f21d8aa",
+          "7a0b3b710e9589d31faf5ea4bf7d1df135138cd17e0e0416e4c5819f1f558d47"
+        ],
+        [
+          "c876e671ef42b063fea4da3f0640af09d0c9af5c9cc1105366daf411217d3392",
+          "40ef98bc4ab4a6e562de092862a9cefb494cf508e6280d050740eb1e68629637"
+        ],
+        [
+          "5fabc2ffe450f2ab9a5ef18afb1aa0228e05fa9a2a1ced036a90bc82b1274b65",
+          "aa4a1b4c52e03c2e131840617b24529966343adc9c1ed3d24825dab8061aacf8"
+        ],
+        [
+          "6c37ca11b550e4f2e783b72e211f7b5d3c0b0357a112a8aa9dadb96115b1b114",
+          "4930c7e63010894cd590eeacd74665b29e2659e300d84d6b7343d7ba34e3d76e"
+        ],
+        [
+          "79d934b23109cfcd71c51e445ea50b05e8791834f689621a742cdba2ec24dfc1",
+          "a0058d95cd49a263f850a4da4282e98f9b085ec6522df5e18aa4968b8b414106"
+        ],
+        [
+          "3a824870c18350a1886adc8268090559926e9b3d710ed5c379a7c7419cfe5b26",
+          "016bfcf7add92d966990675bbfd33cd201f23d782d9eacbc43d8850737230aa0"
+        ],
+        [
+          "bc0eaf01365b8f0e108b9049b36067be9853e68f517877e00923cab0552ce150",
+          "cadac695a0c5dd8a0a420c17602ea43b3a2b73414e77d1a0f6fbfef1cd593a84"
+        ],
+        [
+          "2cad2e3aefcb298a9782cca8aa6a7a559eb23fa199698eb2a447912b0292d1f0",
+          "840fb8d472181bbbfc6692abfeac10376a032f7c68006b27eccaf1a12cd25aa1"
+        ],
+        [
+          "9f0545b1aa014f6d5a22cc1a69cdc236312ce08b62138ce4fd44edd2fe4f8fa0",
+          "6f756513028fff6f624bf677981ea14b7e5cd6843a2b47e36cee2425e1ac3953"
+        ],
+        [
+          "ea35a0483ac7032db7d010ef428ddd9dff60616df1361accf78714c69b0a27e0",
+          "ec087abcf2c94201304e7b1fab105d9ad684e83d0a34c4ecd066530a067c62ab"
+        ],
+        [
+          "cbf74ea0ed3ed0b639d0458de2ad1a9d9ab847bd58c4406894bb0000d0cd5b17",
+          "3510e79d18e1c962bc47f40a32e5601c0ac203d0f9505e01d60cd95e002c8a5d"
+        ]
+      ],
+      "reference_number": "健保審字第1150056995號",
+      "source_uid": "gov_健保審字第1150056995號",
+      "title": "公告異動含rivaroxaban 2.5mg成分藥品Xarelto之支付價格及修訂其給付規定。"
+    },
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品已收載項目異動明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第3節代謝及營養劑Metabolic & nutrient agents 3.3.28.Migalastat hydrochloride (如Galafold)」給付規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 3,
+        "file_name": "attachment-003.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 10451,
+        "official_sha256": "e6ae30c32ec293b711bc75d2fc0b5897ff8a7d2ee2cd2869e8915e773112093d"
+      },
+      "expected": {
+        "block_count": 48,
+        "clauses": [
+          {
+            "clause_code": "3.3.28",
+            "component_manifest_sha256": "26b3781cca1b50e0e228bc7c70edcbce655531dc11990c7e1a87bc84544f453e",
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "6c01419b25347aadb053d8d98882d08c38016aa222ae0ba963133d516af117d9",
+            "revised_block_count": 21,
+            "revised_text_sha256": "3ed66319a86930e2da01f66fcc0a8a61909996eeee6c33f776ed8eb2e6703509",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ],
+            "whitespace_element_blocks": 3
+          }
+        ],
+        "comparison_tables": [
+          {
+            "kind": "clause",
+            "original_header": "原給付規定",
+            "revised_header": "修訂後給付規定",
+            "table_index": 0
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "other_effects": [
+          "reimbursed_item_change"
+        ]
+      },
+      "fixture": {
+        "byte_size": 11284,
+        "derivation": "official content.xml: XML declaration, root start tag and exact office:body bytes; automatic styles and fonts dropped",
+        "file_name": "1150057033.content.xml",
+        "sha256": "2eee5c6f961d480216442455a7de9d3dd2d43b965f5782896752974e5a55ec3f"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20418-50b11-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_receipts": [
+        [
+          "c54543149409072a1dd858f99f5543139786be2d91f80ba6b7837fc7c8d73948",
+          "6c60d4ee4f50e5fbbea78dde27d108e2cdb090b4650d2077d4551c09101fd66a"
+        ],
+        [
+          "ca3b079ab48e37564245092fd56673fce261d5347d588e21c4f5bd439e120372",
+          "e0acc607c7dcbfd331134e255b824356187c90fb1a039056dc3855321fb2c29d"
+        ],
+        [
+          "03d9898931f4916b670e697c0d3b97ed82bbb07a9d168adc98d5347bb019c4be",
+          "e9f94f8d23bb2c690ff0b190ab876ae8d5a9a80b7446be0344e4c14e1b594792"
+        ],
+        [
+          "48bdf1c456101e20dff34da3c3fd322c89e875be3af3b36715fae1f4fd6701b7",
+          "c1b032e0563b7cd578df57b0cfc25812e6718824cb632d3e24568828b5687dcd"
+        ],
+        [
+          "17af44377e43c7a4d4f16bc94df3e8c339655f0cf8ac7ee402ef7d4d6fe549c1",
+          "9bf33dd57157649110bc774a773756cf4d34e048902079b6d01ab0b3fbc5a3f4"
+        ],
+        [
+          "e3dcd411f25516f39ce286b3b74a1e1aeccd03a43f242c75dc814824499ad0f8",
+          "287a9d14fb66a749d02a1454500feea59652a7bad8a4771e92118ba468cc0228"
+        ],
+        [
+          "089a95845931c2611ddb4a3f682f35fda2bccbb9f48d81031a064e43ff1ce775",
+          "2e11b3e55e0086b2da5e246f1bf725e53c787977fd1cafdf23013349c170ee50"
+        ],
+        [
+          "afe5b1a21342250d0ebf9440991c54372931934b91bb60ec2c711bbef853ecdd",
+          "c7c577f2278d1d532cf7f478f359fa65b0f06a4f0274311f27e0fcb766ebf232"
+        ],
+        [
+          "1672e32fe36c3748dfb9313887674c6a3974986cd0bdd1b60439f74989a7550f",
+          "fd407b9c7375670d95f0ece073f8d126015ea55297fb008c568bf225bad7eacb"
+        ],
+        [
+          "99780f0d79194b0d1978269881c4609221754be99e2d04a1f1ca3884dfff1adb",
+          "17f3420ab968dacf9dbe559fc1bf9c8dd97c136645560cd3e079f19dc904579f"
+        ],
+        [
+          "36853edcc24d1fe51b8d4f969dd9d0e77c31560dfff1f5dc1f2112ec31ab2d56",
+          "3f2953f8d404c7618d29cdcdbfd246c2fe25952fa929eb8edef8650a43c7e30d"
+        ],
+        [
+          "d222a77b2c891344f1af891ec8253e9e9c0b1d6ecbf935ed164e2c9020d64f3c",
+          "524b7deeab9298a3f0f9c223c6235f41183a12effd3d16c178073ff3dd77591f"
+        ],
+        [
+          "37325823019dac0a9664e7704050be6ad36a924938d6fa28e0ece30992914c1c",
+          "d7a5a5792cbc4d18caf37ff7a63c850780d8f23ae9671a124b69d092c1e07284"
+        ],
+        [
+          "6953ae6af02ea96adbed9a5dc84131eedbc0410c5687f936201c3805c7847ff7",
+          "4f8cef5b25d8f58695b0b5ef4cf48bef7054b048a899db07dbd83265ca2d2555"
+        ],
+        [
+          "2d158e20e44ed678e3f64cab7dec80f957bb4cd7d027bb4e41b19cd60c7d81bf",
+          "1fcdc312c61d4cd6dfc8194f54b990aa4fea3325280b32375fa90cd2e080ef06"
+        ],
+        [
+          "1a081f33eecf570d9ca91262a9359959e67abc1ed44384fafcf3d4665e54704e",
+          "8297d9474ef04d97387ec90451ee36850eb2cbab7640fa1e5a0fdb678e59d91c"
+        ],
+        [
+          "6f53572268d64f92e67961cd4717f26c62998428b24568b96b19c2cc7472b3da",
+          "44f62556212b22a524640c8f5fc4f23b4a3732d91c64199fb844331879deb966"
+        ],
+        [
+          "2bfd4a012aea6c0f8d981a2b54cca22b466f52a27a62a3769a1ff61957e2fc0d",
+          "e83703f24bc3b9725eeeaa46d2c39ab04a7b737316f2f7a73ef99501083f5d32"
+        ],
+        [
+          "e1848c500ad8bd9865950ba8c745440e938954c0bcd5f1964754fc61e020f36e",
+          "9ce7b2684bb17290382554ced422b4356e45cee8b166a04f7ba0590cb867a468"
+        ],
+        [
+          "8a8088e6ace768e06eb8415613eb8380c0bfb7c49648f0a94ee4c38c5739e85c",
+          "d3f59a955355a135a522a885e4513ee236841ccfdb42471d3166958004261c71"
+        ],
+        [
+          "1b993bbac6c981e5572469ca0eb1fb64e11057828d3e43660ef7440de29fe13e",
+          "1d0cd13e667baa5195ae900b2edfeec7e2ffa6db6a68bd3b5191139791f4f5a4"
+        ],
+        [
+          "08d7d0e558d479e6983e637cd5f1e88a04fc50401169898b755323201e8a3e3a",
+          "b861bb568c651f434e27cb29caa74882a9201856fa9e780bcf4c5edad8895ade"
+        ],
+        [
+          "2620557b8cb49cc8c5c97426df22444bc5e609e9ae2a1ce2e1a6520aa66223a1",
+          "c1f94ab5689106d442574ac3871b67171b07feda4d476602ee71fbfc9c59e7d4"
+        ],
+        [
+          "d694c531aa731eb9f91ea2a6abef01e6a7e3de5a49e7cf0cda42636eff013a73",
+          "f36bcf5536adad5c5593c4b4ce46b32366786757b1a955cf046dfc0037f0a9e0"
+        ],
+        [
+          "bf5d55b6b55a28b3d87199c84a578bcbd034a8c27c21a79b8db29c81ee69d42b",
+          "1d0cd13e667baa5195ae900b2edfeec7e2ffa6db6a68bd3b5191139791f4f5a4"
+        ],
+        [
+          "a55f11b9d2094c6a49a540f3200f51e6cdfff2fd25b79015d6ffc47803ac007f",
+          "e0f614ca8d154aba0a9f14f76c2636efa6e79d8d5622c6ef4a09a8c48102865a"
+        ],
+        [
+          "374e0e307eb630d7a4d9364cf4068d420b3ef9b92ab3cebd066a841feca0a79c",
+          "5c56e9fe2574b74635b79dbd501a5bb6848dce501d1ee988e9c71fa12b5b2227"
+        ],
+        [
+          "feab40e1bc9c82c2a6c304e22ce6de46da3fc16fa11ce7e92fb95ff6a0ea844e",
+          "a840fd577c3e4136fd319e69aec3cfe2432473bc4cc4c2c7f8e5063311ffbfc7"
+        ],
+        [
+          "c41f0b819a359becbefd709d516a23a0278c93cf2dc9e95a6e32a77a7d7be47c",
+          "909999832e41bd197efe68c577da5d2ab2632522e74ab38bfcb1f17d96c3e3e2"
+        ],
+        [
+          "29d84065f7ef3f68a8c87c2d97eb8235105b9a635ccec8ae8c85391af63d51ec",
+          "813fdf00f389f1937b26d49b57d988611b8c5167ec6d8e3661c1ac0abb8e4035"
+        ],
+        [
+          "4e31240b50d9b0dfa717f0a60b0ae2aca62f170f26957b50e6e30e796b426dfb",
+          "17f3420ab968dacf9dbe559fc1bf9c8dd97c136645560cd3e079f19dc904579f"
+        ],
+        [
+          "ba6aaac022b76e3f4a9902b834ce18536276b6c9cbbb2954a58085416dbb2282",
+          "3f2953f8d404c7618d29cdcdbfd246c2fe25952fa929eb8edef8650a43c7e30d"
+        ],
+        [
+          "b7e19db91ddbb22d9c55fd071b7192866c085d3e26384be5308a7e0e4c63e43c",
+          "524b7deeab9298a3f0f9c223c6235f41183a12effd3d16c178073ff3dd77591f"
+        ],
+        [
+          "baeb0eee1b305a0f0330fcd6a1a37d058481203533024c318172807987916d55",
+          "d7a5a5792cbc4d18caf37ff7a63c850780d8f23ae9671a124b69d092c1e07284"
+        ],
+        [
+          "3456aaf1d99b2a0014c04b7661e18e5564b864454d804e26cc7c325c6155bbfd",
+          "4f8cef5b25d8f58695b0b5ef4cf48bef7054b048a899db07dbd83265ca2d2555"
+        ],
+        [
+          "8162b7cf76bd211dab8d241b1e960aedbfd84fb671ef02a4237eb9b426b8234e",
+          "1fcdc312c61d4cd6dfc8194f54b990aa4fea3325280b32375fa90cd2e080ef06"
+        ],
+        [
+          "cfcb0f46df1a1faeddb4ffe5472c6ea14587dbd76c12d135ce56eba38477eadc",
+          "8297d9474ef04d97387ec90451ee36850eb2cbab7640fa1e5a0fdb678e59d91c"
+        ],
+        [
+          "4d58d83b6f9bb0b912dc75de313e946f6bdf7300ac7c3a23dbb96cbea15ff7d1",
+          "44f62556212b22a524640c8f5fc4f23b4a3732d91c64199fb844331879deb966"
+        ],
+        [
+          "a90b7374de69cad656a67b21ef15faa96d3af46efee4b8652464ff5e2b66e239",
+          "e83703f24bc3b9725eeeaa46d2c39ab04a7b737316f2f7a73ef99501083f5d32"
+        ],
+        [
+          "7a9d2fd8ea49bf8eb8427aa70ac985e8e24eea45c2302115edd83aeabec0bb75",
+          "9ce7b2684bb17290382554ced422b4356e45cee8b166a04f7ba0590cb867a468"
+        ],
+        [
+          "9b1e957b51a2e75d81a621ef54ca3e1ad4867c8c8a066ddfa679bca56701b507",
+          "d3f59a955355a135a522a885e4513ee236841ccfdb42471d3166958004261c71"
+        ],
+        [
+          "edf9312d4eaf0b9d28b12d4cf78b7f4455933283f3a4e6c8158e62c018bf35a1",
+          "1d0cd13e667baa5195ae900b2edfeec7e2ffa6db6a68bd3b5191139791f4f5a4"
+        ],
+        [
+          "a03a7a30d4e3e4dcce6f17ed3835dd471a5850a97c19e2bb405f1024b6b46309",
+          "b861bb568c651f434e27cb29caa74882a9201856fa9e780bcf4c5edad8895ade"
+        ],
+        [
+          "37b29f69ad1594c0214d79b168db04571b3b182163bae4a5781c99c387c0fffe",
+          "c1f94ab5689106d442574ac3871b67171b07feda4d476602ee71fbfc9c59e7d4"
+        ],
+        [
+          "76d0d7e5ef81d119e14323baf9830324b8027ff0a00a93112762ae19424b0cfd",
+          "f36bcf5536adad5c5593c4b4ce46b32366786757b1a955cf046dfc0037f0a9e0"
+        ],
+        [
+          "a4c27baeaa70d0681fe02ea819a90ec0739ff8317252aefa8e2a12992389fcf7",
+          "1d0cd13e667baa5195ae900b2edfeec7e2ffa6db6a68bd3b5191139791f4f5a4"
+        ],
+        [
+          "0407063918732609cb95edac5b386a7434abe85cb09005516530b5140e1dafe5",
+          "e0f614ca8d154aba0a9f14f76c2636efa6e79d8d5622c6ef4a09a8c48102865a"
+        ],
+        [
+          "902e03d2dfa151be577951829045d8b2952e23702c86fa872147dadefe2fd957",
+          "5e957413f24d4293ef385d7d4244d34537ac7d6f83e766c193a8c07cbf8c28cf"
+        ]
+      ],
+      "reference_number": "健保審字第1150057033號",
+      "source_uid": "gov_健保審字第1150057033號",
+      "title": "公告異動含migalastat hydrochloride成分藥品Galafold支付價格及修訂其給付規定。"
+    },
+    {
+      "announcement_items": [
+        "修訂「全民健康保險藥物給付項目及支付標準—第六編第八十三條之藥品給付規定第8節免疫製劑Immunologic agents 8.1.3.高單位免疫球蛋白」部分規定，給付規定對照表如附件。"
+      ],
+      "attachment": {
+        "declared_sequence": 1,
+        "file_name": "attachment-001.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 8997,
+        "official_sha256": "5793f99c735db4e139b823fd6de8dfa2eb298df9b72f407227b43b8d01e32ae6"
+      },
+      "expected": {
+        "block_count": 37,
+        "clauses": [
+          {
+            "clause_code": "8.1.3",
+            "component_manifest_sha256": "1c363d9fdd3e5973022e2d06f4bb02e5edfc5e8939b9ac0f6bf50dbe0b5c13e0",
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "20d8e3a87afea78b1757c3fb9cc4fc5051619ee5f4cbed2cd8f7a978eccf46f7",
+            "revised_block_count": 15,
+            "revised_text_sha256": "55a8f26939a582e75abd6a343efeccb1a0d0b3db189cba1f736403f91d11625d",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ],
+            "whitespace_element_blocks": 3
+          }
+        ],
+        "comparison_tables": [
+          {
+            "kind": "clause",
+            "original_header": "原給付規定",
+            "revised_header": "修訂後給付規定",
+            "table_index": 0
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "other_effects": []
+      },
+      "fixture": {
+        "byte_size": 9411,
+        "derivation": "official content.xml: XML declaration, root start tag and exact office:body bytes; automatic styles and fonts dropped",
+        "file_name": "1150672509.content.xml",
+        "sha256": "6e81f64732e63a05d2bce44258cdd0303d95ba48bee0a90e42a5b5590b3a4087"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20420-f8997-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_receipts": [
+        [
+          "2c80f3dc053ca90fca9d93ab2f8e9116c270a30da0ccd5baa01f2786de3ab056",
+          "6c60d4ee4f50e5fbbea78dde27d108e2cdb090b4650d2077d4551c09101fd66a"
+        ],
+        [
+          "9d5ca34a76f96fa7d822959a06d6a2765f8bde6d4cb1c294603f26ba39ccd367",
+          "1117f6f78f7eec184a16298d8dfcf6de567771190900451f844420b6cf6ef204"
+        ],
+        [
+          "e93fa43af4daa93ebb4dcf1852726a496f7105dcc717a119dc3f6c5eb3591188",
+          "cabf8597ea0d251c89800b2a00432331d903bfbc5b03e7738e4b1b0b87900dd8"
+        ],
+        [
+          "c53c2d64dcc5f44aa2acb4fc2b127aa5ca66853fbec38a833563dfe54effd47c",
+          "0b6a59c24a3d85d2930746c58a74012a2fb66eca1a8c464967347d806e69b8a7"
+        ],
+        [
+          "9c62d3617f3c46331f9b6b6bea4fa37fc002896bf21430a2eb33ea2843a25ba3",
+          "c1b032e0563b7cd578df57b0cfc25812e6718824cb632d3e24568828b5687dcd"
+        ],
+        [
+          "b87298ed5c60388260aa771d27328584877ff2fbe188bdc311d9077926cb4702",
+          "9bf33dd57157649110bc774a773756cf4d34e048902079b6d01ab0b3fbc5a3f4"
+        ],
+        [
+          "7eaa3f0985f7b7c972364ddde6b2d7a9b64dafc2d7a0fd249fa8c37d89808fde",
+          "ca3959d9f2a594cee46b2f0c0fc6127a339bf6a9ade6c1126e7c4d8d503c34e1"
+        ],
+        [
+          "7b5002fab01c69c2dec8c486294c28379857a5f7be31ed41ce7cef47dec024d6",
+          "f6d878a44ccfe4505a850e3dd57842152f49379d36f57c6dad7cba751510f7da"
+        ],
+        [
+          "84fb8a22d127cff81307bd8cf9c1e06e09a52195107fefe28c1f4820c23387e5",
+          "1b11e9dff719470e1b8aad8bded31da3446477d4346763600b249a5a6cd3521e"
+        ],
+        [
+          "94449ca0dfda5c35d2ae2723ee83728b967b66e884e3a4aea8ebf26989d038d6",
+          "9876ad7ae53a64737545d99e2ed2be1c2508a437d4f877bc06b6c87ee94fa6c6"
+        ],
+        [
+          "a8db88506f61ebefdb373236198283673c86ed677bd9cf4398c97096c0193145",
+          "33c9e0911f42755815b5c2ec74265f7bacdb23953c0612f76c4d9ae71c99297e"
+        ],
+        [
+          "cb0aa0100160b1a4d15dc469bd09fa4f9a5f6b44a84970bf1c997a1178163860",
+          "33822247fc6eefa790f04bd447d3679a68fd511da8229ae7222149be7ebbeeaf"
+        ],
+        [
+          "28ec4299d42dfdec74fff266973c9b2f682e2c7ab10bc0568b92cb34a38698d2",
+          "5fbd4704334a909fed404012d0684387195188abff2be6ec580863a96b9bdd27"
+        ],
+        [
+          "8c4a550059ac8159b181cfe75eb243ed760e842b814de091f2bd2d303475e491",
+          "bf96f92194cab6128dbbb4e359c168e27e7052bbbcda35a8d600f19e1a1be8de"
+        ],
+        [
+          "03f09e9f726f276339a9b24febb2f1f31b41fa5bcaf10666a69a6cdbb38644e0",
+          "75a5e8261c1783e590140a3fcf8b582bd1a44c5ec2eacc308a29eab6e5adfe31"
+        ],
+        [
+          "809cede70c685031e55e7e514f02c11c5040adfd2dace8d689a07cf2029ca243",
+          "1c22d936dec6a8de264b5137a6689a62eabf6d216dfa50cb70dfa0379b3fdb67"
+        ],
+        [
+          "48c46ecd7139a761c738def3a222e913c717538ccbfd3a48bd9dbdd528f6eb76",
+          "29a5cfea50331727c9a2f030557378ce48e31ebdaf92d9e60eec28f0c79327f5"
+        ],
+        [
+          "aa0b9fed9fac032df2f571cb43ee87de3cd7ad9b033e291ce91f16f153638a82",
+          "7bc9b22d05f9fef6562f09b74befe67c9af3c69adbbedae1c3c2aff6749143ee"
+        ],
+        [
+          "a7a397c682dcc475a40ad7d2c9fadd387eabd439ced43a7eff5f2ee3ef4902da",
+          "b364749fa9c10e4ccff88bcb8bbfb2645c5a287bacb6bbe9fd784454113b9b98"
+        ],
+        [
+          "ac0573e7568a8b78e376006ccf5bf1db89a98c36baedf5345efd919ac662f8a3",
+          "8bedfe4f3090add8a3b6b1a4936df5721b56fe39bb2d77a6070ba5061f9f59bd"
+        ],
+        [
+          "ed0db1820acbd60e7f6a057d53ed44e4dab253df7b6df6eabc26a1177cc7eb29",
+          "49d43b86fdb20d84ef016f6849d79df52a8c2386eef61236a1f7b7430b07953c"
+        ],
+        [
+          "35e6941fdab63aee0694dc7e03037d86b02a516f2ab8437adef2126b3574097d",
+          "8fbff2b24358d20b80a958bc2ada8d66bb8c48c559528766e7c2a6c0290783e8"
+        ],
+        [
+          "9fb617d7afba8130d4bfbd994fcc4fe478540b78ded10b7372fd05b2d4ae04c7",
+          "f6d878a44ccfe4505a850e3dd57842152f49379d36f57c6dad7cba751510f7da"
+        ],
+        [
+          "cc6ae30a35823275823a4a10b140e6f824301189c8a62d6d1c1b0b06dd6c541b",
+          "1b11e9dff719470e1b8aad8bded31da3446477d4346763600b249a5a6cd3521e"
+        ],
+        [
+          "27018849f60defa095801ff0bb5a50d5dd26f72ad0cc66a5a5cdb8dadced08ea",
+          "9876ad7ae53a64737545d99e2ed2be1c2508a437d4f877bc06b6c87ee94fa6c6"
+        ],
+        [
+          "c3432c9b0b898951e2975d1f995f4d52ae207a7202532d1008c48cea7c02cd33",
+          "7f2e0d9c90e4171bd4df062ab67fa906580586701153c620b67bf8727f11585a"
+        ],
+        [
+          "664dbf630418b9df8534540886e6771a3b421962f2c9bd158cd7803471f2b314",
+          "9034cc4500bc38981726a75971e8ab77b89d3eb4a81e01f3f146e891f6ecfa2f"
+        ],
+        [
+          "c7014c624cd97790858534d61eb9a219ed4fa018ec3cc6fddd03a0b7899a6963",
+          "0ba395c8738d6f812d86b342fead12b79a62e72649ed1c61d32c5fe94ab0d53a"
+        ],
+        [
+          "fcc54fc0695efbf9ce6a8cbb4ec52a24344db56af48a31e424513fa2e2f1b812",
+          "15877582663994e986124e554727a40bad493f40d22dbd2f70e9627bd345b44e"
+        ],
+        [
+          "da02049975c29b47a8272c08b8444382244e001dfe2623566a1494fbf0a39c9e",
+          "75a5e8261c1783e590140a3fcf8b582bd1a44c5ec2eacc308a29eab6e5adfe31"
+        ],
+        [
+          "3d4664544946d60bc51d58c694e2cb8e3503af54fb6593c9c2b62b3d15a137bf",
+          "1c22d936dec6a8de264b5137a6689a62eabf6d216dfa50cb70dfa0379b3fdb67"
+        ],
+        [
+          "333f324914a6238d47521613e19af44b37a979fccb83dddc0c65a2549b3f02be",
+          "29a5cfea50331727c9a2f030557378ce48e31ebdaf92d9e60eec28f0c79327f5"
+        ],
+        [
+          "1558a09869e0a3709c449611872fc522a0cf473763153b443574bb7d783b60c6",
+          "7bc9b22d05f9fef6562f09b74befe67c9af3c69adbbedae1c3c2aff6749143ee"
+        ],
+        [
+          "40095b79a0c136958b46f4bd81ab0182902e5de70681bac82154470a384b9cb6",
+          "b0816981b439a169a1bd52c8161a69784ee33f6f0975782069726c75ba5c9bd7"
+        ],
+        [
+          "c4f116a25bf3a0d5ef0ec3458f973897b989e28ed5877375bc5ed1e56dd651cd",
+          "8bedfe4f3090add8a3b6b1a4936df5721b56fe39bb2d77a6070ba5061f9f59bd"
+        ],
+        [
+          "f31afcf9e48f7eceb0e240042b466e8b1d4baef56751540a3966596677a1dbdb",
+          "49d43b86fdb20d84ef016f6849d79df52a8c2386eef61236a1f7b7430b07953c"
+        ],
+        [
+          "3d24de9fbd354f1e9208aac5152465c6287d0c969f29b662d1c62f78dba653d0",
+          "878d343202b5d033c54a0fb543b7220f60a33e44a4721486f49b742658df47bf"
+        ]
+      ],
+      "reference_number": "健保審字第1150672509號",
+      "source_uid": "gov_健保審字第1150672509號",
+      "title": "公告修訂8.1.3.高單位免疫球蛋白之藥品給付規定。"
+    },
+    {
+      "announcement_items": [
+        "修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第4節血液治療藥物 Hematological drugs 4.2.血液代用製劑及血液成分製劑及附表十八之五重型血友病患醫療評估追蹤紀錄表」部分規定，給付規定修訂對照表如附件。"
+      ],
+      "attachment": {
+        "declared_sequence": 0,
+        "file_name": "attachment-000.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 69869,
+        "official_sha256": "1c5829bf5a447080a2222e4bc0fb486eee55137a100e053c8e4a96ef15ff4fb4"
+      },
+      "expected": {
+        "block_count": 39,
+        "clauses": [
+          {
+            "clause_code": "4.2",
+            "component_manifest_sha256": "8453daefb358cc56bfdf9f09e45de3ef530d6542b27f0e6209e1e51c55754f90",
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": false,
+            "original_text_sha256": "aaae149cb42e4f8b0b4651199fb4f9f32e567a9e59f3c037600f11f3da59f6ca",
+            "revised_block_count": 10,
+            "revised_text_sha256": "75d10936c7475822d8c0c559015a184e8145ef09a800663505f5f44b964427c4",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ],
+            "whitespace_element_blocks": 0
+          }
+        ],
+        "comparison_tables": [
+          {
+            "kind": "clause",
+            "original_header": "原給付規定",
+            "revised_header": "修訂後給付規定",
+            "table_index": 0
+          },
+          {
+            "kind": "appendix",
+            "original_header": "原附表規定",
+            "revised_header": "修訂後附表規定",
+            "table_index": 1
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "other_effects": [
+          "appendix:附表十八之五"
+        ]
+      },
+      "fixture": {
+        "byte_size": 8749,
+        "derivation": "official content.xml: XML declaration, root start tag and exact office:body bytes; automatic styles and fonts dropped",
+        "file_name": "1150672381.content.xml",
+        "sha256": "42ac675b342e69a65d84feba37d3405e252a543b9239708810dc7eb6856b7f62"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20417-e7781-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_receipts": [
+        [
+          "1c54ac0724faa5fe974b2860168533438d2037c8a6561609b26e32d98092b609",
+          "6c60d4ee4f50e5fbbea78dde27d108e2cdb090b4650d2077d4551c09101fd66a"
+        ],
+        [
+          "ce9ca9aa89b99b28cbc3387efd6f7efe743b68f7d75d35845be9414efd0ca001",
+          "30ab85fd51238f7ce320e93988f63ffafa08da777410ba06123dbd0c21a2c1c6"
+        ],
+        [
+          "f720462537ab336776409f0a50c8caa274c37da72ef23ceace0a67e1766e945e",
+          "0b6a59c24a3d85d2930746c58a74012a2fb66eca1a8c464967347d806e69b8a7"
+        ],
+        [
+          "1d6e398430f5c10752217f96290563adaf822bcee8eef62c9cbf777e1ba27375",
+          "c1b032e0563b7cd578df57b0cfc25812e6718824cb632d3e24568828b5687dcd"
+        ],
+        [
+          "002e41800b2e668e79c7b7f20d3352aa8ece519049db8ffd3f8a53af242f8a67",
+          "9bf33dd57157649110bc774a773756cf4d34e048902079b6d01ab0b3fbc5a3f4"
+        ],
+        [
+          "18a0f9d81f15bb1a3c41357f8cfacf2a65c0626a0006d2fb615bb9c4d40109dc",
+          "aaae149cb42e4f8b0b4651199fb4f9f32e567a9e59f3c037600f11f3da59f6ca"
+        ],
+        [
+          "a8e1c14af49c5d9fa7b4c868838e14731355ba52c69655d065bcef9a13cdad61",
+          "cf7603e7af962c5ec97ee13d0e0c871706fd40af66306daaaf6565debc26aac2"
+        ],
+        [
+          "3d1c598b64420656bf9eec16ded8d46478e5386cd38b4b7a9a959907bf01c5e3",
+          "58eeddf668b4104f3b42497ea6d9cebf1681c1c495c01e173a4c4b00a22ae679"
+        ],
+        [
+          "194eae47c1fff0e34540efbc986d1d832ce4ba3327e2f8ab2a3fcb0bd6f9219a",
+          "cd8cd178536bf472320bf24a7c098c6052994f6fdcf14748910401b3e91106ba"
+        ],
+        [
+          "07c119968e92abb9a8a4c41641de2c950130a3985db30d0c5b669dcd335afbbd",
+          "7170f46084731ab8f1ee5de63b6ca8d7532909d79c5f1573ab67afca95ad9e70"
+        ],
+        [
+          "bf9760091e5101278769f5985c6a81def408fd1d25e579a83c8c628c944406bc",
+          "0ce7c3615190cc88a0b42db71a1fd389e1bbd78586a1ba7a4f43526c234b9362"
+        ],
+        [
+          "cc2d90288f6f4dd8a5bce73c3900fee2513a096f3c127b4ccdf6d7e622bdc58b",
+          "c4684fb104f02c6ea39402f24bc8a9779de980bfab4b2901232e2c98cbde13df"
+        ],
+        [
+          "ea1975febe523a30fb191f54d944b57a15d4e6024dc6b4b6708ec6bfdc63d504",
+          "33b46915d222b20ef84b6a19185412162cc761c1d3b8d36fd27de5dcd23db271"
+        ],
+        [
+          "af929c8761bb560d32a86a283b501ef0b9a632f87eaa6f0698b8c7aa7d9d9d41",
+          "2893090cd00dbfa2a9884179bfed8cce7e42dd4683d8f4737d70a087be9763ac"
+        ],
+        [
+          "ffd33077c5ef1a2a1972f911de091b734a8ecad996607eef8726cef4ebf52619",
+          "23d5e8f62f5f90343c8e3a9afa58f22d9945c150ab0cb4927ceee91d4130bde8"
+        ],
+        [
+          "0c189fcf0ecfbf886f2c2dad434c6669fe3da85ba7c70917ab9c82cdaec1513b",
+          "aaae149cb42e4f8b0b4651199fb4f9f32e567a9e59f3c037600f11f3da59f6ca"
+        ],
+        [
+          "e14cdac864f48730a390c8780951245432d2e6c3ad7ca56a3ff0e1c0c42ada31",
+          "3510e79d18e1c962bc47f40a32e5601c0ac203d0f9505e01d60cd95e002c8a5d"
+        ],
+        [
+          "301e4c71b5d4a10ee4b80cfe4afead1591fed7d50c02a0f1fc257616c5a622d6",
+          "21ad63d6757506e91ffb92ee0f35ad24d03f51da5c3776fa2b07733b632a0bc7"
+        ],
+        [
+          "57dfa23039759c7b8ea514c3750cf64461cc81cbc7d163cea7c2c470846edda9",
+          "a46ca7d3c1b46bbfefc48166920e80fbe726f373251b273c957ffaf6743e5032"
+        ],
+        [
+          "68586b6d0a3335fe031d6f2dbfe2a02d77a0981e322cfdc935d062a6566cac20",
+          "33e75ba87523a1a2386e8a35b201caafe0133b4b0ca957c6a425c1fc273ad526"
+        ],
+        [
+          "050f818309f1b90b5a9f05092092dfaf329e120b7a38a76cde96771046a9ebd2",
+          "b92ffd01763711aabc167fe08d189a8e2d114a3c1c504481321b55e0719be45b"
+        ],
+        [
+          "18ac0b43daabb8f441ed2ab2baec32cb4959bbae8165737580c6ba9b0a1ad4a9",
+          "7fc382226e820d8febd0c06817ffb2d46164eefd894541c8a3453683704fa593"
+        ],
+        [
+          "6ecf8f4e18b378d72508d4fadf9f9015de86eb896a0e90e6da074446ea19e46f",
+          "5d53ce4d7b37f76d081c51b6b7be66ee154d8d50cec8c0494919d10f3ee23010"
+        ],
+        [
+          "6ae743743d82d8b369cabd36fbffeb53dca4cd7682a3c07e9f926505d03c4d6a",
+          "b06bc90ef6c53018b19e5e019d472d7d5d023a8dccd857bf7d31188ab6098d5d"
+        ],
+        [
+          "293eea66e556a18d9b022d8968a7bd184e2510e856b0414a07515519861f0436",
+          "007daad79047653aec4dc51c0c8d5589cbdb6d9b387a6c9d7eb68d44ee250618"
+        ],
+        [
+          "7b29bcac497fb398f5f130d8807ae85a657639a2e957f01f5c52a9c43e45b9ae",
+          "de245db7223a25d75bf0deaa412369fdc686fe30fe8ea9e62db97eb4bbdad55a"
+        ],
+        [
+          "07d7eaa2af1d3017498009fd5751ac9101a5ed9147dd32eebc154bedf83ef8dc",
+          "ec794140a1e5ce68af19b806d2b6ac456aa65f2108185a7ba9cd87211775830b"
+        ],
+        [
+          "63d1736220b9fef0f2a67858b2f0d00d7c69fc483e14944767c4050b172165d4",
+          "f717f821567f0baa25690908c483732c224ca97f620056f505cf5158dc486cb1"
+        ],
+        [
+          "9b9a7b4e83863f8c849102ec4048aba5d22923435b51294ae48aac3b8034a787",
+          "8a4a93ab40d2c13b20ba21ad8cb75b97593ae4b13291e9051b59a5e4b5ca2930"
+        ],
+        [
+          "0a2b67b62447506671ffc9fdac13931eb60ccfe792e1bcdd2e6501a42a02e824",
+          "b92ffd01763711aabc167fe08d189a8e2d114a3c1c504481321b55e0719be45b"
+        ],
+        [
+          "5f9cbf658965599feb989f51a21f2616cfcaaf0264317d3662027105ff70370a",
+          "7fc382226e820d8febd0c06817ffb2d46164eefd894541c8a3453683704fa593"
+        ],
+        [
+          "6c8fbb765f275d544230a605603a9eaab8f55bae1696fa42436a836a0bd4e5ce",
+          "5d53ce4d7b37f76d081c51b6b7be66ee154d8d50cec8c0494919d10f3ee23010"
+        ],
+        [
+          "91c7d4247cb9285e41c73f0ddd7147c596dda8f89c6fac9ffef600b7bf378e2b",
+          "b06bc90ef6c53018b19e5e019d472d7d5d023a8dccd857bf7d31188ab6098d5d"
+        ],
+        [
+          "d26795df4f0778cbb1d43420ae9510c63f00eb84488894ac1cd244d3e80fb3af",
+          "007daad79047653aec4dc51c0c8d5589cbdb6d9b387a6c9d7eb68d44ee250618"
+        ],
+        [
+          "c60be1262ab82b502d44bc48e0eb7a56b351e4966887a6660dc8d3e47606e6e0",
+          "de245db7223a25d75bf0deaa412369fdc686fe30fe8ea9e62db97eb4bbdad55a"
+        ],
+        [
+          "5d248814f353c235053801fe8cc0d2be0cfbc8f95481afc18f84d07ef6a0ef63",
+          "f183b1264709c7bd3d784598142043fef2c96747ee56dfee056d38cdc225ade0"
+        ],
+        [
+          "820fb9d30f422de7d00e2e2082afb08c733a5b7229a07bbd7795414c32e3a132",
+          "f717f821567f0baa25690908c483732c224ca97f620056f505cf5158dc486cb1"
+        ],
+        [
+          "23f8c3250566d8c68543c55b7ec45bae5f35a6e13cb38f066a5f27088d2cdc78",
+          "8a4a93ab40d2c13b20ba21ad8cb75b97593ae4b13291e9051b59a5e4b5ca2930"
+        ],
+        [
+          "72dd1062a0ddc33d4306fea1875eea1d426307c5f23dc29ee3f34f0dfc7d2c2f",
+          "4da6a22e21f6a56ddbaf51f18d0596aae52a1c87c0c80719b9067c84344848f5"
+        ]
+      ],
+      "reference_number": "健保審字第1150672381號",
+      "source_uid": "gov_健保審字第1150672381號",
+      "title": "公告修訂4.2.血液代用製劑及血液成分製劑及附表十八之五重型血友病患醫療評估追蹤紀錄表之給付規定。"
+    }
+  ],
+  "schema": "nhi-rule-history/announced-notice-fixtures/v1",
+  "source_attribution": "National Health Insurance Administration, Ministry of Health and Welfare, Taiwan; official drug reimbursement-rule amendment notices"
+}

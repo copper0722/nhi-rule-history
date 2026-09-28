@@ -563,3 +563,129 @@ operator evidence store; only explicitly reviewed public receipts or release
 artifacts may be published. Official source content remains attributed to the
 National Health Insurance Administration, and large binaries belong in
 checksum-addressed release assets rather than repeated Git history.
+
+## 14. Deterministic announced-notice overlay
+
+### Why this lane exists
+
+Until this lane, a notice that reached `corpus_registered` could become
+structured data only through the model proposal stage (sections 4-7) or a
+clause-specific loader. The only loaded amendment, 2.6.1, came from the
+hash-locked `announced_dyslipidemia` loader. With the proposal stage not
+running since 2026-07-28, every later notice stopped at `corpus_registered`,
+including the amendments effective 2026-09-01 and 2026-10-01.
+
+This lane needs no model. It reads the official comparison table
+(`修訂對照表`) that every drug-rule amendment notice attaches, and serves its
+revised column as an announced overlay. It sits beside the stage lane:
+
+```text
+corpus source bundle (section 3)
+  -> announced_notice: parse the comparison-table ODT (no model)
+  -> announced_release: compose one sealed release run (active run + notices)
+  -> load (sealed, not served) -> activate (served) -> rollback (append-only)
+```
+
+It is not canonical legal history. The layer contract above still holds: a
+comparison table is not a rule-identity decision and its columns do not prove
+predecessor adjacency. Every projected clause is a `patch_only` clause patch,
+labelled as the revised column of the table and never as a complete clause.
+
+### Parsing contract (`nhi_rule_history.announced_notice`)
+
+- Input is a registered corpus bundle. Every manifest file is re-hashed. Blocks
+  come from the project ODT parser and must equal the `raw.md` source-block
+  receipts written at registration. Queue mode also requires the manifest bytes
+  to match the queue receipt.
+- A comparison table has exactly two columns: a revised header
+  (`修訂後給付規定`, `建議修訂後給付規定`, `修訂後附表規定`) and the
+  matching original header (`原給付規定`, `原附表規定`). Any other header,
+  merged cell, repeated cell, note or annotation in a comparison cell, or tracked
+  change fails closed. Other tables, such as application forms, are ignored.
+- The effective date is the stand-alone statement `（自115年10月1日生效）` in
+  the same attachment, converted from the ROC calendar. Missing, unparseable, or
+  multiple differing dates fail closed. Feed, publication and capture times are
+  never used.
+- A clause starts at a paragraph whose dotted code ends in its own full stop
+  (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
+  same codes, or the original column must read `無` (a new clause). A row
+  without a code continues the previous clause.
+- An appendix table (`附表…`) becomes a pending effect because no dotted
+  clause code exists for it. Listing and price changes named by the notice are
+  also recorded as pending effects.
+- Grammar is matched on NFKC text, because official files mix full-width forms
+  and CJK compatibility ideographs (U+F98E for 年). Stored text is never
+  normalized. The rule
+  `odt-paragraph-text-with-whitespace-elements/1.0.0` renders `text:s`,
+  `text:tab` and `text:line-break`, which the block contract drops. Each
+  manifest entry keeps both hashes.
+- Omission markers (`略`, `(略)`, `(以下略)`, `(餘略)`) set
+  `omitted_text_present`. The same regex rejects confusable words such as
+  `策略`.
+- ODF list numbering draws labels such as `1.` or `(5)` that are not
+  character data. A revised column with such a label is not projected. The
+  clause becomes a pending effect with reason `generated_list_label`.
+- Verification renders the attachment with LibreOffice as an independent
+  engine. The revised text must appear verbatim between cell or line
+  boundaries. A mismatch blocks the clause. `load` requires this rendering
+  unless the operator waives it explicitly.
+
+### Release composition (`nhi_rule_history.announced_release`)
+
+`v_active_run` serves one run, so a new notice is served only through a new run
+that keeps everything the active run serves:
+
+- Every run-scoped row of the active run is carried. Only `run_id` and the row
+  hash that covers it change. Each stored row hash must first replay from the
+  database values. The clause-document receipt in older installations is
+  recomputed with its frozen formula after the same formula replays the base
+  receipt.
+- The 2.6.1 normalization and exact diff are rebuilt for the new run by the
+  unchanged 2.6.1 loader, with inputs pinned to the base run: its predecessor
+  publication run, terminology run and product snapshot. As a positive control,
+  the same call bound to the base run must reproduce the served normalization
+  and diff run ids and sealed fingerprints exactly. Re-bound rows are also
+  compared with run-bound UUIDs masked.
+- The served reader profile is re-bound with byte-identical content. The latest
+  resolution of each carried patch is carried. Its evidence keys stay verbatim,
+  and a `carried_forward` key names the source event.
+- Each new clause patch binds `predecessor_text_sha256` to the served text of
+  the same code. A new clause binds the empty-text hash. The
+  `verified_scheduled` resolution evidence holds the full component manifest,
+  the effective-date span and the rendering-check result.
+- `release_run.source_artifact_sha256` holds the fingerprint of the ordered
+  (reference number, artifact hash) set.
+
+`load` seals the run, the resolutions and the re-bound projections in one
+transaction and changes nothing served. `activate` requires the expected
+sealed fingerprint and the expected served base. It appends release,
+normalization, diff and reader-profile control events in one transaction and
+records the previous chain. `rollback` re-activates that recorded chain.
+
+### Consumer contract
+
+A patch-only patch has no composed clause, decision model or reader profile.
+The view's `decision_aid_available` has no meaning without a model. Consumers
+must render `source_exact_patch_text` as the announced revised column and must
+not present it as a complete clause. A consumer that accepts only
+`reviewed_composite` patches must be changed before a run containing
+patch-only patches is activated.
+
+### Schema limits (design note; no DDL in this lane)
+
+The existing tables represent a notice at patch level. Richer projection
+needs reviewed migrations:
+
+1. `patch_component.component_role` accepts only the 2.6.1 roles, so per-block
+   rows are not written. The block manifest lives in the sealed
+   `component_manifest_sha256` and the resolution evidence. A generic role
+   such as `amendment_block` would allow per-block rows.
+2. `composed_clause_version` requires `inherited_block_count > 0`, and the seal
+   guard requires exactly 116 Table-2 codes per composed version. A
+   full-replacement clause cannot be composed until both rules are
+   generalized.
+3. Only one clause-document diff run can be active, so the exact diff for a
+   second clause needs multi-run activation.
+4. Appendix designations (`附表十八之五`) have no clause key.
+5. Generated list labels need an ODF numbering renderer, or labels read from
+   an independent rendering and verified against it.
