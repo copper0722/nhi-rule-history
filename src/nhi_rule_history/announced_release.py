@@ -57,6 +57,7 @@ from nhi_rule_history.announced_notice import (
     AnnouncedNoticeError,
     ParsedNotice,
     cell_rendering_check,
+    notice_rendering_check,
     projection_block_reason,
     registered_manifest_identity,
     sha256_text,
@@ -74,7 +75,7 @@ from nhi_rule_history.pg.common import (
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.3.0"
+LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.4.0"
 GLOBAL_LOCK_KEY = "nhi-rule-history-announced-global"
 CIVIL_TIMEZONE = "Asia/Taipei"
 EMPTY_TEXT_SHA256 = sha256_text("")
@@ -1601,9 +1602,12 @@ def compose_overlay_release(
     with pending effects only.
 
     Failures are isolated per notice: a notice that is listed twice, lacks a
-    required rendering, cannot be bound to the served clauses, would give a
-    clause a second patch for one effective date, or cannot be superseded is
-    reported in ``failures`` and left out; the rest of the batch composes.
+    required rendering, whose rendering does not confirm the text read outside
+    its comparison cells (:func:`notice_rendering_check`: the effective-date
+    statements, table titles and headers), cannot be bound to the served
+    clauses, would give a clause a second patch for one effective date, or
+    cannot be superseded is reported in ``failures`` and left out; the rest
+    of the batch composes.
 
     A notice the base run already carries is projected again and must
     reproduce every patch the run serves for it (:func:`_served_differences`);
@@ -1652,6 +1656,16 @@ def compose_overlay_release(
                 "the notice states no clause amendment and no other effect",
             )
             continue
+        if rendering is not None:
+            problem = notice_rendering_check(notice, rendering)
+            if problem is not None:
+                fail(
+                    notice,
+                    "rendering",
+                    "the office rendering does not confirm the text read "
+                    f"outside the comparison cells: {problem}",
+                )
+                continue
         rendering_checks[reference] = {
             clause.clause_code: cell_rendering_check(notice, clause, rendering)
             for clause in notice.clauses

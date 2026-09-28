@@ -46,6 +46,7 @@ from typing import Any, Mapping, Sequence
 
 from nhi_rule_history.announced_notice import (
     ParsedNotice,
+    notice_rendering_check,
     parse_notice,
     read_notice_bundle,
     verification_row,
@@ -186,8 +187,14 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
         codes = [c.clause_code for n in notices for c in n.clauses]
         served_run_id, served = served_clauses(connection, codes)
     renderings = {} if args.no_libreoffice else _renderings(notices)
+    body_text: dict[str, str] = {}
     for notice in notices:
         rendering = renderings.get(notice.bundle.reference_number)
+        body_text[notice.bundle.reference_number] = (
+            "not_checked"
+            if args.no_libreoffice
+            else notice_rendering_check(notice, rendering) or "exact"
+        )
         for clause in notice.clauses:
             current = served.get(clause.clause_code)
             row = verification_row(
@@ -210,6 +217,7 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
                 "source_artifact": n.attachment.file_name,
                 "source_artifact_sha256": n.attachment.sha256,
                 "clauses": [c.clause_code for c in n.clauses],
+                "body_text_rendering": body_text[n.bundle.reference_number],
                 "pending_effects": [e.key for e in n.other_effects],
                 "already_in_active_run": n.bundle.reference_number in carried,
             }

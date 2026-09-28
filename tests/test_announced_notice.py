@@ -6,6 +6,7 @@ import json
 import shutil
 import unittest
 import zipfile
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from nhi_rule_history.announced_notice import (
     cell_rendering_check,
     clause_heading_code,
     is_omission_marker,
+    notice_rendering_check,
     parse_comparison_document,
     parse_effective_statement,
     projection_block_reason,
@@ -43,7 +45,7 @@ def _render(payload: bytes) -> dict:
 
 
 def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
-    """A cell rendering that draws every cell as the parser reads it.
+    """A rendering that draws every cell and the body text as the parser reads it.
 
     ``text``/``label``/``separator`` map a paragraph's document order to what
     is drawn instead, to model an office suite that disagrees.
@@ -65,6 +67,20 @@ def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
             "transform": False,
         }
 
+    document = notice.document
+    flow = [
+        (item.document_order, paragraph(item))
+        for item in document.paragraphs
+        if item.top_table_index is None
+        and item.document_order not in document.detached_orders
+    ]
+    for table_index in document.top_tables:
+        orders = [
+            item.document_order
+            for item in document.paragraphs
+            if item.top_table_index == table_index
+        ]
+        flow.append((min(orders) if orders else float("inf"), {"table": True}))
     return {
         "rendering_version": "test",
         "tables": [
@@ -73,7 +89,7 @@ def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
                     [
                         paragraph(item)
                         for item in _cell_items(
-                            notice.document.paragraphs,
+                            document.paragraphs,
                             table_index,
                             cell.row_index,
                             cell.cell_index,
@@ -84,8 +100,9 @@ def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
                 ]
                 for row in grid
             ]
-            for table_index, grid in sorted(notice.document.top_tables.items())
+            for table_index, grid in sorted(document.top_tables.items())
         ],
+        "flow": [entry for _, entry in sorted(flow, key=lambda pair: pair[0])],
     }
 
 
@@ -1073,6 +1090,248 @@ class ComparisonGrammarTest(unittest.TestCase):
         self.assertEqual(cell_rendering_check(notice, clause, None), "unavailable")
 
 
+class BodyTextStructureTest(unittest.TestCase):
+    """2026-09-28 finding O1: text read outside the comparison cells.
+
+    The effective date is read from character data.  A hidden or conditional
+    part of the statement, a later hidden statement, or one in a text box
+    changed the date readers see while the parser read another, with the gate
+    exact.  Every paragraph the parser reads outside the cells (each 生效
+    statement, each table's title and header) now fails closed on the same
+    structures the comparison cells do, and on hiding styles.
+    """
+
+    def test_hidden_or_conditional_statement_fails_closed(self) -> None:
+        cases = dict(_O1_PROBES)
+        cases.update(
+            {
+                "statement_in_hidden_section": _body_parts(
+                    '<text:section text:name="S1" text:display="none">'
+                    "<text:p>（自115年10月1日生效）</text:p></text:section>"
+                ),
+                "statement_in_conditional_section": _body_parts(
+                    '<text:section text:name="S2" text:display="condition" '
+                    'text:condition="ooow:1"><text:p>（自115年10月1日生效）'
+                    "</text:p></text:section>"
+                ),
+                "paragraph_style_hidden_by_its_parent": _body_parts(
+                    '<text:p text:style-name="P1">（自115年10月1日生效）</text:p>',
+                    automatic='<style:style style:name="P1" '
+                    'style:family="paragraph" style:parent-style-name="HidBase"/>',
+                    common='<style:style style:name="HidBase" '
+                    'style:family="paragraph"><style:text-properties '
+                    'text:display="none"/></style:style>',
+                ),
+                "character_style_conditionally_hidden": _body_parts(
+                    '<text:p>（自115年1<text:span text:style-name="CND">0</text:span>'
+                    "月1日生效）</text:p>",
+                    automatic='<style:style style:name="CND" style:family="text">'
+                    '<style:text-properties text:display="condition" '
+                    'text:condition="ooow:1"/></style:style>',
+                ),
+                "statement_with_a_note": _body_parts(
+                    '<text:p>（自115年10月1日生效）<text:note text:note-class="footnote">'
+                    "<text:note-citation>1</text:note-citation><text:note-body>"
+                    "<text:p>註</text:p></text:note-body></text:note></text:p>"
+                ),
+                "default_paragraph_style_hidden": _body_parts(
+                    "<text:p>（自115年10月1日生效）</text:p>",
+                    common='<style:default-style style:family="paragraph">'
+                    '<style:text-properties text:display="none"/></style:default-style>',
+                ),
+            }
+        )
+        for name, (content, styles) in cases.items():
+            with self.subTest(probe=name), self.assertRaisesRegex(
+                AnnouncedNoticeError, "hidden or conditional content"
+            ):
+                _parse_parts(content, styles)
+        # A statement in a text box is not in the body text LibreOffice
+        # renders in order, so it cannot be confirmed.
+        framed = _body_parts(
+            '<text:p>附件<draw:frame draw:name="F1" text:anchor-type="paragraph" '
+            'svg:width="1in" svg:height="0.4in"><draw:text-box>'
+            "<text:p>（自115年11月1日生效）</text:p></draw:text-box></draw:frame>"
+            "</text:p><text:p>（自115年10月1日生效）</text:p>"
+        )
+        with self.assertRaisesRegex(AnnouncedNoticeError, "outside the main text"):
+            _parse_parts(*framed)
+        # Confusable negatives: a visible section, a style that hides
+        # nothing, and a text box that holds no statement (as in the official
+        # 附表 label of notice 1150672509) all parse; the title is then the
+        # last body-text paragraph before the table.
+        for name, (content, styles) in {
+            "visible_section": _body_parts(
+                '<text:section text:name="S3"><text:p>（自115年10月1日生效）'
+                "</text:p></text:section>"
+            ),
+            "bold_digits": _body_parts(
+                '<text:p>（自115年<text:span text:style-name="B">10</text:span>'
+                "月1日生效）</text:p>",
+                automatic='<style:style style:name="B" style:family="text">'
+                '<style:text-properties fo:font-weight="bold"/></style:style>',
+            ),
+            "label_in_a_text_box": _body_parts(
+                '<text:p>附表<draw:frame draw:name="F2" text:anchor-type="paragraph" '
+                'svg:width="1in" svg:height="0.4in"><draw:text-box>'
+                "<text:p>附表</text:p></draw:text-box></draw:frame></text:p>"
+                "<text:p>（自115年10月1日生效）</text:p>"
+            ),
+        }.items():
+            with self.subTest(negative=name):
+                _, notice = _parse_parts(content, styles)
+                self.assertEqual(notice.effective_on, "2026-10-01")
+                self.assertEqual(
+                    notice.tables[0].title_paragraph.text, "（自115年10月1日生效）"
+                )
+
+    def test_hidden_or_conditional_title_or_header_fails_closed(self) -> None:
+        condition = (
+            '<text:conditional-text text:condition="ooow:1" '
+            'text:string-value-if-true="二" text:string-value-if-false="一" '
+            'text:current-value="false">一</text:conditional-text>'
+        )
+        appendix = (
+            '<table:table table:name="APX"><table:table-row>'
+            + _cell("修訂後附表規定")
+            + _cell("原附表規定")
+            + "</table:table-row><table:table-row>"
+            + _cell("甲項")
+            + _cell("乙項")
+            + "</table:table-row></table:table>"
+        )
+        flow = "<text:p>（自115年10月1日生效）</text:p><text:p>附表{} 申請表</text:p>"
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, "title of comparison table 0 contains"
+        ):
+            _parse_parts(*_body_parts(flow.format(condition), table=appendix))
+        _, notice = _parse_parts(*_body_parts(flow.format("一"), table=appendix))
+        self.assertEqual(
+            [effect.designation for effect in notice.other_effects], ["附表一"]
+        )
+        # A header the parser reads as a comparison header but that holds a
+        # hiding field, and another table whose header LibreOffice draws as
+        # a comparison header while the parser reads 申請表.
+        hidden_header = _O1_TABLE.replace(
+            _cell("修訂後給付規定"),
+            "<table:table-cell><text:p>修訂後給付規定<text:hidden-paragraph "
+            'text:condition="ooow:1" text:is-hidden="true"/></text:p>'
+            "</table:table-cell>",
+        )
+        other_table = (
+            '<table:table table:name="FORM"><table:table-row>'
+            "<table:table-cell><text:p>"
+            '<text:conditional-text text:condition="ooow:1" '
+            'text:string-value-if-true="修訂後給付規定" '
+            'text:string-value-if-false="申請表" text:current-value="false">'
+            "申請表</text:conditional-text></text:p></table:table-cell>"
+            + _cell("說明")
+            + "</table:table-row></table:table>"
+        )
+        statement = "<text:p>（自115年10月1日生效）</text:p>"
+        for name, table in (
+            ("comparison_header", hidden_header),
+            ("other_table_header", _O1_TABLE + other_table),
+        ):
+            with self.subTest(header=name), self.assertRaisesRegex(
+                AnnouncedNoticeError, "a table header contains"
+            ):
+                _parse_parts(*_body_parts(statement, table=table))
+        # Confusable negative: an ordinary second table parses and is ignored.
+        plain = (
+            '<table:table table:name="FORM"><table:table-row>'
+            + _cell("申請表")
+            + _cell("說明")
+            + "</table:table-row></table:table>"
+        )
+        _, notice = _parse_parts(*_body_parts(statement, table=_O1_TABLE + plain))
+        self.assertEqual([c.clause_code for c in notice.clauses], ["9.139"])
+        self.assertEqual(len(notice.ignored_tables), 1)
+
+
+class BodyTextRenderingCheckTest(unittest.TestCase):
+    """What the parser reads outside the cells, against a drawn rendering."""
+
+    def setUp(self) -> None:
+        form = (
+            '<table:table table:name="FORM"><table:table-row>'
+            + _cell("申請表")
+            + _cell("說明")
+            + "</table:table-row></table:table>"
+        )
+        content, styles = _body_parts(
+            "<text:p>第9節 抗癌瘤藥物</text:p><text:p>（自115年10月1日生效）</text:p>",
+            table=_O1_TABLE + "<text:p>備註：劃線部分為新修訂規定。</text:p>" + form,
+        )
+        _, self.notice = _parse_parts(content, styles)
+        paragraphs = self.notice.document.paragraphs
+        self.order = {item.text: item.document_order for item in paragraphs}
+        self.statement = self.order["（自115年10月1日生效）"]
+
+    def _check(self, rendering) -> str | None:
+        return notice_rendering_check(self.notice, rendering)
+
+    def test_a_faithful_rendering_confirms(self) -> None:
+        self.assertIsNone(self._check(_drawn(self.notice)))
+        # Confusable negatives: a blank unlabelled paragraph is not body
+        # text, and a paragraph the parser does not read may differ.
+        drawn = _drawn(self.notice, text={self.order["第9節 抗癌瘤藥物"]: "第9節"})
+        drawn["flow"].insert(1, {"text": " ", "label": "", "separator": None,
+                                 "hidden": False, "bullet": None, "transform": False})
+        self.assertIsNone(self._check(drawn))
+
+    def test_what_the_drawn_body_text_does_not_confirm(self) -> None:
+        other_date = _drawn(self.notice, text={self.statement: "（自115年11月1日生效）"})
+        self.assertIn("drawn with other text", self._check(other_date))
+        for key, value in (("hidden", True), ("bullet", "●"), ("transform", True)):
+            drawn = _drawn(self.notice)
+            entry = next(e for e in drawn["flow"] if e.get("text") == "（自115年10月1日生效）")
+            entry[key] = value
+            with self.subTest(flag=key):
+                self.assertIn("hidden, bulleted or case-mapped", self._check(drawn))
+        # A field draws 生效 where the parser reads other text, as text or as
+        # a list label.
+        computed = _drawn(
+            self.notice, text={self.order["第9節 抗癌瘤藥物"]: "（自115年11月1日生效）"}
+        )
+        self.assertIn("is not a parsed effective-date statement", self._check(computed))
+        labelled = _drawn(
+            self.notice, label={self.order["第9節 抗癌瘤藥物"]: "（自115年11月1日生效）"}
+        )
+        self.assertIn("is not a parsed effective-date statement", self._check(labelled))
+        # An extra drawn paragraph (for example a field the parser reads as
+        # nothing) breaks the alignment.
+        extra = _drawn(self.notice)
+        extra["flow"].insert(1, {"text": "", "label": "1.", "separator": "\t",
+                                 "hidden": False, "bullet": None, "transform": False})
+        self.assertIn("differs from the rendering", self._check(extra))
+        # The comparison table drawn before the statement.
+        moved = _drawn(self.notice)
+        marker = moved["flow"].index({"table": True})
+        moved["flow"].insert(1, moved["flow"].pop(marker))
+        self.assertIn("stands elsewhere", self._check(moved))
+        # Headers: the comparison header drawn with other text, and the other
+        # table drawn with a comparison header.
+        header = _drawn(self.notice)
+        header["tables"][0][0][0][0]["text"] = "修訂後給付規定（草案）"
+        self.assertIn("drawn differently", self._check(header))
+        flagged = _drawn(self.notice)
+        flagged["tables"][0][0][1][0]["hidden"] = True
+        self.assertIn("drawn differently", self._check(flagged))
+        disguised = _drawn(self.notice)
+        disguised["tables"][1][0][0][0]["text"] = "修訂後給付規定"
+        self.assertIn("drawn with a comparison header", self._check(disguised))
+        # A rendering from before body text was reported (rule 1.1.0), or
+        # none at all, cannot confirm.
+        older = _drawn(self.notice)
+        del older["flow"]
+        self.assertIn("does not report the body text", self._check(older))
+        self.assertIn("no office rendering", self._check(None))
+        fewer = _drawn(self.notice)
+        fewer["tables"].pop()
+        self.assertIn("different number of tables", self._check(fewer))
+
+
 def _probe_notice(parts: tuple[bytes, bytes, bytes]):
     payload = fixture_odt(*parts)
     sha = hashlib.sha256(payload).hexdigest()
@@ -1105,6 +1364,115 @@ def _probe_table(revised: str, original: str) -> str:
         + cell(original)
         + "</table:table-row></table:table>"
     )
+
+
+_BODY_NS = _NS + (
+    ' xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"'
+    ' xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"'
+    ' xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"'
+    ' xmlns:ooow="http://openoffice.org/2004/writer"'
+)
+_HIDDEN_TEXT_STYLE = (
+    '<style:style style:name="HID" style:family="text">'
+    '<style:text-properties text:display="none"/></style:style>'
+)
+_HIDDEN_PARAGRAPH_STYLE = (
+    '<style:style style:name="HP" style:family="paragraph">'
+    '<style:text-properties text:display="none"/></style:style>'
+)
+_O1_TABLE = (
+    '<table:table table:name="CMP"><table:table-column '
+    'table:number-columns-repeated="2"/><table:table-row>'
+    + _cell("修訂後給付規定")
+    + _cell("原給付規定")
+    + "</table:table-row><table:table-row>"
+    + _cell("9.139.Foo：", "單獨用於")
+    + _cell("9.139.Foo：", "無")
+    + "</table:table-row></table:table>"
+)
+
+
+def _body_parts(
+    flow: str,
+    *,
+    table: str = _O1_TABLE,
+    automatic: str = "",
+    common: str = "",
+    declarations: str = "",
+) -> tuple[bytes, bytes]:
+    """content.xml and styles.xml of a notice: a title, ``flow``, ``table``."""
+
+    content = (
+        f'<?xml version="1.0" encoding="UTF-8"?><office:document-content {_BODY_NS}>'
+        f"<office:automatic-styles>{automatic}</office:automatic-styles>"
+        f"<office:body><office:text>{declarations}"
+        "<text:p>「藥品給付規定」修訂對照表</text:p>"
+        f"{flow}{table}</office:text></office:body></office:document-content>"
+    ).encode("utf-8")
+    styles = (
+        f'<?xml version="1.0" encoding="UTF-8"?><office:document-styles {_BODY_NS}>'
+        f"<office:styles>{common}</office:styles></office:document-styles>"
+    ).encode("utf-8")
+    return content, styles
+
+
+def _parse_parts(content: bytes, styles: bytes, *, structural: bool = True):
+    """Parse a notice; without ``structural`` the parser's refusal of hidden
+    and conditional content is switched off, so what LibreOffice draws can be
+    compared on its own."""
+
+    payload = _odt(content, styles)
+    sha = hashlib.sha256(payload).hexdigest()
+    attachment = NoticeAttachment(
+        declared_sequence=0,
+        file_name="attachment-000.odt",
+        media_type=ODT_MEDIA_TYPE,
+        sha256=sha,
+        byte_size=len(payload),
+        path=FIXTURES / "unused.odt",
+    )
+    document = read_odt_document(payload)
+    if not structural:
+        document = replace(
+            document,
+            unsupported_paragraphs=frozenset(),
+            unsupported_cell_features=frozenset(),
+        )
+    bundle = _bundle(attachment, raw_md_blocks=_receipts(attachment, document))
+    return payload, parse_comparison_document(bundle, attachment, document)
+
+
+# The verifier's O1 probes: what the parser reads outside the comparison
+# cells differs from what LibreOffice draws.
+_O1_PROBES = {
+    "H11_hidden_character_style_digit": _body_parts(
+        '<text:p>（自115年1<text:span text:style-name="HID">0</text:span>'
+        "月1日生效）</text:p>",
+        automatic=_HIDDEN_TEXT_STYLE,
+    ),
+    "H12_later_statement_hidden_by_paragraph_style": _body_parts(
+        "<text:p>（自115年11月1日生效）</text:p>"
+        '<text:p text:style-name="HP">（自115年10月1日生效）</text:p>',
+        automatic=_HIDDEN_PARAGRAPH_STYLE,
+    ),
+    "K4_conditional_text_statement": _body_parts(
+        '<text:p><text:conditional-text text:condition="ooow:1" '
+        'text:string-value-if-true="（自115年11月1日生效）" '
+        'text:string-value-if-false="（自115年10月1日生效）" '
+        'text:current-value="false">（自115年10月1日生效）'
+        "</text:conditional-text></text:p>"
+    ),
+    "K5_hidden_text_field_digit": _body_parts(
+        '<text:p>（自115年1<text:hidden-text text:condition="ooow:1" '
+        'text:string-value="0" text:is-hidden="true">0</text:hidden-text>'
+        "月1日生效）</text:p>"
+    ),
+    "K6_hidden_paragraph_field": _body_parts(
+        "<text:p>（自115年11月1日生效）</text:p><text:p>（自115年10月1日生效）"
+        '<text:hidden-paragraph text:condition="ooow:1" text:is-hidden="true"/>'
+        "</text:p>"
+    ),
+}
 
 
 @unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
@@ -1348,6 +1716,86 @@ class CellRenderingGateTest(unittest.TestCase):
             self.assertFalse(
                 any(p.get(key) for p in cell for key in ("hidden", "bullet", "transform"))
             )
+
+
+@unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
+class BodyTextRenderingGateTest(unittest.TestCase):
+    """Finding O1 end to end: LibreOffice's body text against the parser's.
+
+    The probes are parsed with the structural refusal switched off, so each
+    shows that the rendering alone does not confirm them either.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        declarations = (
+            "<text:user-field-decls><text:user-field-decl "
+            'office:value-type="string" office:string-value="1" text:name="U1"/>'
+            '<text:user-field-decl office:value-type="string" '
+            'office:string-value="（自115年11月1日生效）" text:name="U2"/>'
+            "</text:user-field-decls>"
+        )
+        cls.probes = dict(_O1_PROBES)
+        cls.probes.update(
+            {
+                # The date's digit is a user field: stored 0, declared 1.
+                "computed_digit": _body_parts(
+                    '<text:p>（自115年1<text:user-field-get text:name="U1">0'
+                    "</text:user-field-get>月1日生效）</text:p>",
+                    declarations=declarations,
+                ),
+                # A field draws a statement where the parser reads 附註.
+                "field_drawn_statement": _body_parts(
+                    '<text:p><text:user-field-get text:name="U2">附註'
+                    "</text:user-field-get></text:p>"
+                    "<text:p>（自115年10月1日生效）</text:p>",
+                    declarations=declarations,
+                ),
+                "plain": _body_parts("<text:p>（自115年10月1日生效）</text:p>"),
+                "label_in_a_text_box": _body_parts(
+                    '<text:p>附表<draw:frame draw:name="F2" '
+                    'text:anchor-type="paragraph" svg:width="1in" '
+                    'svg:height="0.4in"><draw:text-box><text:p>附表</text:p>'
+                    "</draw:text-box></draw:frame></text:p>"
+                    "<text:p>（自115年10月1日生效）</text:p>"
+                ),
+            }
+        )
+        cls.notices = {}
+        payloads = {}
+        for name, parts in cls.probes.items():
+            payloads[name], cls.notices[name] = _parse_parts(*parts, structural=False)
+        cls.renderings = render_table_cells(payloads)
+
+    def _check(self, name: str) -> str | None:
+        self.assertIsNotNone(self.renderings[name])
+        return notice_rendering_check(self.notices[name], self.renderings[name])
+
+    def test_hidden_or_conditional_statements_are_not_confirmed(self) -> None:
+        for name in _O1_PROBES:
+            with self.subTest(probe=name):
+                self.assertEqual(self.notices[name].effective_on, "2026-10-01")
+                self.assertIsNotNone(self._check(name))
+
+    def test_computed_statements_are_not_confirmed(self) -> None:
+        self.assertIn("drawn with other text", self._check("computed_digit"))
+        self.assertIn(
+            "is not a parsed effective-date statement",
+            self._check("field_drawn_statement"),
+        )
+
+    def test_plain_body_text_is_confirmed(self) -> None:
+        # Confusable negatives: the plain notice, and one whose title holds a
+        # text box (outside the body text on both sides).
+        self.assertIsNone(self._check("plain"))
+        self.assertIsNone(self._check("label_in_a_text_box"))
+        # LibreOffice ends a body whose last element is a table with an empty
+        # paragraph, which is blank and left out of the comparison.
+        flow = self.renderings["plain"]["flow"]
+        self.assertEqual(
+            [entry.get("text", "table") for entry in flow],
+            ["「藥品給付規定」修訂對照表", "（自115年10月1日生效）", "table", ""],
+        )
 
 
 def _tampered(rendering: dict, notice, item, **change) -> dict:

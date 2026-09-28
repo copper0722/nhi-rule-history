@@ -37,7 +37,7 @@ import zipfile
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 from xml.etree import ElementTree
 
 from nhi_rule_history.contracts import canonical_json_bytes
@@ -65,6 +65,8 @@ _UUID_NAMESPACE = uuid.UUID("5b0c7d7e-2f55-4b6f-a2c4-6f1d8e0b9a31")
 _OFFICE = "urn:oasis:names:tc:opendocument:xmlns:office:1.0"
 _TEXT = "urn:oasis:names:tc:opendocument:xmlns:text:1.0"
 _TABLE = "urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+_STYLE = "urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+_DRAW = "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
 _TAG_P = f"{{{_TEXT}}}p"
 _TAG_H = f"{{{_TEXT}}}h"
 _TAG_S = f"{{{_TEXT}}}s"
@@ -222,6 +224,75 @@ def _unsupported_cell_node(node: ElementTree.Element) -> bool:
         node.attrib.get(_ATTR_DISPLAY, "true") != "true"
         or _ATTR_CONDITION in node.attrib
     )
+
+
+# A paragraph or span whose style, a parent style or the default style has
+# ``text:display`` other than ``true`` is hidden or conditionally hidden.
+_TAG_STYLE = f"{{{_STYLE}}}style"
+_TAG_DEFAULT_STYLE = f"{{{_STYLE}}}default-style"
+_TAG_TEXT_PROPERTIES = f"{{{_STYLE}}}text-properties"
+_ATTR_STYLE_FAMILY = f"{{{_STYLE}}}family"
+_ATTR_STYLE_NAME = f"{{{_STYLE}}}name"
+_ATTR_PARENT_STYLE = f"{{{_STYLE}}}parent-style-name"
+_ATTR_TEXT_STYLE = f"{{{_TEXT}}}style-name"
+_ATTR_CELL_STYLE = f"{{{_TABLE}}}style-name"
+
+
+def _style_hiding(
+    *roots: ElementTree.Element | None,
+) -> Callable[[str, str | None], bool]:
+    """Whether a named style of a family hides its text, by the style chain.
+
+    Later roots win, so ``content.xml`` automatic styles are passed after
+    ``styles.xml``.
+    """
+
+    styles: dict[tuple[str | None, str | None], ElementTree.Element] = {}
+    defaults: dict[str | None, ElementTree.Element] = {}
+    for root in roots:
+        if root is None:
+            continue
+        for node in root.iter():
+            if node.tag == _TAG_STYLE:
+                styles[(node.get(_ATTR_STYLE_FAMILY), node.get(_ATTR_STYLE_NAME))] = (
+                    node
+                )
+            elif node.tag == _TAG_DEFAULT_STYLE:
+                defaults[node.get(_ATTR_STYLE_FAMILY)] = node
+
+    def hides(node: ElementTree.Element | None) -> bool:
+        properties = None if node is None else node.find(_TAG_TEXT_PROPERTIES)
+        return (
+            properties is not None
+            and properties.get(_ATTR_DISPLAY, "true") != "true"
+        )
+
+    def hidden(family: str, name: str | None) -> bool:
+        seen: set[str] = set()
+        while name and name not in seen:
+            seen.add(name)
+            node = styles.get((family, name))
+            if node is None:
+                break
+            if hides(node):
+                return True
+            name = node.get(_ATTR_PARENT_STYLE)
+        return hides(defaults.get(family))
+
+    return hidden
+
+
+def _own_content(element: ElementTree.Element) -> Iterable[ElementTree.Element]:
+    """Descendants of a paragraph, leaving out nested paragraphs and tables."""
+
+    stack = list(element)
+    while stack:
+        node = stack.pop()
+        yield node
+        if node.tag not in {_TAG_P, _TAG_H, _TAG_TABLE}:
+            stack.extend(node)
+
+
 # Manifest rows of these roles, and raw.md, are source files: the parser
 # reads them or they identify the notice, so their size and SHA-256 are always
 # checked and a registration proof never undoes them.  Any other role is a
@@ -660,6 +731,12 @@ class OdtDocument:
     structural_facts: Mapping[str, Any]
     has_tracked_changes: bool
     unsupported_cell_features: frozenset[tuple[int, int, int]]
+    # Document orders of paragraphs outside the main text (in a frame, text
+    # box or other drawing, a note or an annotation), and of paragraphs whose
+    # own text is hidden or conditional by structure or style or holds a note
+    # or annotation (see :func:`read_odt_document`).
+    detached_orders: frozenset[int] = frozenset()
+    unsupported_paragraphs: frozenset[int] = frozenset()
 
 
 def _paragraph_text(element: ElementTree.Element, *, render: bool) -> str:
@@ -729,11 +806,13 @@ def read_odt_document(
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
         raise AnnouncedNoticeError("ODT container is malformed") from exc
     root = ElementTree.fromstring(content)
+    styles_root = None if styles is None else ElementTree.fromstring(styles)
     numbering = resolve_list_labels(
         root,
-        None if styles is None else ElementTree.fromstring(styles),
+        styles_root,
         None if meta is None else ElementTree.fromstring(meta),
     )
+    hidden_style = _style_hiding(styles_root, root)
     body = root.find(f".//{{{_OFFICE}}}text")
     if body is None:
         raise AnnouncedNoticeError("ODT office:text is missing")
@@ -766,6 +845,7 @@ def read_odt_document(
 
     top_tables: dict[int, tuple[tuple[OdtCell, ...], ...]] = {}
     cell_position: dict[int, tuple[int, int, int]] = {}
+    cell_element: dict[int, ElementTree.Element] = {}
     for table in tables:
         index = table_index[id(table)]
         is_top = not any(node.tag == _TAG_TABLE for node in ancestors(table))
@@ -785,6 +865,7 @@ def read_odt_document(
                         "ODT repeated table cells are unsupported"
                     )
                 cell_position[id(cell)] = (index, row_number, cell_number)
+                cell_element[id(cell)] = cell
                 row_cells.append(
                     OdtCell(
                         table_index=index,
@@ -819,6 +900,8 @@ def read_odt_document(
             "independent ODT traversal disagrees with the block parser"
         )
     paragraphs: list[OdtParagraph] = []
+    detached: set[int] = set()
+    concealed: set[int] = set()
     for element, block in zip(elements, blocks):
         block_text = str(block["raw_text"])
         if _paragraph_text(element, render=False) != block_text:
@@ -827,13 +910,37 @@ def read_odt_document(
             )
         top_position: tuple[int, int, int] | None = None
         nested = False
+        cell_styles: list[str | None] = []
         for ancestor in ancestors(element):
             if id(ancestor) in cell_position:
+                cell_styles.append(
+                    cell_element[id(ancestor)].get(_ATTR_CELL_STYLE)
+                )
                 position = cell_position[id(ancestor)]
                 if position[0] in top_tables:
                     top_position = position
                 else:
                     nested = True
+        order = int(block["locator"]["document_order"])
+        if any(
+            ancestor.tag.startswith(f"{{{_DRAW}}}")
+            or ancestor.tag in {_TAG_NOTE, _TAG_ANNOTATION}
+            for ancestor in ancestors(element)
+        ):
+            detached.add(order)
+        own = list(_own_content(element))
+        if (
+            any(_unsupported_cell_node(node) for node in own)
+            or any(_unsupported_cell_node(node) for node in ancestors(element))
+            or hidden_style("paragraph", element.get(_ATTR_TEXT_STYLE))
+            or any(
+                hidden_style("text", node.get(_ATTR_TEXT_STYLE))
+                for node in own
+                if node.get(_ATTR_TEXT_STYLE)
+            )
+            or any(hidden_style("table-cell", name) for name in cell_styles)
+        ):
+            concealed.add(order)
         locator = block["locator"]
         if top_position is not None and not nested:
             if (
@@ -868,6 +975,8 @@ def read_odt_document(
             node.tag == _TAG_TRACKED_CHANGES for node in body.iter()
         ),
         unsupported_cell_features=frozenset(unsupported),
+        detached_orders=frozenset(detached),
+        unsupported_paragraphs=frozenset(concealed),
     )
 
 
@@ -1348,6 +1457,21 @@ def parse_comparison_document(
     table_specs, ignored = _comparison_tables(document)
     if not table_specs:
         raise AnnouncedNoticeError("attachment has no official comparison table")
+    # Every table's header decides whether it is a comparison table.
+    for table_index, grid in document.top_tables.items():
+        if not grid:
+            continue
+        header = {(table_index, 0, cell.cell_index) for cell in grid[0]}
+        if header & document.unsupported_cell_features or any(
+            item.document_order in document.unsupported_paragraphs
+            for item in document.paragraphs
+            if (item.top_table_index, item.top_row_index, item.top_cell_index)
+            in header
+        ):
+            raise AnnouncedNoticeError(
+                "a table header contains notes, annotations or hidden or "
+                "conditional content"
+            )
     title = grammar_text(bundle.title).strip()
     if "預告" in _PRIOR_PRE_ANNOUNCEMENT_RE.sub("", title):
         raise AnnouncedNoticeError(
@@ -1368,11 +1492,24 @@ def parse_comparison_document(
     statements = [
         (item, parse_effective_statement(item.text))
         for item in flow
-        if _EFFECTIVE_WORD_RE.search(item.text)
+        if _EFFECTIVE_WORD_RE.search(grammar_text(item.text))
     ]
     if any(item.numbering is not None for item, _ in statements):
         raise AnnouncedNoticeError(
             "an effective-date statement carries list numbering"
+        )
+    if any(item.document_order in document.detached_orders for item, _ in statements):
+        raise AnnouncedNoticeError(
+            "an effective-date statement is outside the main text "
+            "(a frame, note or annotation)"
+        )
+    if any(
+        item.document_order in document.unsupported_paragraphs
+        for item, _ in statements
+    ):
+        raise AnnouncedNoticeError(
+            "an effective-date statement contains notes, annotations or hidden "
+            "or conditional content"
         )
     unparsed = [item for item, value in statements if value is None]
     if unparsed:
@@ -1397,7 +1534,17 @@ def parse_comparison_document(
             raise AnnouncedNoticeError(
                 f"comparison table {table_index} has no governing effective date"
             )
-        titles = [item for item in flow if item.document_order < start]
+        titles = [
+            item
+            for item in flow
+            if item.document_order < start
+            and item.document_order not in document.detached_orders
+        ]
+        if titles and titles[-1].document_order in document.unsupported_paragraphs:
+            raise AnnouncedNoticeError(
+                f"the title of comparison table {table_index} contains notes, "
+                "annotations or hidden or conditional content"
+            )
         tables.append(
             ComparisonTable(
                 table_index=table_index,
@@ -1737,6 +1884,168 @@ def cell_rendering_check(
             if label and item.numbering.separator != paragraph.get("separator"):
                 return "mismatch"
     return "exact"
+
+
+def _drawn_key(cell: Any) -> str:
+    """A rendered cell's text as :func:`_header_key` reads a parsed one."""
+
+    if not isinstance(cell, list):
+        return ""
+    printed = "".join(
+        (
+            str(paragraph.get("label") or "")
+            + (
+                str(paragraph.get("separator") or "")
+                if paragraph.get("label")
+                else ""
+            )
+            + str(paragraph.get("text") or "")
+        )
+        for paragraph in cell
+        if isinstance(paragraph, Mapping) and not paragraph.get("nested_table")
+    )
+    return re.sub(r"\s+", "", grammar_text(printed))
+
+
+def _drawn_plainly(paragraph: Mapping[str, Any]) -> bool:
+    return all(key in paragraph for key in _PRESENTATION_KEYS) and not any(
+        paragraph[key] for key in _PRESENTATION_KEYS
+    )
+
+
+def notice_rendering_check(
+    notice: ParsedNotice, rendering: Mapping[str, Any] | None
+) -> str | None:
+    """Why LibreOffice's rendering does not confirm the text read outside the cells.
+
+    Returns ``None`` when it confirms it.  ``rendering`` is the notice
+    attachment's entry from
+    :func:`nhi_rule_history.office_rendering.render_table_cells`, whose
+    ``flow`` lists the body text: paragraphs outside the top-level tables and
+    a marker where each table stands.  The parser's body-text paragraphs
+    (not in a frame, note or annotation) are aligned one to one with the
+    rendered ones; blank unlabelled paragraphs are left out on both sides.
+    Then:
+
+    * each paragraph the parser reads there (every effective-date statement
+      and each comparison table's title) has the same text, label and
+      separator, and is not hidden, bulleted or case-mapped;
+    * every rendered paragraph whose label or text reads 生效 is a parsed
+      statement;
+    * each comparison table stands after the same paragraphs;
+    * every table's header reads as the parser read it: a comparison table's
+      header has the same text and is drawn plainly, and no other table's
+      header reads as a comparison header.
+
+    A rendering without ``flow`` cannot confirm any of this.
+    """
+
+    if rendering is None:
+        return "no office rendering is available"
+    flow, tables = rendering.get("flow"), rendering.get("tables")
+    if not isinstance(flow, list) or not isinstance(tables, list):
+        return "the office rendering does not report the body text"
+    document = notice.document
+    top = sorted(document.top_tables)
+    markers = [
+        index
+        for index, entry in enumerate(flow)
+        if isinstance(entry, Mapping) and entry.get("table")
+    ]
+    if len(markers) != len(top) or len(tables) != len(top):
+        return "the office rendering holds a different number of tables"
+    ours = [
+        item
+        for item in document.paragraphs
+        if item.top_table_index is None
+        and item.document_order not in document.detached_orders
+        and (item.text.strip() or item.generated_label)
+    ]
+    drawn: list[tuple[int, Mapping[str, Any]]] = []
+    for index, entry in enumerate(flow):
+        if not isinstance(entry, Mapping):
+            return "the office rendering reports a malformed body-text entry"
+        if entry.get("table"):
+            continue
+        if str(entry.get("text") or "").strip() or entry.get("label"):
+            drawn.append((index, entry))
+    if len(ours) != len(drawn):
+        return "the body text outside the tables differs from the rendering"
+    statements = {
+        item.document_order
+        for item in ours
+        if _EFFECTIVE_WORD_RE.search(grammar_text(item.text))
+    }
+    titles = {
+        table.title_paragraph.document_order
+        for table in notice.tables
+        if table.title_paragraph is not None
+    }
+    for item, (_, entry) in zip(ours, drawn):
+        if item.document_order in statements | titles:
+            label = item.generated_label or ""
+            if (
+                item.text != entry.get("text")
+                or label != (entry.get("label") or "")
+                or (label and item.numbering.separator != entry.get("separator"))
+            ):
+                return (
+                    "an effective-date statement or table title is drawn "
+                    "with other text"
+                )
+            if not _drawn_plainly(entry):
+                return (
+                    "an effective-date statement or table title is drawn "
+                    "hidden, bulleted or case-mapped"
+                )
+        drawn_text = str(entry.get("label") or "") + str(entry.get("text") or "")
+        if (
+            _EFFECTIVE_WORD_RE.search(grammar_text(drawn_text))
+            and item.document_order not in statements
+        ):
+            return "a paragraph drawn with 生效 is not a parsed effective-date statement"
+    for table in notice.tables:
+        marker = markers[top.index(table.table_index)]
+        start = _first_order(document, table.table_index)
+        if sum(1 for index, _ in drawn if index < marker) != sum(
+            1 for item in ours if item.document_order < start
+        ):
+            return f"comparison table {table.table_index} stands elsewhere in the rendering"
+    comparison = {table.table_index for table in notice.tables}
+    for position, table_index in enumerate(top):
+        grid = document.top_tables[table_index]
+        rows = tables[position]
+        if not grid:
+            continue
+        drawn_header = rows[0] if isinstance(rows, list) and rows else None
+        if not isinstance(drawn_header, list):
+            return f"the header of table {table_index} is not rendered"
+        keys = [_drawn_key(cell) for cell in drawn_header]
+        if table_index in comparison:
+            parsed = [
+                _header_key(
+                    _cell_items(document.paragraphs, table_index, 0, cell.cell_index)
+                )
+                for cell in grid[0]
+            ]
+            if keys != parsed or not all(
+                _drawn_plainly(paragraph)
+                for cell in drawn_header
+                if isinstance(cell, list)
+                for paragraph in cell
+                if isinstance(paragraph, Mapping)
+                and not paragraph.get("nested_table")
+            ):
+                return (
+                    f"the header of comparison table {table_index} is drawn "
+                    "differently"
+                )
+        elif any(
+            _REVISED_HEADER_RE.fullmatch(key) or _ORIGINAL_HEADER_RE.fullmatch(key)
+            for key in keys
+        ):
+            return f"table {table_index} is drawn with a comparison header"
+    return None
 
 
 def projection_block_reason(

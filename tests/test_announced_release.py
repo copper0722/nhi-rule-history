@@ -35,6 +35,8 @@ from nhi_rule_history.announced_notice import (
     NoticeBundle,
     _cell_items,
     parse_comparison_document,
+    parse_notice,
+    read_notice_bundle,
     read_odt_document,
     sha256_text,
 )
@@ -365,10 +367,11 @@ def _synthetic_notice(
 
 
 def _rendering(notice, *codes: str) -> dict:
-    """A cell rendering that draws every cell as the parser reads it.
+    """A rendering that draws every cell and the body text as the parser reads it.
 
     When clauses are named, the revised paragraphs of every other clause are
-    drawn with other text, so only the named clauses match.
+    drawn with other text, so only the named clauses match; ``"-"`` names
+    none, so every clause is held back while the notice itself is confirmed.
     """
 
     hidden = {
@@ -377,8 +380,35 @@ def _rendering(notice, *codes: str) -> dict:
         if codes and clause.clause_code not in codes
         for item in clause.revised
     }
+    document = notice.document
+    flow = [
+        (
+            item.document_order,
+            {
+                "text": item.text,
+                "label": item.generated_label or "",
+                "separator": (
+                    item.numbering.separator if item.generated_label else None
+                ),
+                "hidden": False,
+                "bullet": None,
+                "transform": False,
+            },
+        )
+        for item in document.paragraphs
+        if item.top_table_index is None
+        and item.document_order not in document.detached_orders
+    ]
+    for table_index in document.top_tables:
+        orders = [
+            item.document_order
+            for item in document.paragraphs
+            if item.top_table_index == table_index
+        ]
+        flow.append((min(orders) if orders else float("inf"), {"table": True}))
     return {
         "rendering_version": "test",
+        "flow": [entry for _, entry in sorted(flow, key=lambda pair: pair[0])],
         "tables": [
             [
                 [
@@ -668,12 +698,67 @@ class OverlayReleaseLiveTest(unittest.TestCase):
             if number in notice.bundle.reference_number
         )
 
+    def test_notice_whose_body_text_is_not_confirmed_fails_alone(self) -> None:
+        # 2026-09-28 finding O1: the effective date LibreOffice draws was
+        # never compared with the one the parser read.
+        target = self._by_reference("1150672509")
+        reference = target.bundle.reference_number
+        statement = target.tables[0].effective_statement.text
+        other_date = _rendering(target)
+        next(
+            entry for entry in other_date["flow"] if entry.get("text") == statement
+        )["text"] = "（自115年11月1日生效）"
+        renderings = {
+            notice.bundle.reference_number: _rendering(notice)
+            for notice in self.notices
+        }
+        for label, rendering, reason in (
+            ("another date drawn", other_date, "drawn with other text"),
+            ("rule 1.1.0 shape", FOREIGN_RENDERING, "does not report the body text"),
+        ):
+            with self.subTest(label):
+                composition = compose_overlay_release(
+                    self.pg.dsn,
+                    self.notices,
+                    base_run_id=BASE_RUN,
+                    official_renderings={**renderings, reference: rendering},
+                    require_official_rendering=True,
+                    today=TODAY,
+                )
+                self.assertEqual(
+                    [
+                        (item["reference_number"], item["stage"])
+                        for item in composition.failures
+                    ],
+                    [(reference, "rendering")],
+                )
+                self.assertIn(reason, composition.failures[0]["error"])
+                self.assertEqual(
+                    sorted(
+                        item.notice.bundle.reference_number
+                        for item in composition.release.notices
+                    ),
+                    sorted(set(renderings) - {reference}),
+                )
+                self.assertEqual(composition.status, "passed_with_holds")
+        # Confusable negative: the faithful rendering composes every notice.
+        clean = compose_overlay_release(
+            self.pg.dsn,
+            self.notices,
+            base_run_id=BASE_RUN,
+            official_renderings=renderings,
+            require_official_rendering=True,
+            today=TODAY,
+        )
+        self.assertEqual(clean.failures, ())
+        self.assertEqual(clean.status, "passed")
+
     def test_held_back_notice_enters_the_run_with_pending_effects(self) -> None:
         # 2026-09-28 finding M1: a notice whose every clause was held back
         # was dropped from the run, so served data showed no 10-01 change.
         held = self._by_reference("1150672509")
         reference = held.bundle.reference_number
-        mismatch = {reference: FOREIGN_RENDERING}
+        mismatch = {reference: _rendering(held, "-")}
         composition = compose_overlay_release(
             self.pg.dsn,
             self.notices,
@@ -1049,7 +1134,7 @@ class SupersedeLiveTest(unittest.TestCase):
         )
         partial = {
             SUPERSEDE_REFERENCE: _rendering(notice, "9.2"),
-            HELD_REFERENCE: FOREIGN_RENDERING,
+            HELD_REFERENCE: _rendering(held, "-"),
         }
         full = {
             SUPERSEDE_REFERENCE: _rendering(notice),
@@ -1093,8 +1178,8 @@ class SupersedeLiveTest(unittest.TestCase):
             dsn,
             [notice, held],
             official_renderings={
-                SUPERSEDE_REFERENCE: FOREIGN_RENDERING,
-                HELD_REFERENCE: FOREIGN_RENDERING,
+                SUPERSEDE_REFERENCE: _rendering(notice, "-"),
+                HELD_REFERENCE: _rendering(held, "-"),
             },
             today=TODAY,
         )
@@ -2044,8 +2129,8 @@ class CliReceiptLiveTest(unittest.TestCase):
         # The office rendering of this one attachment lacks its revised text,
         # so its only clause is held back and the notice serves no patch.
         cls.renderings = {
-            (cls.root / cls.held / "attachment-000.odt").read_bytes(): (
-                FOREIGN_RENDERING
+            (cls.root / cls.held / "attachment-000.odt").read_bytes(): _rendering(
+                parse_notice(read_notice_bundle(cls.root / cls.held)), "-"
             )
         }
         cls.later = _write_bundle(
