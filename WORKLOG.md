@@ -1,5 +1,27 @@
 # Worklog
 
+## 2026-09-28 — Announced overlay release 1 in production
+
+- Loaded and activated run `ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd` (loader
+  1.0.0 with the seal-shape fix): composed read-only first with explicit notice
+  paths, which reproduced the independent verifier's queue-mode compose (same
+  run id and sealed fingerprint `b536885b…`). The load was inert (the served run
+  was unchanged). The subscriber sync's 2.6.1 receipt check passed read-only on
+  the loaded run, and activation served 10 patches.
+- A fresh read showed the active run, the re-bound 2.6.1 normalization and diff
+  runs, and the panel's announced contract listing 2.6.1 plus nine `patch_only`
+  clauses effective 2026-10-01.
+- The first subscriber sync after activation passed the 2.6.1 loader step,
+  exported through the site's patch_only-capable exporter, and deployed.
+  A per-clause predicate checked each clause's code, notice reference,
+  effective date, patch hash and composition status against the built JSON:
+  10/10. The same check had failed on the pre-activation file (negative
+  control). The built file's canonical hash equals the authenticated live
+  JSON's.
+- Rollback path: `tools/load_announced_notices.py rollback --from-run-id
+  ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd` re-activates the previous chain
+  (rehearsed by the verifier; not exercised in production).
+
 ## 2026-09-28 — Announced overlay: ODF list labels and registered-manifest identity
 
 - Gap: automatic ODF list labels (`1.`, `(5)`) are not character data, so six
