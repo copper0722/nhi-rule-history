@@ -1,5 +1,23 @@
 # Worklog
 
+## 2026-09-28 — Announced overlay release 2 in production; recurring lane registered
+
+- Composed read-only with the verified arguments. The run reproduced the
+  independent verifier's id (`2813b674…`, sealed `5c1afbf9…`) with the expected
+  holds. The load was inert. Just before activation, read-only checks
+  confirmed the served run, the current publication and the ten carried
+  resolutions were unchanged since the load. Activation passed `--load-receipt`
+  and served 21 patches.
+- The next subscriber sync deployed the site. A per-clause predicate on the
+  built JSON returned 21/21, and the build's canonical hash equals the
+  authenticated live JSON's.
+- Registered the private overlay lane (every 15 minutes) with activation held.
+  While held, new composites are composed and loaded inert, and the
+  post-effective `effective_unconsolidated` step still runs. Also registered
+  the effective-date alarm (every 6 hours). Auto-activation stays held until
+  the four remaining unattended-use weaknesses the verifier rated high are
+  fixed and verified.
+
 ## 2026-09-28 — Announced overlay release 1 in production
 
 - Loaded and activated run `ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd` (loader

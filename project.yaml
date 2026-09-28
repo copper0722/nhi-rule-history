@@ -167,7 +167,7 @@ continuous_update:
     auto_promotion_enabled: false
     unavailable_update_bundle: failed_terminal_NHI_UPDATE_BUNDLE_UNAVAILABLE_zero_worker_calls
   announced_notice_overlay:
-    status: release_1_live_release_2_pending_verification
+    status: release_2_live_recurring_lane_registered_activation_held
     recorded_on: "2026-09-28"
     release_1:
       run_id: ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd
@@ -176,12 +176,20 @@ continuous_update:
       served_patch_only_clauses: ["2.1.4.2", "3.3.28", "4.2", "8.1.3", "9.2", "9.5", "9.56", "9.103", "9.113"]
       independent_verification: passed
       subscriber_site_per_clause_check: passed_10_of_10
-    release_2_candidate:
+    release_2:
+      run_id: 2813b674-b462-5d4c-b182-4938961ee175
       loader_version: nhi-rule-history/announced-overlay-loader/2.0.0
+      activated_on: "2026-09-28"
       new_clauses_2026_09_01: ["3.3.32", "5.6.1", "8.2.19", "9.20", "9.4", "9.43"]
       new_clauses_2026_10_01: ["8.2.19", "9.139", "9.140", "9.26", "9.5.1"]
       still_pending: ["9.69", "2.6.2", "2.6.3"]
-      independent_verification: pending
+      independent_verification: passed
+      subscriber_site_per_clause_check: passed_21_of_21
+    recurring_lane:
+      cadence_minutes: 15
+      auto_activation: held_until_R2_H1_to_H4_fixed_and_verified
+      post_effective_resolution: effective_unconsolidated_only_never_reconciled
+      effective_date_alarm_cadence_hours: 6
     parser: src/nhi_rule_history/announced_notice.py
     composer: src/nhi_rule_history/announced_release.py
     cli: tools/load_announced_notices.py
@@ -198,7 +206,7 @@ continuous_update:
     queue_manifest_identity: registered_canonical_bytes_with_bookkeeping_and_derived_layers_reverted_sources_pinned
     list_numbering_receipt: docs/audits/2026-09-28-announced-list-numbering-verification.json
     rehearsal_receipt: docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json
-    production_load: release_1_live
+    production_load: release_2_live
     consumer_prerequisite: subscriber_export_capability_marker_lists_patch_only
 
 announced_dyslipidemia_release:
