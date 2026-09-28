@@ -1,5 +1,60 @@
 # Worklog
 
+## 2026-09-28 — Deterministic announced-notice overlay loader
+
+- Gap: after 2026-07-28 no registered notice became structured data. A notice
+  at `corpus_registered` could reach announced rows only through the model
+  proposal stage (scheduler task 261), which has not run since 2026-07-28, or
+  a clause-specific loader; the only announced amendment, 2.6.1, came from the
+  hash-locked `announced_dyslipidemia` loader. On 2026-09-28 the queue held 15
+  items at `corpus_registered`: the 2.6.1 notice, five notices effective
+  2026-09-01 and nine effective 2026-10-01.
+- `nhi_rule_history.announced_notice` parses a registered corpus bundle
+  without any model: re-hashes the manifest inventory, requires the project
+  ODT blocks to equal the `raw.md` source-block receipts, finds the two-column
+  comparison table, parses the stand-alone ROC effective date on NFKC text
+  (official files use the compatibility ideograph U+F98E for 年), segments
+  clauses at codes ending in their own full stop, and keeps the revised column
+  as exact text with whitespace elements rendered. Appendix tables and listing
+  or price changes become pending effects. Paragraphs whose ODF list numbering
+  draws a label are not projected (`generated_list_label`); LibreOffice
+  rendering is the independent exactness check.
+- `nhi_rule_history.announced_release` composes one new sealed release run: the
+  active run's rows are carried (each stored row hash must replay first; only
+  `run_id` and its row hash change), every new clause becomes a `patch_only`
+  patch, the 2.6.1 normalization and exact diff are rebuilt for the new run by
+  the unchanged 2.6.1 loader after a positive control reproduces the served
+  run ids and sealed fingerprints exactly, the reader profile is re-bound with
+  identical content, and the latest resolution of each carried patch is
+  carried with its evidence keys verbatim. Load is inert; activation and
+  rollback are single append-only transactions with recorded previous chain.
+  No DDL; the schema limits are listed in `docs/continuous-update.md` section 14.
+- CLI `tools/load_announced_notices.py` (`verify`, `compose`, `load`,
+  `activate`, `rollback`). Fixtures: office:body cuts of the four official
+  ODTs named for 2026-10-01 (8.7-12.3 KB each, checksum-pinned, block ids
+  pinned to the registered `raw.md` receipts), built by
+  `tools/build_announced_notice_fixture.py`.
+- Tests: 20 new (grammar with confusable negatives, fixture expectations,
+  span reconstruction, fail-closed tables, generated labels, LibreOffice
+  exactness with a tampered negative, and a live disposable-cluster
+  compose/load/replay/activate/rollback). Full suite with disposable clusters:
+  532 tests, OK (7 skipped).
+- Rehearsal on a disposable database restored from a read-only production
+  dump: `docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json`.
+  The served announced payload of the restored copy equals the live panel
+  payload; the composed runs computed against production (read-only) equal the
+  rehearsal runs; load changes nothing served; activation serves 2.6.1 plus nine
+  new patch-only clauses with every 2.6.1 content field identical; rollback
+  restores the payload except the profile activation time.
+- Findings: six of the fifteen clauses effective 2026-10-01 draw generated
+  list labels and stay pending (8.2.19, 9.139, 9.140, 9.26, 9.5.1, 9.69); the
+  five 2026-09-01 notices were migrated after registration, so their manifests
+  no longer match the queue receipts and queue mode refuses them; the
+  subscriber export accepts only `reviewed_composite` patches and must accept
+  `patch_only` before activation.
+- Not done: nothing loaded, activated or scheduled in production; consumers
+  unchanged; independent verification pending.
+
 ## 2026-09-24 — Classifier-version reselection lane for ignored RSS work items
 
 - Gap: `docs/continuous-update.md` requires a review lane for nonmatching items,

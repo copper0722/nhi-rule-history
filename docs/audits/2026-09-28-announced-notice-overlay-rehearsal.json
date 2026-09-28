@@ -1,0 +1,902 @@
+{
+  "compose": {
+    "A_four_named_notices": {
+      "base_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac",
+      "base_sealed_fingerprint": "24430be4b1a5c8a413739bb8f79316e8199867291297c859b6df8c0c60c0837d",
+      "diff_run_id": "340ecdeb-b7ff-5d34-a447-bc4efef36125",
+      "expected_counts": {
+        "clause_patch": 5,
+        "composed_clause_block": 406,
+        "composed_clause_diff_hunk": 1,
+        "composed_clause_reimbursement_code": 609,
+        "composed_clause_tagging_block_input": 406,
+        "composed_clause_terminology_occurrence": 6,
+        "composed_clause_version": 1,
+        "decision_input": 29,
+        "decision_model": 1,
+        "model_product_code": 609,
+        "notice_effect": 11,
+        "notice_event": 5,
+        "patch_component": 337,
+        "reimbursement_product_snapshot": 609,
+        "risk_branch": 21,
+        "risk_category": 6,
+        "risk_predicate": 34
+      },
+      "input_fingerprint": "fd3c0fbbaf58597865ff120b91682e7348c8a191d91128d9527be4250dee5ce5",
+      "normalization_run_id": "508d8ca8-d8be-5f2d-90ec-1b30fe799c38",
+      "notices": [
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "2.1.4.2"
+          ],
+          "reference_number": "健保審字第1150056995號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "3.3.28"
+          ],
+          "reference_number": "健保審字第1150057033號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "designation": "附表十八之五",
+              "effect_type": "clause_amendment"
+            }
+          ],
+          "projected_clauses": [
+            "4.2"
+          ],
+          "reference_number": "健保審字第1150672381號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [],
+          "projected_clauses": [
+            "8.1.3"
+          ],
+          "reference_number": "健保審字第1150672509號"
+        }
+      ],
+      "output_fingerprint": "241ef6ae5bacafc6b8e1694df0dc4d06e2f203b2364167a815919427df62f9f6",
+      "reader_profile_run_id": "2846b395-6451-52e4-93e0-2cc1fbf5a595",
+      "rebinding_positive_control": {
+        "base_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac",
+        "diff_output_fingerprint": "7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de",
+        "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+        "diff_sealed_fingerprint": "a2200bfb03f39c0dbc71f4aea84ffcbc400449113bf3fd4911d57f76f1354aeb",
+        "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+        "normalization_sealed_fingerprint": "6607e914922f4d31a08d539562ce4bc6cc66ff8674d53209035bb3bb5028ae3a"
+      },
+      "run_id": "bb2a37bf-580a-5c20-8b02-f9b3d6bc91b4",
+      "sealed_fingerprint": "062422ced1813cac925538eddbae10e9a800bc3022ae41c7074621c3ba902812",
+      "source_set_sha256": "39da55581e8e2868116b7c233c3187d9f11dbf8cc22db1a4b575101d2ab22c28"
+    },
+    "B_all_projectable_2026_10_01_notices": {
+      "base_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac",
+      "base_sealed_fingerprint": "24430be4b1a5c8a413739bb8f79316e8199867291297c859b6df8c0c60c0837d",
+      "diff_run_id": "0c93c8fc-4729-5b67-ba9f-c9260fafd5e9",
+      "expected_counts": {
+        "clause_patch": 10,
+        "composed_clause_block": 406,
+        "composed_clause_diff_hunk": 1,
+        "composed_clause_reimbursement_code": 609,
+        "composed_clause_tagging_block_input": 406,
+        "composed_clause_terminology_occurrence": 6,
+        "composed_clause_version": 1,
+        "decision_input": 29,
+        "decision_model": 1,
+        "model_product_code": 609,
+        "notice_effect": 24,
+        "notice_event": 9,
+        "patch_component": 337,
+        "reimbursement_product_snapshot": 609,
+        "risk_branch": 21,
+        "risk_category": 6,
+        "risk_predicate": 34
+      },
+      "input_fingerprint": "6b30131398a170df8d354902c3dce37a898c124c5772bb5c49472f6d8d73b579",
+      "normalization_run_id": "fb035c30-4ee6-5cb8-b025-98eb87a25f4b",
+      "notices": [
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "blocked_reason": "generated_list_label",
+              "clause_code": "9.139",
+              "effect_type": "clause_amendment"
+            },
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "9.56"
+          ],
+          "reference_number": "健保審字第1150056967號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "blocked_reason": "generated_list_label",
+              "clause_code": "9.140",
+              "effect_type": "clause_amendment"
+            },
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "9.103"
+          ],
+          "reference_number": "健保審字第1150056971號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "2.1.4.2"
+          ],
+          "reference_number": "健保審字第1150056995號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "3.3.28"
+          ],
+          "reference_number": "健保審字第1150057033號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "clause_code": null,
+              "designation": "附表十八之五",
+              "effect_type": "clause_amendment"
+            }
+          ],
+          "projected_clauses": [
+            "4.2"
+          ],
+          "reference_number": "健保審字第1150672381號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [],
+          "projected_clauses": [
+            "9.113"
+          ],
+          "reference_number": "健保審字第1150672430號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [],
+          "projected_clauses": [
+            "8.1.3"
+          ],
+          "reference_number": "健保審字第1150672509號"
+        },
+        {
+          "effective_on": "2026-10-01",
+          "pending_effects": [
+            {
+              "blocked_reason": "generated_list_label",
+              "clause_code": "9.26",
+              "effect_type": "clause_amendment"
+            },
+            {
+              "blocked_reason": "generated_list_label",
+              "clause_code": "9.5.1",
+              "effect_type": "clause_amendment"
+            },
+            {
+              "blocked_reason": "generated_list_label",
+              "clause_code": "9.69",
+              "effect_type": "clause_amendment"
+            },
+            {
+              "clause_code": null,
+              "effect_type": "reimbursed_item_change"
+            }
+          ],
+          "projected_clauses": [
+            "9.2",
+            "9.5"
+          ],
+          "reference_number": "健保審字第1150672522號"
+        }
+      ],
+      "output_fingerprint": "9e770b81cf664b9cfe81ffa27e90736d15272305025414498d0a977ce2256444",
+      "reader_profile_run_id": "a7fbb503-051e-51e3-b0ff-64fee698c8c9",
+      "rebinding_positive_control": {
+        "base_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac",
+        "diff_output_fingerprint": "7fae168ebce0b933d6d258b399da439caeaafa128eb71141fc8d45019b0e64de",
+        "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+        "diff_sealed_fingerprint": "a2200bfb03f39c0dbc71f4aea84ffcbc400449113bf3fd4911d57f76f1354aeb",
+        "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+        "normalization_sealed_fingerprint": "6607e914922f4d31a08d539562ce4bc6cc66ff8674d53209035bb3bb5028ae3a"
+      },
+      "run_id": "834d578d-c412-5f3a-8810-1e221309ae8b",
+      "sealed_fingerprint": "5c9afd5aee955f580637f053e3603038cc3bc41bd2ba2e6da7beaf10b6828f62",
+      "source_set_sha256": "0b7191fc9505c6b5fb60a98618d949a62d21a5216bfb8eac55547e1d7254f9b6"
+    },
+    "production_read_only_compose_identical": {
+      "A": true,
+      "B": true
+    }
+  },
+  "non_claims": [
+    "not canonical legal history",
+    "not loaded, activated or served in production",
+    "producer evidence; independent verification pending"
+  ],
+  "recorded_on": "2026-09-28",
+  "rehearsal_B": {
+    "activate": {
+      "api_patch_clauses": [
+        "2.6.1",
+        "2.1.4.2",
+        "3.3.28",
+        "4.2",
+        "8.1.3",
+        "9.103",
+        "9.113",
+        "9.2",
+        "9.5",
+        "9.56"
+      ],
+      "dyslipidemia_2_6_1_content_checks": [
+        "history_transition.lineage 85 85 multiset equal: True",
+        "history_transition.hunks 1 1 multiset equal: True",
+        "composed_clause.blocks identical: True",
+        "composed_clause.rendering identical: True",
+        "composed_clause.reimbursement_code_links identical: True",
+        "composed_clause.composed_text identical: True",
+        "composed_clause.composed_text_sha256 identical: True",
+        "composed_clause.public_note identical: True",
+        "composed_clause.composition_manifest_sha256 identical: True",
+        "decision_model identical: True",
+        "reader_profile content identical: True True True",
+        "components identical: True",
+        "event_effects identical: True",
+        "patch.source_exact_patch_text identical: True",
+        "patch.source_exact_patch_sha256 identical: True",
+        "patch.display_lifecycle identical: True",
+        "patch.decision_aid_available identical: True",
+        "patch.current_resolution_state identical: True",
+        "patch.resolution_reason identical: True",
+        "patch.reference_number identical: True",
+        "patch.effective_on identical: True",
+        "patch.public_note identical: True",
+        "patch.patch_id identical: True",
+        "patch.unprocessed_event_scope identical: True",
+        "patch.composition_status identical: True",
+        "original resolution evidence keys preserved: True"
+      ],
+      "previous_chain": {
+        "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+        "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+        "reader_profiles": [
+          {
+            "profile_id": "045254d2-51f0-52b0-9878-be9df78575f8",
+            "profile_run_id": "e3b98c8d-699d-5301-864e-66958b2a486f"
+          }
+        ],
+        "release_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac"
+      },
+      "public_patches": [
+        {
+          "clause_code": "2.6.1",
+          "composition_status": "reviewed_composite",
+          "current_resolution_state": "reconciled",
+          "decision_aid_available": true,
+          "display_lifecycle": "effective_reconciled",
+          "effective_from": "2026-09-01"
+        },
+        {
+          "clause_code": "2.1.4.2",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "3.3.28",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "4.2",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "8.1.3",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "9.103",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "9.113",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "9.2",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "9.5",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        },
+        {
+          "clause_code": "9.56",
+          "composition_status": "patch_only",
+          "current_resolution_state": "verified_scheduled",
+          "decision_aid_available": true,
+          "display_lifecycle": "future",
+          "effective_from": "2026-10-01"
+        }
+      ],
+      "served_chain": {
+        "diff_run_id": "0c93c8fc-4729-5b67-ba9f-c9260fafd5e9",
+        "normalization_run_id": "fb035c30-4ee6-5cb8-b025-98eb87a25f4b",
+        "reader_profiles": [
+          {
+            "profile_id": "96074390-f7a9-556e-a2e7-1dd83634b4b6",
+            "profile_run_id": "a7fbb503-051e-51e3-b0ff-64fee698c8c9"
+          }
+        ],
+        "release_run_id": "834d578d-c412-5f3a-8810-1e221309ae8b"
+      },
+      "wrong_sealed_fingerprint_refused": true
+    },
+    "baseline_payload_equals_live_panel_payload": true,
+    "consumer_export": {
+      "minimal_patch_only_branch": {
+        "announced_versions": [
+          {
+            "clause_code": "2.6.1",
+            "component_count": 337,
+            "composition_status": "reviewed_composite",
+            "display_lifecycle": "effective_reconciled",
+            "has_composed_clause": true
+          },
+          {
+            "clause_code": "2.1.4.2",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "3.3.28",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "4.2",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "8.1.3",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "9.103",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "9.113",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "9.2",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "9.5",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          },
+          {
+            "clause_code": "9.56",
+            "component_count": 0,
+            "composition_status": "patch_only",
+            "display_lifecycle": "future",
+            "has_composed_clause": false
+          }
+        ],
+        "ok": true
+      },
+      "unchanged_export_library": {
+        "error": "Announced patch has not been composed into a complete clause",
+        "ok": false
+      }
+    },
+    "load": {
+      "counts": {
+        "clause_patch": 10,
+        "composed_clause_block": 406,
+        "composed_clause_component": 70,
+        "composed_clause_component_block": 406,
+        "composed_clause_diff_hunk": 1,
+        "composed_clause_document_receipt": 1,
+        "composed_clause_reimbursement_code": 609,
+        "composed_clause_table": 4,
+        "composed_clause_table_cell": 436,
+        "composed_clause_table_cell_block": 340,
+        "composed_clause_table_row": 134,
+        "composed_clause_tagging_block_input": 406,
+        "composed_clause_terminology_occurrence": 6,
+        "composed_clause_version": 1,
+        "decision_input": 29,
+        "decision_model": 1,
+        "model_product_code": 609,
+        "notice_effect": 24,
+        "notice_event": 9,
+        "patch_component": 337,
+        "reimbursement_product_snapshot": 609,
+        "risk_branch": 21,
+        "risk_category": 6,
+        "risk_predicate": 34
+      },
+      "diff_output_fingerprint": "8dab46fe0379b9015174e9a8990a20fe375f077c298ce060e7de4e7d9e80ac6d",
+      "first_load_replayed": false,
+      "reader_profile_id": "96074390-f7a9-556e-a2e7-1dd83634b4b6",
+      "resolved_patch_count": 10,
+      "second_load_replayed": true,
+      "served_payload_unchanged_after_load": true
+    },
+    "rollback": {
+      "payload_differences_from_baseline": [
+        "reader_profile.activated_at (new activation event for the same profile)"
+      ],
+      "payload_equal_except_profile_activation_time": true,
+      "served_chain": {
+        "diff_run_id": "cc4acbaf-559d-5148-9773-f5f023e36561",
+        "normalization_run_id": "16d5abd5-a8aa-5d35-8a4d-3e3edabb7598",
+        "reader_profiles": [
+          {
+            "profile_id": "045254d2-51f0-52b0-9878-be9df78575f8",
+            "profile_run_id": "e3b98c8d-699d-5301-864e-66958b2a486f"
+          }
+        ],
+        "release_run_id": "ad59feb1-1891-5b92-b221-0cb15d3efbac"
+      }
+    }
+  },
+  "schema": "nhi-rule-history/announced-notice-overlay-rehearsal/v1",
+  "scope": "Disposable rehearsal database restored from a read-only dump of the production announced, publication, terminology, clause and edition schemas; production was only read. Nothing was loaded or activated in production.",
+  "verification_table_2026_09_01_explicit": [
+    {
+      "blocked_reason": "generated_list_label",
+      "clause_code": "5.6.1",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150054837號",
+      "revised_equals_official_rendering": "mismatch"
+    },
+    {
+      "blocked_reason": null,
+      "clause_code": "9.20",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150055637號",
+      "revised_equals_official_rendering": "exact"
+    },
+    {
+      "blocked_reason": "generated_list_label",
+      "clause_code": "9.43",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150055637號",
+      "revised_equals_official_rendering": "mismatch"
+    },
+    {
+      "blocked_reason": "generated_list_label",
+      "clause_code": "8.2.19",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150055748號",
+      "revised_equals_official_rendering": "mismatch"
+    },
+    {
+      "blocked_reason": "generated_list_label",
+      "clause_code": "3.3.32",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150055691號",
+      "revised_equals_official_rendering": "mismatch"
+    },
+    {
+      "blocked_reason": null,
+      "clause_code": "9.4",
+      "effective_on": "2026-09-01",
+      "reference_number": "健保審字第1150055348號",
+      "revised_equals_official_rendering": "exact"
+    }
+  ],
+  "verification_table_queue_corpus_registered": {
+    "clauses": [
+      {
+        "blocked_reason": null,
+        "clause_code": "9.113",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": true,
+        "old_equals_served_semantic": true,
+        "old_paragraphs_found_in_served": [
+          7,
+          7
+        ],
+        "omitted_text_present": false,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672430號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "0ab8f6eb8bd3a9d461ce60220bb4f56c10ffa5fb710566d7e1246d6d0217d4f9",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "4.2",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          1,
+          1
+        ],
+        "omitted_text_present": false,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672381號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "75d10936c7475822d8c0c559015a184e8145ef09a800663505f5f44b964427c4",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "8.1.3",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          12,
+          12
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672509號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 3,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "55a8f26939a582e75abd6a343efeccb1a0d0b3db189cba1f736403f91d11625d",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "8.2.19",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          8,
+          19
+        ],
+        "omitted_text_present": false,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150057031號",
+        "revised_blocks_with_generated_labels": 1,
+        "revised_blocks_with_whitespace_elements": 1,
+        "revised_equals_official_rendering": "mismatch",
+        "revised_text_sha256": "a927c588bcb0bc916162291172273e30df0c99767aa2d3ad4391284dc58b6655",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "2.1.4.2",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          10,
+          10
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150056995號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 2,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "4f45bd4b305322d6d2e8e420dfa50ce846cae8bdb5b5beb6d3e40ab69731e03c",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "3.3.28",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          18,
+          18
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150057033號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 3,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "3ed66319a86930e2da01f66fcc0a8a61909996eeee6c33f776ed8eb2e6703509",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "9.139",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": null,
+        "omitted_text_present": false,
+        "original_is_none": true,
+        "reference_number": "健保審字第1150056967號",
+        "revised_blocks_with_generated_labels": 2,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "mismatch",
+        "revised_text_sha256": "78c80b2d7c43ca7adb923fa489c46519eac940566fdf443294d4b5d77434d8b4",
+        "served_clause_present": false
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "9.56",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          5,
+          5
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150056967號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 3,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "31a7ca535e4dcaf3dedbf9bfdcd1357da76269a4bd7e6f5c694943c0cb64f147",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "9.140",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": null,
+        "omitted_text_present": false,
+        "original_is_none": true,
+        "reference_number": "健保審字第1150056971號",
+        "revised_blocks_with_generated_labels": 9,
+        "revised_blocks_with_whitespace_elements": 5,
+        "revised_equals_official_rendering": "mismatch",
+        "revised_text_sha256": "62893fa053620162e12c004324dd3f9ae6ac71c7060d7403e53532d7f9799858",
+        "served_clause_present": false
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "9.103",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          13,
+          13
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150056971號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "a4e4c387cf0fe438f14b1ec0b66d2599cb3451a98c7c8b8aa54889dbee7e026e",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "9.69",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          78,
+          88
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672522號",
+        "revised_blocks_with_generated_labels": 16,
+        "revised_blocks_with_whitespace_elements": 5,
+        "revised_equals_official_rendering": "not_applicable_nested_table",
+        "revised_text_sha256": "5a72d32784e2bf8acaad64aba16b3ef1864af89e03a11fd26ee50ef9ca3523e3",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "9.2",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          3,
+          3
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672522號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "bdbff22ad1165cdf58222b6eb54d32ad9bb96e0cf5c701c06f8b88d758d627ab",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "9.26",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          4,
+          6
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672522號",
+        "revised_blocks_with_generated_labels": 2,
+        "revised_blocks_with_whitespace_elements": 1,
+        "revised_equals_official_rendering": "mismatch",
+        "revised_text_sha256": "5ee2d30fdbd02c73d280f126c3dcac6338d5cafcff284b3c11cd0f980368befd",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": null,
+        "clause_code": "9.5",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          1,
+          1
+        ],
+        "omitted_text_present": false,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672522號",
+        "revised_blocks_with_generated_labels": 0,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "exact",
+        "revised_text_sha256": "59cab4a6d711bc7d3301bd1bd30fb9b3b9ce15708fbd3278029c0c18338407db",
+        "served_clause_present": true
+      },
+      {
+        "blocked_reason": "generated_list_label",
+        "clause_code": "9.5.1",
+        "effective_on": "2026-10-01",
+        "old_equals_served_exact": false,
+        "old_equals_served_semantic": false,
+        "old_paragraphs_found_in_served": [
+          3,
+          3
+        ],
+        "omitted_text_present": true,
+        "original_is_none": false,
+        "reference_number": "健保審字第1150672522號",
+        "revised_blocks_with_generated_labels": 1,
+        "revised_blocks_with_whitespace_elements": 0,
+        "revised_equals_official_rendering": "mismatch",
+        "revised_text_sha256": "30cae97594d3a7dfa2a78fc0735eba2a08473ee7a02ab4336c38764271dd36f5",
+        "served_clause_present": true
+      }
+    ],
+    "queue_receipt_failures": [
+      {
+        "bundle": "gov_健保審字第1150671962號",
+        "error": "corpus manifest differs from its queue receipt"
+      },
+      {
+        "bundle": "gov_健保審字第1150054837號",
+        "error": "corpus manifest differs from its queue receipt"
+      },
+      {
+        "bundle": "gov_健保審字第1150055637號",
+        "error": "corpus manifest differs from its queue receipt"
+      },
+      {
+        "bundle": "gov_健保審字第1150055748號",
+        "error": "corpus manifest differs from its queue receipt"
+      },
+      {
+        "bundle": "gov_健保審字第1150055691號",
+        "error": "corpus manifest differs from its queue receipt"
+      },
+      {
+        "bundle": "gov_健保審字第1150055348號",
+        "error": "corpus manifest differs from its queue receipt"
+      }
+    ]
+  }
+}

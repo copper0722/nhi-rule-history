@@ -161,6 +161,23 @@ continuous_update:
     status: skipped_gate
     next_due: "2099-01-01"
     resume_requires: explicit_Copper_instruction
+  announced_notice_overlay:
+    status: implemented_rehearsed_not_loaded
+    recorded_on: "2026-09-28"
+    parser: src/nhi_rule_history/announced_notice.py
+    composer: src/nhi_rule_history/announced_release.py
+    cli: tools/load_announced_notices.py
+    model_calls: none
+    projection: patch_only_revised_column_overlay
+    canonical_history_write: false
+    ddl_added: false
+    blocked_projection_reasons:
+      - generated_list_label
+      - official_rendering_mismatch
+    rehearsal_receipt: docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json
+    production_load: not_performed
+    consumer_prerequisite: subscriber_export_must_accept_patch_only
+    independent_verification: pending
 
 announced_dyslipidemia_release:
   status: effective_reconciled_live_verified

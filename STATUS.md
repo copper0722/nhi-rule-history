@@ -1,6 +1,29 @@
 # 專案進度
 
-最後核對：2026-09-14
+最後核對：2026-09-28
+
+## 2026-09-28 — 公告修訂對照表的確定性 announced overlay（未載入正式庫）
+
+- 根因：公告抵達 `corpus_registered` 後，只能經模型 proposal 階段（排程 261）
+  或單條專用 loader 成為結構化資料；proposal 階段自 2026-07-28 未執行，因此
+  2.6.1 之後的修訂全部停在 `corpus_registered`。9/28 佇列有 15 則：2.6.1 公告、
+  115/9/1 生效 5 則、115/10/1 生效 9 則。
+- 新增 `announced_notice`（不呼叫模型）：解析官方「修訂對照表」修訂後欄位、
+  自附件生效日句（民國→西元）、條號（以自身句點結尾）、逐字文字與 block
+  manifest；附表與品項／價格異動記為 pending effect；ODF 自動編號會畫出非文字
+  標號，該條不投影；以 LibreOffice 獨立渲染核對逐字相符。
+- 新增 `announced_release`：以現行 active run 為底組成單一新 release run，
+  2.6.1 全部內容原樣帶入（row hash 先重播），新條文一律 `patch_only`；2.6.1
+  正規化與 exact diff 以原 loader 重建並先以 positive control 重現現行 run，
+  reader profile 內容不變重新綁定。載入不改變對外內容；啟用與回滾皆為單一
+  append-only 交易。未新增 DDL。
+- 演練（抽取正式庫唯讀 dump 的拋棄式資料庫）：收據
+  `docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json`。115/10/1
+  可投影 9 條（2.1.4.2、3.3.28、8.1.3、4.2、9.56、9.103、9.113、9.2、9.5），
+  6 條因自動編號暫不投影（8.2.19、9.139、9.140、9.26、9.5.1、9.69）。
+- 啟用前必須先改付費站 export：現行 `publicAnnouncedPatch` 只接受
+  `reviewed_composite`，遇到 `patch_only` 會讓整份 export 失敗。
+- 未做：正式庫尚未載入或啟用；排程未註冊；獨立驗證待辦。
 
 ## 2026-09-14 — 2.6.1 生效後 reconciliation 收據，判讀工具恢復
 
