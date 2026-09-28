@@ -51,7 +51,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.3.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.4.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -121,32 +121,55 @@ _CODE_TOKEN_RE = re.compile(
     r"(?<![0-9.\u00b7\u30fb\u2027\u2219])"
     r"(?P<code>[0-9]+(?:[.\u00b7\u30fb\u2027\u2219][0-9]+)+)(?![0-9])"
 )
-# A dotted number is a quantity, not a designation, after a comparison or
-# arithmetic sign (``≦ -2.5``, ``min/1.73``) or before a unit, a CJK word, a
-# closing bracket or a percent sign (``2.5 mg``, ``1.5倍``, ``2.18歲以上``).
-_QUANTITY_BEFORE_RE = re.compile(r"[<>=≤≥≦≧±×xX*/~～\-−–]\s*$")
-_QUANTITY_AFTER_RE = re.compile(
-    r"\s*(?:(?:mg|mcg|µg|μg|ug|ng|kg|g|ml|dl|l|iu|u|mmol|meq|sd|uln|mmhg|mm|cm"
-    r"|m2|m²|min|hr|h|x|×)(?![a-z])|[%)\]】\u3400-\u9fff])",
-    re.IGNORECASE,
-)
-# It names something when a Latin name follows, directly or after a heading
-# stop, colon, comma or bracket (``9.140 Bar``, ``9.140Bar``, ``9.57:Bar``,
-# ``9.140、Bar``, ``9.140(Bar)``), or when a stop or colon runs into a CJK name
-# (``0.5.藥品給付通則``).
-_DESIGNATION_AFTER_RE = re.compile(
-    r"\s*(?:[.:、,，(\[【]\s*)?[A-Za-z]|[.:](?=[\u3400-\u9fff])"
-)
-# Or when it stands alone on its line, or is written with a hyphen as a
-# heading (``9-140.Bar``) at the start of a line.
+# Where a line starts: the paragraph start, a line break or tab, a run of
+# spaces or a sentence end, followed by marks only.
 _LINE_START_RE = re.compile(
     r"(?:^|[\n\t]| {2,}|[。；;!?！？])[^0-9A-Za-z\u3400-\u9fff\n\t]*$"
 )
+# The strict heading grammar decides first: at a line start, a number ended
+# by its own stop (``9.141.Baz``, ``0.5.藥品給付通則``) is a designation.
+_HEADING_STOP_RE = re.compile(r"\.(?![0-9])")
+# A number is a quantity, a version or another code system's code, not a
+# designation, after a comparison or arithmetic sign (``≦ -2.5``,
+# ``min/1.73``), after a Latin word and a space (``AJCC 8.0``, ``RECIST
+# 1.1``), or before a unit, a percent sign or a closing bracket (``2.5 mg``,
+# ``4.5 mU/L``, ``1.8 Gy``).
+_QUANTITY_BEFORE_RE = re.compile(r"(?:[<>=≤≥≦≧±×xX*/~～\-−–]|[A-Za-z]{2,} )\s*$")
+_UNIT_AFTER_RE = re.compile(
+    r"\s*(?:(?:mg|mcg|µg|μg|ug|ng|pg|kg|gm|g|ml|cc|dl|fl|l|miu|iu|mu|u|mmol"
+    r"|meq|mosm|mci|bq|sd|uln|mmhg|kpa|gy|mm|cm|m2|m²|min|sec|hr|h|x|×|times"
+    r"|points?)(?![a-z])|[%)\]】])",
+    re.IGNORECASE,
+)
+# A CJK word after a number at a line start names a clause unless it is a
+# unit, an age, a count or a range word (``2.18歲以上``, ``1.5倍``).
+_CJK_QUANTITY_WORD_RE = re.compile(
+    r"\s*(?:歲|倍|個月|月|週|周|天|日|年|小時|時|分鐘|分|秒|次|公斤|公克|克|毫克"
+    r"|微克|毫升|公升|升|公分|公釐|毫米|顆|錠|粒|包|支|瓶|劑|國際單位|單位|毫莫耳"
+    r"|萬|千|百|元|點|以上|以下|以內|左右|至|到|或|及|與|和|等)"
+)
+_CJK_NAME_AFTER_RE = re.compile(
+    r"\s*(?:[:、,，(（「『【\[]\s*)?[\u3400-\u9fff]"
+)
+# Anywhere, a Latin name after the number names a clause, directly or after
+# a stop, colon, comma, bracket, dash, dot or quote (``9.140 Bar``,
+# ``9.140Bar``, ``9.57:Bar``, ``9.140、Bar``, ``9.140(Bar)``, ``9.140 - Bar``,
+# ``9.140「Bar」``).
+_LATIN_NAME_AFTER_RE = re.compile(
+    r"\s*(?:[.:、,，(\[【\-—–‧·「『\"“'‘]\s*)*[A-Za-z]"
+)
 _ALONE_AFTER_RE = re.compile(r"(?:[ ]*[.:、,，])?[ ]*(?:\n|$)")
+# A heading written with a hyphen at a line start (``9-140.Bar``, ``9-140
+# Bar``).
 _HYPHEN_HEADING_RE = re.compile(
     r"(?:^|(?<=[\n\t]))[^0-9A-Za-z\u3400-\u9fff\n\t]*"
-    r"(?P<code>[0-9]{1,2}-[0-9]{1,3})\.(?=[^0-9\s.])"
+    r"(?P<code>[0-9]{1,2}-[0-9]{1,3})(?:[.:]\s*|\s+)(?=[A-Za-z])"
 )
+# Not clause codes at all: an ICD-10 code (one capital letter, then two digits
+# and the stop: ``K70.0``, ``I85.01``), a number whose first part has three or
+# more digits (``115.10.1``, ``999.9``) and one with a part of four or more
+# digits (``0.9444``, ``7.39030``); clause code parts have at most three.
+_ICD_LETTER_RE = re.compile(r"(?<![A-Za-z])[A-Z]$")
 # A title may say the notice was pre-announced before (前經預告, 業經本署預告);
 # that phrase does not make it a pre-announcement.
 _PRIOR_PRE_ANNOUNCEMENT_RE = re.compile(r"(?:前|業|已)經[^,，。()（）]{0,20}預告")
@@ -161,7 +184,30 @@ _OMISSION_RE = re.compile(
     r"|(?:以下|其餘|餘)略"
     r"|(?:^|[\s:,、。)\]】~])略\s*[。.]?\s*$"
 )
-_UNSUPPORTED_CELL_TAGS = frozenset({_TAG_NOTE, _TAG_ANNOTATION})
+# Content whose display depends on a condition or that is hidden by the
+# document structure itself.  Hidden character and paragraph styles are
+# resolved by the office rendering check instead.
+_TAG_SECTION = f"{{{_TEXT}}}section"
+_ATTR_DISPLAY = f"{{{_TEXT}}}display"
+_ATTR_CONDITION = f"{{{_TEXT}}}condition"
+_UNSUPPORTED_CELL_TAGS = frozenset(
+    {
+        _TAG_NOTE,
+        _TAG_ANNOTATION,
+        f"{{{_TEXT}}}hidden-paragraph",
+        f"{{{_TEXT}}}hidden-text",
+        f"{{{_TEXT}}}conditional-text",
+    }
+)
+
+
+def _unsupported_cell_node(node: ElementTree.Element) -> bool:
+    if node.tag in _UNSUPPORTED_CELL_TAGS:
+        return True
+    return node.tag == _TAG_SECTION and (
+        node.attrib.get(_ATTR_DISPLAY, "true") != "true"
+        or _ATTR_CONDITION in node.attrib
+    )
 # Manifest rows of these roles, and raw.md, are source files: the parser
 # reads them or they identify the notice, so their size and SHA-256 are always
 # checked and a registration proof never undoes them.  Any other role is a
@@ -741,7 +787,7 @@ def read_odt_document(
 
     unsupported: set[tuple[int, int, int]] = set()
     for node in body.iter():
-        if node.tag not in _UNSUPPORTED_CELL_TAGS:
+        if not _unsupported_cell_node(node):
             continue
         for ancestor in ancestors(node):
             if id(ancestor) in cell_position:
@@ -1005,10 +1051,17 @@ def _cell_items(
 def designation_codes(text: str, *, heading: bool = False) -> list[str]:
     """Dotted numbers in ``text`` that read like a clause designation.
 
-    ``text`` is paragraph character data, not a generated list label.  With
-    ``heading``, the paragraph's own strict heading code is not reported.
-    A number run into a CJK word (``2.18歲``, ``9.140藥品``) cannot be told
-    from a list item or a quantity and is not reported.
+    ``text`` is a paragraph's character data or its printed text, list label
+    included.  With ``heading``, the paragraph's own strict heading code is
+    not reported.  In order:
+
+    * a number ended by its own stop at a line start is a designation;
+    * a quantity, a version or an ICD-10 code is not (:data:`_QUANTITY_BEFORE_RE`,
+      :data:`_UNIT_AFTER_RE`, :data:`_ICD_LETTER_RE`);
+    * at a line start, a CJK word after the number is a designation unless it
+      is a unit, age, count or range word;
+    * anywhere, a Latin name after the number is a designation;
+    * so is a number alone on its line, and a hyphenated heading.
     """
 
     text = grammar_text(text)
@@ -1020,13 +1073,33 @@ def designation_codes(text: str, *, heading: bool = False) -> list[str]:
     for match in _CODE_TOKEN_RE.finditer(text):
         if match.start() == skip:
             continue
+        code = match.group("code")
+        parts = re.split(r"[^0-9]", code)
         before, after = text[: match.start()], text[match.end() :]
-        if _QUANTITY_BEFORE_RE.search(before) or _QUANTITY_AFTER_RE.match(after):
-            continue
-        if _DESIGNATION_AFTER_RE.match(after) or (
-            _LINE_START_RE.search(before) and _ALONE_AFTER_RE.match(after)
+        if (
+            len(parts[0]) >= 3
+            or any(len(part) >= 4 for part in parts)
+            or (len(parts[0]) == 2 and _ICD_LETTER_RE.search(before))
         ):
-            found.append(match.group("code"))
+            continue
+        line_start = _LINE_START_RE.search(before) is not None
+        if line_start and _HEADING_STOP_RE.match(after):
+            found.append(code)
+            continue
+        if _QUANTITY_BEFORE_RE.search(before) or _UNIT_AFTER_RE.match(after):
+            continue
+        if (
+            (
+                line_start
+                and _CJK_NAME_AFTER_RE.match(after)
+                and not _CJK_QUANTITY_WORD_RE.match(
+                    re.sub(r"^\s*[:、,，(（「『【\[]\s*", "", after)
+                )
+            )
+            or _LATIN_NAME_AFTER_RE.match(after)
+            or (line_start and _ALONE_AFTER_RE.match(after))
+        ):
+            found.append(code)
     found.extend(match.group("code") for match in _HYPHEN_HEADING_RE.finditer(text))
     return found
 
@@ -1034,7 +1107,11 @@ def designation_codes(text: str, *, heading: bool = False) -> list[str]:
 def _refuse_designation(item: OdtParagraph, owner: str, *, heading: bool) -> None:
     if item.nested:
         return
-    codes = designation_codes(item.text, heading=heading)
+    # The printed text holds the generated label too: a label can draw a
+    # designation (``9.141`` before the text) that the character data lacks.
+    codes = designation_codes(item.text, heading=heading) or designation_codes(
+        item.printed_text, heading=heading
+    )
     if codes:
         raise AnnouncedNoticeError(
             f"a paragraph inside clause {owner} reads like a designation "
@@ -1211,7 +1288,13 @@ def _continuation_refusal(
             if any(
                 _LOOSE_DESIGNATION_RE.match(grammar_text(text))
                 for text in (item.text, item.printed_text)
-            ) or (not item.nested and designation_codes(item.text)):
+            ) or (
+                not item.nested
+                and (
+                    designation_codes(item.text)
+                    or designation_codes(item.printed_text)
+                )
+            ):
                 return "a paragraph reads like a designation"
     return None
 
@@ -1320,7 +1403,8 @@ def parse_comparison_document(
             }
             if cells_with_features & document.unsupported_cell_features:
                 raise AnnouncedNoticeError(
-                    "comparison cell contains notes or annotations"
+                    "comparison cell contains notes, annotations or hidden "
+                    "or conditional content"
                 )
             revised_items = _cell_items(
                 document.paragraphs,
@@ -1547,6 +1631,10 @@ def revised_paragraphs_in_served(
     ]
 
 
+# What the office rendering reports per paragraph beyond its string.
+_PRESENTATION_KEYS = ("hidden", "bullet", "transform")
+
+
 def cell_rendering_check(
     notice: ParsedNotice,
     clause: AnnouncedClause,
@@ -1563,7 +1651,10 @@ def cell_rendering_check(
     clause's own paragraphs must carry the same list label followed by the
     same separator (tab, space, nothing or line break).  A label that only
     matches another cell, or a gap LibreOffice draws differently, is a
-    mismatch.
+    mismatch.  So is any paragraph of the cell that LibreOffice draws
+    differently from its string: hidden in whole or part (or its label), a
+    bullet or image instead of a label, or a case map on its text or label;
+    a rendering that does not report these cannot confirm the cell.
     """
 
     if rendering is None:
@@ -1587,6 +1678,13 @@ def cell_rendering_check(
             return "mismatch"
         if not isinstance(cell, list):
             return "mismatch"
+        for paragraph in cell:
+            if not isinstance(paragraph, Mapping) or paragraph.get("nested_table"):
+                continue
+            if any(key not in paragraph for key in _PRESENTATION_KEYS) or any(
+                paragraph[key] for key in _PRESENTATION_KEYS
+            ):
+                return "mismatch"
         ours = [
             item
             for item in _cell_items(

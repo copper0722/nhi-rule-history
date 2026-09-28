@@ -60,6 +60,9 @@ def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
             "separator": separator.get(
                 order, item.numbering.separator if own_label else None
             ),
+            "hidden": False,
+            "bullet": None,
+            "transform": False,
         }
 
     return {
@@ -725,6 +728,19 @@ class ComparisonGrammarTest(unittest.TestCase):
             "限用於A<text:line-break/>9.140 Bar(115/10/1)",
             "限用於A<text:tab/>9.140.Bar(115/10/1)",
             '限用於A<text:s text:c="3"/>9.140.Bar(115/10/1)',
+            # Finding B5: a CJK name, and the forms around a Latin name the
+            # first version let through.
+            "9.140 抗癌藥物",
+            "9.140　高單位免疫球蛋白",
+            "9.140、高單位免疫球蛋白",
+            "9.140（高單位免疫球蛋白）",
+            "9.140高單位免疫球蛋白",
+            "9.140 - Bar",
+            "9.140—Bar",
+            "9.140「Bar」",
+            "9.140‧Bar",
+            "9-140 Bar",
+            "限用於A<text:line-break/>9.140 高單位",
         ):
             with self.subTest(paragraph=paragraph), self.assertRaisesRegex(
                 AnnouncedNoticeError, "inside clause 9.139 reads like a designation"
@@ -777,6 +793,26 @@ class ComparisonGrammarTest(unittest.TestCase):
             "~2.(略)",
             "(詳見9.24.1)",
             "依2.6.1規定辦理",
+            # Cross-references, units, versions, codes of other systems and
+            # dates that the first version refused (finding B5, low).
+            "依9.69.之規定辦理",
+            "詳見2.1.4.2.規定",
+            "TSH 4.5 mU/L以上",
+            "每次4.5 MIU",
+            "2.5 cc",
+            "1.5 times ULN",
+            "QTc延長0.5 sec",
+            "肝硬度12.5 kPa以上",
+            "放射劑量1.8 Gy",
+            "Child-Pugh score 6.5 points",
+            "RECIST version 1.1 標準",
+            "AJCC 8.0 staging",
+            "自115.10.1起",
+            "Serum albumin在3.5 gm/dl以上",
+            "限用於第2型糖尿病(ICD-10-CM：E11.9、E11.65)",
+            "ICD-10-CM: C50.911, C50.912",
+            "1.5倍以上",
+            "2.5以上",
         ]
         parsed = _parse_payload(
             _comparison([(revised, ["2.1.4.2.Rivaroxaban：", revised[1]])])
@@ -785,6 +821,51 @@ class ComparisonGrammarTest(unittest.TestCase):
         self.assertEqual(
             [item.text for item in parsed.clauses[0].revised], revised
         )
+
+    def test_designation_drawn_by_a_list_label_fails_closed(self) -> None:
+        # 2026-09-28 finding B1: the label "9.141" of a list item inside
+        # clause 9.140's cell was not read, so its text was merged into 9.140.
+        def clause_cell(label_level: str, text: str) -> str:
+            styles = (
+                '<text:list-style style:name="GL">' + label_level
+                + "</text:list-style>"
+            )
+            body = (
+                "<text:p>（自115年10月1日生效）</text:p><table:table>"
+                "<table:table-row>" + _cell("修訂後給付規定") + _cell("原給付規定")
+                + "</table:table-row><table:table-row><table:table-cell>"
+                "<text:p>9.140.Foo：(115/10/1)</text:p><text:p>說明甲</text:p>"
+                '<text:list text:style-name="GL"><text:list-item>'
+                f"<text:p>{text}</text:p></text:list-item></text:list>"
+                "</table:table-cell>" + _cell("無")
+                + "</table:table-row></table:table>"
+            )
+            return _document(body, automatic_styles=styles)
+
+        def level(prefix: str, suffix: str, start: int, followed: str = "listtab") -> str:
+            return (
+                '<text:list-level-style-number text:level="1" style:num-format="1" '
+                f'style:num-prefix="{prefix}" style:num-suffix="{suffix}" '
+                f'text:start-value="{start}"><style:list-level-properties '
+                'text:list-level-position-and-space-mode="label-alignment">'
+                f'<style:list-level-label-alignment text:label-followed-by="{followed}"/>'
+                "</style:list-level-properties></text:list-level-style-number>"
+            )
+
+        for name, content in (
+            ("label 9.141 and a tab", clause_cell(level("9.", "", 141), "Bar：新增給付")),
+            ("label 9.141:", clause_cell(level("9.", ":", 141), "Bar：新增給付")),
+            ("label 9.141 and a space", clause_cell(level("9.", "", 141, "space"), "Bar：新增給付")),
+            ("label 9.141 and a CJK name", clause_cell(level("9.", "", 141), "新藥甲（如Bar）：新增給付")),
+        ):
+            with self.subTest(label=name), self.assertRaisesRegex(
+                AnnouncedNoticeError, r"inside clause 9\.140 reads like a designation \(9\.141\)"
+            ):
+                _parse_payload(content)
+        # Confusable negatives: ordinary labels before the same text.
+        for prefix, suffix in (("(", ")"), ("", ".")):
+            parsed = _parse_payload(clause_cell(level(prefix, suffix, 5), "Bar：新增給付"))
+            self.assertEqual([c.clause_code for c in parsed.clauses], ["9.140"])
 
     def test_missing_registration_receipts_fail_closed(self) -> None:
         # 2026-09-28 finding L5: without raw.md receipts the block identity
@@ -842,6 +923,67 @@ class ComparisonGrammarTest(unittest.TestCase):
             ):
                 _parse_payload(_comparison(rows), title=title)
 
+    def test_hidden_or_conditional_structure_fails_closed(self) -> None:
+        # Finding B2: a hidden section, a hidden-paragraph or hidden-text field
+        # and conditional text decide by condition what is drawn.
+        head = "9.139.Foo：(115/10/1)"
+        for cell in (
+            '<text:section text:name="S1" text:display="none">'
+            "<text:p>隱藏段落</text:p></text:section><text:p>單獨用於</text:p>",
+            '<text:section text:name="S2" text:condition="ooow:1">'
+            "<text:p>條件段落</text:p></text:section><text:p>單獨用於</text:p>",
+            '<text:p>單獨用於<text:hidden-paragraph text:condition="ooow:1" '
+            'text:is-hidden="true"/></text:p>',
+            '<text:p>單獨用於<text:hidden-text text:condition="ooow:1" '
+            'text:string-value="（隱藏）" text:is-hidden="true">（隱藏）'
+            "</text:hidden-text></text:p>",
+            '<text:p>單獨用於<text:conditional-text text:condition="ooow:1" '
+            'text:string-value-if-true="甲" text:string-value-if-false="乙">甲'
+            "</text:conditional-text></text:p>",
+        ):
+            body = (
+                "<text:p>（自115年10月1日生效）</text:p><table:table>"
+                "<table:table-row>" + _cell("修訂後給付規定") + _cell("原給付規定")
+                + f"</table:table-row><table:table-row><table:table-cell><text:p>{head}"
+                "</text:p>" + cell + "</table:table-cell>" + _cell("無")
+                + "</table:table-row></table:table>"
+            )
+            with self.subTest(cell=cell[:40]), self.assertRaisesRegex(
+                AnnouncedNoticeError, "hidden or conditional content"
+            ):
+                _parse_payload(_document(body))
+        # Confusable negative: a visible section parses.
+        body = (
+            "<text:p>（自115年10月1日生效）</text:p><table:table>"
+            "<table:table-row>" + _cell("修訂後給付規定") + _cell("原給付規定")
+            + f"</table:table-row><table:table-row><table:table-cell><text:p>{head}"
+            '</text:p><text:section text:name="S3"><text:p>單獨用於</text:p>'
+            "</text:section></table:table-cell>" + _cell("無")
+            + "</table:table-row></table:table>"
+        )
+        self.assertEqual(
+            [c.clause_code for c in _parse_payload(_document(body)).clauses], ["9.139"]
+        )
+
+    def test_rendering_without_presentation_cannot_confirm(self) -> None:
+        notice = _parse_payload(
+            _comparison([(["9.2.Carboplatin：(115/10/1)", "限用於卵巢癌。"],
+                          ["9.2.Carboplatin：", "限用於卵巢癌第一線。"])])
+        )
+        clause = notice.clauses[0]
+        self.assertEqual(cell_rendering_check(notice, clause, _drawn(notice)), "exact")
+        for key, value in (("hidden", True), ("bullet", "●"), ("transform", True)):
+            drawn = _drawn(notice)
+            drawn["tables"][0][1][0][1][key] = value
+            with self.subTest(key=key):
+                self.assertEqual(cell_rendering_check(notice, clause, drawn), "mismatch")
+        # A rendering that does not report presentation (an older renderer)
+        # cannot confirm the cell.
+        bare = _drawn(notice)
+        for paragraph in bare["tables"][0][1][0]:
+            del paragraph["transform"]
+        self.assertEqual(cell_rendering_check(notice, clause, bare), "mismatch")
+
     def test_rendering_check_reads_the_clause_cell_only(self) -> None:
         # 2026-09-28 finding R2-H1: the check searched the whole document's
         # text export, so revised text shown only in another cell (typically
@@ -867,11 +1009,17 @@ class ComparisonGrammarTest(unittest.TestCase):
             "mismatch",
         )
         extra = _drawn(notice)
-        extra["tables"][0][1][0].append({"text": "", "label": "2.", "separator": "\t"})
+        extra["tables"][0][1][0].append(
+            {"text": "", "label": "2.", "separator": "\t", "hidden": False,
+             "bullet": None, "transform": False}
+        )
         self.assertEqual(cell_rendering_check(notice, clause, extra), "mismatch")
         # Confusable negative: a blank unlabelled paragraph is not drawn text.
         blank = _drawn(notice)
-        blank["tables"][0][1][0].append({"text": " ", "label": "", "separator": None})
+        blank["tables"][0][1][0].append(
+            {"text": " ", "label": "", "separator": None, "hidden": False,
+             "bullet": None, "transform": False}
+        )
         self.assertEqual(cell_rendering_check(notice, clause, blank), "exact")
         self.assertEqual(
             cell_rendering_check(notice, clause, {"tables": []}), "mismatch"
@@ -1015,6 +1163,77 @@ class CellRenderingGateTest(unittest.TestCase):
                 generator=odf.OTHER,
             ),
         }
+        # 2026-09-28 findings B2-B4: presentation the paragraph string does
+        # not show.  Each draws differently from its string in LibreOffice.
+        hidden_text = (
+            '<style:style style:name="HID" style:family="text">'
+            '<style:text-properties text:display="none"/></style:style>'
+        )
+        hidden_paragraph = (
+            '<style:style style:name="HP" style:family="paragraph">'
+            '<style:text-properties text:display="none"/></style:style>'
+        )
+        upper = (
+            '<style:style style:name="UC" style:family="text">'
+            '<style:text-properties fo:text-transform="uppercase"/></style:style>'
+        )
+        small_caps = (
+            '<style:style style:name="SC" style:family="text">'
+            '<style:text-properties fo:font-variant="small-caps"/></style:style>'
+        )
+        bullet = (
+            '<text:list-level-style-bullet text:level="1" text:bullet-char="●">'
+            "<style:list-level-properties text:list-level-position-and-space-"
+            'mode="label-alignment"><style:list-level-label-alignment '
+            'text:label-followed-by="listtab"/></style:list-level-properties>'
+            "</text:list-level-style-bullet>"
+        )
+
+        def presented(cell: str, automatic: str = "", common: str = "") -> tuple:
+            return odf.document(
+                _probe_table(heading + cell, heading + odf.para("無")),
+                automatic=automatic,
+                common=common,
+                generator=odf.OTHER,
+            )
+
+        cls.probes.update(
+            {
+                "hidden_span": presented(
+                    odf.para('單獨用於<text:span text:style-name="HID">（隱藏）</text:span>'),
+                    automatic=hidden_text,
+                ),
+                "hidden_paragraph": presented(
+                    odf.para("單獨用於", "HP") + odf.para("其次"),
+                    automatic=hidden_paragraph,
+                ),
+                "hidden_label": presented(
+                    odf.lst("HL", odf.item(odf.para("單獨用於"))),
+                    automatic=odf.list_style(
+                        "HL", odf.level(1, "1", None, ".", extra='text:style-name="HID"')
+                    ),
+                    common=hidden_text,
+                ),
+                "uppercase_label": presented(
+                    odf.lst("UL", odf.item(odf.para("單獨用於"))),
+                    automatic=odf.list_style(
+                        "UL", odf.level(1, "i", None, ".", extra='text:style-name="UC"')
+                    ),
+                    common=upper,
+                ),
+                "small_caps_text": presented(
+                    odf.para('限用於<text:span text:style-name="SC">abc</text:span>'),
+                    automatic=small_caps,
+                ),
+                "bullet_instead_of_none": presented(
+                    odf.lst("DNB", odf.item(odf.para("甲一")), odf.item(odf.para("乙二"))),
+                    automatic='<text:list-style style:name="DNB">'
+                    + odf.level(1, "", None, None)
+                    + bullet
+                    + "</text:list-style>",
+                ),
+            }
+        )
         cls.notices = {}
         payloads = {}
         for name, parts in cls.probes.items():
@@ -1058,6 +1277,31 @@ class CellRenderingGateTest(unittest.TestCase):
             ["1.\t限  用於\t成人", "2.\t每日\n一次"],
         )
         self.assertEqual((check, reason), ("exact", None))
+
+    def test_what_the_string_does_not_show_is_a_mismatch(self) -> None:
+        # Findings B2-B4: the string of a hidden span, a hidden paragraph or
+        # a hidden label, a bullet drawn instead of no label, and a case map
+        # all looked exact.  The rendering now reports them.
+        for name, key in (
+            ("hidden_span", "hidden"),
+            ("hidden_paragraph", "hidden"),
+            ("hidden_label", "hidden"),
+            ("uppercase_label", "transform"),
+            ("small_caps_text", "transform"),
+            ("bullet_instead_of_none", "bullet"),
+        ):
+            with self.subTest(probe=name):
+                clause, check, reason = self._check(name)
+                cell = self.renderings[name]["tables"][0][1][0]
+                self.assertTrue(any(paragraph.get(key) for paragraph in cell))
+                self.assertEqual(check, "mismatch")
+                self.assertEqual(reason, "official_rendering_mismatch")
+        # Confusable negative: the controls report none of them.
+        for name in ("whitespace_positive", "covered_cell"):
+            cell = self.renderings[name]["tables"][-1][1][0]
+            self.assertFalse(
+                any(p.get(key) for p in cell for key in ("hidden", "bullet", "transform"))
+            )
 
 
 def _tampered(rendering: dict, notice, item, **change) -> dict:
