@@ -741,6 +741,34 @@ class ComparisonGrammarTest(unittest.TestCase):
             "9.140‧Bar",
             "9-140 Bar",
             "限用於A<text:line-break/>9.140 高單位",
+            # Finding B5 (round 5): after a break a number is a designation
+            # whatever follows it unless a whole unit word does, so names that
+            # start with a unit-like character, mid-line designations, a
+            # letter before a two-stop number and a word that is no code system
+            # all count.
+            "限用於A，9.140 抗癌藥物",
+            "限用於A 9.140 抗癌藥物",
+            "限用於A、9.141.高單位免疫球蛋白",
+            "9.140 分子標靶藥物",
+            "9.140 支氣管擴張劑",
+            "9.140 百日咳疫苗",
+            "9.140 日本腦炎疫苗",
+            "9.140 點眼劑",
+            "9.140 G-CSF",
+            "9.140 L-asparaginase",
+            "9.140 H2-blocker",
+            "9.140 U-500 insulin",
+            "A10.3.9 Bar",
+            "Add 9.141 Baz",
+            "限用於A—9.140 抗癌藥物",
+            "限用於A.9.140 Bar",
+            "9.140 L型鈣離子阻斷劑",
+            # The cost: a sub-item numbered like a designation and followed by
+            # a word that is not a unit is refused too (the notice is held,
+            # never merged).
+            "1.1 限用於成人病患",
+            "1.0 版",
+            "2.5 倍數",
         ):
             with self.subTest(paragraph=paragraph), self.assertRaisesRegex(
                 AnnouncedNoticeError, "inside clause 9.139 reads like a designation"
@@ -813,6 +841,19 @@ class ComparisonGrammarTest(unittest.TestCase):
             "ICD-10-CM: C50.911, C50.912",
             "1.5倍以上",
             "2.5以上",
+            # Quantities from the official comparison tables in the corpus
+            # (round 6), after a sign, an attached minus, a Latin word or a
+            # break, with a whole unit word or a range after them (＜ is
+            # read as < after NFKC).
+            "Rivaroxaban 2.5mg限與aspirin併用",
+            "DXA檢測BMD之-2.5SD ＜T score ＜-1.0SD)",
+            "Atropine sulfate  0.1 mg/mL- 0.5 mg/mL眼用製劑",
+            "規格量≧ 3.5 mL項目",
+            "(platelet count) ＜0.5x109/L。",
+            "HER2/CEP17比值 2.0 以上",
+            "0.5 公絲以下",
+            "TLS 1.2(或以上等級)加密",
+            "pH:7.30 - 7.45",
         ]
         parsed = _parse_payload(
             _comparison([(revised, ["2.1.4.2.Rivaroxaban：", revised[1]])])
@@ -857,6 +898,11 @@ class ComparisonGrammarTest(unittest.TestCase):
             ("label 9.141:", clause_cell(level("9.", ":", 141), "Bar：新增給付")),
             ("label 9.141 and a space", clause_cell(level("9.", "", 141, "space"), "Bar：新增給付")),
             ("label 9.141 and a CJK name", clause_cell(level("9.", "", 141), "新藥甲（如Bar）：新增給付")),
+            # Finding B5 (round 5): names that start like a unit.
+            ("label 9.141 and 分子", clause_cell(level("9.", "", 141), "分子標靶藥物：新增給付")),
+            ("label 9.141 and 克流感", clause_cell(level("9.", "", 141), "克流感膠囊：新增給付")),
+            ("label 9.141 and G-CSF", clause_cell(level("9.", "", 141), "G-CSF（filgrastim）：新增給付")),
+            ("label 9.141 and H2", clause_cell(level("9.", "", 141, "space"), "H2 receptor antagonists")),
         ):
             with self.subTest(label=name), self.assertRaisesRegex(
                 AnnouncedNoticeError, r"inside clause 9\.140 reads like a designation \(9\.141\)"

@@ -51,7 +51,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.4.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.5.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -113,63 +113,77 @@ _LOOSE_DESIGNATION_RE = re.compile(
     r"^[^0-9A-Za-z\u3400-\u9fff]*"
     r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
 )
-# Inside a clause's cell, anywhere in a paragraph (after a line break, a tab,
-# a run of spaces, a sentence or a word such as 新增), a dotted number that
-# names something reads like another clause designation.  Grammar runs on
-# NFKC text, where full-width digits and stops are ASCII.
+# Inside a clause's cells, a dotted number decides by where it stands.
+# Grammar runs on NFKC text, where full-width digits and stops are ASCII.  A
+# number joined to a longer number is not a token of its own.
 _CODE_TOKEN_RE = re.compile(
-    r"(?<![0-9.\u00b7\u30fb\u2027\u2219])"
+    r"(?<![0-9])(?<![0-9][.\u00b7\u30fb\u2027\u2219])"
     r"(?P<code>[0-9]+(?:[.\u00b7\u30fb\u2027\u2219][0-9]+)+)(?![0-9])"
 )
-# Where a line starts: the paragraph start, a line break or tab, a run of
-# spaces or a sentence end, followed by marks only.
-_LINE_START_RE = re.compile(
-    r"(?:^|[\n\t]| {2,}|[。；;!?！？])[^0-9A-Za-z\u3400-\u9fff\n\t]*$"
+# A quantity: a comparison or arithmetic sign before the number (``≦ 2.5``,
+# ``min/1.73``, ``3 x 2.5``), a minus sign attached to it (``≦ -2.5``,
+# ``BMD之-2.5SD``) or a range dash after another number (``0.5-1.5``).
+_SIGN_BEFORE_RE = re.compile(
+    r"(?:[<>=≤≥≦≧±×*/+~～]\s*"
+    r"|(?:^|(?<=[\s0-9]))[xX]\s*"
+    r"|(?:^|(?<=[\s\u3400-\u9fff(\[<>=≤≥≦≧±×*/+~～]))[\-−]"
+    r"|[0-9%]\s*[\-−–—]\s*)\Z"
 )
-# The strict heading grammar decides first: at a line start, a number ended
-# by its own stop (``9.141.Baz``, ``0.5.藥品給付通則``) is a designation.
-_HEADING_STOP_RE = re.compile(r"\.(?![0-9])")
-# A number is a quantity, a version or another code system's code, not a
-# designation, after a comparison or arithmetic sign (``≦ -2.5``,
-# ``min/1.73``), after a Latin word and a space (``AJCC 8.0``, ``RECIST
-# 1.1``), or before a unit, a percent sign or a closing bracket (``2.5 mg``,
-# ``4.5 mU/L``, ``1.8 Gy``).
-_QUANTITY_BEFORE_RE = re.compile(r"(?:[<>=≤≥≦≧±×xX*/~～\-−–]|[A-Za-z]{2,} )\s*$")
+# Where a heading can start: the paragraph start, a line break or tab,
+# whitespace, or a break (a sentence or clause stop, a comma, 、, a dash),
+# followed by marks only (``◎``, ``（``, ``「``).
+_BOUNDARY_RE = re.compile(
+    r"(?:^|[\s。；;！!？?：:，,、\-−–—])"
+    r"[^0-9A-Za-z\u3400-\u9fff\s。；;！!？?：:，,、\-−–—]*\Z"
+)
+# Version numbers of the listed code systems (``AJCC 8.0``, ``RECIST 1.1``,
+# ``TLS 1.2``).
+_CODE_SYSTEM_BEFORE_RE = re.compile(
+    r"(?<![A-Za-z])(?:AJCC|RECIST|TLS|version)\s+\Z", re.IGNORECASE
+)
+# A whole unit word, a percent sign or a closing bracket right after the
+# number, with no name running on (``2.5 mg``, ``2.5mg限``, ``4.5 mU/L``,
+# ``0.5 公絲以下``, ``2.18歲以上``, ``1.5倍``, ``7.0%``, ``(2.5)``), or a
+# product or range with another number (``0.5x109/L``, ``7.30 - 7.45``).  A
+# single-letter unit takes no letter, digit, hyphen or CJK character after
+# it, and a CJK unit takes no other CJK character than a range or joining
+# word, so ``G-CSF``, ``U-500``, ``H2``, ``L型``, ``分子``, ``克流感`` and
+# ``日本`` are names, not units.
+_CJK_UNIT_FOLLOWERS = (
+    "以上|以下|以內|以外|以後|以前|未滿|左右|之|或|及|與|和|至|到|等|內|後|前"
+    "|起|每|者|為|的"
+)
 _UNIT_AFTER_RE = re.compile(
-    r"\s*(?:(?:mg|mcg|µg|μg|ug|ng|pg|kg|gm|g|ml|cc|dl|fl|l|miu|iu|mu|u|mmol"
-    r"|meq|mosm|mci|bq|sd|uln|mmhg|kpa|gy|mm|cm|m2|m²|min|sec|hr|h|x|×|times"
-    r"|points?)(?![a-z])|[%)\]】])",
+    r"\s*(?:"
+    r"(?:mg|mcg|µg|μg|ug|ng|pg|kg|gm|ml|cc|dl|fl|miu|iu|mu|bu|mmol|meq|mosm"
+    r"|mci|bq|sd|uln|mmhg|kpa|gy|mm|cm|m2|m²|min|sec|hr|times|points?)"
+    r"(?![A-Za-z0-9\-])"
+    r"|(?:g|l|u|h|x|×)(?![A-Za-z0-9\-\u3400-\u9fff])"
+    r"|(?:國際單位|單位|毫莫耳|個月|小時|分鐘|公斤|公克|毫克|微克|毫升|公升|公分"
+    r"|公釐|毫米|公絲|公撮|歲|倍|月|週|周|天|日|年|時|分|秒|次|克|升|顆|錠|粒|包"
+    r"|支|瓶|劑|片|滴|元|點)"
+    rf"(?=$|[^\u3400-\u9fff]|(?:{_CJK_UNIT_FOLLOWERS}))"
+    r"|以上|以下|以內|未滿|左右"
+    r"|[%)\]】」』]"
+    r"|[x×\-−–~～]\s*[0-9]"
+    r")",
     re.IGNORECASE,
 )
-# A CJK word after a number at a line start names a clause unless it is a
-# unit, an age, a count or a range word (``2.18歲以上``, ``1.5倍``).
-_CJK_QUANTITY_WORD_RE = re.compile(
-    r"\s*(?:歲|倍|個月|月|週|周|天|日|年|小時|時|分鐘|分|秒|次|公斤|公克|克|毫克"
-    r"|微克|毫升|公升|升|公分|公釐|毫米|顆|錠|粒|包|支|瓶|劑|國際單位|單位|毫莫耳"
-    r"|萬|千|百|元|點|以上|以下|以內|左右|至|到|或|及|與|和|等)"
-)
-_CJK_NAME_AFTER_RE = re.compile(
-    r"\s*(?:[:、,，(（「『【\[]\s*)?[\u3400-\u9fff]"
-)
-# Anywhere, a Latin name after the number names a clause, directly or after
-# a stop, colon, comma, bracket, dash, dot or quote (``9.140 Bar``,
-# ``9.140Bar``, ``9.57:Bar``, ``9.140、Bar``, ``9.140(Bar)``, ``9.140 - Bar``,
-# ``9.140「Bar」``).
+# A Latin name after the number, directly or after a stop, colon, comma,
+# bracket, dash, dot or quote (``9.140Bar``, ``9.140 - Bar``, ``9.140「Bar」``).
 _LATIN_NAME_AFTER_RE = re.compile(
     r"\s*(?:[.:、,，(\[【\-—–‧·「『\"“'‘]\s*)*[A-Za-z]"
 )
-_ALONE_AFTER_RE = re.compile(r"(?:[ ]*[.:、,，])?[ ]*(?:\n|$)")
 # A heading written with a hyphen at a line start (``9-140.Bar``, ``9-140
 # Bar``).
 _HYPHEN_HEADING_RE = re.compile(
     r"(?:^|(?<=[\n\t]))[^0-9A-Za-z\u3400-\u9fff\n\t]*"
     r"(?P<code>[0-9]{1,2}-[0-9]{1,3})(?:[.:]\s*|\s+)(?=[A-Za-z])"
 )
-# Not clause codes at all: an ICD-10 code (one capital letter, then two digits
-# and the stop: ``K70.0``, ``I85.01``), a number whose first part has three or
-# more digits (``115.10.1``, ``999.9``) and one with a part of four or more
-# digits (``0.9444``, ``7.39030``); clause code parts have at most three.
-_ICD_LETTER_RE = re.compile(r"(?<![A-Za-z])[A-Z]$")
+_LETTER_BEFORE_RE = re.compile(r"[A-Za-z]\Z")
+# An ICD-10 code: one capital letter, then two digits and one stop (``K70.0``,
+# ``I85.01``).
+_ICD_BEFORE_RE = re.compile(r"(?<![A-Za-z])[A-Z]\Z")
 # A title may say the notice was pre-announced before (前經預告, 業經本署預告);
 # that phrase does not make it a pre-announcement.
 _PRIOR_PRE_ANNOUNCEMENT_RE = re.compile(r"(?:前|業|已)經[^,，。()（）]{0,20}預告")
@@ -1053,16 +1067,30 @@ def designation_codes(text: str, *, heading: bool = False) -> list[str]:
 
     ``text`` is a paragraph's character data or its printed text, list label
     included.  With ``heading``, the paragraph's own strict heading code is
-    not reported.  In order:
+    not reported.  A number whose first part has three or more digits
+    (``115.10.1``) or with a part of four or more (``0.9444``) is never a
+    clause code, and a number after a comparison or arithmetic sign, an
+    attached minus sign or a range dash is a quantity
+    (:data:`_SIGN_BEFORE_RE`).  Otherwise:
 
-    * a number ended by its own stop at a line start is a designation;
-    * a quantity, a version or an ICD-10 code is not (:data:`_QUANTITY_BEFORE_RE`,
-      :data:`_UNIT_AFTER_RE`, :data:`_ICD_LETTER_RE`);
-    * at a line start, a CJK word after the number is a designation unless it
-      is a unit, age, count or range word;
-    * anywhere, a Latin name after the number is a designation;
-    * so is a number alone on its line, and a hyphenated heading.
+    * at the paragraph start, a line start or after a break
+      (:data:`_BOUNDARY_RE`) it is a designation whatever follows, unless a
+      unit word, a percent sign or a closing bracket follows it
+      (:data:`_UNIT_AFTER_RE`) or it is the version of a listed code system
+      (:data:`_CODE_SYSTEM_BEFORE_RE`);
+    * right after a letter it is a designation with two or more stops
+      (``A10.3.9``); with one, an ICD-10 code (``K70.0``) is not, and any
+      other is when a Latin name follows (``A9.140 Bar``);
+    * right after a word it is a designation when a Latin name, not a unit,
+      follows (``新增9.140 Bar``); a cross-reference (``依9.69.之規定``)
+      stays text;
+    * a hyphenated heading at a line start (``9-140 Bar``) is one too.
     """
+
+    def named_after(after: str) -> bool:
+        return bool(_LATIN_NAME_AFTER_RE.match(after)) and not _UNIT_AFTER_RE.match(
+            after
+        )
 
     text = grammar_text(text)
     skip = None
@@ -1079,26 +1107,23 @@ def designation_codes(text: str, *, heading: bool = False) -> list[str]:
         if (
             len(parts[0]) >= 3
             or any(len(part) >= 4 for part in parts)
-            or (len(parts[0]) == 2 and _ICD_LETTER_RE.search(before))
+            or _SIGN_BEFORE_RE.search(before)
         ):
             continue
-        line_start = _LINE_START_RE.search(before) is not None
-        if line_start and _HEADING_STOP_RE.match(after):
-            found.append(code)
+        if _LETTER_BEFORE_RE.search(before):
+            if len(parts) >= 3 or (
+                not (len(parts[0]) == 2 and _ICD_BEFORE_RE.search(before))
+                and named_after(after)
+            ):
+                found.append(code)
             continue
-        if _QUANTITY_BEFORE_RE.search(before) or _UNIT_AFTER_RE.match(after):
+        if _BOUNDARY_RE.search(before):
+            if not (
+                _CODE_SYSTEM_BEFORE_RE.search(before) or _UNIT_AFTER_RE.match(after)
+            ):
+                found.append(code)
             continue
-        if (
-            (
-                line_start
-                and _CJK_NAME_AFTER_RE.match(after)
-                and not _CJK_QUANTITY_WORD_RE.match(
-                    re.sub(r"^\s*[:、,，(（「『【\[]\s*", "", after)
-                )
-            )
-            or _LATIN_NAME_AFTER_RE.match(after)
-            or (line_start and _ALONE_AFTER_RE.match(after))
-        ):
+        if named_after(after):
             found.append(code)
     found.extend(match.group("code") for match in _HYPHEN_HEADING_RE.finditer(text))
     return found
