@@ -697,6 +697,48 @@ class ComparisonGrammarTest(unittest.TestCase):
         with self.assertRaisesRegex(AnnouncedNoticeError, "previous row"):
             _parse_payload(_document(body))
 
+    def test_designation_inside_a_clause_cell_fails_closed(self) -> None:
+        # 2026-09-28 finding R2-H3: the H1 fix covered rows only; a
+        # designation-like paragraph inside the same cell was merged into the
+        # clause above it (the verifier's 9.139/9.140 probe).
+        for revised in (
+            ["9.139.Foo：(115/10/1)", "限用於A", "9.140 Bar(115/10/1)", "限用於B"],
+            ["9.139.Foo：(115/10/1)", "限用於A", "9.57:Bar"],
+            ["9.139.Foo：(115/10/1)", "◎9.141.Baz"],
+            ["9.139.Foo：(115/10/1)", "0.5.藥品給付通則"],
+            ["9.139.Foo：(115/10/1)", "9.140"],
+        ):
+            with self.subTest(paragraph=revised[-1]), self.assertRaisesRegex(
+                AnnouncedNoticeError, "inside clause 9.139 reads like a designation"
+            ):
+                _parse_payload(_comparison([(revised, ["無"])]))
+        # The original column is read the same way.
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, r"inside clause 9\.2 reads like a designation \(9\.140\)"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(["9.2.Foo：(115/10/1)", "限用於A"], ["9.2.Foo：", "9.140 Bar"])]
+                )
+            )
+        # Confusable negatives: an item number or quantity run into its word,
+        # a single-level item and an omission marker stay clause text.
+        revised = [
+            "2.1.4.2.Rivaroxaban：(115/10/1)",
+            "2.18歲以上非瓣膜性心房纖維顫動病患",
+            "1.限用於",
+            "~2.(略)",
+            "2.5mg每日一次",
+            "每日2.5 mg",
+        ]
+        parsed = _parse_payload(
+            _comparison([(revised, ["2.1.4.2.Rivaroxaban：", revised[1]])])
+        )
+        self.assertEqual([c.clause_code for c in parsed.clauses], ["2.1.4.2"])
+        self.assertEqual(
+            [item.text for item in parsed.clauses[0].revised], revised
+        )
+
     def test_missing_registration_receipts_fail_closed(self) -> None:
         # 2026-09-28 finding L5: without raw.md receipts the block identity
         # check was skipped.
@@ -730,6 +772,28 @@ class ComparisonGrammarTest(unittest.TestCase):
                 AnnouncedNoticeError, message
             ):
                 _parse_payload(_comparison(rows, header=header), title=title)
+
+    def test_prior_pre_announcement_phrase_is_not_a_pre_announcement(self) -> None:
+        # 2026-09-28 finding R2-L5: any title containing 預告 was refused,
+        # including an announcement that says it was pre-announced before.
+        rows = [(["2.1.1.X：(115/10/1)"], ["2.1.1.X："])]
+        proposal = ("建議修訂後給付規定", "原給付規定")
+        for title in (
+            "公告修正「藥品給付規定」部分規定（前經預告）",
+            "公告修正「藥品給付規定」部分規定(業經本署於115年8月1日預告)",
+        ):
+            with self.subTest(title=title):
+                parsed = _parse_payload(_comparison(rows, header=proposal), title=title)
+                self.assertEqual([c.clause_code for c in parsed.clauses], ["2.1.1"])
+        for title in (
+            "預告修正「藥品給付規定」部分規定草案",
+            "公告修正「藥品給付規定」部分規定（前經預告），並預告修正附表",
+            "有關預告修正「藥品給付規定」一案",
+        ):
+            with self.subTest(title=title), self.assertRaisesRegex(
+                AnnouncedNoticeError, "pre-announcement"
+            ):
+                _parse_payload(_comparison(rows), title=title)
 
     def test_rendering_check_reads_the_clause_cell_only(self) -> None:
         # 2026-09-28 finding R2-H1: the check searched the whole document's

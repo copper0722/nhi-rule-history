@@ -51,7 +51,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.1.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.2.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -113,6 +113,16 @@ _LOOSE_DESIGNATION_RE = re.compile(
     r"^[^0-9A-Za-z\u3400-\u9fff]*"
     r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
 )
+# Inside a clause's cell, a paragraph that opens with a dotted code followed by
+# white space, a full stop or a colon reads like another designation
+# (``9.140 Bar``, ``9.57:Bar``, ``◎9.141.``); a code run into the next word is
+# a list item or a quantity (``2.18歲以上`` is item 2, 18 years or older).
+_IN_CELL_DESIGNATION_RE = re.compile(
+    r"^[^0-9A-Za-z\u3400-\u9fff]*(?P<code>[0-9]+(?:\.[0-9]+)+)(?:$|[\s.:])"
+)
+# A title may say the notice was pre-announced before (前經預告, 業經本署預告);
+# that phrase does not make it a pre-announcement.
+_PRIOR_PRE_ANNOUNCEMENT_RE = re.compile(r"(?:前|業|已)經[^,，。()（）]{0,20}預告")
 _APPENDIX_DESIGNATION_RE = re.compile(
     r"附表[一二三四五六七八九十百零〇]+(?:之[一二三四五六七八九十]+)?"
 )
@@ -965,10 +975,25 @@ def _cell_items(
     )
 
 
+def _in_cell_designation(item: OdtParagraph) -> str | None:
+    """The code of a designation-like paragraph, if ``item`` reads as one."""
+
+    for text in (item.text, item.printed_text):
+        match = _IN_CELL_DESIGNATION_RE.match(grammar_text(text))
+        if match:
+            return match.group("code")
+    return None
+
+
 def _segments(
     items: Sequence[OdtParagraph],
 ) -> list[tuple[str | None, list[OdtParagraph]]]:
-    """Split one cell at clause-heading paragraphs, keeping document order."""
+    """Split one cell at clause-heading paragraphs, keeping document order.
+
+    A paragraph inside a clause's segment that reads like another
+    designation fails closed: the clause might run on into a clause whose
+    heading is not in the strict form, and its text would be merged.
+    """
 
     segments: list[tuple[str | None, list[OdtParagraph]]] = []
     for item in items:
@@ -983,6 +1008,14 @@ def _segments(
         if code is not None:
             segments.append((code, [item]))
         elif segments:
+            owner = segments[-1][0]
+            if owner is not None and not item.nested:
+                designation = _in_cell_designation(item)
+                if designation is not None:
+                    raise AnnouncedNoticeError(
+                        f"a paragraph inside clause {owner} reads like a "
+                        f"designation ({designation})"
+                    )
             segments[-1][1].append(item)
         else:
             segments.append((None, [item]))
@@ -1153,7 +1186,7 @@ def parse_comparison_document(
     if not table_specs:
         raise AnnouncedNoticeError("attachment has no official comparison table")
     title = grammar_text(bundle.title).strip()
-    if "預告" in title:
+    if "預告" in _PRIOR_PRE_ANNOUNCEMENT_RE.sub("", title):
         raise AnnouncedNoticeError(
             "the notice is a pre-announcement (預告), not announced text"
         )
