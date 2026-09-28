@@ -39,6 +39,7 @@ from nhi_rule_history.announced_notice import (
     sha256_text,
 )
 from nhi_rule_history.announced_release import (
+    GLOBAL_LOCK_KEY,
     LOADER_VERSION,
     PLACEHOLDER_RUN_ID,
     REPRODUCED_PATCH_KEYS,
@@ -117,6 +118,7 @@ def _apply_migrations(pg: recovery_fixture.DisposablePostgres) -> None:
         "2026-07-29_nhi_rule_history_announced_version_projection_v24.sql",
         "2026-07-29_nhi_rule_history_clause_components_v25.sql",
         "2026-07-30_nhi_rule_history_clause_reader_profile_v26.sql",
+        "2026-09-28_nhi_rule_history_announced_resolution_guard_v27.sql",
     }
     missing = required & {path.name for path in pending}
     if missing:
@@ -393,6 +395,9 @@ def _rendering(notice, *codes: str) -> dict:
                                 if item.generated_label
                                 else None
                             ),
+                            "hidden": False,
+                            "bullet": None,
+                            "transform": False,
                         }
                         for item in _cell_items(
                             notice.document.paragraphs,
@@ -1756,6 +1761,134 @@ class RollbackCarryLiveTest(_LiveRunCase):
         self.assertEqual(events(first.release.run_id, BASE_PATCH), unchanged_before)
 
 
+class RollbackRecencyLiveTest(_LiveRunCase):
+    """2026-09-28 finding MEDIUM-C (DB): carry-back keeps the newer decision."""
+
+    def _two_runs(self):
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        second = self.compose(
+            [notice, _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)]
+        )
+        self.serve(second, first.release.run_id)
+        return first, second, str(self.served_patch("9.2")["patch_id"])
+
+    def _write_past_guard(self, run_id: str, patch_id: str, state: str) -> None:
+        """A write that reached the unserved run before the guard existed."""
+
+        with _connect(self.dsn, read_only=False) as connection:
+            connection.execute("SET session_replication_role = replica")
+            connection.execute(
+                "INSERT INTO nhi_rule_history_announced.patch_resolution_event "
+                "(run_id, patch_id, resolution_state, reason, evidence) "
+                "VALUES (%s,%s,%s,'fixture late write','{}')",
+                (run_id, patch_id, state),
+            )
+            connection.commit()
+
+    def test_a_newer_decision_in_the_restored_run_is_kept(self) -> None:
+        first, second, patch_92 = self._two_runs()
+        self._write_past_guard(first.release.run_id, patch_92, "withdrawn")
+        restored = rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
+        self.assertEqual(
+            [(item["clause_code"], item["decision"], item["resolution_state"])
+             for item in restored["carried_back_resolutions"]],
+            [("9.2", "kept_newer_restored", "withdrawn")],
+        )
+        served = self.served_patch("9.2")
+        self.assertEqual(
+            (served["run_id"], served["current_resolution_state"]),
+            (first.release.run_id, "withdrawn"),
+        )
+
+    def test_decisions_in_both_runs_refuse_the_rollback(self) -> None:
+        first, second, patch_92 = self._two_runs()
+        self._write_past_guard(first.release.run_id, patch_92, "withdrawn")
+        self.resolve(second.release.run_id, patch_92, "effective_unconsolidated",
+                     "fixture post-effective resolution")
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError, "rollback refused: the resolution of 9.2 changed in both runs"
+        ):
+            rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
+        self.assertEqual(self.served_patch("9.2")["run_id"], second.release.run_id)
+
+    def test_a_resolution_without_origin_refuses_the_rollback(self) -> None:
+        first, second, patch_92 = self._two_runs()
+        self._write_past_guard(first.release.run_id, patch_92, "withdrawn")
+        # Without its origin, the rolled-back run's only resolution could be
+        # a decision written while it was served, so neither side can win.
+        with _connect(self.dsn, read_only=False) as connection:
+            connection.execute("SET session_replication_role = replica")
+            stripped = connection.execute(
+                "UPDATE nhi_rule_history_announced.patch_resolution_event "
+                "SET evidence = evidence - 'carried_forward' "
+                "- 'superseded_projection' WHERE run_id=%s AND patch_id=%s",
+                (second.release.run_id, patch_92),
+            ).rowcount
+            connection.commit()
+        self.assertEqual(stripped, 1)
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError, "rollback refused: the resolution of 9.2 .*origin is not recorded"
+        ):
+            rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
+        self.assertEqual(self.served_patch("9.2")["run_id"], second.release.run_id)
+
+
+class ResolutionGuardMigrationTest(_LiveRunCase):
+    """2026-09-28 finding MEDIUM-C (DB): migration v27 and its rollback."""
+
+    GUARD = MIGRATIONS / "2026-09-28_nhi_rule_history_announced_resolution_guard_v27.sql"
+    ROLLBACK = MIGRATIONS / (
+        "2026-09-28_nhi_rule_history_announced_resolution_guard_v27.rollback.sql"
+    )
+
+    def _write(self, run_id: str, patch_id: str, *, lock_timeout: str | None = None):
+        with _connect(self.dsn, read_only=False) as connection:
+            if lock_timeout:
+                connection.execute(f"SET lock_timeout = '{lock_timeout}'")
+            connection.execute(
+                "SELECT nhi_rule_history_announced.set_patch_resolution("
+                "%s,%s,'withdrawn','fixture withdrawal','{}')",
+                (run_id, patch_id),
+            )
+            connection.commit()
+
+    def test_writes_follow_the_served_run(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        patch_92 = str(self.served_patch("9.2")["patch_id"])
+        second = self.compose([notice, _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)])
+        load_overlay_release(self.dsn, second.release)
+        # A loaded run that was never served still takes its resolutions.
+        self._write(second.release.run_id, patch_92)
+        third = self.compose(
+            [notice, _synthetic_notice(NEW_CLAUSE_REFERENCE, NEW_CLAUSE_ROWS)]
+        )
+        self.serve(third, first.release.run_id)
+        served = self.served_patch("9.2")["run_id"]
+        self.assertEqual(served, third.release.run_id)
+        # The run served before is refused; the served run is accepted.
+        with self.assertRaisesRegex(psycopg.Error, "was served before and is not the served run"):
+            self._write(first.release.run_id, patch_92)
+        self._write(served, patch_92)
+        # The writer waits for the global announced lock.
+        with psycopg.connect(self.dsn) as holder:
+            holder.execute(
+                "SELECT pg_advisory_lock(hashtextextended(%s, 0))", (GLOBAL_LOCK_KEY,)
+            )
+            with self.assertRaisesRegex(psycopg.errors.LockNotAvailable, "lock timeout"):
+                self._write(served, patch_92, lock_timeout="300ms")
+        # The rollback file restores the v22 writer, and the migration
+        # applies again on top of it.
+        self.pg.psql(file=self.ROLLBACK)
+        self._write(first.release.run_id, patch_92)
+        self.pg.psql(file=self.GUARD)
+        with self.assertRaisesRegex(psycopg.Error, "was served before and is not the served run"):
+            self._write(first.release.run_id, patch_92)
+
+
 class SupersedeReportLiveTest(_LiveRunCase):
     """2026-09-28 finding LOW: a supersede must report every column it rewrites."""
 
@@ -1846,6 +1979,41 @@ def _write_bundle(
     if corrupt:
         (bundle / "attachment-000.odt").write_bytes(payload + b"\0")
     return relative
+
+
+class RenderingInputTest(unittest.TestCase):
+    """2026-09-28 finding LOW-3: the attachment is rendered as verified."""
+
+    def test_changed_attachment_bytes_are_not_rendered(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "attachment-000.odt"
+            good = replace(notice, attachment=replace(notice.attachment, path=path))
+            path.write_bytes(b"changed after verification")
+            seen = {}
+
+            def render(payloads, **_):
+                seen.update(payloads)
+                return {key: {"tables": []} for key in payloads}
+
+            with mock.patch.object(cli, "render_table_cells", side_effect=render):
+                self.assertEqual(cli._renderings([good]), {SUPERSEDE_REFERENCE: None})
+            self.assertEqual(seen, {})
+            # Confusable negative: the verified bytes are rendered.
+            payload = fixture_odt(
+                notice_fixture._comparison(SUPERSEDE_ROWS[:1])
+            )
+            path.write_bytes(payload)
+            verified = replace(
+                good,
+                attachment=replace(
+                    good.attachment, sha256=hashlib.sha256(payload).hexdigest()
+                ),
+            )
+            with mock.patch.object(cli, "render_table_cells", side_effect=render):
+                self.assertEqual(
+                    cli._renderings([verified]), {SUPERSEDE_REFERENCE: {"tables": []}}
+                )
 
 
 class CliReceiptLiveTest(unittest.TestCase):

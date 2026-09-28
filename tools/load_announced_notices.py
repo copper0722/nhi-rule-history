@@ -37,6 +37,7 @@ updated.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -160,14 +161,21 @@ def _carried_references(dsn: str) -> set[str]:
 
 
 def _renderings(notices: Sequence[ParsedNotice]) -> dict[str, Any]:
-    """LibreOffice's cell rendering of each notice's comparison attachment."""
+    """LibreOffice's cell rendering of each notice's comparison attachment.
 
-    return render_table_cells(
-        {
-            notice.bundle.reference_number: notice.attachment.path.read_bytes()
-            for notice in notices
-        }
-    )
+    The attachment is read again here; bytes that no longer match the
+    verified attachment are not rendered, so the notice stays unconfirmed.
+    """
+
+    payloads = {}
+    for notice in notices:
+        payload = notice.attachment.path.read_bytes()
+        if hashlib.sha256(payload).hexdigest() == notice.attachment.sha256:
+            payloads[notice.bundle.reference_number] = payload
+    rendered = render_table_cells(payloads)
+    return {notice.bundle.reference_number: rendered.get(
+        notice.bundle.reference_number
+    ) for notice in notices}
 
 
 def _verification(args: argparse.Namespace) -> dict[str, Any]:

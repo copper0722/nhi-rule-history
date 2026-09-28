@@ -1,5 +1,32 @@
 # Worklog
 
+## 2026-09-29 — Overlay loader 2.3.0 deployed; v27 pending; auto-activation still held
+
+- Merged round 5. The cell rendering check (rule 1.1.0) now also reports,
+  per paragraph, hidden text (character, paragraph and label styles, hiding
+  fields, hidden or conditional sections), bullets and case maps. A revised
+  cell with any of them, or a rendering that does not report them, cannot be
+  confirmed. Parser 1.4.0 reads designations drawn by list labels and
+  CJK-named headings in a fixed order and fails closed on them.
+- Rollback carries resolutions back by recency. A change made only in the
+  rolled-back run is carried back, a change made only in the restored run is
+  kept, and a change in both refuses the rollback. The restored run is
+  activated before anything is written to it.
+- The independent verifier found it safe to deploy with the lane's
+  activation hold kept on. A read-only compose on the served run gave 20
+  reproduced and 14 carried patches, byte-identical to the producer's
+  receipt. The real clause texts are byte-identical across the four reviewed
+  loader versions.
+- Migration v27 moves the resolution writer's rules into the database and is
+  verified but not yet applied. It must follow this deployment: loader 2.2.0
+  writes before it activates, so under v27 it would refuse a rollback that
+  carries a withdrawal back.
+- Auto-activation stays held. The effective-date statement sits outside the
+  comparison table, so hidden or conditional content in it can show readers a
+  date other than the one the parser reads (O1). Loose designations without a
+  terminal stop still merge into the clause above (B5). Neither occurs in the
+  real data.
+
 ## 2026-09-28 — Overlay loader 2.2.0 deployed; auto-activation still held
 
 - Merged the unattended-use hardening. It adds per-cell LibreOffice rendering
