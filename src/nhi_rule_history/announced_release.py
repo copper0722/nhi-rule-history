@@ -58,6 +58,7 @@ from nhi_rule_history.announced_notice import (
     ParsedNotice,
     exact_in_rendering,
     projection_block_reason,
+    registered_manifest_identity,
     sha256_text,
     stable_uuid,
 )
@@ -388,17 +389,49 @@ class QueuedBundle:
     corpus_manifest_sha256: str
     first_title_raw: str
     problem: str | None = None
+    manifest_identity: Mapping[str, Any] | None = None
+
+
+def queued_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
+    """One queue receipt, with its bundle's registered-manifest identity.
+
+    The receipt names the bundle by a corpus-relative path and pins the
+    registered manifest digest.  A bundle whose manifest cannot be proven to
+    be the registered one carries a ``problem`` and must not be parsed.
+    """
+
+    evidence = row["evidence_json"] or {}
+    relative = str(evidence.get("corpus_bundle_relative_path") or "")
+    if not relative or Path(relative).is_absolute() or ".." in Path(
+        relative
+    ).parts:
+        raise AnnouncedReleaseError("queue receipt has no safe bundle path")
+    bundle_dir = Path(corpus_root) / relative
+    registered = str(evidence.get("corpus_manifest_sha256") or "")
+    manifest = bundle_dir / "manifest.json"
+    problem = None
+    identity = None
+    try:
+        identity = registered_manifest_identity(manifest.read_bytes(), registered)
+    except OSError:
+        problem = "corpus manifest is missing"
+    except AnnouncedNoticeError as exc:
+        problem = str(exc)
+    return QueuedBundle(
+        work_item_id=str(row["work_item_id"]),
+        source_uid=str(evidence.get("source_uid") or ""),
+        bundle_dir=bundle_dir,
+        corpus_manifest_sha256=registered,
+        first_title_raw=str(row["first_title_raw"]),
+        problem=problem,
+        manifest_identity=identity,
+    )
 
 
 def queued_bundles(
     dsn: str, *, corpus_root: Path, state: str = "corpus_registered"
 ) -> list[QueuedBundle]:
-    """Registered notice bundles waiting in the update queue at ``state``.
-
-    The queue receipt names the bundle by a corpus-relative path and pins its
-    manifest hash; a bundle whose manifest bytes differ carries a ``problem``
-    and must not be parsed.
-    """
+    """Registered notice bundles waiting in the update queue at ``state``."""
 
     with _connect(dsn, read_only=True) as connection:
         rows = connection.execute(
@@ -411,36 +444,7 @@ def queued_bundles(
             """,
             (state,),
         ).fetchall()
-    found: list[QueuedBundle] = []
-    root = Path(corpus_root)
-    for row in rows:
-        evidence = row["evidence_json"] or {}
-        relative = str(evidence.get("corpus_bundle_relative_path") or "")
-        if not relative or Path(relative).is_absolute() or ".." in Path(
-            relative
-        ).parts:
-            raise AnnouncedReleaseError("queue receipt has no safe bundle path")
-        bundle_dir = root / relative
-        manifest = bundle_dir / "manifest.json"
-        digest = (
-            hashlib.sha256(manifest.read_bytes()).hexdigest()
-            if manifest.is_file()
-            else ""
-        )
-        problem = None
-        if digest != evidence.get("corpus_manifest_sha256"):
-            problem = "corpus manifest differs from its queue receipt"
-        found.append(
-            QueuedBundle(
-                work_item_id=str(row["work_item_id"]),
-                source_uid=str(evidence.get("source_uid") or ""),
-                bundle_dir=bundle_dir,
-                corpus_manifest_sha256=digest,
-                first_title_raw=str(row["first_title_raw"]),
-                problem=problem,
-            )
-        )
-    return found
+    return [queued_bundle(row, corpus_root) for row in rows]
 
 
 # ---------------------------------------------------------------------------
@@ -638,6 +642,11 @@ def notice_rows(
             "source_uid": notice.bundle.source_uid,
             "reference_number": notice.bundle.reference_number,
             "corpus_manifest_sha256": notice.bundle.manifest_sha256,
+            **(
+                {"corpus_manifest_identity": dict(notice.bundle.manifest_identity)}
+                if notice.bundle.manifest_identity is not None
+                else {}
+            ),
             "source_artifact_sha256": notice.attachment.sha256,
             "source_artifact_filename": notice.attachment.file_name,
             "comparison_table": {

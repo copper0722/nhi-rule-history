@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import itertools
 import json
 import re
 import shutil
@@ -42,6 +43,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 from xml.etree import ElementTree
 
+from nhi_rule_history.contracts import canonical_json_bytes
 from nhi_rule_history.current_publication import semantic_comparison_text
 from nhi_rule_history.odf_list_numbering import (
     LIST_LABEL_RULE_VERSION,
@@ -115,6 +117,13 @@ _OMISSION_RE = re.compile(
     r"|(?:^|[\s:,、。)\]】~])略\s*[。.]?\s*$"
 )
 _UNSUPPORTED_CELL_TAGS = frozenset({_TAG_NOTE, _TAG_ANNOTATION})
+# Corpus bookkeeping may add or advance these ``extraction_status`` keys in
+# manifest.json after registration.  Each maps to the values the key may have
+# held at registration (``None``: absent); no other manifest byte may change.
+_BOOKKEEPING_REVERSIONS: Mapping[str, tuple[str | None, ...]] = {
+    "mineru": (None,),
+    "proofread": ("not_started",),
+}
 
 
 class AnnouncedNoticeError(PgLoadError):
@@ -203,6 +212,77 @@ class NoticeBundle:
     attachments: tuple[NoticeAttachment, ...]
     announcement_items: tuple[str, ...]
     raw_md_blocks: Mapping[str, tuple[tuple[str, str], ...]]
+    manifest_identity: Mapping[str, Any] | None = None
+
+
+def registered_manifest_identity(
+    manifest_bytes: bytes, registered_sha256: str
+) -> dict[str, Any]:
+    """Prove that manifest.json is the registered one, up to bookkeeping.
+
+    Corpus registration records the SHA-256 of the canonical manifest bytes.
+    Later corpus bookkeeping may re-serialize manifest.json and add or
+    advance the ``extraction_status`` keys in ``_BOOKKEEPING_REVERSIONS``.
+    The registered bytes are rebuilt by reverting only those keys and must
+    hash to the recorded digest, which proves that every file row, hash and
+    identity field is exactly the registered one.  Anything else raises.
+    """
+
+    current = hashlib.sha256(manifest_bytes).hexdigest()
+    if not re.fullmatch(r"[0-9a-f]{64}", registered_sha256 or ""):
+        raise AnnouncedNoticeError("registration receipt has no manifest digest")
+    if current == registered_sha256:
+        return {
+            "method": "identical_bytes",
+            "registered_manifest_sha256": registered_sha256,
+            "current_manifest_sha256": current,
+        }
+    try:
+        manifest = json.loads(manifest_bytes)
+    except ValueError as exc:
+        raise AnnouncedNoticeError("corpus manifest is not JSON") from exc
+    status = manifest.get("extraction_status") if isinstance(manifest, dict) else None
+    if not isinstance(status, dict):
+        raise AnnouncedNoticeError(
+            "corpus manifest differs from its registration receipt"
+        )
+    keys = [key for key in _BOOKKEEPING_REVERSIONS if key in status]
+    choices = [
+        [("kept", status[key])]
+        + [
+            ("reverted", value)
+            for value in _BOOKKEEPING_REVERSIONS[key]
+            if value != status[key]
+        ]
+        for key in keys
+    ]
+    for combination in itertools.product(*choices):
+        candidate_status = dict(status)
+        reverted: dict[str, Any] = {}
+        for key, (action, value) in zip(keys, combination):
+            if action != "reverted":
+                continue
+            reverted[key] = {"registered": value, "current": status[key]}
+            if value is None:
+                del candidate_status[key]
+            else:
+                candidate_status[key] = value
+        candidate = dict(manifest)
+        candidate["extraction_status"] = candidate_status
+        rebuilt = hashlib.sha256(canonical_json_bytes(candidate)).hexdigest()
+        if rebuilt == registered_sha256:
+            return {
+                "method": "canonical_bytes_with_bookkeeping_reverted"
+                if reverted
+                else "canonical_bytes",
+                "registered_manifest_sha256": registered_sha256,
+                "current_manifest_sha256": current,
+                "reverted_extraction_status": reverted,
+            }
+    raise AnnouncedNoticeError(
+        "corpus manifest differs from its registration receipt beyond "
+        "extraction-status bookkeeping"
+    )
 
 
 def _raw_md_sections(raw_md: str) -> tuple[tuple[str, ...], dict[str, list]]:
@@ -225,8 +305,15 @@ def _raw_md_sections(raw_md: str) -> tuple[tuple[str, ...], dict[str, list]]:
     return tuple(items), blocks
 
 
-def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
-    """Read one registered corpus bundle and verify its file inventory."""
+def read_notice_bundle(
+    bundle_dir: Path, *, registered_manifest_sha256: str | None = None
+) -> NoticeBundle:
+    """Read one registered corpus bundle and verify its file inventory.
+
+    With ``registered_manifest_sha256`` (the queue's registration receipt)
+    the manifest must be proven identical to the registered one, and the
+    notice is identified by the registered digest.
+    """
 
     bundle_dir = Path(bundle_dir)
     real_root = bundle_dir.resolve(strict=True)
@@ -242,6 +329,13 @@ def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
     if not manifest_path.is_file() or not inside(manifest_path):
         raise AnnouncedNoticeError("corpus bundle manifest is missing")
     manifest_bytes = manifest_path.read_bytes()
+    identity = (
+        None
+        if registered_manifest_sha256 is None
+        else registered_manifest_identity(
+            manifest_bytes, registered_manifest_sha256
+        )
+    )
     manifest = json.loads(manifest_bytes)
     if manifest.get("schema") != CORPUS_BUNDLE_SCHEMA:
         raise AnnouncedNoticeError("corpus bundle schema is unsupported")
@@ -299,12 +393,17 @@ def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
         title=str(manifest.get("title_zh") or ""),
         official_url=official_url,
         published_on=published_on,
-        manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        manifest_sha256=(
+            hashlib.sha256(manifest_bytes).hexdigest()
+            if identity is None
+            else identity["registered_manifest_sha256"]
+        ),
         attachments=tuple(attachments),
         announcement_items=items,
         raw_md_blocks={
             name: tuple(values) for name, values in raw_blocks.items()
         },
+        manifest_identity=identity,
     )
 
 

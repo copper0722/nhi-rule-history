@@ -595,8 +595,14 @@ labelled as the revised column of the table and never as a complete clause.
 
 - Input is a registered corpus bundle. Every manifest file is re-hashed. Blocks
   come from the project ODT parser and must equal the `raw.md` source-block
-  receipts written at registration. Queue mode also requires the manifest bytes
-  to match the queue receipt.
+  receipts written at registration. Queue mode also requires the manifest to be
+  the registered one: the queue receipt pins the SHA-256 of the canonical
+  manifest bytes, and corpus bookkeeping may later re-serialize `manifest.json`
+  and add or advance `extraction_status.mineru` or `.proofread`. The registered
+  bytes are rebuilt by reverting only those keys and must hash to the receipt,
+  which proves every file row and identity field unchanged; any other
+  difference is refused. The notice is then identified by the registered
+  digest, and the evidence records which keys were reverted.
 - A comparison table has exactly two columns: a revised header
   (`修訂後給付規定`, `建議修訂後給付規定`, `修訂後附表規定`) and the
   matching original header (`原給付規定`, `原附表規定`). Any other header,

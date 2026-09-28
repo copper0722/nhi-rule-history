@@ -9,7 +9,9 @@ activate  make a loaded run the served run (precondition-checked)
 rollback  re-activate the chain recorded when a run was activated
 
 Notices come from ``--notice`` bundle paths (relative to ``--corpus-root``)
-or from the update queue with ``--queue-state``.  No command calls a model.
+or from the update queue with ``--queue-state``; a queued bundle's manifest
+must be proven identical to its registration receipt.  No command calls a
+model.
 
 compose, load and activate print one JSON receipt on stdout; errors go to
 stderr.  Every receipt lists ``failures`` (notices that failed to parse, bind,
@@ -62,8 +64,12 @@ EXIT_HOLDS = 3
 
 def _bundles(
     args: argparse.Namespace,
-) -> tuple[list[Path], list[dict[str, Any]]]:
-    paths = [args.corpus_root / item for item in args.notice or ()]
+) -> tuple[list[tuple[Path, str | None]], list[dict[str, Any]]]:
+    """Bundle paths, each with its registered manifest digest if queued."""
+
+    paths: list[tuple[Path, str | None]] = [
+        (args.corpus_root / item, None) for item in args.notice or ()
+    ]
     failures: list[dict[str, Any]] = []
     if args.queue_state:
         for item in queued_bundles(
@@ -74,12 +80,12 @@ def _bundles(
                     {"bundle": item.bundle_dir.name, "error": item.problem}
                 )
             else:
-                paths.append(item.bundle_dir)
-    unique: list[Path] = []
-    for path in paths:
-        if path not in unique:
-            unique.append(path)
-    return unique, failures
+                paths.append((item.bundle_dir, item.corpus_manifest_sha256))
+    unique: dict[Path, str | None] = {}
+    for path, registered in paths:
+        if unique.get(path) is None:
+            unique[path] = registered
+    return list(unique.items()), failures
 
 
 def _parse(
@@ -92,9 +98,11 @@ def _parse(
     for failure in failures:
         failure.setdefault("stage", "queue")
     dropped: list[dict[str, Any]] = []
-    for path in paths:
+    for path, registered in paths:
         try:
-            notice = parse_notice(read_notice_bundle(path))
+            notice = parse_notice(
+                read_notice_bundle(path, registered_manifest_sha256=registered)
+            )
         except AnnouncedNoticeError as exc:
             failures.append(
                 {"bundle": path.name, "stage": "parse", "error": str(exc)}
