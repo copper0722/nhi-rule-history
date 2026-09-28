@@ -74,7 +74,7 @@ from nhi_rule_history.pg.common import (
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.2.0"
+LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.3.0"
 GLOBAL_LOCK_KEY = "nhi-rule-history-announced-global"
 CIVIL_TIMEZONE = "Asia/Taipei"
 EMPTY_TEXT_SHA256 = sha256_text("")
@@ -2653,16 +2653,22 @@ def _lock_resolutions(connection: Any) -> None:
     )
 
 
-def _carry_resolutions_back(
+def _carry_back_plan(
     connection: Any, *, from_run_id: str, to_run_id: str
 ) -> list[dict[str, Any]]:
-    """Carry resolutions written to a rolled-back run to the restored run.
+    """Which resolutions a rollback carries back, decided by recency.
 
-    A patch served by both runs whose current state or reason differs (for
-    example a withdrawal written while ``from_run_id`` was served) gets a
-    new resolution in ``to_run_id`` with that state and reason, the
-    evidence carried verbatim and a ``carried_forward`` key naming the
-    source event.
+    For each patch served by both runs whose current state or reason
+    differs, the rolled-back run's first resolution names the restored run's
+    event it was carried from (``carried_forward`` or
+    ``superseded_projection``).  Then:
+
+    * only the rolled-back run changed since (for example a withdrawal
+      written while it was served): its current resolution is carried back;
+    * only the restored run changed since: the restored run keeps its newer
+      resolution;
+    * both changed, or the provenance is missing: the rollback is refused,
+      because either choice would drop a decision.
     """
 
     rows = connection.execute(
@@ -2671,58 +2677,131 @@ def _carry_resolutions_back(
                source.resolution_id, source.resolution_state,
                source.resolution_reason, source.resolution_evidence,
                source.resolution_recorded_at,
+               target.resolution_id AS target_id,
                target.resolution_state AS target_state,
-               target.resolution_reason AS target_reason
+               target.resolution_reason AS target_reason,
+               first.resolution_id AS first_id,
+               first.evidence AS first_evidence
         FROM {SCHEMA}.v_current_patch_resolution source
         JOIN {SCHEMA}.v_current_patch_resolution target
           ON target.patch_id = source.patch_id AND target.run_id = %s
         JOIN {SCHEMA}.clause_patch patch
           ON patch.run_id = source.run_id AND patch.patch_id = source.patch_id
+        JOIN LATERAL (
+          SELECT event.resolution_id, event.evidence
+          FROM {SCHEMA}.patch_resolution_event event
+          WHERE event.run_id = source.run_id
+            AND event.patch_id = source.patch_id
+          ORDER BY event.resolution_id
+          LIMIT 1
+        ) first ON true
         WHERE source.run_id = %s
         ORDER BY patch.clause_code, source.patch_id
         """,
         (to_run_id, from_run_id),
     ).fetchall()
-    carried: list[dict[str, Any]] = []
+    plan: list[dict[str, Any]] = []
+    conflicts: list[str] = []
     for row in rows:
         if (row["resolution_state"], row["resolution_reason"]) == (
             row["target_state"],
             row["target_reason"],
         ):
             continue
-        evidence = _jsonable(row["resolution_evidence"]) or {}
-        carried_from = {
-            "run_id": from_run_id,
-            "resolution_id": int(row["resolution_id"]),
-            "recorded_at": row["resolution_recorded_at"].isoformat(),
-            "loader_version": LOADER_VERSION,
-            "carried_row_rule": (
-                "rollback restores this run; the rolled-back run's current "
-                "resolution of the patch is carried back"
-            ),
-        }
-        if "carried_forward" in evidence:
-            carried_from["previous"] = evidence["carried_forward"]
-        resolution_id = connection.execute(
-            f"SELECT {SCHEMA}.set_patch_resolution(%s,%s,%s,%s,%s::jsonb) AS id",
-            (
-                to_run_id,
-                row["patch_id"],
-                row["resolution_state"],
-                row["resolution_reason"],
-                json_text({**evidence, "carried_forward": carried_from}),
-            ),
-        ).fetchone()["id"]
-        carried.append(
-            {
-                "clause_code": str(row["clause_code"]),
-                "patch_id": str(row["patch_id"]),
-                "resolution_state": str(row["resolution_state"]),
-                "from_resolution_id": int(row["resolution_id"]),
-                "resolution_id": int(resolution_id),
-            }
+        origin = _resolution_origin(row["first_evidence"])
+        source_changed = row["resolution_id"] != row["first_id"]
+        target_changed = origin is not None and (
+            str(origin.get("run_id")) != to_run_id
+            or origin.get("resolution_id") != row["target_id"]
         )
-    return carried
+        entry = {
+            "clause_code": str(row["clause_code"]),
+            "patch_id": str(row["patch_id"]),
+            "resolution_state": str(row["resolution_state"]),
+            "from_resolution_id": int(row["resolution_id"]),
+            "restored_resolution_id": int(row["target_id"]),
+        }
+        if origin is None:
+            # The first resolution may itself be a decision written while
+            # the run was served; which one is newer cannot be told.
+            conflicts.append(entry["clause_code"])
+        elif source_changed and not target_changed:
+            evidence = _jsonable(row["resolution_evidence"]) or {}
+            carried_from = {
+                "run_id": from_run_id,
+                "resolution_id": int(row["resolution_id"]),
+                "recorded_at": row["resolution_recorded_at"].isoformat(),
+                "loader_version": LOADER_VERSION,
+                "carried_row_rule": (
+                    "rollback restores this run; the rolled-back run's "
+                    "current resolution of the patch is newer and is "
+                    "carried back"
+                ),
+            }
+            if "carried_forward" in evidence:
+                carried_from["previous"] = evidence["carried_forward"]
+            plan.append(
+                {
+                    **entry,
+                    "decision": "carried",
+                    "reason": str(row["resolution_reason"]),
+                    "evidence": {**evidence, "carried_forward": carried_from},
+                }
+            )
+        elif target_changed and not source_changed:
+            plan.append(
+                {
+                    **entry,
+                    "resolution_state": str(row["target_state"]),
+                    "decision": "kept_newer_restored",
+                }
+            )
+        else:
+            conflicts.append(entry["clause_code"])
+    if conflicts:
+        raise AnnouncedReleaseError(
+            "rollback refused: the resolution of "
+            + ", ".join(sorted(conflicts))
+            + " changed in both runs since the rolled-back run was composed,"
+            " or its origin is not recorded; resolve it in the served run first"
+        )
+    return plan
+
+
+def _carry_back(
+    connection: Any, plan: Sequence[Mapping[str, Any]], *, to_run_id: str
+) -> list[dict[str, Any]]:
+    """Write the carried entries of ``plan`` to the (now served) restored run."""
+
+    done: list[dict[str, Any]] = []
+    for entry in plan:
+        summary = {
+            key: entry[key]
+            for key in (
+                "clause_code",
+                "patch_id",
+                "resolution_state",
+                "from_resolution_id",
+                "restored_resolution_id",
+                "decision",
+            )
+        }
+        if entry["decision"] == "carried":
+            summary["resolution_id"] = int(
+                connection.execute(
+                    f"SELECT {SCHEMA}.set_patch_resolution("
+                    "%s,%s,%s,%s,%s::jsonb) AS id",
+                    (
+                        to_run_id,
+                        entry["patch_id"],
+                        entry["resolution_state"],
+                        entry["reason"],
+                        json_text(entry["evidence"]),
+                    ),
+                ).fetchone()["id"]
+            )
+        done.append(summary)
+    return done
 
 
 def rollback_overlay_release(
@@ -2733,9 +2812,11 @@ def rollback_overlay_release(
 ) -> dict[str, Any]:
     """Re-activate the chain recorded when ``from_run_id`` was activated.
 
-    Resolutions written to ``from_run_id`` while it was served are carried
-    back to the restored run (:func:`_carry_resolutions_back`), so rolling
-    back never reverts a withdrawal or a reconciliation.
+    Resolutions are carried back by recency (:func:`_carry_back_plan`): a
+    resolution written to ``from_run_id`` while it was served is carried to
+    the restored run, a newer one already in the restored run is kept, and
+    a conflict refuses the rollback.  The restored run is activated before
+    anything is written to it, as the resolution guard requires.
     """
 
     with _connect(dsn, read_only=False) as connection:
@@ -2760,22 +2841,25 @@ def rollback_overlay_release(
         if activation is None:
             raise AnnouncedReleaseError("no recorded previous chain to restore")
         previous = activation["evidence"]["previous"]
+        restored_run_id = str(previous["release_run_id"])
         _lock_resolutions(connection)
-        carried_back = _carry_resolutions_back(
-            connection,
-            from_run_id=from_run_id,
-            to_run_id=str(previous["release_run_id"]),
+        plan = _carry_back_plan(
+            connection, from_run_id=from_run_id, to_run_id=restored_run_id
         )
         evidence = {
             "loader_version": LOADER_VERSION,
             "rolled_back_run_id": from_run_id,
             "restored": previous,
-            "carried_back_resolutions": carried_back,
+            "carried_back_resolutions": [
+                {key: value for key, value in entry.items() if key != "evidence"}
+                for entry in plan
+            ],
         }
         connection.execute(
             f"SELECT {SCHEMA}.set_release_control(%s,'activate',%s,%s::jsonb)",
-            (previous["release_run_id"], reason, json_text(evidence)),
+            (restored_run_id, reason, json_text(evidence)),
         )
+        carried_back = _carry_back(connection, plan, to_run_id=restored_run_id)
         _activate_chain(connection, previous, reason=reason, evidence=evidence)
         connection.commit()
     return verify_served_chain(dsn, expected=previous) | {
