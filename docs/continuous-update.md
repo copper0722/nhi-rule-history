@@ -631,11 +631,23 @@ labelled as the revised column of the table and never as a complete clause.
 - A clause starts at a paragraph whose dotted code ends in its own full stop
   (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
   same codes, or the original column must read `無` (a new clause).
-- Inside a clause's cell, in either column, a paragraph that opens with a
-  dotted code followed by white space, a full stop or a colon (`9.140 Bar`,
-  `9.57:Bar`, `◎9.141.`, `0.5.`) fails the notice closed: the clause may run
-  on into a clause whose heading is not in the strict form. A code run into
-  the next word (`2.18歲以上`, `2.5mg`) stays clause text.
+- Inside a clause's cell, in either column and in rows that would continue
+  the clause above, a dotted number anywhere in a paragraph that reads like a
+  designation fails the notice closed: the clause may run on into a clause
+  whose heading is not in the strict form. That covers a number after a line
+  break, a tab, a run of spaces, a sentence or a word (`新增9.140 Bar`,
+  `A9.140 Bar`), digits joined by a middle dot (`9·140`), and the heading
+  paragraph after its own code. It reads like a designation when:
+  - a Latin name follows it, directly or after a stop, colon, comma or
+    bracket (`9.140 Bar`, `9.140Bar`, `9.57:Bar`, `9.140、Bar`, `9.140(Bar)`);
+  - a stop or colon runs into a CJK name (`0.5.藥品給付通則`);
+  - it stands alone on its line;
+  - it is a hyphenated heading (`9-140.Bar`) at a line start.
+
+  A quantity is never reported: a number after a comparison or arithmetic
+  sign (`≦ -2.5`, `min/1.73`), or before a unit, a CJK word, a closing bracket
+  or a percent sign (`2.5 mg`, `0.5 mg/kg`, `1.5倍`, `2.18歲以上`). A number
+  run into a CJK word cannot be told from a list item and is not reported.
 - A row without a code continues the previous clause only on positive
   evidence. The clause above must end on the previous row of the same table,
   and each column must hold one undesignated segment. The original column
@@ -709,6 +721,9 @@ labelled as the revised column of the table and never as a complete clause.
   (`official_rendering_unverified`). `load` requires this rendering unless the
   operator waives it explicitly. The whole-document text export used before
   loader 2.1.0 could not tell cells apart and could not see separators.
+  Documents are reported as they finish. A document that crashes the office
+  process or stalls it (120 s by default) stays unrendered, and the other
+  documents get a fresh process. Only that notice then fails at `rendering`.
 
 ### Release composition (`nhi_rule_history.announced_release`)
 
@@ -735,8 +750,12 @@ that keeps everything the active run serves:
   the effective-date span and the rendering-check result.
 - `release_run.source_artifact_sha256` holds the fingerprint of the ordered
   (reference number, artifact hash) set.
-- Runs are sealed by loader `…/announced-overlay-loader/2.1.0` (the cell
-  rendering check, parser 1.2.0 and list-label rule 1.1.0). The seal covers
+- The input fingerprint, and so the run id, covers the base run's current
+  resolution of every patch (`base_resolution_pins`). After a resolution is
+  written to the served run, the next compose is a new run that carries it;
+  it never replays a loaded run with stale resolutions.
+- Runs are sealed by loader `…/announced-overlay-loader/2.2.0` (the cell
+  rendering check, parser 1.3.0 and list-label rule 1.1.0). The seal covers
   exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader 1.0.0
   runs also sealed the carried document tables. Activation accepts only runs
   sealed by the current loader version; rollback restores a recorded chain
@@ -752,10 +771,13 @@ the served run as it is now: each patch the served run serves must have, in
 the new run, a resolution carried from the served run's current resolution of
 that patch (the same resolution id under `carried_forward` or
 `superseded_projection`) with the same state and reason, and no resolution
-may come from another run. A withdrawal written to the served run after
-composition is therefore never reverted, and a run composed on any other
-base (for example before a rollback) is refused; compose again instead. The
-subscriber sync runs the 2.6.1 loader with
+may come from another run. Before comparing, it locks
+`patch_resolution_event` against writes (SHARE ROW EXCLUSIVE) until commit.
+A writer that does not take the global lock waits, and a write already in
+flight is waited for and then seen. A withdrawal written to the served run
+after composition is therefore never reverted, and a run composed on any
+other base (for example before a rollback) is refused; compose again
+instead. The subscriber sync runs the 2.6.1 loader with
 activation on every tick, and that loader re-activates its own run whenever
 the served run has no 2.6.1 composed version for the 2.6.1 notice artifact.
 So while the served run carries that version, `activate` refuses a run
@@ -764,6 +786,21 @@ notice artifact. Before committing, it also runs the loader's own
 active-source query on the activated state. It appends release,
 normalization, diff and reader-profile control events in one transaction and
 records the previous chain. `rollback` re-activates that recorded chain.
+
+Rollback carries resolutions back. For each patch served by both runs whose
+current state or reason in the rolled-back run differs, the restored run gets
+a new resolution with that state and reason. Its evidence is carried
+verbatim, with `carried_forward` naming the source event, and the rollback
+receipt and control event list the patches as `carried_back_resolutions`. A
+withdrawal written while the later run was served therefore survives
+rollback.
+
+The subscriber sync's 2.6.1 tick (`tools/load_announced_dyslipidemia.py`)
+runs the loader in one database session. That session holds the global
+announced lock from before the served run is read until after it is
+(re-)activated, so an overlay activation waits instead of being undone by the
+tick. The loader module itself is unchanged: its code hash is part of the
+2.6.1 normalization and diff run identities.
 
 ### Failure isolation and receipts
 
@@ -779,7 +816,10 @@ and is reported, while the rest of the batch still composes:
 - the notice states no clause amendment and no other effect;
 - a carried notice's fresh projection no longer reproduces a patch the run
   serves for it (stage `carried`; next subsection);
-- a supersede is refused (next subsection).
+- a supersede is refused (next subsection);
+- a bundle or queue receipt raises an unexpected exception (a manifest that
+  is not JSON, an ODT whose XML is cut): stage `parse` or `queue`, with the
+  exception type named.
 
 Only run-level invariants abort the batch: the base chain (active run,
 counts, row hashes, resolutions), the current publication, the target schema,
@@ -798,18 +838,25 @@ stderr. Every receipt has these lists:
   `clause_amendment` effects with a code), with the reason and whether the
   notice is `new`, `superseded` or `carried` in this run.
 - `superseded_notices`: notices whose carried rows were replaced, with their
-  served and added clauses and the `scope_changes` the replacement makes to
-  served patches (`partial_event_projection`, `unprocessed_event_scope`).
+  served and added clauses and the `scope_changes`: every column the
+  replacement rewrites in a served patch (for example
+  `partial_event_projection`, `unprocessed_event_scope`,
+  `component_manifest_sha256`, `public_note`).
 - `carried_notices`: selected notices that the run already carries unchanged,
-  with the `reproduced_clauses` their fresh projection re-proved.
+  with the `reproduced_clauses` their fresh projection re-proved and any
+  `predecessor_moved_clauses`.
+- `carried_predecessor_moved` (compose and load): served patches whose
+  publication text moved (next subsection), with the served and current
+  predecessor hashes, the served resolution state and `settled`.
 
 Appendix-table and listed-item effects are pending by design. They appear per
 notice under `pending_effects`, not as held-back clauses.
 
 - `status` is `passed` (a run was composed, loaded or activated) or
   `no_change` (nothing new to compose) only when `failures`,
-  `dropped_notices` and `blocked_clauses` are all empty. Otherwise it is
-  `passed_with_holds` or `no_change_with_holds`.
+  `dropped_notices` and `blocked_clauses` are all empty and every moved
+  predecessor is settled. Otherwise it is `passed_with_holds` or
+  `no_change_with_holds`.
 - Exit status: 0 green, 3 completed with holds, 1 error. Exit status 3 means
   the step took effect: a `load` sealed its run, and an `activate` served it.
   A scheduler must read `status` and must not treat 3 as a failed step.
@@ -831,11 +878,21 @@ notice under `pending_effects`, not as held-back clauses.
 ### Superseding a carried notice
 
 A notice that the served run already carries is projected again on every
-compose. Each `patch_only` patch the run serves for it must come back with the
-same patch id, text hash, effective date and predecessor text hash; otherwise
-the notice is a `carried` failure (for example a clause now held back, or a
-publication change that moved its predecessor), its carried rows stay
-served, and the receipt is not green. A reviewed composite is not compared.
+compose, against what the publication holds now. Each `patch_only` patch the
+run serves for it must come back with the same patch id, text hash and
+effective date. Otherwise the notice is a `carried` failure (for example a
+clause now held back or changed text), its carried rows stay served, and the
+receipt is not green. A reviewed composite is not compared.
+
+When NHI consolidates or amends a served clause, the publication text the
+patch was bound to moves. A new clause may also appear in the publication.
+The patch is then listed in `carried_predecessor_moved` and handled as
+follows:
+- its served rows stay as they are and are never re-bound;
+- other notices compose, load and activate as usual;
+- a supersede of that notice is dropped (`carried_predecessor_moved`);
+- the entry holds the status until the patch is settled: reconciled,
+  corrected, withdrawn or conflicted.
 
 A later compose may project more of a carried notice's clauses, for example
 after a parser fix admits clauses held back for generated list labels.
