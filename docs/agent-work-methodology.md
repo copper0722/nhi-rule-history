@@ -311,12 +311,12 @@ foreign key。
 
 ## 暫停與重啟條件
 
-2026-07-28 起，clause-history agent dispatch 依 Copper 指示暫停。deterministic
-raw acquisition 可保留，但不得呼叫 Claude 或其他模型整理條文。重新啟動
-agent dispatch 必須同時具備：
+2026-07-28 Copper 要求暫時停止呼叫 Claude 整理條文，先把方法學寫好；這個
+暫時指示被記錄成無限期暫停。2026-09-28 Copper 明示從未要求暫停，proposal
+lane 當日恢復。
 
-- Copper 明確指示恢復；
-- M1/M2 契約與 validator 已完成；
-- 10-unit pilot packet 已凍結；
-- runtime 明示 `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=true`；
-- candidate-only／no canonical write 保護仍生效。
+- 暫停只用 scheduler row（next due 停放）這一個槓桿；
+  `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED` 只是單次緊急停止，預設啟用。
+- M1–M5 仍是 canonical history 的工作計畫，但不是 dispatch 的前置閘。
+- candidate-only／no canonical write 保護持續生效
+  （`AUTO_PROMOTION_ENABLED=false`）。

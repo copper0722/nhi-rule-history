@@ -1,5 +1,41 @@
 # Worklog
 
+## 2026-09-28 — Proposal lane resumed; composite seal made compatible with the subscriber sync
+
+- Owner direction: the 2026-07-28 request to stop model calls while the
+  methodology was written was temporary, but it was recorded as an indefinite
+  pause (task 261 parked at 2099, wrapper default-deny, resume gated on the
+  M1/M2 validator and a 10-unit pilot). On 2026-09-28 Copper stated he never
+  wanted a pause. The private scheduler migration resumed task 261 the same
+  day with an exact-state guard, an immutable before-image and a rollback that
+  restores the parked row from it. The wrapper's environment switch is now a
+  default-enabled kill switch; the scheduler row is the only pause lever. The
+  methodology items stay as canonical-history work, not dispatch gates
+  (`docs/agent-work-methodology.md`, `docs/gap-register.md`, `project.yaml`).
+- First resumed fire failed with `bundle manifest is missing`: six items were
+  acquired before the 2026-08-28 controller move, and their immutable update
+  bundles did not survive it. The lane takes the oldest item first, so it
+  would have stalled on the first of them indefinitely. The private controller
+  now retires exactly that case to `failed_terminal` with
+  `NHI_UPDATE_BUNDLE_UNAVAILABLE` and zero worker calls. It applies only when
+  the bundle directory is absent, the bundle root is present and non-empty,
+  and a different controller actor wrote the acquisition. A present but
+  altered bundle still fails closed. The six notices' current text is served
+  through the announced overlay instead.
+- Composite seal: `prepare_overlay_release` stored table fingerprints for
+  every carried table with rows. When the base carries the legacy document
+  tables, that is 24 keys. The subscriber sync re-verifies the active run on
+  every tick with `announced_dyslipidemia.verify_announced_material`, which
+  requires dict equality over the 17 sealed-count tables. The first sync
+  after activating the rehearsed run would therefore have failed with
+  `sealed source release receipt does not replay` and frozen the paid site.
+  Stored counts, fingerprints and output now use the 2.6.1 convention.
+  `verify_overlay_release` still checks every carried table at load time.
+  Activation also refuses a run carrying 2.6.1 unless the sync's own
+  read-only receipt check passes first. The new assertions fail on `a1e0f11`
+  and pass after the fix. Because the code fingerprint changed, the rehearsed
+  run ids in the 2026-09-28 overlay receipt are superseded.
+
 ## 2026-09-28 — Deterministic announced-notice overlay loader
 
 - Gap: after 2026-07-28 no registered notice became structured data. A notice

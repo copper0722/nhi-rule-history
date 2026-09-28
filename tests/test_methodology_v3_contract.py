@@ -58,9 +58,15 @@ class MethodologyV3ContractTests(unittest.TestCase):
             method,
         )
 
-    def test_project_records_pause_and_v1_queue_supersession(self) -> None:
+    def test_project_records_resume_and_v1_queue_supersession(self) -> None:
+        # 2026-09-28: the 2026-07-28 temporary stop was recorded as an
+        # indefinite pause; Copper resumed the lane and the methodology items
+        # are canonical-history work, not dispatch gates.
         project = PROJECT.read_text(encoding="utf-8")
-        self.assertIn("status: paused_by_owner", project)
+        self.assertIn("status: resumed_by_owner", project)
+        self.assertIn('resumed_on: "2026-09-28"', project)
+        self.assertIn("methodology_items_are_dispatch_gates: false", project)
+        self.assertNotIn("status: paused_by_owner", project)
         self.assertIn(
             "disposition: retained_discovery_provenance_not_executable",
             project,

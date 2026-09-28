@@ -75,11 +75,15 @@
 
 ## 目前操作狀態
 
-- 條文整理 agent dispatch 已依 Copper 指示暫停：PG proposal task =
-  `skipped_gate`、next due = 2099；執行 wrapper 預設
-  `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=false`。
-- deterministic RSS／raw acquisition 與 bounded public-source research
-  可保留，但不呼叫 Claude 或其他模型批次整理／裁決條文。
+- 條文整理 proposal lane（PG task 261）2026-09-28 依 Copper 明示恢復：
+  2026-07-28 的暫時停止曾被誤記為無限期暫停。task 回到 `ready`、每 5 分鐘
+  處理一則；暫停只由 scheduler row 的 next due 控制，wrapper 的
+  `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED` 改為預設啟用的緊急停止。
+  仍維持 `AUTO_PROMOTION_ENABLED=false`、只寫 stage。
+- 恢復首輪發現：2026-08-28 controller 遷移前取得的 6 則公告，其 immutable
+  update bundle 沒有隨遷移保存。controller 現在把這種情況記為
+  `failed_terminal`（`NHI_UPDATE_BUNDLE_UNAVAILABLE`、零模型呼叫）再處理
+  下一則；這些公告的現行文字改由 deterministic announced overlay 提供。
 - canonical 方法已改為 v4 evidence-union contract：單一條文是 legal
   version unit；年度快照只作 source observations 與整條消失偵測；
   appearance／text-change／disappearance 不先冒充法律事件。條文日期與
@@ -118,8 +122,8 @@
   enrichments、official notices 四個 contract 的 meaningful fingerprint，
   只有內容變更才重建、測試、部署付費站，並以合法訂閱 session 比對正式
   JSON 與本次 artifact 的 exact SHA-256。首輪 scheduled run 為
-  `up_to_date`；task 261 的條文歷史 agent dispatch 仍是
-  `skipped_gate`，沒有重新啟動 Claude。
+  `up_to_date`。task 261 的條文歷史 proposal lane 已於 2026-09-28
+  恢復（見「目前操作狀態」）。
 - 現行分章正典已程式化切成 639 個單一條文 publication rows；每條保存
   exact text、13,874 個結構區塊、3,487 個 distinct valid ROC-date rows、
   官方 ODT URL/hash/locator 與版本缺口 inventory。依 owner 指定規則，

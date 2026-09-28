@@ -158,9 +158,14 @@ continuous_update:
     audit_agent_direct_text_edit: forbidden
   clause_history_agent_dispatch:
     task_id: 261
-    status: skipped_gate
-    next_due: "2099-01-01"
-    resume_requires: explicit_Copper_instruction
+    status: resumed
+    paused_on: "2026-07-28"
+    resumed_on: "2026-09-28"
+    resume_basis: explicit_Copper_instruction
+    pause_lever: scheduler_row_next_due_only
+    wrapper_switch: default_enabled_emergency_kill_switch
+    auto_promotion_enabled: false
+    unavailable_update_bundle: failed_terminal_NHI_UPDATE_BUNDLE_UNAVAILABLE_zero_worker_calls
   announced_notice_overlay:
     status: implemented_rehearsed_not_loaded
     recorded_on: "2026-09-28"
@@ -1440,16 +1445,17 @@ methodology_v3:
     disposition: retained_discovery_provenance_not_executable
     reason: mandatory_official_event_identity_cannot_be_a_completion_gate
   agent_dispatch:
-    status: paused_by_owner
+    status: resumed_by_owner
     paused_on: "2026-07-28"
+    resumed_on: "2026-09-28"
     scope: clause_history_agent_calls
     deterministic_raw_acquisition_allowed: true
-    resume_requires:
-      - explicit_Copper_instruction
+    pause_record_correction: temporary_stop_was_recorded_as_indefinite_pause
+    methodology_items_are_dispatch_gates: false
+    remaining_methodology_work:
       - v3_transition_evidence_schema_and_validator
       - v3_queue_converter
       - frozen_10_unit_pilot_packet
-      - NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED_true
   source_selection:
     primary_legal_update_lane: reimbursement_rule_rss_and_official_attachments
     separate_drug_announcement_required: false

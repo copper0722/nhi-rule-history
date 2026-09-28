@@ -409,11 +409,21 @@ of direct legal adjacency.
 
 ## 10. Verified stage-only scheduling profile
 
-Owner override, 2026-07-28: the proposal/agent-dispatch portion is paused while
-the v3 transition-evidence methodology, queue converter, validator, and pilot
-are built. Deterministic poll/acquisition may continue. No Claude or fallback
-worker may be called until Copper explicitly resumes the lane and
-`NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED=true`.
+Owner direction history: on 2026-07-28 Copper asked for a temporary stop to
+model calls while the v3 transition-evidence methodology was written. That
+request was recorded as an indefinite pause (task parked at 2099, wrapper
+default-deny). On 2026-09-28 Copper stated that he never wanted a pause, and the
+proposal stage was resumed the same day. The single pause lever is now the
+scheduler row (next-due parking); `NHI_RULE_HISTORY_AGENT_DISPATCH_ENABLED` is a
+per-invocation emergency kill switch that defaults to enabled (`false` skips
+with zero worker calls). The v3 methodology remains the plan for canonical
+history work; it is not a dispatch gate.
+
+An item whose immutable update bundle was kept by a retired controller host
+(items acquired before the 2026-08-28 controller move) is retired to
+`failed_terminal` with `NHI_UPDATE_BUNDLE_UNAVAILABLE` and zero worker calls,
+so it cannot hold the lane. Its current text is served through the
+deterministic announced overlay (section 14), not through this lane.
 
 The registered recurring deployment performs only:
 
