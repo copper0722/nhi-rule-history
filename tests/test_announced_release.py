@@ -31,6 +31,7 @@ from nhi_rule_history.announced_notice import (
     ODT_MEDIA_TYPE,
     NoticeAttachment,
     NoticeBundle,
+    _cell_items,
     parse_comparison_document,
     read_odt_document,
     sha256_text,
@@ -340,15 +341,57 @@ def _synthetic_notice(
     return parse_comparison_document(bundle, attachment, document)
 
 
-def _rendering(notice, *codes: str) -> str:
-    """An office rendering that shows only the named clauses' revised text."""
+def _rendering(notice, *codes: str) -> dict:
+    """A cell rendering that draws every cell as the parser reads it.
 
-    return "\n".join(
-        item.text
+    When clauses are named, the revised paragraphs of every other clause are
+    drawn with other text, so only the named clauses match.
+    """
+
+    hidden = {
+        item.document_order
         for clause in notice.clauses
-        if not codes or clause.clause_code in codes
+        if codes and clause.clause_code not in codes
         for item in clause.revised
-    ) + "\n"
+    }
+    return {
+        "rendering_version": "test",
+        "tables": [
+            [
+                [
+                    [
+                        {
+                            "text": (
+                                "與對照表無關的另一份文字"
+                                if item.document_order in hidden
+                                else item.text
+                            ),
+                            "label": item.generated_label or "",
+                            "separator": (
+                                item.numbering.separator
+                                if item.generated_label
+                                else None
+                            ),
+                        }
+                        for item in _cell_items(
+                            notice.document.paragraphs,
+                            table_index,
+                            cell.row_index,
+                            cell.cell_index,
+                        )
+                        if not item.nested
+                    ]
+                    for cell in row
+                ]
+                for row in grid
+            ]
+            for table_index, grid in sorted(notice.document.top_tables.items())
+        ],
+    }
+
+
+# A rendering of some other document: no table lines up with the notice.
+FOREIGN_RENDERING = {"rendering_version": "test", "tables": []}
 
 
 def _public_patches(dsn: str) -> dict[str, dict]:
@@ -604,7 +647,7 @@ class OverlayReleaseLiveTest(unittest.TestCase):
         # was dropped from the run, so served data showed no 10-01 change.
         held = self._by_reference("1150672509")
         reference = held.bundle.reference_number
-        mismatch = {reference: "與對照表無關的另一份文字\n"}
+        mismatch = {reference: FOREIGN_RENDERING}
         composition = compose_overlay_release(
             self.pg.dsn,
             self.notices,
@@ -902,7 +945,7 @@ class SupersedeLiveTest(unittest.TestCase):
         )
         partial = {
             SUPERSEDE_REFERENCE: _rendering(notice, "9.2"),
-            HELD_REFERENCE: "與對照表無關的另一份文字\n",
+            HELD_REFERENCE: FOREIGN_RENDERING,
         }
         full = {
             SUPERSEDE_REFERENCE: _rendering(notice),
@@ -1245,7 +1288,7 @@ class CliReceiptLiveTest(unittest.TestCase):
         # so its only clause is held back and the notice serves no patch.
         cls.renderings = {
             (cls.root / cls.held / "attachment-000.odt").read_bytes(): (
-                "與對照表無關的另一份文字\n"
+                FOREIGN_RENDERING
             )
         }
         cls.later = _write_bundle(
@@ -1278,8 +1321,11 @@ class CliReceiptLiveTest(unittest.TestCase):
         # which --allow-without-rendering-check admits.
         with mock.patch.object(
             cli,
-            "libreoffice_text_export",
-            side_effect=lambda payload, **_: self.renderings.get(payload),
+            "render_table_cells",
+            side_effect=lambda payloads, **_: {
+                key: self.renderings.get(payload)
+                for key, payload in payloads.items()
+            },
         ), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(
             stderr
         ):

@@ -35,7 +35,7 @@ from typing import Any, Sequence
 
 from nhi_rule_history.announced_notice import (
     AnnouncedNoticeError,
-    libreoffice_text_export,
+    ParsedNotice,
     parse_notice,
     read_notice_bundle,
     verification_row,
@@ -55,6 +55,7 @@ from nhi_rule_history.announced_release import (
     rollback_overlay_release,
     served_clauses,
 )
+from nhi_rule_history.office_rendering import render_table_cells
 from nhi_rule_history.pg.common import PgLoadError
 
 
@@ -146,6 +147,17 @@ def _carried_references(dsn: str) -> set[str]:
         }
 
 
+def _renderings(notices: Sequence[ParsedNotice]) -> dict[str, Any]:
+    """LibreOffice's cell rendering of each notice's comparison attachment."""
+
+    return render_table_cells(
+        {
+            notice.bundle.reference_number: notice.attachment.path.read_bytes()
+            for notice in notices
+        }
+    )
+
+
 def _verification(args: argparse.Namespace) -> dict[str, Any]:
     notices, failures, dropped = _parse(args)
     carried = _carried_references(args.dsn)
@@ -153,12 +165,9 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
     with _connect(args.dsn, read_only=True) as connection:
         codes = [c.clause_code for n in notices for c in n.clauses]
         served_run_id, served = served_clauses(connection, codes)
+    renderings = {} if args.no_libreoffice else _renderings(notices)
     for notice in notices:
-        rendering = (
-            None
-            if args.no_libreoffice
-            else libreoffice_text_export(notice.attachment.path.read_bytes())
-        )
+        rendering = renderings.get(notice.bundle.reference_number)
         for clause in notice.clauses:
             current = served.get(clause.clause_code)
             row = verification_row(
@@ -238,12 +247,7 @@ def _compose(
     args: argparse.Namespace,
 ) -> tuple[Composition, list[dict[str, Any]], list[dict[str, Any]]]:
     notices, failures, dropped = _parse(args)
-    renderings = {
-        notice.bundle.reference_number: libreoffice_text_export(
-            notice.attachment.path.read_bytes()
-        )
-        for notice in notices
-    }
+    renderings = _renderings(notices)
     composition = compose_overlay_release(
         args.dsn,
         notices,

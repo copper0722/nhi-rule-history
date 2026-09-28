@@ -31,9 +31,6 @@ import io
 import itertools
 import json
 import re
-import shutil
-import subprocess
-import tempfile
 import unicodedata
 import uuid
 import zipfile
@@ -1462,85 +1459,73 @@ def revised_paragraphs_in_served(
     ]
 
 
-def libreoffice_text_export(
-    payload: bytes,
-    *,
-    soffice: str | None = None,
-    timeout_seconds: int = 180,
-) -> str | None:
-    """Render an ODT to UTF-8 text with LibreOffice, or return ``None``.
+def cell_rendering_check(
+    notice: ParsedNotice,
+    clause: AnnouncedClause,
+    rendering: Mapping[str, Any] | None,
+) -> str:
+    """Check a clause against LibreOffice's rendering of its own revised cells.
 
-    This is an independent rendering engine used only for verification.  It
-    runs with a throwaway user profile so it never attaches to a running
-    office instance.
-    """
-
-    binary = soffice or shutil.which("soffice")
-    if not binary:
-        return None
-    with tempfile.TemporaryDirectory(prefix="nhi-notice-lo-") as scratch:
-        work = Path(scratch)
-        source = work / "source.odt"
-        source.write_bytes(payload)
-        completed = subprocess.run(
-            [
-                binary,
-                f"-env:UserInstallation={(work / 'profile').as_uri()}",
-                "--headless",
-                "--norestore",
-                "--convert-to",
-                "txt:Text (encoded):UTF8",
-                "--outdir",
-                str(work),
-                str(source),
-            ],
-            check=False,
-            capture_output=True,
-            timeout=timeout_seconds,
-        )
-        output = work / "source.txt"
-        if completed.returncode != 0 or not output.is_file():
-            return None
-        return output.read_text(encoding="utf-8-sig")
-
-
-def exact_in_rendering(clause: AnnouncedClause, rendering: str | None) -> str:
-    """Check the revised text against an independent LibreOffice rendering.
-
-    LibreOffice writes each paragraph on its own line, joins the last
-    paragraph of one cell to the next cell with a tab, and keeps whitespace
-    elements.  A list paragraph starts with four spaces per list level, then
-    its label (two spaces when it draws none) and one space; the expected
-    lines are built from each paragraph's reconstructed label, so a wrong
-    label cannot match.  Blank paragraphs are dropped on both sides.  The
-    revised text must appear verbatim, starting at a line start and ending at
-    a line end or a cell boundary.
+    ``rendering`` is the notice attachment's entry from
+    :func:`nhi_rule_history.office_rendering.render_table_cells`.  Each
+    revised cell the clause spans is aligned paragraph by paragraph with the
+    cell LibreOffice renders at the same top-level table, row and column;
+    blank unlabelled paragraphs and nested tables are left out on both sides.
+    Every paragraph of the cell must have the same text, and each of the
+    clause's own paragraphs must carry the same list label followed by the
+    same separator (tab, space, nothing or line break).  A label that only
+    matches another cell, or a gap LibreOffice draws differently, is a
+    mismatch.
     """
 
     if rendering is None:
         return "unavailable"
     if any(item.nested for item in clause.revised):
         return "not_applicable_nested_table"
-    lines = [line for line in rendering.split("\n") if line.strip()]
-    haystack = "\n" + "\n".join(lines) + "\n"
-    needle = "\n".join(
-        line
-        for item in clause.revised
-        for line in (item.export_prefix + item.text).split("\n")
-        if line.strip()
+    tables = rendering.get("tables")
+    top = sorted(notice.document.top_tables)
+    if not isinstance(tables, list) or len(tables) != len(top):
+        return "mismatch"
+    column = next(
+        table.revised_column
+        for table in notice.tables
+        if table.table_index == clause.table_index
     )
-    start = 0
-    while True:
-        position = haystack.find(needle, start)
-        if position < 0:
+    own = {item.document_order for item in clause.revised}
+    for table_index, row_index in clause.rows:
+        try:
+            cell = tables[top.index(table_index)][row_index][column]
+        except (IndexError, TypeError, ValueError):
             return "mismatch"
-        before = haystack[position - 1 : position]
-        after = haystack[position + len(needle) : position + len(needle) + 1]
-        # LibreOffice joins consecutive table cells with a tab, so a cell
-        # may start after a tab and end before one.
-        if before in {"\n", "\t"} and after in {"\n", "\t"}:
-            return "exact"
-        start = position + 1
+        if not isinstance(cell, list):
+            return "mismatch"
+        ours = [
+            item
+            for item in _cell_items(
+                notice.document.paragraphs, table_index, row_index, column
+            )
+            if not item.nested and (item.text.strip() or item.generated_label)
+        ]
+        drawn = [
+            paragraph
+            for paragraph in cell
+            if isinstance(paragraph, Mapping)
+            and not paragraph.get("nested_table")
+            and (str(paragraph.get("text") or "").strip() or paragraph.get("label"))
+        ]
+        if len(ours) != len(drawn):
+            return "mismatch"
+        for item, paragraph in zip(ours, drawn):
+            if item.text != paragraph.get("text"):
+                return "mismatch"
+            if item.document_order not in own:
+                continue
+            label = item.generated_label or ""
+            if label != (paragraph.get("label") or ""):
+                return "mismatch"
+            if label and item.numbering.separator != paragraph.get("separator"):
+                return "mismatch"
+    return "exact"
 
 
 def projection_block_reason(
@@ -1548,8 +1533,9 @@ def projection_block_reason(
 ) -> str | None:
     """Why a clause must stay a pending effect instead of a patch, if so.
 
-    A clause whose paragraphs carry list numbering is projected only when the
-    independent office rendering shows exactly the reconstructed labels.
+    A clause whose paragraphs carry list numbering is projected only when
+    LibreOffice's rendering of its own revised cells shows exactly the
+    reconstructed labels and separators (:func:`cell_rendering_check`).
     """
 
     if clause.blocked_reason:
@@ -1566,12 +1552,12 @@ def verification_row(
     clause: AnnouncedClause,
     *,
     served_text: str | None,
-    rendering: str | None,
+    rendering: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     whitespace_blocks = sum(
         1 for item in clause.revised if item.text != item.block_text
     )
-    rendering_check = exact_in_rendering(clause, rendering)
+    rendering_check = cell_rendering_check(notice, clause, rendering)
     return {
         "reference_number": notice.bundle.reference_number,
         "clause_code": clause.clause_code,

@@ -56,13 +56,14 @@ from nhi_rule_history.announced_notice import (
     AnnouncedClause,
     AnnouncedNoticeError,
     ParsedNotice,
-    exact_in_rendering,
+    cell_rendering_check,
     projection_block_reason,
     registered_manifest_identity,
     sha256_text,
     stable_uuid,
 )
 from nhi_rule_history.current_publication import semantic_comparison_text
+from nhi_rule_history.office_rendering import CELL_RENDERING_VERSION
 from nhi_rule_history.pg.common import (
     code_fingerprint,
     json_text,
@@ -115,7 +116,8 @@ _BLOCK_NOTES = {
         "reproduced"
     ),
     "official_rendering_mismatch": (
-        "parsed text differs from the independent office rendering"
+        "its text, list labels or label separators differ from LibreOffice's "
+        "rendering of its own revised cell"
     ),
     "official_rendering_unverified": (
         "reconstructed list labels are not confirmed by an independent "
@@ -684,6 +686,7 @@ def notice_rows(
             "official_rendering_check": checks.get(
                 clause.clause_code, "unavailable"
             ),
+            "official_rendering_version": CELL_RENDERING_VERSION,
             "loader_version": LOADER_VERSION,
             "parser_version": PARSER_VERSION,
             "text_rule_version": TEXT_RULE_VERSION,
@@ -829,6 +832,7 @@ def _code_sha256() -> str:
         here,
         here.with_name("announced_notice.py"),
         here.with_name("odf_list_numbering.py"),
+        here.with_name("office_rendering.py"),
     )
 
 
@@ -1432,18 +1436,20 @@ def compose_overlay_release(
     base_run_id: str | None = None,
     dyslipidemia_odt: Path | None = None,
     today: date | None = None,
-    official_renderings: Mapping[str, str | None] | None = None,
+    official_renderings: Mapping[str, Mapping[str, Any] | None] | None = None,
     require_official_rendering: bool = False,
     supersede: bool = False,
 ) -> Composition:
     """Compose a new release run from the active run plus ``notices``.
 
-    ``official_renderings`` maps a reference number to an independent office
-    rendering of its comparison-table attachment.  A clause whose parsed text
-    is not found verbatim there, whose list numbering is not reproduced, or
-    whose reconstructed list labels are not confirmed by that rendering, is
-    kept as a pending effect instead of a patch.  A notice whose every clause
-    is held back still enters the run with pending effects only.
+    ``official_renderings`` maps a reference number to LibreOffice's cell
+    rendering of its comparison-table attachment
+    (:func:`nhi_rule_history.office_rendering.render_table_cells`).  A clause
+    whose revised cells LibreOffice renders differently, whose list numbering
+    is not reproduced, or whose reconstructed list labels and separators are
+    not confirmed by that rendering, is kept as a pending effect instead of a
+    patch.  A notice whose every clause is held back still enters the run
+    with pending effects only.
 
     Failures are isolated per notice: a notice that is listed twice, lacks a
     required rendering, cannot be bound to the served clauses, would give a
@@ -1496,7 +1502,7 @@ def compose_overlay_release(
             )
             continue
         rendering_checks[reference] = {
-            clause.clause_code: exact_in_rendering(clause, rendering)
+            clause.clause_code: cell_rendering_check(notice, clause, rendering)
             for clause in notice.clauses
         }
         candidates.append(notice)
@@ -1854,7 +1860,7 @@ def prepare_overlay_release(
     base_run_id: str | None = None,
     dyslipidemia_odt: Path | None = None,
     today: date | None = None,
-    official_renderings: Mapping[str, str | None] | None = None,
+    official_renderings: Mapping[str, Mapping[str, Any] | None] | None = None,
     require_official_rendering: bool = False,
     supersede: bool = False,
 ) -> OverlayRelease:
