@@ -625,6 +625,11 @@ labelled as the revised column of the table and never as a complete clause.
 - ODF list numbering draws labels such as `1.` or `(5)` that are not
   character data. A revised column with such a label is not projected. The
   clause becomes a pending effect with reason `generated_list_label`.
+- A notice whose every clause is held back still enters the run. Its event
+  lists each held-back clause in `unresolved_scope` with its `blocked_reason`,
+  and each clause is a `pending_projection` effect. Served data therefore
+  shows that the clause changes on the stated date, although no text is
+  served.
 - Verification renders the attachment with LibreOffice as an independent
   engine. The revised text must appear verbatim between cell or line
   boundaries. A mismatch blocks the clause. `load` requires this rendering
@@ -658,9 +663,91 @@ that keeps everything the active run serves:
 
 `load` seals the run, the resolutions and the re-bound projections in one
 transaction and changes nothing served. `activate` requires the expected
-sealed fingerprint and the expected served base. It appends release,
-normalization, diff and reader-profile control events in one transaction and
-records the previous chain. `rollback` re-activates that recorded chain.
+sealed fingerprint and the expected served base. It also refuses a run that
+does not carry every notice and every clause patch (patch id, text hash,
+effective date) of the served run, so a stale run composed from an older base
+cannot unserve anything. It appends release, normalization, diff and
+reader-profile control events in one transaction and records the previous
+chain. `rollback` re-activates that recorded chain.
+
+### Failure isolation and receipts
+
+Composition isolates failures per notice. Each of these leaves one notice out
+and is reported, while the rest of the batch still composes:
+
+- the notice is listed twice in one batch;
+- a required office rendering is unavailable;
+- a clause cannot be bound to the served publication: it has an original
+  column but no served clause, or it is marked new but is already served;
+- a clause would get a second patch for the same effective date, within the
+  batch or beside a carried patch;
+- the notice states no clause amendment and no other effect;
+- a supersede is refused (next subsection).
+
+Only run-level invariants abort the batch: the base chain (active run,
+counts, row hashes, resolutions), the current publication, the target schema,
+the seal, and the 2.6.1 re-binding.
+
+`compose`, `load` and `activate` print one JSON receipt on stdout. Errors go to
+stderr. Every receipt has these lists:
+
+- `failures`: bundles that failed at `queue`, `parse`, `input`, `rendering`,
+  `bind` or `supersede`, with the error.
+- `dropped_notices`: parsed notices left out, with the reason:
+  `effective_on_not_selected`, or
+  `carried_notice_has_newly_projectable_clauses` when a carried notice could
+  serve more clauses but superseding was not requested.
+- `blocked_clauses`: dotted clauses the run holds back (pending
+  `clause_amendment` effects with a code), with the reason and whether the
+  notice is `new`, `superseded` or `carried` in this run.
+- `superseded_notices`: notices whose carried rows were replaced, with their
+  served and added clauses.
+- `carried_notices`: selected notices that the run already carries unchanged.
+
+Appendix-table and listed-item effects are pending by design. They appear per
+notice under `pending_effects`, not as held-back clauses.
+
+- `status` is `passed` (a run was composed, loaded or activated) or
+  `no_change` (nothing new to compose) only when `failures`,
+  `dropped_notices` and `blocked_clauses` are all empty. Otherwise it is
+  `passed_with_holds` or `no_change_with_holds`.
+- Exit status: 0 green, 3 completed with holds, 1 error. Exit status 3 means
+  the step took effect: a `load` sealed its run, and an `activate` served it.
+  A scheduler must read `status` and must not treat 3 as a failed step.
+- Without `--skip-failed`, any failure refuses the whole command: exit 1,
+  nothing loaded.
+- `activate --load-receipt <file>` copies the failures, dropped notices and
+  superseded notices of the load that sealed the run into the activation
+  receipt and the activation control event. Without it those lists are
+  `null` (unknown, not empty), and only the held-back clauses, read from the
+  served run, set the status.
+
+### Superseding a carried notice
+
+A notice that the served run already carries is normally left as carried. A
+later compose may project more of its clauses, for example after a parser fix
+admits clauses held back for generated list labels. Without
+`--supersede-carried` the notice is reported in `dropped_notices`. With it,
+the new composite replaces the notice's carried event, effects and patches by
+its fresh projection. The served run is not rolled back.
+
+The supersede is refused, and the notice keeps its carried rows and is
+reported in `failures`, unless all of these hold:
+
+- the fresh parse has the same notice id (same reference number and source
+  artifact hash);
+- no other carried row depends on the notice (patch components, composed
+  versions, decision models), so the 2.6.1 reviewed composite is never
+  superseded;
+- every clause patch the notice serves is `patch_only` and comes back with
+  the same patch id, text hash and effective date;
+- each of those patches is still `verified_scheduled`, so no later resolution
+  is reset.
+
+Every patch of a superseded notice gets a fresh `verified_scheduled`
+resolution. For a patch that was already served, the evidence names the
+replaced resolution under `superseded_projection`. The input fingerprint
+includes the superseded reference numbers.
 
 ### Consumer contract
 
@@ -670,6 +757,11 @@ must render `source_exact_patch_text` as the announced revised column and must
 not present it as a complete clause. A consumer that accepts only
 `reviewed_composite` patches must be changed before a run containing
 patch-only patches is activated.
+
+A notice whose every clause is held back has no clause patch, so
+`v_public_clause_patch` does not list it. A consumer that shows announced
+changes must also read the active run's `notice_event` and `notice_effect`
+rows; otherwise that notice's held-back clauses stay invisible.
 
 ### Schema limits (design note; no DDL in this lane)
 

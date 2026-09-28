@@ -9,11 +9,22 @@ the active run serves.  This module builds that composite run:
   except for ``run_id`` and the row hash that covers it; each stored row hash
   must first replay exactly, so a carried row is provably the same row;
 * each new notice contributes ``notice_event``/``notice_effect`` rows and one
-  ``patch_only`` ``clause_patch`` per amended clause, built deterministically
-  by :mod:`nhi_rule_history.announced_notice` without any model call;
+  ``patch_only`` ``clause_patch`` per projectable clause, built
+  deterministically by :mod:`nhi_rule_history.announced_notice` without any
+  model call; a notice whose every clause is held back still contributes its
+  event, with each held-back clause as a pending effect;
+* a notice the base run already carries can be superseded: its carried rows
+  are replaced by its fresh projection, but only when every clause patch it
+  serves is re-projected byte-identically;
 * the carried 2.6.1 clause document normalization and exact diff are rebuilt
   for the new run by the unchanged 2.6.1 loader code, and the active reader
   profile is re-bound to them with byte-identical content.
+
+Composition isolates failures per notice.  A notice that cannot be rendered,
+bound or superseded is reported and left out while the rest of the batch
+composes; only run-level invariants (base chain, publication, schema, seal,
+2.6.1 re-binding) abort the batch.  Every composition reports its failures,
+dropped notices and held-back clauses.
 
 Loading seals everything in one transaction and changes nothing that is
 served.  Activation is a separate, precondition-checked transaction; rollback
@@ -26,6 +37,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -83,10 +95,44 @@ LEGACY_DOCUMENT_TABLES = (
     "composed_clause_table_cell_block",
 )
 DYSLIPIDEMIA_CLAUSE = "2.6.1"
+NOTICE_TABLES = ("notice_event", "notice_effect", "clause_patch")
+PLACEHOLDER_RUN_ID = "00000000-0000-0000-0000-000000000000"
+# Receipt status.  Only a receipt that holds nothing back is green.
+STATUS_PASSED = "passed"
+STATUS_PASSED_WITH_HOLDS = "passed_with_holds"
+STATUS_NO_CHANGE = "no_change"
+STATUS_NO_CHANGE_WITH_HOLDS = "no_change_with_holds"
+_BLOCK_NOTES = {
+    "generated_list_label": (
+        "ODF list numbering draws labels that are not in the document "
+        "character data"
+    ),
+    "official_rendering_mismatch": (
+        "parsed text differs from the independent office rendering"
+    ),
+}
 
 
 class AnnouncedReleaseError(AnnouncedNoticeError):
     """A release composition, load or activation invariant failed."""
+
+
+def receipt_status(
+    *,
+    composed: bool,
+    failures: Sequence[Any] | None,
+    dropped_notices: Sequence[Any] | None,
+    blocked_clauses: Sequence[Any] | None,
+) -> str:
+    """Overall receipt status; any failure, drop or held-back clause holds."""
+
+    held = any(
+        bool(value)
+        for value in (failures, dropped_notices, blocked_clauses)
+    )
+    if composed:
+        return STATUS_PASSED_WITH_HOLDS if held else STATUS_PASSED
+    return STATUS_NO_CHANGE_WITH_HOLDS if held else STATUS_NO_CHANGE
 
 
 def _jsonable(value: Any) -> Any:
@@ -500,16 +546,12 @@ def notice_rows(
                         "scope_note": (
                             f"{clause.clause_code} revised column is not "
                             "projected: "
-                            + {
-                                "generated_list_label": (
-                                    "ODF list numbering draws labels that "
-                                    "are not in the document character data"
-                                ),
-                                "official_rendering_mismatch": (
-                                    "parsed text differs from the "
-                                    "independent office rendering"
-                                ),
-                            }[blocked[clause.clause_code]]
+                            + _BLOCK_NOTES.get(
+                                blocked[clause.clause_code],
+                                "the parser holds it back ("
+                                + blocked[clause.clause_code]
+                                + ")",
+                            )
                         ),
                     }
                 )
@@ -1109,7 +1151,215 @@ def _profile_rebind(
     )
 
 
-def prepare_overlay_release(
+@dataclass(frozen=True)
+class CarriedNotice:
+    """One notice of the base run with the rows that serve it."""
+
+    event: Mapping[str, Any]
+    effects: tuple[Mapping[str, Any], ...]
+    patches: tuple[Mapping[str, Any], ...]
+    dependent_tables: tuple[str, ...]
+
+    @property
+    def notice_id(self) -> str:
+        return str(self.event["notice_id"])
+
+
+def _carried_notices(base: BaseChain) -> dict[str, CarriedNotice]:
+    """Index the base run's notices by reference number."""
+
+    effects: dict[str, list[Mapping[str, Any]]] = {}
+    for row in base.rows["notice_effect"]:
+        effects.setdefault(str(row["notice_id"]), []).append(row)
+    patches: dict[str, list[Mapping[str, Any]]] = {}
+    for row in base.rows["clause_patch"]:
+        patches.setdefault(str(row["effect_id"]), []).append(row)
+    carried: dict[str, CarriedNotice] = {}
+    for event in base.rows["notice_event"]:
+        notice_id = str(event["notice_id"])
+        own_effects = tuple(effects.get(notice_id, ()))
+        effect_ids = {str(row["effect_id"]) for row in own_effects}
+        own_patches = tuple(
+            row
+            for effect_id in sorted(effect_ids)
+            for row in patches.get(effect_id, ())
+        )
+        patch_ids = {str(row["patch_id"]) for row in own_patches}
+        # Any other carried row that names this notice (patch components,
+        # composed versions, decision models) would be orphaned by a
+        # supersede, so it pins the notice to its carried rows.
+        dependent = sorted(
+            shape.name
+            for shape in base.tables
+            if shape.name not in NOTICE_TABLES
+            and any(
+                str(row.get("patch_id")) in patch_ids
+                or str(row.get("effect_id")) in effect_ids
+                or str(row.get("notice_id")) == notice_id
+                for row in base.rows[shape.name]
+            )
+        )
+        carried[str(event["reference_number"])] = CarriedNotice(
+            event=event,
+            effects=own_effects,
+            patches=own_patches,
+            dependent_tables=tuple(dependent),
+        )
+    return carried
+
+
+def _notice_label(notice: ParsedNotice) -> dict[str, Any]:
+    return {
+        "reference_number": notice.bundle.reference_number,
+        "bundle": notice.bundle.bundle_dir.name,
+        "effective_on": notice.effective_on,
+    }
+
+
+def blocked_clauses(
+    rows: Mapping[str, Sequence[Mapping[str, Any]]],
+    origins: Mapping[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Dotted clauses that a run's notices hold back, with a reason each.
+
+    A held-back clause is a ``clause_amendment`` effect with a clause code in
+    ``pending_projection``.  Appendix-table and listed-item effects are
+    pending by design, not held back, and are not listed.  ``origins`` maps a
+    reference number to ``new`` or ``superseded``; other notices are
+    ``carried``.
+    """
+
+    events = {
+        str(row["notice_id"]): row for row in rows.get("notice_event", ())
+    }
+    found: list[dict[str, Any]] = []
+    for effect in rows.get("notice_effect", ()):
+        if (
+            effect["effect_type"] != "clause_amendment"
+            or effect["projection_status"] != "pending_projection"
+            or not effect["clause_code"]
+        ):
+            continue
+        event = events[str(effect["notice_id"])]
+        reference = str(event["reference_number"])
+        reasons = [
+            str(item["blocked_reason"])
+            for item in event["unresolved_scope"]
+            if isinstance(item, Mapping)
+            and item.get("clause_code") == effect["clause_code"]
+            and item.get("blocked_reason")
+        ]
+        found.append(
+            {
+                "reference_number": reference,
+                "clause_code": effect["clause_code"],
+                "effective_on": str(event["effective_on"]),
+                "reason": reasons[0] if reasons else "pending_projection",
+                "scope_note": effect["scope_note"],
+                **(
+                    {"origin": origins.get(reference, "carried")}
+                    if origins is not None
+                    else {}
+                ),
+            }
+        )
+    return sorted(
+        found,
+        key=lambda item: (
+            item["effective_on"], item["reference_number"], item["clause_code"]
+        ),
+    )
+
+
+def _supersede_refusal(
+    previous: CarriedNotice, fresh: NoticeRows, base: BaseChain
+) -> str | None:
+    """Why ``fresh`` must not replace a carried notice's rows, if it must not.
+
+    Superseding changes no served clause text: every clause patch the notice
+    serves must come back with the same patch id, text hash and effective
+    date, and must still be ``verified_scheduled`` so that no later
+    resolution is reset.
+    """
+
+    if fresh.notice.notice_id != previous.notice_id:
+        return "the notice's source artifact differs from the carried notice"
+    if previous.dependent_tables:
+        return "the carried notice has dependent rows in " + ", ".join(
+            previous.dependent_tables
+        )
+    again = {row["clause_code"]: row for row in fresh.rows["clause_patch"]}
+    for row in sorted(previous.patches, key=lambda item: item["clause_code"]):
+        code = row["clause_code"]
+        if row["composition_status"] != "patch_only":
+            return f"{code} is served as a {row['composition_status']} patch"
+        fresh_row = again.get(code)
+        if fresh_row is None or any(
+            str(fresh_row[key]) != str(row[key])
+            for key in (
+                "patch_id", "source_exact_patch_sha256", "effective_from"
+            )
+        ):
+            return f"served clause {code} is not re-projected byte-identically"
+        state = base.resolutions[str(row["patch_id"])]["resolution_state"]
+        if state != "verified_scheduled":
+            return (
+                f"served clause {code} is {state}; superseding would reset "
+                "its resolution"
+            )
+    return None
+
+
+def _drop_carried(
+    rows: dict[str, list[dict[str, Any]]], notices: Iterable[CarriedNotice]
+) -> set[str]:
+    """Remove superseded notices' carried rows; return their patch ids."""
+
+    notice_ids: set[str] = set()
+    effect_ids: set[str] = set()
+    patch_ids: set[str] = set()
+    for notice in notices:
+        notice_ids.add(notice.notice_id)
+        effect_ids.update(str(row["effect_id"]) for row in notice.effects)
+        patch_ids.update(str(row["patch_id"]) for row in notice.patches)
+    for table in ("notice_event", "notice_effect"):
+        rows[table] = [
+            row
+            for row in rows[table]
+            if str(row["notice_id"]) not in notice_ids
+        ]
+    rows["clause_patch"] = [
+        row
+        for row in rows["clause_patch"]
+        if str(row["effect_id"]) not in effect_ids
+    ]
+    return patch_ids
+
+
+@dataclass(frozen=True)
+class Composition:
+    """One compose decision: the new run, if any, and what it holds back."""
+
+    base_run_id: str
+    base_sealed_fingerprint: str
+    release: OverlayRelease | None
+    carried_notices: tuple[Mapping[str, Any], ...]
+    superseded_notices: tuple[Mapping[str, Any], ...]
+    failures: tuple[Mapping[str, Any], ...]
+    dropped_notices: tuple[Mapping[str, Any], ...]
+    blocked_clauses: tuple[Mapping[str, Any], ...]
+
+    @property
+    def status(self) -> str:
+        return receipt_status(
+            composed=self.release is not None,
+            failures=self.failures,
+            dropped_notices=self.dropped_notices,
+            blocked_clauses=self.blocked_clauses,
+        )
+
+
+def compose_overlay_release(
     dsn: str,
     notices: Sequence[ParsedNotice],
     *,
@@ -1118,77 +1368,195 @@ def prepare_overlay_release(
     today: date | None = None,
     official_renderings: Mapping[str, str | None] | None = None,
     require_official_rendering: bool = False,
-) -> OverlayRelease:
+    supersede: bool = False,
+) -> Composition:
     """Compose a new release run from the active run plus ``notices``.
 
     ``official_renderings`` maps a reference number to an independent office
     rendering of its comparison-table attachment.  A clause whose parsed text
     is not found verbatim there, or whose revised column draws generated list
-    labels, is kept as a pending effect instead of a patch.
+    labels, is kept as a pending effect instead of a patch.  A notice whose
+    every clause is held back still enters the run with pending effects only.
+
+    Failures are isolated per notice: a notice that is listed twice, lacks a
+    required rendering, cannot be bound to the served clauses, would give a
+    clause a second patch for one effective date, or cannot be superseded is
+    reported in ``failures`` and left out; the rest of the batch composes.
+
+    A notice the base run already carries stays carried unless its fresh
+    parse projects a clause the run holds back.  Such a notice is reported in
+    ``dropped_notices`` unless ``supersede`` is set; then its carried rows are
+    replaced by its fresh projection when :func:`_supersede_refusal` allows
+    it, and it fails closed otherwise.  ``release`` is ``None`` when no
+    notice is new or superseded.
     """
 
     renderings = dict(official_renderings or {})
-    rendering_checks: dict[str, dict[str, str]] = {}
+    failures: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
+
+    def fail(notice: ParsedNotice, stage: str, error: str) -> None:
+        failures.append(
+            {**_notice_label(notice), "stage": stage, "error": error}
+        )
+
+    listed: dict[str, list[ParsedNotice]] = {}
     for notice in notices:
-        rendering = renderings.get(notice.bundle.reference_number)
+        listed.setdefault(notice.bundle.reference_number, []).append(notice)
+    rendering_checks: dict[str, dict[str, str]] = {}
+    candidates: list[ParsedNotice] = []
+    for reference, group in sorted(listed.items()):
+        if len(group) > 1:
+            for notice in group:
+                fail(
+                    notice, "input", "the notice is listed twice in one batch"
+                )
+            continue
+        notice = group[0]
+        rendering = renderings.get(reference)
         if rendering is None and require_official_rendering:
-            raise AnnouncedReleaseError(
-                "an independent office rendering is required for "
-                + notice.bundle.reference_number
+            fail(
+                notice,
+                "rendering",
+                "an independent office rendering is required but unavailable",
             )
-        rendering_checks[notice.bundle.reference_number] = {
+            continue
+        if not notice.clauses and not notice.other_effects:
+            fail(
+                notice,
+                "parse",
+                "the notice states no clause amendment and no other effect",
+            )
+            continue
+        rendering_checks[reference] = {
             clause.clause_code: exact_in_rendering(clause, rendering)
             for clause in notice.clauses
         }
-    notices = [
-        notice
-        for notice in notices
-        if any(
-            clause_block_reason(
-                clause,
-                rendering_checks[notice.bundle.reference_number].get(
-                    clause.clause_code
-                ),
-            )
-            is None
-            for clause in notice.clauses
-        )
-    ]
-    if not notices:
-        raise AnnouncedReleaseError("no notice has a projectable clause")
-    # The run identity must not depend on the order notices were listed in.
-    notices = sorted(notices, key=lambda notice: notice.bundle.reference_number)
-    references = [notice.bundle.reference_number for notice in notices]
-    if len(references) != len(set(references)):
-        raise AnnouncedReleaseError("a notice is listed twice")
+        candidates.append(notice)
     with _connect(dsn, read_only=True) as connection:
         base = read_base_chain(connection, base_run_id)
-        base_notices = {
-            row["reference_number"] for row in base.rows["notice_event"]
+        carried = _carried_notices(base)
+        served_run_id, served = served_clauses(
+            connection,
+            [
+                clause.clause_code
+                for notice in candidates
+                for clause in notice.clauses
+            ],
+        )
+        preliminary: list[NoticeRows] = []
+        superseding: dict[str, CarriedNotice] = {}
+        superseded: dict[str, dict[str, Any]] = {}
+        carried_notices: list[dict[str, Any]] = []
+        for notice in candidates:
+            reference = notice.bundle.reference_number
+            checks = rendering_checks[reference]
+            previous = carried.get(reference)
+            if previous is not None:
+                served_codes = sorted(
+                    {str(row["clause_code"]) for row in previous.patches}
+                )
+                added = sorted(
+                    clause.clause_code
+                    for clause in notice.clauses
+                    if clause.clause_code not in served_codes
+                    and clause_block_reason(
+                        clause, checks.get(clause.clause_code)
+                    )
+                    is None
+                )
+                if not added:
+                    carried_notices.append(
+                        {
+                            **_notice_label(notice),
+                            "notice_id": previous.notice_id,
+                        }
+                    )
+                    continue
+                if not supersede:
+                    dropped.append(
+                        {
+                            **_notice_label(notice),
+                            "reason": (
+                                "carried_notice_has_newly_projectable_clauses"
+                            ),
+                            "clause_codes": added,
+                        }
+                    )
+                    continue
+            try:
+                item = notice_rows(
+                    notice,
+                    run_id=PLACEHOLDER_RUN_ID,
+                    served_run_id=served_run_id,
+                    served=served,
+                    rendering_checks=checks,
+                )
+            except AnnouncedNoticeError as exc:
+                stage = "bind" if previous is None else "supersede"
+                fail(notice, stage, str(exc))
+                continue
+            if previous is not None:
+                refusal = _supersede_refusal(previous, item, base)
+                if refusal is not None:
+                    fail(notice, "supersede", refusal)
+                    continue
+                superseding[reference] = previous
+                superseded[reference] = {
+                    **_notice_label(notice),
+                    "notice_id": previous.notice_id,
+                    "served_clauses": served_codes,
+                    "added_clauses": added,
+                }
+            preliminary.append(item)
+        # A run holds one patch per clause and effective date.  A notice that
+        # would add a second one is left out rather than guessed between; a
+        # superseding notice re-projects its own served keys, so counting
+        # them once among the wanted keys keeps them out of the clash.
+        kept = {
+            (row["clause_code"], row["effective_from"])
+            for reference, item in carried.items()
+            if reference not in superseding
+            for row in item.patches
         }
-        overlap = sorted(set(references) & base_notices)
-        if overlap:
-            raise AnnouncedReleaseError(
-                f"notices already carried by the base run: {overlap}"
+        wanted = Counter(
+            (row["clause_code"], row["effective_from"])
+            for item in preliminary
+            for row in item.rows["clause_patch"]
+        )
+        admitted: list[NoticeRows] = []
+        for item in preliminary:
+            clashes = sorted(
+                f"{row['clause_code']} effective {row['effective_from']}"
+                for row in item.rows["clause_patch"]
+                if (row["clause_code"], row["effective_from"]) in kept
+                or wanted[(row["clause_code"], row["effective_from"])] > 1
             )
-        codes = [
-            clause.clause_code
-            for notice in notices
-            for clause in notice.clauses
-        ]
-        served_run_id, served = served_clauses(connection, codes)
-        preliminary = [
-            notice_rows(
-                notice,
-                run_id="00000000-0000-0000-0000-000000000000",
-                served_run_id=served_run_id,
-                served=served,
-                rendering_checks=rendering_checks[
-                    notice.bundle.reference_number
-                ],
+            if clashes:
+                reference = item.notice.bundle.reference_number
+                superseding.pop(reference, None)
+                superseded.pop(reference, None)
+                fail(
+                    item.notice,
+                    "bind",
+                    "another patch amends the same clause on the same date: "
+                    + ", ".join(clashes),
+                )
+                continue
+            admitted.append(item)
+        if not admitted:
+            return Composition(
+                base_run_id=str(base.run["run_id"]),
+                base_sealed_fingerprint=str(base.run["sealed_fingerprint"]),
+                release=None,
+                carried_notices=tuple(carried_notices),
+                superseded_notices=(),
+                failures=tuple(failures),
+                dropped_notices=tuple(dropped),
+                blocked_clauses=tuple(blocked_clauses(base.rows, {})),
             )
-            for notice in notices
-        ]
+        # The run identity must not depend on the order notices were listed in.
+        admitted.sort(key=lambda item: item.notice.bundle.reference_number)
         notice_fingerprints = [
             {
                 "reference_number": item.notice.bundle.reference_number,
@@ -1205,27 +1573,8 @@ def prepare_overlay_release(
                     for table, rows in item.rows.items()
                 },
             }
-            for item in preliminary
+            for item in admitted
         ]
-        source_set = object_fingerprint(
-            sorted(
-                [
-                    {
-                        "reference_number": row["reference_number"],
-                        "source_artifact_sha256": row["source_artifact_sha256"],
-                    }
-                    for row in base.rows["notice_event"]
-                ]
-                + [
-                    {
-                        "reference_number": item.notice.bundle.reference_number,
-                        "source_artifact_sha256": item.notice.attachment.sha256,
-                    }
-                    for item in preliminary
-                ],
-                key=lambda row: row["reference_number"],
-            )
-        )
         input_fingerprint = object_fingerprint(
             {
                 "loader_version": LOADER_VERSION,
@@ -1235,22 +1584,24 @@ def prepare_overlay_release(
                 "base_sealed_fingerprint": base.run["sealed_fingerprint"],
                 "served_publication_run_id": served_run_id,
                 "notices": notice_fingerprints,
+                "superseded_references": sorted(superseding),
                 "code_sha256": _code_sha256(),
             }
         )
         run_id = stable_uuid("overlay-release-run", input_fingerprint)
         rows = _carry(base, run_id)
+        superseded_patch_ids = _drop_carried(rows, superseding.values())
         built = [
             notice_rows(
-                notice,
+                item.notice,
                 run_id=run_id,
                 served_run_id=served_run_id,
                 served=served,
                 rendering_checks=rendering_checks[
-                    notice.bundle.reference_number
+                    item.notice.bundle.reference_number
                 ],
             )
-            for notice in notices
+            for item in admitted
         ]
         for item in built:
             for table, table_rows in item.rows.items():
@@ -1266,6 +1617,18 @@ def prepare_overlay_release(
         material, rebinding_receipt = _rebinding(
             connection, base, run_id=run_id, dyslipidemia_odt=dyslipidemia_odt
         )
+    source_set = object_fingerprint(
+        sorted(
+            (
+                {
+                    "reference_number": row["reference_number"],
+                    "source_artifact_sha256": row["source_artifact_sha256"],
+                }
+                for row in rows["notice_event"]
+            ),
+            key=lambda row: row["reference_number"],
+        )
+    )
     frozen = {
         name: tuple(sorted(value, key=lambda row: json_text(row)))
         for name, value in rows.items()
@@ -1305,6 +1668,8 @@ def prepare_overlay_release(
     today = today or datetime.now(ZoneInfo(CIVIL_TIMEZONE)).date()
     resolutions: list[ResolutionRow] = []
     for patch_id, prior in sorted(base.resolutions.items()):
+        if patch_id in superseded_patch_ids:
+            continue
         # The served evidence keys stay verbatim; the carry is recorded
         # beside them, chaining any earlier carry.
         prior_evidence = _jsonable(prior["evidence"])
@@ -1342,6 +1707,25 @@ def prepare_overlay_release(
                     "effective date; correction, withdrawal and "
                     "consolidation reconciliation are pending"
                 )
+            if patch_id in superseded_patch_ids:
+                # Same patch id, text and effective date as the served patch;
+                # the fresh evidence describes the fresh row, and the served
+                # resolution it replaces is named beside it.
+                prior = base.resolutions[patch_id]
+                evidence = {
+                    **evidence,
+                    "superseded_projection": {
+                        "run_id": str(base.run["run_id"]),
+                        "resolution_id": int(prior["resolution_id"]),
+                        "resolution_state": str(prior["resolution_state"]),
+                        "recorded_at": prior["recorded_at"].isoformat(),
+                        "loader_version": LOADER_VERSION,
+                        "superseded_row_rule": (
+                            "notice re-projected; patch id, text and "
+                            "effective date unchanged"
+                        ),
+                    },
+                }
             resolutions.append(
                 ResolutionRow(
                     patch_id=patch_id,
@@ -1355,7 +1739,7 @@ def prepare_overlay_release(
         if material is not None
         else None
     )
-    return OverlayRelease(
+    release = OverlayRelease(
         run_id=run_id,
         base=base,
         notices=tuple(built),
@@ -1374,6 +1758,58 @@ def prepare_overlay_release(
         profile=profile,
         rebinding_control=rebinding_receipt,
     )
+    origins = {
+        item.notice.bundle.reference_number: (
+            "superseded"
+            if item.notice.bundle.reference_number in superseding
+            else "new"
+        )
+        for item in built
+    }
+    return Composition(
+        base_run_id=str(base.run["run_id"]),
+        base_sealed_fingerprint=str(base.run["sealed_fingerprint"]),
+        release=release,
+        carried_notices=tuple(carried_notices),
+        superseded_notices=tuple(
+            superseded[reference] for reference in sorted(superseding)
+        ),
+        failures=tuple(failures),
+        dropped_notices=tuple(dropped),
+        blocked_clauses=tuple(blocked_clauses(frozen, origins)),
+    )
+
+
+def prepare_overlay_release(
+    dsn: str,
+    notices: Sequence[ParsedNotice],
+    *,
+    base_run_id: str | None = None,
+    dyslipidemia_odt: Path | None = None,
+    today: date | None = None,
+    official_renderings: Mapping[str, str | None] | None = None,
+    require_official_rendering: bool = False,
+    supersede: bool = False,
+) -> OverlayRelease:
+    """Compose strictly: any notice failure, or nothing to compose, raises."""
+
+    composition = compose_overlay_release(
+        dsn,
+        notices,
+        base_run_id=base_run_id,
+        dyslipidemia_odt=dyslipidemia_odt,
+        today=today,
+        official_renderings=official_renderings,
+        require_official_rendering=require_official_rendering,
+        supersede=supersede,
+    )
+    if composition.failures:
+        raise AnnouncedReleaseError(
+            "notice failures: " + json_text(list(composition.failures))
+        )
+    if composition.release is None:
+        raise AnnouncedReleaseError("no notice to compose")
+    return composition.release
 
 
 # ---------------------------------------------------------------------------
@@ -1789,8 +2225,13 @@ def activate_overlay_release(
     expected_sealed_fingerprint: str,
     expected_base_run_id: str,
     reason: str = "announced overlay loader activation",
+    compose_holds: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Make a loaded overlay run the served run, with its re-bound chain."""
+    """Make a loaded overlay run the served run, with its re-bound chain.
+
+    ``compose_holds`` (the failures and dropped notices of the load that
+    sealed this run) is recorded in the activation evidence when supplied.
+    """
 
     with _connect(dsn, read_only=False) as connection:
         connection.execute(
@@ -1815,6 +2256,9 @@ def activate_overlay_release(
             raise AnnouncedReleaseError(
                 "the served run is not the expected base run"
             )
+        _require_served_rows_carried(
+            connection, served_run_id=expected_base_run_id, run_id=run_id
+        )
         carries_dyslipidemia = connection.execute(
             f"""
             SELECT 1 FROM {SCHEMA}.composed_clause_version
@@ -1856,6 +2300,11 @@ def activate_overlay_release(
             "sealed_fingerprint": expected_sealed_fingerprint,
             "previous": previous,
             "activated": new_chain,
+            **(
+                {"compose_holds": dict(compose_holds)}
+                if compose_holds is not None
+                else {}
+            ),
         }
         connection.execute(
             f"SELECT {SCHEMA}.set_release_control(%s,'activate',%s,%s::jsonb)",
@@ -1908,6 +2357,70 @@ def rollback_overlay_release(
         _activate_chain(connection, previous, reason=reason, evidence=evidence)
         connection.commit()
     return verify_served_chain(dsn, expected=previous)
+
+
+def _require_served_rows_carried(
+    connection: Any, *, served_run_id: str, run_id: str
+) -> None:
+    """Refuse a run that would stop serving a served notice or patch text.
+
+    A composite carries every row of its base and a supersede re-projects
+    served patches byte-identically, so each served notice and each served
+    clause patch (id, text hash, effective date) must exist in the new run.
+    """
+
+    def notices(run: str) -> set[str]:
+        return {
+            str(row["reference_number"])
+            for row in connection.execute(
+                f"SELECT reference_number FROM {SCHEMA}.notice_event "
+                "WHERE run_id=%s",
+                (run,),
+            ).fetchall()
+        }
+
+    def patches(run: str) -> set[tuple[str, str, str, str]]:
+        return {
+            (
+                str(row["clause_code"]),
+                str(row["patch_id"]),
+                str(row["source_exact_patch_sha256"]),
+                row["effective_from"].isoformat(),
+            )
+            for row in connection.execute(
+                f"""
+                SELECT clause_code, patch_id, source_exact_patch_sha256,
+                       effective_from
+                FROM {SCHEMA}.clause_patch WHERE run_id=%s
+                """,
+                (run,),
+            ).fetchall()
+        }
+
+    lost_notices = sorted(notices(served_run_id) - notices(run_id))
+    lost_patches = sorted(
+        {row[0] for row in patches(served_run_id) - patches(run_id)}
+    )
+    if lost_notices or lost_patches:
+        raise AnnouncedReleaseError(
+            "the run does not carry everything the served run serves: "
+            + json_text(
+                {"notices": lost_notices, "clause_patches": lost_patches}
+            )
+        )
+
+
+def _run_blocked_clauses(connection: Any, run_id: str) -> list[dict[str, Any]]:
+    rows = {
+        table: [
+            {key: _jsonable(value) for key, value in row.items()}
+            for row in connection.execute(
+                f"SELECT * FROM {SCHEMA}.{table} WHERE run_id=%s", (run_id,)
+            ).fetchall()
+        ]
+        for table in ("notice_event", "notice_effect")
+    }
+    return blocked_clauses(rows)
 
 
 def _served_chain(connection: Any) -> dict[str, Any]:
@@ -2091,8 +2604,10 @@ def verify_served_chain(
         ).fetchone()["n"]
         if len(patches) != stored:
             raise AnnouncedReleaseError("a sealed patch is not served")
+        blocked = _run_blocked_clauses(connection, run_id)
     return {
         "served": chain,
+        "blocked_clauses": blocked,
         "public_patch_count": len(patches),
         "public_patches": [
             {
