@@ -2682,7 +2682,10 @@ def _carry_back_plan(
     * only the restored run changed since: the restored run keeps its newer
       resolution;
     * both changed, or the provenance is missing: the rollback is refused,
-      because either choice would drop a decision.
+      because either choice would drop a decision.  The refusal names the
+      restored run's state and reason for each such patch; writing them to
+      the served run unblocks the rollback (the restored run itself takes no
+      write while another run is served).
     """
 
     rows = connection.execute(
@@ -2715,7 +2718,7 @@ def _carry_back_plan(
         (to_run_id, from_run_id),
     ).fetchall()
     plan: list[dict[str, Any]] = []
-    conflicts: list[str] = []
+    conflicts: list[tuple[str, str, str]] = []
     for row in rows:
         if (row["resolution_state"], row["resolution_reason"]) == (
             row["target_state"],
@@ -2735,10 +2738,15 @@ def _carry_back_plan(
             "from_resolution_id": int(row["resolution_id"]),
             "restored_resolution_id": int(row["target_id"]),
         }
+        restored = (
+            entry["clause_code"],
+            str(row["target_state"]),
+            str(row["target_reason"]),
+        )
         if origin is None:
             # The first resolution may itself be a decision written while
             # the run was served; which one is newer cannot be told.
-            conflicts.append(entry["clause_code"])
+            conflicts.append(restored)
         elif source_changed and not target_changed:
             evidence = _jsonable(row["resolution_evidence"]) or {}
             carried_from = {
@@ -2771,13 +2779,23 @@ def _carry_back_plan(
                 }
             )
         else:
-            conflicts.append(entry["clause_code"])
+            conflicts.append(restored)
     if conflicts:
+        conflicts.sort()
         raise AnnouncedReleaseError(
             "rollback refused: the resolution of "
-            + ", ".join(sorted(conflicts))
+            + ", ".join(code for code, _, _ in conflicts)
             + " changed in both runs since the rolled-back run was composed,"
-            " or its origin is not recorded; resolve it in the served run first"
+            " or its origin is not recorded; resolve it in the served run first:"
+            " make the served run's resolution state and reason equal to the"
+            " restored run's ("
+            + "; ".join(
+                f"{code}: state {json.dumps(state, ensure_ascii=False)}, "
+                f"reason {json.dumps(reason, ensure_ascii=False)}"
+                for code, state, reason in conflicts
+            )
+            + "), then roll back again; the restored run takes no write while"
+            " another run is served"
         )
     return plan
 

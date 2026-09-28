@@ -893,15 +893,22 @@ resolution names the restored run's event it was carried from. Then:
   `carried_forward` naming the source event.
 - If only the restored run changed since, it keeps its newer resolution
   (`kept_newer_restored`).
-- If both changed, the rollback is refused.
+- If both changed, or the first resolution records no origin, the rollback
+  is refused (`rollback refused: ...`). The refusal names the restored run's
+  state and reason for each such patch. To unblock it, write that state and
+  reason to the served run and roll back again: the patch then no longer
+  differs. The restored run itself takes no write while another run is
+  served.
 
 The rollback receipt and control event list every decision as
 `carried_back_resolutions`. The restored run is activated before anything is
 written to it.
 
 Migration `2026-09-28_nhi_rule_history_announced_resolution_guard_v27`
-(with its rollback file; design-gated, applied separately) moves the
-resolution writer's rules into the database:
+(with its rollback file) was applied in production on 2026-09-29 at
+03:14:02 +08:00, after loader 2.3.0 was live; it must never run under an
+older loader, whose rollback writes to the restored run before activating
+it. It moves the resolution writer's rules into the database:
 - every resolution insert, through `set_patch_resolution` or directly,
   takes the global announced lock;
 - it is refused for a run that was served before and is not the served run

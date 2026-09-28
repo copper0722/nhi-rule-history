@@ -1894,9 +1894,29 @@ class RollbackRecencyLiveTest(_LiveRunCase):
                      "fixture post-effective resolution")
         with self.assertRaisesRegex(
             AnnouncedReleaseError, "rollback refused: the resolution of 9.2 changed in both runs"
-        ):
+        ) as refused:
             rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
         self.assertEqual(self.served_patch("9.2")["run_id"], second.release.run_id)
+        # The refusal says what unblocks it: the restored run's state and
+        # reason, written to the served run, because under v27 the restored
+        # run takes no write.
+        self.assertIn(
+            "resolve it in the served run first: make the served run's "
+            "resolution state and reason equal to the restored run's "
+            '(9.2: state "withdrawn", reason "fixture late write"), then roll '
+            "back again",
+            str(refused.exception),
+        )
+        with self.assertRaisesRegex(psycopg.Error, "is not the served run"):
+            self.resolve(first.release.run_id, patch_92, "withdrawn", "fixture late write")
+        self.resolve(second.release.run_id, patch_92, "withdrawn", "fixture late write")
+        restored = rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
+        self.assertEqual(restored["carried_back_resolutions"], [])
+        served = self.served_patch("9.2")
+        self.assertEqual(
+            (served["run_id"], served["current_resolution_state"]),
+            (first.release.run_id, "withdrawn"),
+        )
 
     def test_a_resolution_without_origin_refuses_the_rollback(self) -> None:
         first, second, patch_92 = self._two_runs()
@@ -1914,7 +1934,9 @@ class RollbackRecencyLiveTest(_LiveRunCase):
             connection.commit()
         self.assertEqual(stripped, 1)
         with self.assertRaisesRegex(
-            AnnouncedReleaseError, "rollback refused: the resolution of 9.2 .*origin is not recorded"
+            AnnouncedReleaseError,
+            "rollback refused: the resolution of 9.2 .*origin is not recorded.*"
+            '9.2: state "withdrawn", reason "fixture late write"',
         ):
             rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
         self.assertEqual(self.served_patch("9.2")["run_id"], second.release.run_id)
