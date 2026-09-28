@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import tempfile
+import threading
 import types
 import unittest
 import uuid
@@ -40,6 +41,7 @@ from nhi_rule_history.announced_notice import (
 from nhi_rule_history.announced_release import (
     LOADER_VERSION,
     PLACEHOLDER_RUN_ID,
+    REPRODUCED_PATCH_KEYS,
     AnnouncedReleaseError,
     CarriedNotice,
     SEALED_COUNT_TABLES,
@@ -53,6 +55,7 @@ from nhi_rule_history.announced_release import (
     read_base_chain,
     rollback_overlay_release,
     _connect,
+    _jsonable,
 )
 from nhi_rule_history.pg.common import (
     json_text,
@@ -305,14 +308,25 @@ def _synthetic_notice(
     *,
     effective: str = "（自115年10月1日生效）",
     declared_sha256: str | None = None,
+    header: tuple[str, str] | None = None,
+    preamble: str = "",
 ):
     """Parse a comparison table written in the parser's own table grammar.
 
     ``declared_sha256`` names the artifact the text claims to come from, so a
     re-parse of the same source with different text can be simulated.
+    ``header`` and ``preamble`` (paragraphs before the table) vary the
+    document around the same rows.
     """
 
-    payload = fixture_odt(notice_fixture._comparison(rows, effective=effective))
+    content = notice_fixture._comparison(
+        rows, effective=effective, **({"header": header} if header else {})
+    )
+    if preamble:
+        content = content.replace(
+            b"<office:text>", b"<office:text>" + preamble.encode("utf-8"), 1
+        )
+    payload = fixture_odt(content)
     sha = declared_sha256 or hashlib.sha256(payload).hexdigest()
     attachment = NoticeAttachment(
         declared_sequence=0,
@@ -955,19 +969,32 @@ class ServedPatchPinTest(unittest.TestCase):
 
     def test_identical_projection_is_reproduced(self) -> None:
         previous, fresh, base = self._pair()
-        self.assertEqual(_served_differences(previous, fresh), [])
+        self.assertEqual(_served_differences(previous, fresh), ([], []))
         self.assertIsNone(_supersede_refusal(previous, fresh, base))
 
-    def test_new_predecessor_is_refused(self) -> None:
+    def test_new_predecessor_is_a_move_not_a_rebind(self) -> None:
+        # Finding HIGH-A: the served patch is the same, only the publication
+        # text it was bound to moved.  That is reported apart from a
+        # difference, and a supersede still refuses to re-bind it.
         previous, fresh, base = self._pair(predecessor_text_sha256="b" * 64)
+        differences, moved = _served_differences(previous, fresh)
+        self.assertEqual(differences, [])
         self.assertEqual(
-            _served_differences(previous, fresh),
-            ["9.2 (predecessor_text_sha256 differs)"],
+            [(item["clause_code"], item["served_predecessor_text_sha256"],
+              item["current_predecessor_text_sha256"]) for item in moved],
+            [("9.2", "b" * 64, "a" * 64)],
         )
         self.assertEqual(
             _supersede_refusal(previous, fresh, base),
             "served clause 9.2 is not re-projected byte-identically "
             "(predecessor_text_sha256 differs)",
+        )
+
+    def test_changed_text_is_a_difference(self) -> None:
+        previous, fresh, base = self._pair(source_exact_patch_sha256="c" * 64)
+        self.assertEqual(
+            _served_differences(previous, fresh),
+            (["9.2 (source_exact_patch_sha256 differs)"], []),
         )
 
     def test_scope_fields_alone_are_not_a_difference(self) -> None:
@@ -977,7 +1004,7 @@ class ServedPatchPinTest(unittest.TestCase):
             partial_event_projection=True,
             unprocessed_event_scope=[{"clause_code": "9.69"}],
         )
-        self.assertEqual(_served_differences(previous, fresh), [])
+        self.assertEqual(_served_differences(previous, fresh), ([], []))
         self.assertIsNone(_supersede_refusal(previous, fresh, base))
 
 
@@ -1391,6 +1418,368 @@ class SupersedeLiveTest(unittest.TestCase):
             )
         self.assertEqual(sorted(_public_patches(dsn)), ["3.3.28", "9.2", "9.9"])
 
+
+
+OTHER_REFERENCE = "健保審字第1159000002號"
+OTHER_ROWS = [
+    (["2.1.4.2.Rivaroxaban：(115/10/1)", "限用於心房纖維顫動。"],
+     ["2.1.4.2.Rivaroxaban：", "限用於靜脈血栓。"])
+]
+NEW_CLAUSE_REFERENCE = "健保審字第1159000004號"
+NEW_CLAUSE_ROWS = [(["9.139.Mogamulizumab：(115/10/1)", "單獨用於。"], ["無"])]
+
+
+class _LiveRunCase(unittest.TestCase):
+    """A fresh disposable cluster per test, with served-run helpers."""
+
+    def setUp(self) -> None:
+        self.pg = recovery_fixture.DisposablePostgres()
+        _apply_migrations(self.pg)
+        _seed(self.pg.dsn)
+        self.dsn = self.pg.dsn
+
+    def tearDown(self) -> None:
+        self.pg.close()
+
+    def compose(self, notices, *, codes=None, **options):
+        renderings = {
+            notice.bundle.reference_number: _rendering(notice, *(codes or {}).get(
+                notice.bundle.reference_number, ()))
+            for notice in notices
+        }
+        return compose_overlay_release(
+            self.dsn, notices, official_renderings=renderings, today=TODAY,
+            **options,
+        )
+
+    def serve(self, composition, base_run_id: str) -> dict:
+        load_overlay_release(self.dsn, composition.release)
+        return self.activate(composition, base_run_id)
+
+    def activate(self, composition, base_run_id: str) -> dict:
+        return activate_overlay_release(
+            self.dsn,
+            run_id=composition.release.run_id,
+            expected_sealed_fingerprint=composition.release.sealed_fingerprint,
+            expected_base_run_id=base_run_id,
+        )
+
+    def resolve(self, run_id: str, patch_id: str, state: str, reason: str) -> None:
+        with _connect(self.dsn, read_only=False) as connection:
+            connection.execute(
+                "SELECT nhi_rule_history_announced.set_patch_resolution("
+                "%s,%s,%s,%s,'{}')",
+                (run_id, patch_id, state, reason),
+            )
+            connection.commit()
+
+    def publish(self, code: str, text: str) -> None:
+        """The current publication now holds ``text`` for ``code``."""
+
+        digest = sha256_text(text)
+        with _connect(self.dsn, read_only=False) as connection:
+            connection.execute("SET session_replication_role = replica")
+            updated = connection.execute(
+                "UPDATE nhi_rule_history_publication.current_clause SET "
+                "raw_text=%s, raw_text_sha256=%s WHERE clause_code=%s",
+                (text, digest, code),
+            ).rowcount
+            if not updated:
+                connection.execute(
+                    """
+                    INSERT INTO nhi_rule_history_publication.current_clause
+                    SELECT run_id, %s, chapter_number, %s, code_origin, %s,
+                           source_acquisition_run_id, source_resource_id,
+                           source_url, source_label, source_artifact_sha256,
+                           source_span, %s, %s, normalized_text,
+                           normalized_text_sha256, comparison_text,
+                           comparison_sha256, valid_distinct_roc_date_count,
+                           expected_version_count, reconstructed_version_count,
+                           missing_version_count,
+                           annotation_count_underflows_reconstructed,
+                           inventory_status, source_row_sha256
+                    FROM nhi_rule_history_publication.current_clause
+                    WHERE clause_code='9.9'
+                    """,
+                    (code, code, code, text, digest),
+                )
+            connection.commit()
+
+    def served_patch(self, code: str) -> dict:
+        with _connect(self.dsn, read_only=True) as connection:
+            row = connection.execute(
+                "SELECT * FROM nhi_rule_history_announced.v_public_clause_patch "
+                "WHERE clause_code=%s",
+                (code,),
+            ).fetchone()
+        return {key: _jsonable(value) if not isinstance(value, datetime) else value
+                for key, value in row.items()}
+
+
+class PublicationMoveLiveTest(_LiveRunCase):
+    """2026-09-28 finding HIGH-A: a consolidated clause must not stall the lane.
+
+    When NHI consolidates a served clause, the publication text its patch was
+    bound to moves.  The carried notice then reported a failure on every
+    compose, and without --skip-failed no later notice could be served.
+    """
+
+    def test_moved_predecessors_keep_served_rows_and_let_others_serve(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS)
+        new_clause = _synthetic_notice(NEW_CLAUSE_REFERENCE, NEW_CLAUSE_ROWS)
+        # 9.2 serves; 9.5 is held back; 9.139 is a new clause.
+        first = self.compose(
+            [notice, new_clause], base_run_id=BASE_RUN,
+            codes={SUPERSEDE_REFERENCE: ("9.2",)},
+        )
+        self.serve(first, BASE_RUN)
+        served_92 = self.served_patch("9.2")
+        served_139 = self.served_patch("9.139")
+
+        # NHI consolidates both clauses into the publication.
+        self.publish("9.2", "9.2.Carboplatin：(115/10/1)\n限用於卵巢癌。")
+        self.publish("9.139", "9.139.Mogamulizumab：(115/10/1)\n單獨用於。")
+        other = _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)
+        later = self.compose(
+            [notice, new_clause, other], codes={SUPERSEDE_REFERENCE: ("9.2",)},
+        )
+        self.assertEqual(later.failures, ())
+        self.assertEqual(
+            [(item["reference_number"], item["clause_code"],
+              item["served_predecessor_text_sha256"],
+              item["current_predecessor_text_sha256"], item["settled"])
+             for item in later.predecessor_moved],
+            [
+                (SUPERSEDE_REFERENCE, "9.2",
+                 served_92["predecessor_text_sha256"],
+                 sha256_text("9.2.Carboplatin：(115/10/1)\n限用於卵巢癌。"),
+                 False),
+                (NEW_CLAUSE_REFERENCE, "9.139", sha256_text(""),
+                 sha256_text("9.139.Mogamulizumab：(115/10/1)\n單獨用於。"),
+                 False),
+            ],
+        )
+        self.assertEqual(later.status, "passed_with_holds")
+        # The new notice composes and serves; the moved patches stay exactly
+        # as served, bound to the text they were verified against.
+        self.serve(later, first.release.run_id)
+        self.assertEqual(
+            sorted(_public_patches(self.dsn)), ["2.1.4.2", "9.139", "9.2", "9.9"]
+        )
+        for code, before in (("9.2", served_92), ("9.139", served_139)):
+            after = self.served_patch(code)
+            self.assertEqual(after["run_id"], later.release.run_id)
+            for key in (*REPRODUCED_PATCH_KEYS, "component_manifest_sha256"):
+                self.assertEqual(after[key], before[key], (code, key))
+
+        # A supersede would re-bind the moved predecessor, so a carried
+        # notice with newly projectable clauses is dropped instead.
+        waiting = self.compose(
+            [notice, new_clause, other], supersede=True,
+        )
+        self.assertEqual(waiting.failures, ())
+        self.assertIsNone(waiting.release)
+        self.assertEqual(
+            [(item["reference_number"], item["reason"], item["clause_codes"])
+             for item in waiting.dropped_notices],
+            [(SUPERSEDE_REFERENCE, "carried_predecessor_moved", ["9.5"])],
+        )
+
+        # Once the moved patch is settled (reconciled), it no longer holds.
+        self.resolve(later.release.run_id, served_92["patch_id"],
+                     "reconciled", "fixture consolidation")
+        settled = self.compose([notice, new_clause, other],
+                               codes={SUPERSEDE_REFERENCE: ("9.2",)})
+        self.assertEqual(
+            [(item["clause_code"], item["served_resolution_state"], item["settled"])
+             for item in settled.predecessor_moved],
+            [("9.2", "reconciled", True), ("9.139", "verified_scheduled", False)],
+        )
+
+    def test_changed_text_still_fails_the_carried_notice(self) -> None:
+        # Confusable negative: a re-parse that changes served text is a
+        # failure, whatever the publication does.
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        self.publish("9.2", "9.2.Carboplatin：(115/10/1)\n限用於卵巢癌。")
+        changed = _synthetic_notice(
+            SUPERSEDE_REFERENCE,
+            [(["9.2.Carboplatin：(115/10/1)", "限用於卵巢癌及子宮頸癌。"],
+              SUPERSEDE_ROWS[0][1])],
+            declared_sha256=notice.attachment.sha256,
+        )
+        attempt = self.compose([changed])
+        self.assertEqual(
+            [(item["stage"], item["error"]) for item in attempt.failures],
+            [("carried", "the fresh projection does not reproduce the served "
+              "patches: 9.2 (patch_id, source_exact_patch_sha256 differs)")],
+        )
+        self.assertEqual(attempt.predecessor_moved, ())
+
+
+class ResolutionPinLiveTest(_LiveRunCase):
+    """2026-09-28 finding MEDIUM-D: recompose must follow a new resolution.
+
+    The run identity did not cover the served resolutions, so after a
+    resolution was written to the served run the next compose gave the same
+    run, whose load replayed the stale resolutions and whose activation was
+    refused on every tick.
+    """
+
+    def test_lane_recovers_after_a_post_effective_write(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        patch_92 = str(self.served_patch("9.2")["patch_id"])
+        other = _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)
+        # The lane loads a run, and its activation is held.
+        held = self.compose([notice, other])
+        load_overlay_release(self.dsn, held.release)
+        # Confusable negative: with nothing written, composing again gives
+        # the same run.
+        self.assertEqual(self.compose([notice, other]).release.run_id,
+                         held.release.run_id)
+        # Meanwhile the post-effective writer resolves the served 9.2.
+        self.resolve(first.release.run_id, patch_92, "effective_unconsolidated",
+                     "fixture post-effective resolution")
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError, "current resolution of: 9.2;"
+        ):
+            self.activate(held, first.release.run_id)
+        # The next compose is a new run that carries the new resolution.
+        again = self.compose([notice, other])
+        self.assertNotEqual(again.release.run_id, held.release.run_id)
+        self.assertFalse(load_overlay_release(self.dsn, again.release)["replayed"])
+        self.activate(again, first.release.run_id)
+        served = self.served_patch("9.2")
+        self.assertEqual(served["current_resolution_state"], "effective_unconsolidated")
+        self.assertEqual(served["run_id"], again.release.run_id)
+
+
+class ResolutionRaceLiveTest(_LiveRunCase):
+    """2026-09-28 finding MEDIUM-C: a write in flight during activation.
+
+    A withdrawal inserted into the served run by a writer that does not take
+    the global lock, and committed while activation runs, was lost: the new
+    run was served with the older resolution.
+    """
+
+    def test_activation_waits_for_a_resolution_in_flight(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        patch_92 = str(self.served_patch("9.2")["patch_id"])
+        candidate = self.compose(
+            [notice, _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)]
+        )
+        load_overlay_release(self.dsn, candidate.release)
+
+        inserted, release_writer = threading.Event(), threading.Event()
+
+        def writer() -> None:
+            with psycopg.connect(self.dsn) as connection:
+                connection.execute(
+                    "SELECT nhi_rule_history_announced.set_patch_resolution("
+                    "%s,%s,'withdrawn','fixture withdrawal in flight','{}')",
+                    (first.release.run_id, patch_92),
+                )
+                inserted.set()
+                release_writer.wait(30)
+                connection.commit()
+
+        outcome: dict[str, object] = {}
+
+        def activation() -> None:
+            try:
+                outcome["result"] = self.activate(candidate, first.release.run_id)
+            except Exception as exc:  # recorded for the assertion below
+                outcome["error"] = exc
+
+        writing = threading.Thread(target=writer)
+        writing.start()
+        self.assertTrue(inserted.wait(30))
+        activating = threading.Thread(target=activation)
+        activating.start()
+        activating.join(1.5)
+        # Activation waits for the writer instead of reading past it.
+        self.assertTrue(activating.is_alive())
+        release_writer.set()
+        writing.join(30)
+        activating.join(60)
+        self.assertIsInstance(outcome.get("error"), AnnouncedReleaseError)
+        self.assertIn("current resolution of: 9.2;", str(outcome["error"]))
+        self.assertEqual(self.served_patch("9.2")["current_resolution_state"], "withdrawn")
+        self.assertEqual(self.served_patch("9.2")["run_id"], first.release.run_id)
+
+
+class RollbackCarryLiveTest(_LiveRunCase):
+    """2026-09-28 finding MEDIUM-E: rollback reverted a withdrawal."""
+
+    def test_rollback_carries_the_current_resolutions_back(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        first = self.compose([notice], base_run_id=BASE_RUN)
+        self.serve(first, BASE_RUN)
+        second = self.compose(
+            [notice, _synthetic_notice(OTHER_REFERENCE, OTHER_ROWS)]
+        )
+        self.serve(second, first.release.run_id)
+        patch_92 = str(self.served_patch("9.2")["patch_id"])
+        self.resolve(second.release.run_id, patch_92, "withdrawn",
+                     "fixture withdrawal")
+
+        def events(run_id: str, patch_id: str) -> int:
+            with _connect(self.dsn, read_only=True) as connection:
+                return connection.execute(
+                    "SELECT count(*) AS n FROM nhi_rule_history_announced."
+                    "patch_resolution_event WHERE run_id=%s AND patch_id=%s",
+                    (run_id, patch_id),
+                ).fetchone()["n"]
+
+        unchanged_before = events(first.release.run_id, BASE_PATCH)
+        restored = rollback_overlay_release(self.dsn, from_run_id=second.release.run_id)
+        served = self.served_patch("9.2")
+        self.assertEqual(served["run_id"], first.release.run_id)
+        self.assertEqual(served["current_resolution_state"], "withdrawn")
+        self.assertEqual(
+            served["resolution_evidence"]["carried_forward"]["run_id"],
+            second.release.run_id,
+        )
+        self.assertEqual(
+            [(item["clause_code"], item["resolution_state"])
+             for item in restored["carried_back_resolutions"]],
+            [("9.2", "withdrawn")],
+        )
+        # Confusable negative: a patch whose resolution did not change gets
+        # no new event.
+        self.assertEqual(events(first.release.run_id, BASE_PATCH), unchanged_before)
+
+
+class SupersedeReportLiveTest(_LiveRunCase):
+    """2026-09-28 finding LOW: a supersede must report every column it rewrites."""
+
+    def test_scope_changes_list_manifest_and_note_changes(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS)
+        first = self.compose(
+            [notice], base_run_id=BASE_RUN, codes={SUPERSEDE_REFERENCE: ("9.2",)}
+        )
+        self.serve(first, BASE_RUN)
+        # The same artifact read with a leading paragraph (block locators
+        # shift) and the 建議 header (public note wording).
+        drifted = _synthetic_notice(
+            SUPERSEDE_REFERENCE, SUPERSEDE_ROWS,
+            declared_sha256=notice.attachment.sha256,
+            header=("建議修訂後給付規定", "原給付規定"),
+            preamble="<text:p>附件一</text:p>",
+        )
+        composition = self.compose([drifted], supersede=True)
+        self.assertEqual(composition.failures, ())
+        self.assertEqual(
+            sorted({item["field"] for entry in composition.superseded_notices
+                    for item in entry["scope_changes"]}),
+            ["component_manifest_sha256", "partial_event_projection",
+             "public_note", "unprocessed_event_scope"],
+        )
 
 
 def _write_bundle(

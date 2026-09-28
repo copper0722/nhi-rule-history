@@ -18,9 +18,11 @@ compose, load and activate print one JSON receipt on stdout; errors go to
 stderr.  Every receipt lists ``failures`` (notices that failed to parse, bind,
 render or supersede, with the reason), ``dropped_notices`` (parsed notices
 left out, with the reason) and ``blocked_clauses`` (clauses the run holds
-back, with the reason).  Its ``status`` is ``passed`` or ``no_change`` only
-when all three are empty, and ``passed_with_holds`` or
-``no_change_with_holds`` otherwise.  Exit status: 0 green, 3 completed with
+back, with the reason); compose and load also list
+``carried_predecessor_moved`` (served patches whose publication text moved,
+kept as served).  Its ``status`` is ``passed`` or ``no_change`` only when the
+three lists are empty and every moved predecessor belongs to a settled
+patch, and ``passed_with_holds`` or ``no_change_with_holds`` otherwise.  Exit status: 0 green, 3 completed with
 holds (a load did seal its run and an activation did serve it), 1 error.
 
 ``--acknowledged-failures`` names a JSON list of failures already known and
@@ -325,6 +327,7 @@ def _holds(
         failures=failures,
         dropped_notices=dropped,
         blocked_clauses=composition.blocked_clauses,
+        predecessor_moved=composition.predecessor_moved,
     )
     if stale:
         status = {
@@ -338,6 +341,7 @@ def _holds(
         "blocked_clauses": list(composition.blocked_clauses),
         "superseded_notices": list(composition.superseded_notices),
         "carried_notices": list(composition.carried_notices),
+        "carried_predecessor_moved": list(composition.predecessor_moved),
         **(
             {"acknowledged_failures": matched, "stale_acknowledgments": stale}
             if acknowledged
@@ -413,11 +417,11 @@ def _load_receipt_holds(
         "failures": receipt.get("failures"),
         "dropped_notices": receipt.get("dropped_notices"),
         "superseded_notices": receipt.get("superseded_notices"),
-        **(
-            {"acknowledged_failures": receipt["acknowledged_failures"]}
-            if isinstance(receipt.get("acknowledged_failures"), list)
-            else {}
-        ),
+        **{
+            key: receipt[key]
+            for key in ("acknowledged_failures", "carried_predecessor_moved")
+            if isinstance(receipt.get(key), list)
+        },
     }
     if not all(
         isinstance(holds[key], list)
@@ -491,6 +495,7 @@ def _run(args: argparse.Namespace) -> int:
                 failures=holds and holds["failures"],
                 dropped_notices=holds and holds["dropped_notices"],
                 blocked_clauses=result["blocked_clauses"],
+                predecessor_moved=holds and holds.get("carried_predecessor_moved"),
             ),
             "failures": None if holds is None else holds["failures"],
             "dropped_notices": (
