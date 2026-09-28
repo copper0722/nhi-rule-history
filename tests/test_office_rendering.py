@@ -127,10 +127,16 @@ class ProgressTest(unittest.TestCase):
 
         def attempt(python, binary, documents, work, attempt, **_):
             calls.append([key for key, _ in documents])
-            finished = {documents[0][0]: {"key": documents[0][0], "tables": []}}
+            finished = {
+                documents[0][0]: {"key": documents[0][0], "tables": [], "flow": []}
+            }
             if attempt == 0:
                 return finished, None, False
-            return {key: {"key": key, "tables": []} for key, _ in documents}, None, True
+            return (
+                {key: {"key": key, "tables": [], "flow": []} for key, _ in documents},
+                None,
+                True,
+            )
 
         with mock.patch.object(office_rendering, "_attempt", side_effect=attempt), \
                 mock.patch.object(office_rendering, "uno_python", return_value="python3"):
@@ -139,6 +145,33 @@ class ProgressTest(unittest.TestCase):
             )
         self.assertEqual(calls, [["a", "b", "c"], ["b", "c"]])
         self.assertTrue(all(value is not None for value in result.values()))
+
+
+    def test_an_entry_without_body_text_is_unrendered(self) -> None:
+        # Finding O1: a rendering must report the body text outside the
+        # tables; an entry shaped as rule 1.1.0 wrote it confirms nothing.
+        def attempt(python, binary, documents, work, attempt, **_):
+            return (
+                {
+                    "a": {"key": "a", "tables": []},
+                    "b": {"key": "b", "tables": [], "flow": []},
+                },
+                None,
+                True,
+            )
+
+        with mock.patch.object(office_rendering, "_attempt", side_effect=attempt), \
+                mock.patch.object(office_rendering, "uno_python", return_value="python3"):
+            result = render_table_cells({"a": b"1", "b": b"2"}, soffice="/usr/bin/true")
+        self.assertIsNone(result["a"])
+        self.assertEqual(
+            result["b"],
+            {
+                "rendering_version": office_rendering.CELL_RENDERING_VERSION,
+                "tables": [],
+                "flow": [],
+            },
+        )
 
 
 if __name__ == "__main__":

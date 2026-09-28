@@ -1,14 +1,16 @@
-"""LibreOffice's own reading of the paragraphs in an ODT's table cells.
+"""LibreOffice's own reading of the paragraphs of an ODT's body text.
 
 The official-rendering gate of the announced overlay compares each clause
-with the rendering of its own revised cell.  A plain-text export cannot serve
+with the rendering of its own revised cell, and the text the parser reads
+outside the cells (the effective-date statement, table titles) with the
+rendering of the same body-text paragraphs.  A plain-text export cannot serve
 that purpose: it prints the whole document, so a paragraph can be found in
 another cell, and it prints every list label followed by one space whatever
 gap the document draws.  This module opens the document in LibreOffice and
-reads, through UNO, each paragraph of each cell of each top-level table: its
-text, the list label LibreOffice draws before it (``ListLabelString``) and
-what follows that label (the list level's ``LabelFollowedBy``: tab, space,
-nothing or a line break).
+reads, through UNO, each paragraph of each cell of each top-level table and
+each paragraph of the body text outside them: its text, the list label
+LibreOffice draws before it (``ListLabelString``) and what follows that label
+(the list level's ``LabelFollowedBy``: tab, space, nothing or a line break).
 
 The UNO client runs in a child process with an interpreter that can import
 ``uno``, against a private office process with a throwaway profile, so it
@@ -34,7 +36,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
-CELL_RENDERING_VERSION = "nhi-rule-history/office-cell-rendering/1.1.0"
+CELL_RENDERING_VERSION = "nhi-rule-history/office-cell-rendering/1.2.0"
 # com.sun.star.text.LabelFollow, for the label-alignment position mode.
 _LABEL_FOLLOWED_BY = {0: "\t", 1: " ", 2: "", 3: "\n"}
 # com.sun.star.text.PositionAndSpaceMode.LABEL_ALIGNMENT; in the older
@@ -191,21 +193,24 @@ def render_table_cells(
     timeout_seconds: int = 600,
     document_seconds: int = 120,
 ) -> dict[str, dict[str, Any] | None]:
-    """LibreOffice's cell paragraphs of each ODT, or ``None`` per document.
+    """LibreOffice's body-text paragraphs of each ODT, or ``None`` per document.
 
-    A rendering is ``{"rendering_version", "tables"}``: one entry per
-    top-level body table in document order, each a list of rows, each a list
-    of cells by column position; a cell is a list of paragraphs
-    ``{"text", "label", "separator", "hidden", "bullet", "transform"}``
-    (``separator`` is ``None`` when there is no label or its gap is not a
-    character) and ``{"nested_table": true}`` for a table inside the cell, or
-    ``None`` when the office suite cannot address it.  ``getString`` returns
-    text LibreOffice does not draw and bullets have no label string, so each
-    paragraph also reports whether any of it, or its label, is hidden (a
-    hidden character attribute, hiding field or hidden or conditional
-    section), the bullet or image a list level draws instead of a label, and
-    whether a case map (upper, lower, title case or small caps) changes how
-    its text or label is drawn.
+    A rendering is ``{"rendering_version", "tables", "flow"}``.  ``tables``
+    has one entry per top-level body table in document order, each a list of
+    rows, each a list of cells by column position; a cell is a list of
+    paragraphs ``{"text", "label", "separator", "hidden", "bullet",
+    "transform"}`` (``separator`` is ``None`` when there is no label or its
+    gap is not a character) and ``{"nested_table": true}`` for a table inside
+    the cell, or ``None`` when the office suite cannot address it.  ``flow``
+    is the body text in document order: the same paragraph entries for the
+    paragraphs outside the top-level tables, and ``{"table": true}`` where a
+    top-level table stands.  Frames, text boxes, notes and annotations are
+    not body text.  ``getString`` returns text LibreOffice does not draw and
+    bullets have no label string, so each paragraph also reports whether any
+    of it, or its label, is hidden (a hidden character attribute, hiding
+    field or hidden or conditional section), the bullet or image a list level
+    draws instead of a label, and whether a case map (upper, lower, title
+    case or small caps) changes how its text or label is drawn.
 
     A document is ``None`` when LibreOffice or its Python bridge is
     unavailable, or the document does not load, crashes the office process
@@ -243,10 +248,15 @@ def render_table_cells(
             )
             attempt += 1
             for key, entry in finished.items():
-                if key in result and isinstance(entry.get("tables"), list):
+                if (
+                    key in result
+                    and isinstance(entry.get("tables"), list)
+                    and isinstance(entry.get("flow"), list)
+                ):
                     result[key] = {
                         "rendering_version": CELL_RENDERING_VERSION,
                         "tables": entry["tables"],
+                        "flow": entry["flow"],
                     }
             if complete:
                 break
@@ -341,6 +351,17 @@ def _presentation(
     return {"hidden": hidden, "bullet": bullet, "transform": transform}
 
 
+def _paragraph(element: Any, character_styles: Any) -> dict[str, Any]:
+    label = _value(element, "ListLabelString") or ""
+    level = _level(element)
+    return {
+        "text": element.getString(),
+        "label": label,
+        "separator": _separator(level) if label else None,
+        **_presentation(element, level, character_styles),
+    }
+
+
 def _paragraphs(text: Any, character_styles: Any) -> list[dict[str, Any]]:
     found: list[dict[str, Any]] = []
     enumeration = text.createEnumeration()
@@ -349,16 +370,22 @@ def _paragraphs(text: Any, character_styles: Any) -> list[dict[str, Any]]:
         if element.supportsService("com.sun.star.text.TextTable"):
             found.append({"nested_table": True})
             continue
-        label = _value(element, "ListLabelString") or ""
-        level = _level(element)
-        found.append(
-            {
-                "text": element.getString(),
-                "label": label,
-                "separator": _separator(level) if label else None,
-                **_presentation(element, level, character_styles),
-            }
-        )
+        found.append(_paragraph(element, character_styles))
+    return found
+
+
+def _flow(document: Any) -> list[dict[str, Any]]:
+    """The body text: its paragraphs, and a marker where a table stands."""
+
+    character_styles = document.getStyleFamilies().getByName("CharacterStyles")
+    found: list[dict[str, Any]] = []
+    enumeration = document.getText().createEnumeration()
+    while enumeration.hasMoreElements():
+        element = enumeration.nextElement()
+        if element.supportsService("com.sun.star.text.TextTable"):
+            found.append({"table": True})
+            continue
+        found.append(_paragraph(element, character_styles))
     return found
 
 
@@ -452,7 +479,13 @@ def _child(request_path: str) -> int:
                     emit({"key": key, "error": "the document did not load"})
                     continue
                 try:
-                    emit({"key": key, "tables": _tables(document)})
+                    emit(
+                        {
+                            "key": key,
+                            "tables": _tables(document),
+                            "flow": _flow(document),
+                        }
+                    )
                 finally:
                     document.close(True)
         return 0
