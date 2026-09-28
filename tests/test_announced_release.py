@@ -393,6 +393,9 @@ def _rendering(notice, *codes: str) -> dict:
                                 if item.generated_label
                                 else None
                             ),
+                            "hidden": False,
+                            "bullet": None,
+                            "transform": False,
                         }
                         for item in _cell_items(
                             notice.document.paragraphs,
@@ -1846,6 +1849,41 @@ def _write_bundle(
     if corrupt:
         (bundle / "attachment-000.odt").write_bytes(payload + b"\0")
     return relative
+
+
+class RenderingInputTest(unittest.TestCase):
+    """2026-09-28 finding LOW-3: the attachment is rendered as verified."""
+
+    def test_changed_attachment_bytes_are_not_rendered(self) -> None:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS[:1])
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "attachment-000.odt"
+            good = replace(notice, attachment=replace(notice.attachment, path=path))
+            path.write_bytes(b"changed after verification")
+            seen = {}
+
+            def render(payloads, **_):
+                seen.update(payloads)
+                return {key: {"tables": []} for key in payloads}
+
+            with mock.patch.object(cli, "render_table_cells", side_effect=render):
+                self.assertEqual(cli._renderings([good]), {SUPERSEDE_REFERENCE: None})
+            self.assertEqual(seen, {})
+            # Confusable negative: the verified bytes are rendered.
+            payload = fixture_odt(
+                notice_fixture._comparison(SUPERSEDE_ROWS[:1])
+            )
+            path.write_bytes(payload)
+            verified = replace(
+                good,
+                attachment=replace(
+                    good.attachment, sha256=hashlib.sha256(payload).hexdigest()
+                ),
+            )
+            with mock.patch.object(cli, "render_table_cells", side_effect=render):
+                self.assertEqual(
+                    cli._renderings([verified]), {SUPERSEDE_REFERENCE: {"tables": []}}
+                )
 
 
 class CliReceiptLiveTest(unittest.TestCase):

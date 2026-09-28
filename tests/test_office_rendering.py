@@ -74,12 +74,16 @@ class DocumentIsolationTest(unittest.TestCase):
         return result, time.monotonic() - start
 
     def test_a_hanging_document_is_the_only_one_lost(self) -> None:
+        tmp = Path(os.environ.get("TMPDIR") or tempfile.gettempdir())
+        before = {path.name for path in tmp.glob("lu*")}
         result, seconds = self._render("hang")
         self.assertEqual(
             {key: value is not None for key, value in result.items()},
             {"a": True, "b": False, "c": True},
         )
         self.assertLess(seconds, 60)
+        # The killed office process leaves no temporary files behind.
+        self.assertEqual({path.name for path in tmp.glob("lu*")}, before)
 
     def test_a_crashing_document_is_the_only_one_lost(self) -> None:
         result, _ = self._render("crash")
@@ -99,6 +103,42 @@ class DocumentIsolationTest(unittest.TestCase):
     def test_a_renderer_that_never_starts_renders_nothing(self) -> None:
         result = render_table_cells(self.payloads, soffice="/bin/false")
         self.assertEqual(result, {"a": None, "b": None, "c": None})
+
+
+class ProgressTest(unittest.TestCase):
+    """Renderer bookkeeping without an office suite."""
+
+    def test_a_line_cut_inside_a_character_is_skipped(self) -> None:
+        # 2026-09-28 finding MEDIUM-3: a crash in the middle of a UTF-8
+        # character made the whole batch fail.
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as scratch:
+            output = Path(scratch) / "output.jsonl"
+            output.write_bytes(
+                b'{"loading": "a"}\n{"key": "a", "tables": []}\n{"loading": "b"}\n'
+                + '{"key": "b", "tables": [["限'.encode("utf-8")[:-1]
+            )
+            finished, loading, count = office_rendering._progress(output)
+        self.assertEqual((sorted(finished), loading, count), (["a"], "b", 3))
+
+    def test_a_process_that_dies_between_documents_is_restarted(self) -> None:
+        # Finding LOW-1: an office process that ended after one document and
+        # before the next left every remaining document unrendered.
+        calls = []
+
+        def attempt(python, binary, documents, work, attempt, **_):
+            calls.append([key for key, _ in documents])
+            finished = {documents[0][0]: {"key": documents[0][0], "tables": []}}
+            if attempt == 0:
+                return finished, None, False
+            return {key: {"key": key, "tables": []} for key, _ in documents}, None, True
+
+        with mock.patch.object(office_rendering, "_attempt", side_effect=attempt), \
+                mock.patch.object(office_rendering, "uno_python", return_value="python3"):
+            result = render_table_cells(
+                {"a": b"1", "b": b"2", "c": b"3"}, soffice="/usr/bin/true"
+            )
+        self.assertEqual(calls, [["a", "b", "c"], ["b", "c"]])
+        self.assertTrue(all(value is not None for value in result.values()))
 
 
 if __name__ == "__main__":

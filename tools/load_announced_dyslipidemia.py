@@ -37,11 +37,15 @@ class LockedSession:
 
     def __init__(self, dsn: str) -> None:
         self.connection = psycopg.connect(dsn)
-        self.connection.execute(
-            "SELECT pg_advisory_lock(hashtextextended(%s, 0))",
-            (GLOBAL_LOCK_KEY,),
-        )
-        self.connection.commit()
+        try:
+            self.connection.execute(
+                "SELECT pg_advisory_lock(hashtextextended(%s, 0))",
+                (GLOBAL_LOCK_KEY,),
+            )
+            self.connection.commit()
+        except BaseException:
+            self.connection.close()
+            raise
 
     def __call__(self, dsn: str) -> "LockedSession":
         return self

@@ -34,12 +34,20 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
-CELL_RENDERING_VERSION = "nhi-rule-history/office-cell-rendering/1.0.0"
+CELL_RENDERING_VERSION = "nhi-rule-history/office-cell-rendering/1.1.0"
 # com.sun.star.text.LabelFollow, for the label-alignment position mode.
 _LABEL_FOLLOWED_BY = {0: "\t", 1: " ", 2: "", 3: "\n"}
 # com.sun.star.text.PositionAndSpaceMode.LABEL_ALIGNMENT; in the older
 # label-width mode the gap is a position, not a character.
 _LABEL_ALIGNMENT = 1
+# com.sun.star.style.NumberingType values that draw no text label.
+_NUMBERING_BULLET = {6: "bullet", 8: "image"}
+# Fields whose text depends on a condition or is hidden.
+_HIDING_FIELDS = (
+    "com.sun.star.text.TextField.HiddenText",
+    "com.sun.star.text.TextField.HiddenParagraph",
+    "com.sun.star.text.TextField.ConditionalText",
+)
 _CONNECT_SECONDS = 60
 # The child process runs this file as a script.
 _CHILD = Path(__file__).resolve()
@@ -102,10 +110,10 @@ def _progress(output: Path) -> tuple[dict[str, Any], str | None, int]:
     count = 0
     if not output.is_file():
         return finished, loading, count
-    for line in output.read_text(encoding="utf-8").split("\n"):
+    for line in output.read_bytes().split(b"\n"):
         try:
-            entry = json.loads(line)
-        except ValueError:
+            entry = json.loads(line.decode("utf-8"))
+        except ValueError:  # includes UnicodeDecodeError
             continue  # a line cut short by a crash
         count += 1
         if "loading" in entry:
@@ -147,12 +155,16 @@ def _attempt(
         ),
         encoding="utf-8",
     )
+    # The office process keeps its temporary files under the work directory,
+    # so a killed process leaves nothing behind once the batch ends.
+    office_tmp = work / f"tmp-{attempt}"
+    office_tmp.mkdir()
     process = subprocess.Popen(
         [python, str(_CHILD), str(request)],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        env=_child_env(),
+        env={**_child_env(), "TMPDIR": str(office_tmp)},
         start_new_session=True,
     )
     lines, stalled_since = 0, time.monotonic()
@@ -184,10 +196,16 @@ def render_table_cells(
     A rendering is ``{"rendering_version", "tables"}``: one entry per
     top-level body table in document order, each a list of rows, each a list
     of cells by column position; a cell is a list of paragraphs
-    ``{"text", "label", "separator"}`` (``separator`` is ``None`` when there
-    is no label or its gap is not a character) and ``{"nested_table": true}``
-    for a table inside the cell, or ``None`` when the office suite cannot
-    address it.
+    ``{"text", "label", "separator", "hidden", "bullet", "transform"}``
+    (``separator`` is ``None`` when there is no label or its gap is not a
+    character) and ``{"nested_table": true}`` for a table inside the cell, or
+    ``None`` when the office suite cannot address it.  ``getString`` returns
+    text LibreOffice does not draw and bullets have no label string, so each
+    paragraph also reports whether any of it, or its label, is hidden (a
+    hidden character attribute, hiding field or hidden or conditional
+    section), the bullet or image a list level draws instead of a label, and
+    whether a case map (upper, lower, title case or small caps) changes how
+    its text or label is drawn.
 
     A document is ``None`` when LibreOffice or its Python bridge is
     unavailable, or the document does not load, crashes the office process
@@ -232,12 +250,12 @@ def render_table_cells(
                     }
             if complete:
                 break
-            if loading is None:
+            if loading is None and not finished:
                 # The office process failed before any document: the
                 # renderer itself is unavailable.
                 break
-            # The document being loaded stopped the office process; it stays
-            # unrendered and the rest get a fresh process.
+            # The document being loaded, if any, stopped the office process;
+            # it stays unrendered and the rest get a fresh process.
             pending = [
                 key for key in pending if key not in finished and key != loading
             ]
@@ -257,18 +275,73 @@ def _property(name: str, value: Any) -> Any:
     return item
 
 
-def _separator(paragraph: Any) -> str | None:
-    rules = paragraph.getPropertyValue("NumberingRules")
-    if rules is None:
+def _value(element: Any, name: str) -> Any:
+    try:
+        return element.getPropertyValue(name)
+    except Exception:  # the property does not apply here
         return None
-    level = paragraph.getPropertyValue("NumberingLevel")
-    values = {item.Name: item.Value for item in rules.getByIndex(level)}
-    if values.get("PositionAndSpaceMode") != _LABEL_ALIGNMENT:
-        return None
-    return _LABEL_FOLLOWED_BY.get(values.get("LabelFollowedBy"))
 
 
-def _paragraphs(text: Any) -> list[dict[str, Any]]:
+def _level(paragraph: Any) -> dict[str, Any] | None:
+    """The list level a counted list paragraph draws, if it is one."""
+
+    rules = _value(paragraph, "NumberingRules")
+    if rules is None or not _value(paragraph, "NumberingIsNumber"):
+        return None
+    level = _value(paragraph, "NumberingLevel")
+    if level is None:
+        return None
+    return {item.Name: item.Value for item in rules.getByIndex(level)}
+
+
+def _separator(level: dict[str, Any] | None) -> str | None:
+    if level is None or level.get("PositionAndSpaceMode") != _LABEL_ALIGNMENT:
+        return None
+    return _LABEL_FOLLOWED_BY.get(level.get("LabelFollowedBy"))
+
+
+def _presentation(
+    paragraph: Any, level: dict[str, Any] | None, character_styles: Any
+) -> dict[str, Any]:
+    """What LibreOffice draws differently from the paragraph's string."""
+
+    hidden = bool(_value(paragraph, "CharHidden"))
+    transform = bool(_value(paragraph, "CharCaseMap"))
+    section = _value(paragraph, "TextSection")
+    while section is not None:
+        if _value(section, "IsVisible") is False or _value(section, "Condition"):
+            hidden = True
+        section = _value(section, "ParentSection")
+    portions = paragraph.createEnumeration()
+    while portions.hasMoreElements():
+        portion = portions.nextElement()
+        if _value(portion, "CharHidden"):
+            hidden = True
+        if _value(portion, "CharCaseMap"):
+            transform = True
+        field = (
+            _value(portion, "TextField")
+            if _value(portion, "TextPortionType") == "TextField"
+            else None
+        )
+        if field is not None and any(
+            field.supportsService(name) for name in _HIDING_FIELDS
+        ):
+            hidden = True
+    bullet = None
+    if level is not None:
+        bullet = _NUMBERING_BULLET.get(level.get("NumberingType"))
+        if bullet == "bullet":
+            bullet = level.get("BulletChar") or bullet
+        style_name = level.get("CharStyleName")
+        if style_name and character_styles.hasByName(style_name):
+            style = character_styles.getByName(style_name)
+            hidden = hidden or bool(_value(style, "CharHidden"))
+            transform = transform or bool(_value(style, "CharCaseMap"))
+    return {"hidden": hidden, "bullet": bullet, "transform": transform}
+
+
+def _paragraphs(text: Any, character_styles: Any) -> list[dict[str, Any]]:
     found: list[dict[str, Any]] = []
     enumeration = text.createEnumeration()
     while enumeration.hasMoreElements():
@@ -276,18 +349,21 @@ def _paragraphs(text: Any) -> list[dict[str, Any]]:
         if element.supportsService("com.sun.star.text.TextTable"):
             found.append({"nested_table": True})
             continue
-        label = element.getPropertyValue("ListLabelString") or ""
+        label = _value(element, "ListLabelString") or ""
+        level = _level(element)
         found.append(
             {
                 "text": element.getString(),
                 "label": label,
-                "separator": _separator(element) if label else None,
+                "separator": _separator(level) if label else None,
+                **_presentation(element, level, character_styles),
             }
         )
     return found
 
 
 def _tables(document: Any) -> list[list[list[Any]]]:
+    character_styles = document.getStyleFamilies().getByName("CharacterStyles")
     tables: list[list[list[Any]]] = []
     enumeration = document.getText().createEnumeration()
     while enumeration.hasMoreElements():
@@ -302,7 +378,11 @@ def _tables(document: Any) -> list[list[list[Any]]]:
                     cell = element.getCellByPosition(column, row)
                 except Exception:  # an irregular table has no such cell
                     cell = None
-                cells.append(None if cell is None else _paragraphs(cell.getText()))
+                cells.append(
+                    None
+                    if cell is None
+                    else _paragraphs(cell.getText(), character_styles)
+                )
             grid.append(cells)
         tables.append(grid)
     return tables
