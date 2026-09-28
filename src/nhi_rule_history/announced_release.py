@@ -56,13 +56,14 @@ from nhi_rule_history.announced_notice import (
     AnnouncedClause,
     AnnouncedNoticeError,
     ParsedNotice,
-    exact_in_rendering,
+    cell_rendering_check,
     projection_block_reason,
     registered_manifest_identity,
     sha256_text,
     stable_uuid,
 )
 from nhi_rule_history.current_publication import semantic_comparison_text
+from nhi_rule_history.office_rendering import CELL_RENDERING_VERSION
 from nhi_rule_history.pg.common import (
     code_fingerprint,
     json_text,
@@ -73,7 +74,7 @@ from nhi_rule_history.pg.common import (
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.0.0"
+LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.2.0"
 GLOBAL_LOCK_KEY = "nhi-rule-history-announced-global"
 CIVIL_TIMEZONE = "Asia/Taipei"
 EMPTY_TEXT_SHA256 = sha256_text("")
@@ -115,7 +116,8 @@ _BLOCK_NOTES = {
         "reproduced"
     ),
     "official_rendering_mismatch": (
-        "parsed text differs from the independent office rendering"
+        "its text, list labels or label separators differ from LibreOffice's "
+        "rendering of its own revised cell"
     ),
     "official_rendering_unverified": (
         "reconstructed list labels are not confirmed by an independent "
@@ -128,19 +130,31 @@ class AnnouncedReleaseError(AnnouncedNoticeError):
     """A release composition, load or activation invariant failed."""
 
 
+# A served patch in one of these states is settled: a moved predecessor no
+# longer needs anyone's attention.
+SETTLED_RESOLUTION_STATES = frozenset(
+    {"reconciled", "corrected", "withdrawn", "conflicted"}
+)
+
+
 def receipt_status(
     *,
     composed: bool,
     failures: Sequence[Any] | None,
     dropped_notices: Sequence[Any] | None,
     blocked_clauses: Sequence[Any] | None,
+    predecessor_moved: Sequence[Mapping[str, Any]] | None = None,
 ) -> str:
-    """Overall receipt status; any failure, drop or held-back clause holds."""
+    """Overall receipt status.
+
+    Any failure, drop or held-back clause holds, and so does a served patch
+    whose predecessor moved while it is not settled.
+    """
 
     held = any(
         bool(value)
         for value in (failures, dropped_notices, blocked_clauses)
-    )
+    ) or any(not item.get("settled") for item in predecessor_moved or ())
     if composed:
         return STATUS_PASSED_WITH_HOLDS if held else STATUS_PASSED
     return STATUS_NO_CHANGE_WITH_HOLDS if held else STATUS_NO_CHANGE
@@ -421,6 +435,8 @@ def queued_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
         problem = "corpus manifest is missing"
     except AnnouncedNoticeError as exc:
         problem = str(exc)
+    except Exception as exc:  # a malformed manifest fails this bundle only
+        problem = describe_error(exc)
     return QueuedBundle(
         work_item_id=str(row["work_item_id"]),
         source_uid=str(evidence.get("source_uid") or ""),
@@ -430,6 +446,32 @@ def queued_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
         problem=problem,
         manifest_identity=identity,
     )
+
+
+def describe_error(exc: Exception) -> str:
+    """A failure message; unexpected exception types are named."""
+
+    if isinstance(exc, AnnouncedNoticeError):
+        return str(exc)
+    return f"{type(exc).__name__}: {exc}"
+
+
+def _receipt_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
+    """:func:`queued_bundle`, or a bundle that carries why it cannot be read."""
+
+    try:
+        return queued_bundle(row, corpus_root)
+    except Exception as exc:  # one receipt never aborts the batch
+        evidence = row["evidence_json"] if isinstance(row["evidence_json"], Mapping) else {}
+        name = str(evidence.get("source_uid") or row["work_item_id"])
+        return QueuedBundle(
+            work_item_id=str(row["work_item_id"]),
+            source_uid=str(evidence.get("source_uid") or ""),
+            bundle_dir=Path(corpus_root) / name,
+            corpus_manifest_sha256="",
+            first_title_raw=str(row["first_title_raw"]),
+            problem=describe_error(exc),
+        )
 
 
 def queued_bundles(
@@ -448,7 +490,7 @@ def queued_bundles(
             """,
             (state,),
         ).fetchall()
-    return [queued_bundle(row, corpus_root) for row in rows]
+    return [_receipt_bundle(row, corpus_root) for row in rows]
 
 
 def registered_bundles(dsn: str, *, corpus_root: Path) -> list[QueuedBundle]:
@@ -473,28 +515,11 @@ def registered_bundles(dsn: str, *, corpus_root: Path) -> list[QueuedBundle]:
             ORDER BY transition.work_item_id, transition.transition_seq DESC
             """
         ).fetchall()
-    found: list[QueuedBundle] = []
     rows = sorted(
         rows,
         key=lambda row: (row["first_observed_at"], str(row["work_item_id"])),
     )
-    for row in rows:
-        try:
-            found.append(queued_bundle(row, corpus_root))
-        except AnnouncedReleaseError as exc:
-            evidence = row["evidence_json"] or {}
-            name = str(evidence.get("source_uid") or row["work_item_id"])
-            found.append(
-                QueuedBundle(
-                    work_item_id=str(row["work_item_id"]),
-                    source_uid=str(evidence.get("source_uid") or ""),
-                    bundle_dir=Path(corpus_root) / name,
-                    corpus_manifest_sha256="",
-                    first_title_raw=str(row["first_title_raw"]),
-                    problem=str(exc),
-                )
-            )
-    return found
+    return [_receipt_bundle(row, corpus_root) for row in rows]
 
 
 # ---------------------------------------------------------------------------
@@ -554,7 +579,18 @@ def notice_rows(
     served_run_id: str,
     served: Mapping[str, Mapping[str, Any]],
     rendering_checks: Mapping[str, str] | None = None,
+    observe_publication: bool = False,
 ) -> NoticeRows:
+    """The rows one notice contributes to a run.
+
+    Each patch binds its predecessor to the current publication text of its
+    clause.  A binding that the publication contradicts (a new clause that is
+    already published, or a revised clause that is not) raises, unless
+    ``observe_publication`` is set: then the predecessor records what the
+    publication holds now, so that a served patch can be compared with it.
+    Such rows are never loaded.
+    """
+
     notice_id = notice.notice_id
     header = notice.tables[0].revised_header
     checks = dict(rendering_checks or {})
@@ -631,7 +667,13 @@ def notice_rows(
             )
         )
         current = served.get(clause.clause_code)
-        if clause.original_is_none:
+        if observe_publication:
+            predecessor = (
+                EMPTY_TEXT_SHA256
+                if current is None
+                else str(current["raw_text_sha256"])
+            )
+        elif clause.original_is_none:
             if current is not None:
                 raise AnnouncedReleaseError(
                     f"{clause.clause_code} is marked new but is already served"
@@ -684,6 +726,7 @@ def notice_rows(
             "official_rendering_check": checks.get(
                 clause.clause_code, "unavailable"
             ),
+            "official_rendering_version": CELL_RENDERING_VERSION,
             "loader_version": LOADER_VERSION,
             "parser_version": PARSER_VERSION,
             "text_rule_version": TEXT_RULE_VERSION,
@@ -829,6 +872,7 @@ def _code_sha256() -> str:
         here,
         here.with_name("announced_notice.py"),
         here.with_name("odf_list_numbering.py"),
+        here.with_name("office_rendering.py"),
     )
 
 
@@ -1337,15 +1381,117 @@ def blocked_clauses(
     )
 
 
+# A served patch is reproduced only with the same identity, text, effective
+# date and predecessor: a new predecessor would re-bind the served patch to a
+# different publication text.
+IDENTITY_PATCH_KEYS = (
+    "patch_id",
+    "source_exact_patch_sha256",
+    "effective_from",
+)
+REPRODUCED_PATCH_KEYS = (*IDENTITY_PATCH_KEYS, "predecessor_text_sha256")
+
+
+def _served_differences(
+    previous: CarriedNotice, fresh: NoticeRows
+) -> tuple[list[str], list[dict[str, Any]]]:
+    """How a carried notice's fresh projection departs from what it serves.
+
+    Each ``patch_only`` patch the base run serves for the notice must come
+    back with the same :data:`IDENTITY_PATCH_KEYS`; otherwise it is a
+    difference.  A patch that does, but whose predecessor text in the current
+    publication moved (NHI consolidated or amended the clause), is returned
+    separately: its served row stays as it is and is never re-bound.  A
+    reviewed composite is not a projection of the notice and is not compared.
+    """
+
+    again = {row["clause_code"]: row for row in fresh.rows["clause_patch"]}
+    held = {
+        str(item["clause_code"]): str(item.get("blocked_reason"))
+        for item in fresh.rows["notice_event"][0]["unresolved_scope"]
+        if isinstance(item, Mapping) and item.get("clause_code")
+    }
+    differences: list[str] = []
+    moved: list[dict[str, Any]] = []
+    for row in sorted(previous.patches, key=lambda item: item["clause_code"]):
+        code = str(row["clause_code"])
+        if row["composition_status"] != "patch_only":
+            continue
+        fresh_row = again.get(code)
+        if fresh_row is None:
+            differences.append(
+                f"{code} is held back now ({held[code]})"
+                if code in held
+                else f"{code} is no longer in the notice"
+            )
+            continue
+        changed = [
+            key
+            for key in IDENTITY_PATCH_KEYS
+            if str(fresh_row[key]) != str(row[key])
+        ]
+        if changed:
+            differences.append(f"{code} ({', '.join(changed)} differs)")
+        elif str(fresh_row["predecessor_text_sha256"]) != str(
+            row["predecessor_text_sha256"]
+        ):
+            moved.append(
+                {
+                    "clause_code": code,
+                    "patch_id": str(row["patch_id"]),
+                    "served_predecessor_text_sha256": str(
+                        row["predecessor_text_sha256"]
+                    ),
+                    "current_predecessor_text_sha256": str(
+                        fresh_row["predecessor_text_sha256"]
+                    ),
+                }
+            )
+    return differences, moved
+
+
+def _scope_changes(
+    previous: CarriedNotice, fresh: NoticeRows
+) -> list[dict[str, Any]]:
+    """Every column of a served patch that a supersede rewrites.
+
+    The reproduced keys are equal by then; the row hash follows the others.
+    """
+
+    ignored = {"run_id", "source_row_sha256", *REPRODUCED_PATCH_KEYS}
+    again = {row["clause_code"]: row for row in fresh.rows["clause_patch"]}
+    changes: list[dict[str, Any]] = []
+    for row in sorted(previous.patches, key=lambda item: item["clause_code"]):
+        fresh_row = again.get(row["clause_code"])
+        if fresh_row is None:
+            continue
+        for key in sorted(set(row) | set(fresh_row)):
+            if key in ignored:
+                continue
+            served_value = _jsonable(row.get(key))
+            fresh_value = _jsonable(fresh_row.get(key))
+            if json_text(served_value) != json_text(fresh_value):
+                changes.append(
+                    {
+                        "clause_code": row["clause_code"],
+                        "field": key,
+                        "served": served_value,
+                        "fresh": fresh_value,
+                    }
+                )
+    return changes
+
+
 def _supersede_refusal(
     previous: CarriedNotice, fresh: NoticeRows, base: BaseChain
 ) -> str | None:
     """Why ``fresh`` must not replace a carried notice's rows, if it must not.
 
     Superseding changes no served clause text: every clause patch the notice
-    serves must come back with the same patch id, text hash and effective
-    date, and must still be ``verified_scheduled`` so that no later
-    resolution is reset.
+    serves must come back with the same :data:`REPRODUCED_PATCH_KEYS`, and
+    must still be ``verified_scheduled`` so that no later resolution is
+    reset.  The scope fields it does rewrite are reported by
+    :func:`_scope_changes`.
     """
 
     if fresh.notice.notice_id != previous.notice_id:
@@ -1360,13 +1506,18 @@ def _supersede_refusal(
         if row["composition_status"] != "patch_only":
             return f"{code} is served as a {row['composition_status']} patch"
         fresh_row = again.get(code)
-        if fresh_row is None or any(
-            str(fresh_row[key]) != str(row[key])
-            for key in (
-                "patch_id", "source_exact_patch_sha256", "effective_from"
-            )
-        ):
+        if fresh_row is None:
             return f"served clause {code} is not re-projected byte-identically"
+        changed = [
+            key
+            for key in REPRODUCED_PATCH_KEYS
+            if str(fresh_row[key]) != str(row[key])
+        ]
+        if changed:
+            return (
+                f"served clause {code} is not re-projected byte-identically "
+                f"({', '.join(changed)} differs)"
+            )
         state = base.resolutions[str(row["patch_id"])]["resolution_state"]
         if state != "verified_scheduled":
             return (
@@ -1414,6 +1565,7 @@ class Composition:
     failures: tuple[Mapping[str, Any], ...]
     dropped_notices: tuple[Mapping[str, Any], ...]
     blocked_clauses: tuple[Mapping[str, Any], ...]
+    predecessor_moved: tuple[Mapping[str, Any], ...] = ()
 
     @property
     def status(self) -> str:
@@ -1422,6 +1574,7 @@ class Composition:
             failures=self.failures,
             dropped_notices=self.dropped_notices,
             blocked_clauses=self.blocked_clauses,
+            predecessor_moved=self.predecessor_moved,
         )
 
 
@@ -1432,30 +1585,34 @@ def compose_overlay_release(
     base_run_id: str | None = None,
     dyslipidemia_odt: Path | None = None,
     today: date | None = None,
-    official_renderings: Mapping[str, str | None] | None = None,
+    official_renderings: Mapping[str, Mapping[str, Any] | None] | None = None,
     require_official_rendering: bool = False,
     supersede: bool = False,
 ) -> Composition:
     """Compose a new release run from the active run plus ``notices``.
 
-    ``official_renderings`` maps a reference number to an independent office
-    rendering of its comparison-table attachment.  A clause whose parsed text
-    is not found verbatim there, whose list numbering is not reproduced, or
-    whose reconstructed list labels are not confirmed by that rendering, is
-    kept as a pending effect instead of a patch.  A notice whose every clause
-    is held back still enters the run with pending effects only.
+    ``official_renderings`` maps a reference number to LibreOffice's cell
+    rendering of its comparison-table attachment
+    (:func:`nhi_rule_history.office_rendering.render_table_cells`).  A clause
+    whose revised cells LibreOffice renders differently, whose list numbering
+    is not reproduced, or whose reconstructed list labels and separators are
+    not confirmed by that rendering, is kept as a pending effect instead of a
+    patch.  A notice whose every clause is held back still enters the run
+    with pending effects only.
 
     Failures are isolated per notice: a notice that is listed twice, lacks a
     required rendering, cannot be bound to the served clauses, would give a
     clause a second patch for one effective date, or cannot be superseded is
     reported in ``failures`` and left out; the rest of the batch composes.
 
-    A notice the base run already carries stays carried unless its fresh
-    parse projects a clause the run holds back.  Such a notice is reported in
-    ``dropped_notices`` unless ``supersede`` is set; then its carried rows are
-    replaced by its fresh projection when :func:`_supersede_refusal` allows
-    it, and it fails closed otherwise.  ``release`` is ``None`` when no
-    notice is new or superseded.
+    A notice the base run already carries is projected again and must
+    reproduce every patch the run serves for it (:func:`_served_differences`);
+    otherwise it is a ``carried`` failure, and its carried rows stay as they
+    are.  It stays carried unless its fresh parse projects a clause the run
+    holds back.  Such a notice is reported in ``dropped_notices`` unless
+    ``supersede`` is set; then its carried rows are replaced by its fresh
+    projection when :func:`_supersede_refusal` allows it, and it fails closed
+    otherwise.  ``release`` is ``None`` when no notice is new or superseded.
     """
 
     renderings = dict(official_renderings or {})
@@ -1496,7 +1653,7 @@ def compose_overlay_release(
             )
             continue
         rendering_checks[reference] = {
-            clause.clause_code: exact_in_rendering(clause, rendering)
+            clause.clause_code: cell_rendering_check(notice, clause, rendering)
             for clause in notice.clauses
         }
         candidates.append(notice)
@@ -1515,66 +1672,126 @@ def compose_overlay_release(
         superseding: dict[str, CarriedNotice] = {}
         superseded: dict[str, dict[str, Any]] = {}
         carried_notices: list[dict[str, Any]] = []
+        predecessor_moved: list[dict[str, Any]] = []
+
+        def project(notice: ParsedNotice, **options: Any) -> NoticeRows:
+            return notice_rows(
+                notice,
+                run_id=PLACEHOLDER_RUN_ID,
+                served_run_id=served_run_id,
+                served=served,
+                rendering_checks=rendering_checks[
+                    notice.bundle.reference_number
+                ],
+                **options,
+            )
+
         for notice in candidates:
             reference = notice.bundle.reference_number
-            checks = rendering_checks[reference]
             previous = carried.get(reference)
-            if previous is not None:
-                served_codes = sorted(
-                    {str(row["clause_code"]) for row in previous.patches}
-                )
-                added = sorted(
-                    clause.clause_code
-                    for clause in notice.clauses
-                    if clause.clause_code not in served_codes
-                    and clause_block_reason(
-                        clause, checks.get(clause.clause_code)
-                    )
-                    is None
-                )
-                if not added:
-                    carried_notices.append(
-                        {
-                            **_notice_label(notice),
-                            "notice_id": previous.notice_id,
-                        }
-                    )
-                    continue
-                if not supersede:
-                    dropped.append(
-                        {
-                            **_notice_label(notice),
-                            "reason": (
-                                "carried_notice_has_newly_projectable_clauses"
-                            ),
-                            "clause_codes": added,
-                        }
-                    )
-                    continue
-            try:
-                item = notice_rows(
-                    notice,
-                    run_id=PLACEHOLDER_RUN_ID,
-                    served_run_id=served_run_id,
-                    served=served,
-                    rendering_checks=checks,
-                )
-            except AnnouncedNoticeError as exc:
-                stage = "bind" if previous is None else "supersede"
-                fail(notice, stage, str(exc))
+            if previous is None:
+                try:
+                    preliminary.append(project(notice))
+                except AnnouncedNoticeError as exc:
+                    fail(notice, "bind", str(exc))
                 continue
-            if previous is not None:
-                refusal = _supersede_refusal(previous, item, base)
-                if refusal is not None:
-                    fail(notice, "supersede", refusal)
-                    continue
-                superseding[reference] = previous
-                superseded[reference] = {
-                    **_notice_label(notice),
-                    "notice_id": previous.notice_id,
-                    "served_clauses": served_codes,
-                    "added_clauses": added,
-                }
+            # A carried notice is projected again on every compose, against
+            # what the publication holds now: its fresh parse must still
+            # reproduce each patch the run serves for it.
+            observed = project(notice, observe_publication=True)
+            differences, moved = _served_differences(previous, observed)
+            if differences:
+                fail(
+                    notice,
+                    "carried",
+                    "the fresh projection does not reproduce the served "
+                    "patches: " + "; ".join(differences),
+                )
+                continue
+            # A predecessor that moved (NHI consolidated or amended the
+            # clause) is its own state: the served rows stay as they are,
+            # nothing is re-bound, and no other notice waits for it.
+            for entry in moved:
+                state = str(
+                    base.resolutions[entry["patch_id"]]["resolution_state"]
+                )
+                predecessor_moved.append(
+                    {
+                        **_notice_label(notice),
+                        "notice_id": previous.notice_id,
+                        **entry,
+                        "served_resolution_state": state,
+                        "settled": state in SETTLED_RESOLUTION_STATES,
+                    }
+                )
+            served_codes = sorted(
+                {str(row["clause_code"]) for row in previous.patches}
+            )
+            added = sorted(
+                str(row["clause_code"])
+                for row in observed.rows["clause_patch"]
+                if row["clause_code"] not in served_codes
+            )
+            if not added:
+                carried_notices.append(
+                    {
+                        **_notice_label(notice),
+                        "notice_id": previous.notice_id,
+                        "reproduced_clauses": sorted(
+                            str(row["clause_code"])
+                            for row in previous.patches
+                            if row["composition_status"] == "patch_only"
+                        ),
+                        **(
+                            {
+                                "predecessor_moved_clauses": [
+                                    entry["clause_code"] for entry in moved
+                                ]
+                            }
+                            if moved
+                            else {}
+                        ),
+                    }
+                )
+                continue
+            if moved:
+                # Superseding would re-bind the moved predecessors.
+                dropped.append(
+                    {
+                        **_notice_label(notice),
+                        "reason": "carried_predecessor_moved",
+                        "clause_codes": added,
+                    }
+                )
+                continue
+            if not supersede:
+                dropped.append(
+                    {
+                        **_notice_label(notice),
+                        "reason": (
+                            "carried_notice_has_newly_projectable_clauses"
+                        ),
+                        "clause_codes": added,
+                    }
+                )
+                continue
+            try:
+                item = project(notice)
+            except AnnouncedNoticeError as exc:
+                fail(notice, "supersede", str(exc))
+                continue
+            refusal = _supersede_refusal(previous, item, base)
+            if refusal is not None:
+                fail(notice, "supersede", refusal)
+                continue
+            superseding[reference] = previous
+            superseded[reference] = {
+                **_notice_label(notice),
+                "notice_id": previous.notice_id,
+                "served_clauses": served_codes,
+                "added_clauses": added,
+                "scope_changes": _scope_changes(previous, item),
+            }
             preliminary.append(item)
         # A run holds one patch per clause and effective date.  A notice that
         # would add a second one is left out rather than guessed between; a
@@ -1621,6 +1838,7 @@ def compose_overlay_release(
                 failures=tuple(failures),
                 dropped_notices=tuple(dropped),
                 blocked_clauses=tuple(blocked_clauses(base.rows, {})),
+                predecessor_moved=tuple(predecessor_moved),
             )
         # The run identity must not depend on the order notices were listed in.
         admitted.sort(key=lambda item: item.notice.bundle.reference_number)
@@ -1652,6 +1870,13 @@ def compose_overlay_release(
                 "served_publication_run_id": served_run_id,
                 "notices": notice_fingerprints,
                 "superseded_references": sorted(superseding),
+                # The served resolutions the run carries: a resolution
+                # written to the base after this compose gives the next
+                # compose a new run, which carries it.
+                "base_resolution_pins": {
+                    patch_id: int(row["resolution_id"])
+                    for patch_id, row in sorted(base.resolutions.items())
+                },
                 "code_sha256": _code_sha256(),
             }
         )
@@ -1763,6 +1988,7 @@ def compose_overlay_release(
     for item in built:
         for patch_id, evidence in sorted(item.patch_evidence.items()):
             effective_on = date.fromisoformat(item.patch_effective[patch_id])
+            state = "verified_scheduled"
             if today < effective_on:
                 reason = (
                     "official comparison table verified before its stated "
@@ -1775,10 +2001,13 @@ def compose_overlay_release(
                     "consolidation reconciliation are pending"
                 )
             if patch_id in superseded_patch_ids:
-                # Same patch id, text and effective date as the served patch;
-                # the fresh evidence describes the fresh row, and the served
-                # resolution it replaces is named beside it.
+                # Same patch id, text, effective date and predecessor as the
+                # served patch, so its served resolution stands; the fresh
+                # evidence describes the fresh row, and the served
+                # resolution is named beside it.
                 prior = base.resolutions[patch_id]
+                state = str(prior["resolution_state"])
+                reason = str(prior["reason"])
                 evidence = {
                     **evidence,
                     "superseded_projection": {
@@ -1788,15 +2017,16 @@ def compose_overlay_release(
                         "recorded_at": prior["recorded_at"].isoformat(),
                         "loader_version": LOADER_VERSION,
                         "superseded_row_rule": (
-                            "notice re-projected; patch id, text and "
-                            "effective date unchanged"
+                            "notice re-projected; patch id, text, effective "
+                            "date and predecessor unchanged; served "
+                            "resolution state and reason kept"
                         ),
                     },
                 }
             resolutions.append(
                 ResolutionRow(
                     patch_id=patch_id,
-                    resolution_state="verified_scheduled",
+                    resolution_state=state,
                     reason=reason,
                     evidence={**evidence, "verified_on": today.isoformat()},
                 )
@@ -1844,6 +2074,7 @@ def compose_overlay_release(
         failures=tuple(failures),
         dropped_notices=tuple(dropped),
         blocked_clauses=tuple(blocked_clauses(frozen, origins)),
+        predecessor_moved=tuple(predecessor_moved),
     )
 
 
@@ -1854,7 +2085,7 @@ def prepare_overlay_release(
     base_run_id: str | None = None,
     dyslipidemia_odt: Path | None = None,
     today: date | None = None,
-    official_renderings: Mapping[str, str | None] | None = None,
+    official_renderings: Mapping[str, Mapping[str, Any] | None] | None = None,
     require_official_rendering: bool = False,
     supersede: bool = False,
 ) -> OverlayRelease:
@@ -2337,6 +2568,10 @@ def activate_overlay_release(
         _require_served_rows_carried(
             connection, served_run_id=expected_base_run_id, run_id=run_id
         )
+        _lock_resolutions(connection)
+        _require_resolutions_carried(
+            connection, served_run_id=expected_base_run_id, run_id=run_id
+        )
         carries_dyslipidemia = connection.execute(
             f"""
             SELECT 1 FROM {SCHEMA}.composed_clause_version
@@ -2404,13 +2639,104 @@ def activate_overlay_release(
     return verify_served_chain(dsn, expected=new_chain) | {"previous": previous}
 
 
+def _lock_resolutions(connection: Any) -> None:
+    """Hold resolution writes until this transaction ends.
+
+    The overlay lane writes resolutions under the global lock this module
+    holds; any other writer waits here, and a write already in flight is
+    waited for, so the resolutions read next are the ones that stay
+    current until commit.
+    """
+
+    connection.execute(
+        f"LOCK TABLE {SCHEMA}.patch_resolution_event IN SHARE ROW EXCLUSIVE MODE"
+    )
+
+
+def _carry_resolutions_back(
+    connection: Any, *, from_run_id: str, to_run_id: str
+) -> list[dict[str, Any]]:
+    """Carry resolutions written to a rolled-back run to the restored run.
+
+    A patch served by both runs whose current state or reason differs (for
+    example a withdrawal written while ``from_run_id`` was served) gets a
+    new resolution in ``to_run_id`` with that state and reason, the
+    evidence carried verbatim and a ``carried_forward`` key naming the
+    source event.
+    """
+
+    rows = connection.execute(
+        f"""
+        SELECT source.patch_id, patch.clause_code,
+               source.resolution_id, source.resolution_state,
+               source.resolution_reason, source.resolution_evidence,
+               source.resolution_recorded_at,
+               target.resolution_state AS target_state,
+               target.resolution_reason AS target_reason
+        FROM {SCHEMA}.v_current_patch_resolution source
+        JOIN {SCHEMA}.v_current_patch_resolution target
+          ON target.patch_id = source.patch_id AND target.run_id = %s
+        JOIN {SCHEMA}.clause_patch patch
+          ON patch.run_id = source.run_id AND patch.patch_id = source.patch_id
+        WHERE source.run_id = %s
+        ORDER BY patch.clause_code, source.patch_id
+        """,
+        (to_run_id, from_run_id),
+    ).fetchall()
+    carried: list[dict[str, Any]] = []
+    for row in rows:
+        if (row["resolution_state"], row["resolution_reason"]) == (
+            row["target_state"],
+            row["target_reason"],
+        ):
+            continue
+        evidence = _jsonable(row["resolution_evidence"]) or {}
+        carried_from = {
+            "run_id": from_run_id,
+            "resolution_id": int(row["resolution_id"]),
+            "recorded_at": row["resolution_recorded_at"].isoformat(),
+            "loader_version": LOADER_VERSION,
+            "carried_row_rule": (
+                "rollback restores this run; the rolled-back run's current "
+                "resolution of the patch is carried back"
+            ),
+        }
+        if "carried_forward" in evidence:
+            carried_from["previous"] = evidence["carried_forward"]
+        resolution_id = connection.execute(
+            f"SELECT {SCHEMA}.set_patch_resolution(%s,%s,%s,%s,%s::jsonb) AS id",
+            (
+                to_run_id,
+                row["patch_id"],
+                row["resolution_state"],
+                row["resolution_reason"],
+                json_text({**evidence, "carried_forward": carried_from}),
+            ),
+        ).fetchone()["id"]
+        carried.append(
+            {
+                "clause_code": str(row["clause_code"]),
+                "patch_id": str(row["patch_id"]),
+                "resolution_state": str(row["resolution_state"]),
+                "from_resolution_id": int(row["resolution_id"]),
+                "resolution_id": int(resolution_id),
+            }
+        )
+    return carried
+
+
 def rollback_overlay_release(
     dsn: str,
     *,
     from_run_id: str,
     reason: str = "announced overlay rollback",
 ) -> dict[str, Any]:
-    """Re-activate the chain recorded when ``from_run_id`` was activated."""
+    """Re-activate the chain recorded when ``from_run_id`` was activated.
+
+    Resolutions written to ``from_run_id`` while it was served are carried
+    back to the restored run (:func:`_carry_resolutions_back`), so rolling
+    back never reverts a withdrawal or a reconciliation.
+    """
 
     with _connect(dsn, read_only=False) as connection:
         connection.execute(
@@ -2434,10 +2760,17 @@ def rollback_overlay_release(
         if activation is None:
             raise AnnouncedReleaseError("no recorded previous chain to restore")
         previous = activation["evidence"]["previous"]
+        _lock_resolutions(connection)
+        carried_back = _carry_resolutions_back(
+            connection,
+            from_run_id=from_run_id,
+            to_run_id=str(previous["release_run_id"]),
+        )
         evidence = {
             "loader_version": LOADER_VERSION,
             "rolled_back_run_id": from_run_id,
             "restored": previous,
+            "carried_back_resolutions": carried_back,
         }
         connection.execute(
             f"SELECT {SCHEMA}.set_release_control(%s,'activate',%s,%s::jsonb)",
@@ -2445,7 +2778,9 @@ def rollback_overlay_release(
         )
         _activate_chain(connection, previous, reason=reason, evidence=evidence)
         connection.commit()
-    return verify_served_chain(dsn, expected=previous)
+    return verify_served_chain(dsn, expected=previous) | {
+        "carried_back_resolutions": carried_back
+    }
 
 
 def _require_dyslipidemia_carried(
@@ -2539,6 +2874,94 @@ def _require_served_rows_carried(
             + json_text(
                 {"notices": lost_notices, "clause_patches": lost_patches}
             )
+        )
+
+
+def _resolution_origin(evidence: Any) -> Mapping[str, Any] | None:
+    """The base resolution a composed resolution was carried from, if any.
+
+    A carried resolution names it in ``carried_forward`` (which wins over an
+    older ``superseded_projection`` it carries along); a superseded patch's
+    fresh resolution names it in ``superseded_projection``.  A new patch's
+    resolution names none.
+    """
+
+    if not isinstance(evidence, Mapping):
+        return None
+    for key in ("carried_forward", "superseded_projection"):
+        origin = evidence.get(key)
+        if isinstance(origin, Mapping):
+            return origin
+    return None
+
+
+def _require_resolutions_carried(
+    connection: Any, *, served_run_id: str, run_id: str
+) -> None:
+    """Refuse a run whose resolutions no longer follow the served run.
+
+    Each patch the served run serves must have, in the new run, a resolution
+    carried from the served run's current resolution of that patch (same
+    resolution id) with the same state and reason.  A resolution written to
+    the served run after composition, such as a withdrawal, is therefore
+    never reverted by activation.  No resolution of the new run may come
+    from another run, so a run composed on another base is refused.
+    """
+
+    rows = connection.execute(
+        f"""
+        SELECT resolution.run_id, resolution.patch_id,
+               resolution.resolution_id, resolution.resolution_state,
+               resolution.resolution_reason, resolution.resolution_evidence,
+               patch.clause_code
+        FROM {SCHEMA}.v_current_patch_resolution resolution
+        JOIN {SCHEMA}.clause_patch patch USING (run_id, patch_id)
+        WHERE resolution.run_id IN (%s, %s)
+        """,
+        (served_run_id, run_id),
+    ).fetchall()
+    served = {
+        str(row["patch_id"]): row
+        for row in rows
+        if str(row["run_id"]) == served_run_id
+    }
+    composed = {
+        str(row["patch_id"]): row for row in rows if str(row["run_id"]) == run_id
+    }
+    other_bases: set[str] = set()
+    changed: set[str] = set()
+    for patch_id, row in composed.items():
+        origin = _resolution_origin(row["resolution_evidence"])
+        if origin is not None and str(origin.get("run_id")) != served_run_id:
+            other_bases.add(str(origin.get("run_id")))
+            continue
+        current = served.get(patch_id)
+        if current is None:
+            if origin is not None:
+                changed.add(str(row["clause_code"]))
+            continue
+        if (
+            origin is None
+            or origin.get("resolution_id") != current["resolution_id"]
+            or row["resolution_state"] != current["resolution_state"]
+            or row["resolution_reason"] != current["resolution_reason"]
+        ):
+            changed.add(str(row["clause_code"]))
+    changed.update(
+        str(row["clause_code"])
+        for patch_id, row in served.items()
+        if patch_id not in composed
+    )
+    if other_bases:
+        raise AnnouncedReleaseError(
+            "the run was composed on another base run: "
+            + ", ".join(sorted(other_bases))
+        )
+    if changed:
+        raise AnnouncedReleaseError(
+            "the run does not carry the served run's current resolution of: "
+            + ", ".join(sorted(changed))
+            + "; compose the run again"
         )
 
 

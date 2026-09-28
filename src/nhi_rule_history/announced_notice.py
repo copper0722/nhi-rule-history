@@ -31,9 +31,6 @@ import io
 import itertools
 import json
 import re
-import shutil
-import subprocess
-import tempfile
 import unicodedata
 import uuid
 import zipfile
@@ -54,7 +51,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.1.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.3.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -116,6 +113,43 @@ _LOOSE_DESIGNATION_RE = re.compile(
     r"^[^0-9A-Za-z\u3400-\u9fff]*"
     r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
 )
+# Inside a clause's cell, anywhere in a paragraph (after a line break, a tab,
+# a run of spaces, a sentence or a word such as 新增), a dotted number that
+# names something reads like another clause designation.  Grammar runs on
+# NFKC text, where full-width digits and stops are ASCII.
+_CODE_TOKEN_RE = re.compile(
+    r"(?<![0-9.\u00b7\u30fb\u2027\u2219])"
+    r"(?P<code>[0-9]+(?:[.\u00b7\u30fb\u2027\u2219][0-9]+)+)(?![0-9])"
+)
+# A dotted number is a quantity, not a designation, after a comparison or
+# arithmetic sign (``≦ -2.5``, ``min/1.73``) or before a unit, a CJK word, a
+# closing bracket or a percent sign (``2.5 mg``, ``1.5倍``, ``2.18歲以上``).
+_QUANTITY_BEFORE_RE = re.compile(r"[<>=≤≥≦≧±×xX*/~～\-−–]\s*$")
+_QUANTITY_AFTER_RE = re.compile(
+    r"\s*(?:(?:mg|mcg|µg|μg|ug|ng|kg|g|ml|dl|l|iu|u|mmol|meq|sd|uln|mmhg|mm|cm"
+    r"|m2|m²|min|hr|h|x|×)(?![a-z])|[%)\]】\u3400-\u9fff])",
+    re.IGNORECASE,
+)
+# It names something when a Latin name follows, directly or after a heading
+# stop, colon, comma or bracket (``9.140 Bar``, ``9.140Bar``, ``9.57:Bar``,
+# ``9.140、Bar``, ``9.140(Bar)``), or when a stop or colon runs into a CJK name
+# (``0.5.藥品給付通則``).
+_DESIGNATION_AFTER_RE = re.compile(
+    r"\s*(?:[.:、,，(\[【]\s*)?[A-Za-z]|[.:](?=[\u3400-\u9fff])"
+)
+# Or when it stands alone on its line, or is written with a hyphen as a
+# heading (``9-140.Bar``) at the start of a line.
+_LINE_START_RE = re.compile(
+    r"(?:^|[\n\t]| {2,}|[。；;!?！？])[^0-9A-Za-z\u3400-\u9fff\n\t]*$"
+)
+_ALONE_AFTER_RE = re.compile(r"(?:[ ]*[.:、,，])?[ ]*(?:\n|$)")
+_HYPHEN_HEADING_RE = re.compile(
+    r"(?:^|(?<=[\n\t]))[^0-9A-Za-z\u3400-\u9fff\n\t]*"
+    r"(?P<code>[0-9]{1,2}-[0-9]{1,3})\.(?=[^0-9\s.])"
+)
+# A title may say the notice was pre-announced before (前經預告, 業經本署預告);
+# that phrase does not make it a pre-announcement.
+_PRIOR_PRE_ANNOUNCEMENT_RE = re.compile(r"(?:前|業|已)經[^,，。()（）]{0,20}預告")
 _APPENDIX_DESIGNATION_RE = re.compile(
     r"附表[一二三四五六七八九十百零〇]+(?:之[一二三四五六七八九十]+)?"
 )
@@ -968,10 +1002,57 @@ def _cell_items(
     )
 
 
+def designation_codes(text: str, *, heading: bool = False) -> list[str]:
+    """Dotted numbers in ``text`` that read like a clause designation.
+
+    ``text`` is paragraph character data, not a generated list label.  With
+    ``heading``, the paragraph's own strict heading code is not reported.
+    A number run into a CJK word (``2.18歲``, ``9.140藥品``) cannot be told
+    from a list item or a quantity and is not reported.
+    """
+
+    text = grammar_text(text)
+    skip = None
+    if heading:
+        match = _CLAUSE_HEADING_RE.match(text)
+        skip = match.start("code") if match else None
+    found: list[str] = []
+    for match in _CODE_TOKEN_RE.finditer(text):
+        if match.start() == skip:
+            continue
+        before, after = text[: match.start()], text[match.end() :]
+        if _QUANTITY_BEFORE_RE.search(before) or _QUANTITY_AFTER_RE.match(after):
+            continue
+        if _DESIGNATION_AFTER_RE.match(after) or (
+            _LINE_START_RE.search(before) and _ALONE_AFTER_RE.match(after)
+        ):
+            found.append(match.group("code"))
+    found.extend(match.group("code") for match in _HYPHEN_HEADING_RE.finditer(text))
+    return found
+
+
+def _refuse_designation(item: OdtParagraph, owner: str, *, heading: bool) -> None:
+    if item.nested:
+        return
+    codes = designation_codes(item.text, heading=heading)
+    if codes:
+        raise AnnouncedNoticeError(
+            f"a paragraph inside clause {owner} reads like a designation "
+            f"({codes[0]})"
+        )
+
+
 def _segments(
     items: Sequence[OdtParagraph],
 ) -> list[tuple[str | None, list[OdtParagraph]]]:
-    """Split one cell at clause-heading paragraphs, keeping document order."""
+    """Split one cell at clause-heading paragraphs, keeping document order.
+
+    A paragraph inside a clause's segment, including the heading paragraph
+    after its own code, that holds anything reading like another designation
+    (:func:`designation_codes`) fails closed: the clause might run on into a
+    clause whose heading is not in the strict form, and its text would be
+    merged.
+    """
 
     segments: list[tuple[str | None, list[OdtParagraph]]] = []
     for item in items:
@@ -984,8 +1065,12 @@ def _segments(
             )
         code = None if item.nested else clause_heading_code(item.text)
         if code is not None:
+            _refuse_designation(item, code, heading=True)
             segments.append((code, [item]))
         elif segments:
+            owner = segments[-1][0]
+            if owner is not None:
+                _refuse_designation(item, owner, heading=False)
             segments[-1][1].append(item)
         else:
             segments.append((None, [item]))
@@ -1126,7 +1211,7 @@ def _continuation_refusal(
             if any(
                 _LOOSE_DESIGNATION_RE.match(grammar_text(text))
                 for text in (item.text, item.printed_text)
-            ):
+            ) or (not item.nested and designation_codes(item.text)):
                 return "a paragraph reads like a designation"
     return None
 
@@ -1156,7 +1241,7 @@ def parse_comparison_document(
     if not table_specs:
         raise AnnouncedNoticeError("attachment has no official comparison table")
     title = grammar_text(bundle.title).strip()
-    if "預告" in title:
+    if "預告" in _PRIOR_PRE_ANNOUNCEMENT_RE.sub("", title):
         raise AnnouncedNoticeError(
             "the notice is a pre-announcement (預告), not announced text"
         )
@@ -1462,85 +1547,73 @@ def revised_paragraphs_in_served(
     ]
 
 
-def libreoffice_text_export(
-    payload: bytes,
-    *,
-    soffice: str | None = None,
-    timeout_seconds: int = 180,
-) -> str | None:
-    """Render an ODT to UTF-8 text with LibreOffice, or return ``None``.
+def cell_rendering_check(
+    notice: ParsedNotice,
+    clause: AnnouncedClause,
+    rendering: Mapping[str, Any] | None,
+) -> str:
+    """Check a clause against LibreOffice's rendering of its own revised cells.
 
-    This is an independent rendering engine used only for verification.  It
-    runs with a throwaway user profile so it never attaches to a running
-    office instance.
-    """
-
-    binary = soffice or shutil.which("soffice")
-    if not binary:
-        return None
-    with tempfile.TemporaryDirectory(prefix="nhi-notice-lo-") as scratch:
-        work = Path(scratch)
-        source = work / "source.odt"
-        source.write_bytes(payload)
-        completed = subprocess.run(
-            [
-                binary,
-                f"-env:UserInstallation={(work / 'profile').as_uri()}",
-                "--headless",
-                "--norestore",
-                "--convert-to",
-                "txt:Text (encoded):UTF8",
-                "--outdir",
-                str(work),
-                str(source),
-            ],
-            check=False,
-            capture_output=True,
-            timeout=timeout_seconds,
-        )
-        output = work / "source.txt"
-        if completed.returncode != 0 or not output.is_file():
-            return None
-        return output.read_text(encoding="utf-8-sig")
-
-
-def exact_in_rendering(clause: AnnouncedClause, rendering: str | None) -> str:
-    """Check the revised text against an independent LibreOffice rendering.
-
-    LibreOffice writes each paragraph on its own line, joins the last
-    paragraph of one cell to the next cell with a tab, and keeps whitespace
-    elements.  A list paragraph starts with four spaces per list level, then
-    its label (two spaces when it draws none) and one space; the expected
-    lines are built from each paragraph's reconstructed label, so a wrong
-    label cannot match.  Blank paragraphs are dropped on both sides.  The
-    revised text must appear verbatim, starting at a line start and ending at
-    a line end or a cell boundary.
+    ``rendering`` is the notice attachment's entry from
+    :func:`nhi_rule_history.office_rendering.render_table_cells`.  Each
+    revised cell the clause spans is aligned paragraph by paragraph with the
+    cell LibreOffice renders at the same top-level table, row and column;
+    blank unlabelled paragraphs and nested tables are left out on both sides.
+    Every paragraph of the cell must have the same text, and each of the
+    clause's own paragraphs must carry the same list label followed by the
+    same separator (tab, space, nothing or line break).  A label that only
+    matches another cell, or a gap LibreOffice draws differently, is a
+    mismatch.
     """
 
     if rendering is None:
         return "unavailable"
     if any(item.nested for item in clause.revised):
         return "not_applicable_nested_table"
-    lines = [line for line in rendering.split("\n") if line.strip()]
-    haystack = "\n" + "\n".join(lines) + "\n"
-    needle = "\n".join(
-        line
-        for item in clause.revised
-        for line in (item.export_prefix + item.text).split("\n")
-        if line.strip()
+    tables = rendering.get("tables")
+    top = sorted(notice.document.top_tables)
+    if not isinstance(tables, list) or len(tables) != len(top):
+        return "mismatch"
+    column = next(
+        table.revised_column
+        for table in notice.tables
+        if table.table_index == clause.table_index
     )
-    start = 0
-    while True:
-        position = haystack.find(needle, start)
-        if position < 0:
+    own = {item.document_order for item in clause.revised}
+    for table_index, row_index in clause.rows:
+        try:
+            cell = tables[top.index(table_index)][row_index][column]
+        except (IndexError, TypeError, ValueError):
             return "mismatch"
-        before = haystack[position - 1 : position]
-        after = haystack[position + len(needle) : position + len(needle) + 1]
-        # LibreOffice joins consecutive table cells with a tab, so a cell
-        # may start after a tab and end before one.
-        if before in {"\n", "\t"} and after in {"\n", "\t"}:
-            return "exact"
-        start = position + 1
+        if not isinstance(cell, list):
+            return "mismatch"
+        ours = [
+            item
+            for item in _cell_items(
+                notice.document.paragraphs, table_index, row_index, column
+            )
+            if not item.nested and (item.text.strip() or item.generated_label)
+        ]
+        drawn = [
+            paragraph
+            for paragraph in cell
+            if isinstance(paragraph, Mapping)
+            and not paragraph.get("nested_table")
+            and (str(paragraph.get("text") or "").strip() or paragraph.get("label"))
+        ]
+        if len(ours) != len(drawn):
+            return "mismatch"
+        for item, paragraph in zip(ours, drawn):
+            if item.text != paragraph.get("text"):
+                return "mismatch"
+            if item.document_order not in own:
+                continue
+            label = item.generated_label or ""
+            if label != (paragraph.get("label") or ""):
+                return "mismatch"
+            if label and item.numbering.separator != paragraph.get("separator"):
+                return "mismatch"
+    return "exact"
 
 
 def projection_block_reason(
@@ -1548,8 +1621,9 @@ def projection_block_reason(
 ) -> str | None:
     """Why a clause must stay a pending effect instead of a patch, if so.
 
-    A clause whose paragraphs carry list numbering is projected only when the
-    independent office rendering shows exactly the reconstructed labels.
+    A clause whose paragraphs carry list numbering is projected only when
+    LibreOffice's rendering of its own revised cells shows exactly the
+    reconstructed labels and separators (:func:`cell_rendering_check`).
     """
 
     if clause.blocked_reason:
@@ -1566,12 +1640,12 @@ def verification_row(
     clause: AnnouncedClause,
     *,
     served_text: str | None,
-    rendering: str | None,
+    rendering: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     whitespace_blocks = sum(
         1 for item in clause.revised if item.text != item.block_text
     )
-    rendering_check = exact_in_rendering(clause, rendering)
+    rendering_check = cell_rendering_check(notice, clause, rendering)
     return {
         "reference_number": notice.bundle.reference_number,
         "clause_code": clause.clause_code,

@@ -18,10 +18,20 @@ compose, load and activate print one JSON receipt on stdout; errors go to
 stderr.  Every receipt lists ``failures`` (notices that failed to parse, bind,
 render or supersede, with the reason), ``dropped_notices`` (parsed notices
 left out, with the reason) and ``blocked_clauses`` (clauses the run holds
-back, with the reason).  Its ``status`` is ``passed`` or ``no_change`` only
-when all three are empty, and ``passed_with_holds`` or
-``no_change_with_holds`` otherwise.  Exit status: 0 green, 3 completed with
+back, with the reason); compose and load also list
+``carried_predecessor_moved`` (served patches whose publication text moved,
+kept as served).  Its ``status`` is ``passed`` or ``no_change`` only when the
+three lists are empty and every moved predecessor belongs to a settled
+patch, and ``passed_with_holds`` or ``no_change_with_holds`` otherwise.  Exit status: 0 green, 3 completed with
 holds (a load did seal its run and an activation did serve it), 1 error.
+
+``--acknowledged-failures`` names a JSON list of failures already known and
+accepted, each ``{"bundle", "stage", "error"}`` exactly as a receipt prints
+it.  A failure that matches one exactly moves to ``acknowledged_failures``
+and neither holds the batch nor needs ``--skip-failed``; any other failure
+still does.  An acknowledgment that matches no failure any more is listed in
+``stale_acknowledgments`` and makes the status non-green until the list is
+updated.
 """
 
 from __future__ import annotations
@@ -31,23 +41,25 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from nhi_rule_history.announced_notice import (
-    AnnouncedNoticeError,
-    libreoffice_text_export,
+    ParsedNotice,
     parse_notice,
     read_notice_bundle,
     verification_row,
 )
 from nhi_rule_history.announced_release import (
     STATUS_NO_CHANGE,
+    STATUS_NO_CHANGE_WITH_HOLDS,
     STATUS_PASSED,
+    STATUS_PASSED_WITH_HOLDS,
     AnnouncedReleaseError,
     Composition,
     _connect,
     activate_overlay_release,
     compose_overlay_release,
+    describe_error,
     load_overlay_release,
     queued_bundles,
     receipt_status,
@@ -55,6 +67,7 @@ from nhi_rule_history.announced_release import (
     rollback_overlay_release,
     served_clauses,
 )
+from nhi_rule_history.office_rendering import render_table_cells
 from nhi_rule_history.pg.common import PgLoadError
 
 
@@ -113,9 +126,9 @@ def _parse(
             notice = parse_notice(
                 read_notice_bundle(path, registered_manifest_sha256=registered)
             )
-        except AnnouncedNoticeError as exc:
+        except Exception as exc:  # one bundle never aborts the batch
             failures.append(
-                {"bundle": path.name, "stage": "parse", "error": str(exc)}
+                {"bundle": path.name, "stage": "parse", "error": describe_error(exc)}
             )
             continue
         if args.effective_on and notice.effective_on not in args.effective_on:
@@ -146,6 +159,17 @@ def _carried_references(dsn: str) -> set[str]:
         }
 
 
+def _renderings(notices: Sequence[ParsedNotice]) -> dict[str, Any]:
+    """LibreOffice's cell rendering of each notice's comparison attachment."""
+
+    return render_table_cells(
+        {
+            notice.bundle.reference_number: notice.attachment.path.read_bytes()
+            for notice in notices
+        }
+    )
+
+
 def _verification(args: argparse.Namespace) -> dict[str, Any]:
     notices, failures, dropped = _parse(args)
     carried = _carried_references(args.dsn)
@@ -153,12 +177,9 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
     with _connect(args.dsn, read_only=True) as connection:
         codes = [c.clause_code for n in notices for c in n.clauses]
         served_run_id, served = served_clauses(connection, codes)
+    renderings = {} if args.no_libreoffice else _renderings(notices)
     for notice in notices:
-        rendering = (
-            None
-            if args.no_libreoffice
-            else libreoffice_text_export(notice.attachment.path.read_bytes())
-        )
+        rendering = renderings.get(notice.bundle.reference_number)
         for clause in notice.clauses:
             current = served.get(clause.clause_code)
             row = verification_row(
@@ -238,12 +259,7 @@ def _compose(
     args: argparse.Namespace,
 ) -> tuple[Composition, list[dict[str, Any]], list[dict[str, Any]]]:
     notices, failures, dropped = _parse(args)
-    renderings = {
-        notice.bundle.reference_number: libreoffice_text_export(
-            notice.attachment.path.read_bytes()
-        )
-        for notice in notices
-    }
+    renderings = _renderings(notices)
     composition = compose_overlay_release(
         args.dsn,
         notices,
@@ -256,27 +272,81 @@ def _compose(
     return composition, failures, dropped
 
 
+_ACKNOWLEDGED_KEYS = ("bundle", "stage", "error")
+
+
+def _acknowledged(path: Path | None) -> list[dict[str, str]]:
+    """The acknowledged failures listed in ``path``, validated."""
+
+    if path is None:
+        return []
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise AnnouncedReleaseError(
+            f"cannot read the acknowledged failures: {exc}"
+        ) from exc
+    if not isinstance(entries, list) or not all(
+        isinstance(entry, dict)
+        and set(entry) >= set(_ACKNOWLEDGED_KEYS)
+        and all(isinstance(entry[key], str) for key in _ACKNOWLEDGED_KEYS)
+        for entry in entries
+    ):
+        raise AnnouncedReleaseError(
+            "acknowledged failures must be a JSON list of objects with "
+            "string bundle, stage and error"
+        )
+    return [{key: entry[key] for key in _ACKNOWLEDGED_KEYS} for entry in entries]
+
+
 def _holds(
     composition: Composition,
     failures: list[dict[str, Any]],
     dropped: list[dict[str, Any]],
+    acknowledged: Sequence[Mapping[str, str]] = (),
 ) -> dict[str, Any]:
     """Receipt head: status plus everything the batch did not serve."""
 
+    known = {tuple(entry[key] for key in _ACKNOWLEDGED_KEYS) for entry in acknowledged}
     failures = [*failures, *composition.failures]
+    matched = [
+        item
+        for item in failures
+        if tuple(item.get(key) for key in _ACKNOWLEDGED_KEYS) in known
+    ]
+    failures = [item for item in failures if item not in matched]
+    seen = {tuple(item[key] for key in _ACKNOWLEDGED_KEYS) for item in matched}
+    stale = [
+        dict(entry)
+        for entry in acknowledged
+        if tuple(entry[key] for key in _ACKNOWLEDGED_KEYS) not in seen
+    ]
     dropped = [*dropped, *composition.dropped_notices]
+    status = receipt_status(
+        composed=composition.release is not None,
+        failures=failures,
+        dropped_notices=dropped,
+        blocked_clauses=composition.blocked_clauses,
+        predecessor_moved=composition.predecessor_moved,
+    )
+    if stale:
+        status = {
+            STATUS_PASSED: STATUS_PASSED_WITH_HOLDS,
+            STATUS_NO_CHANGE: STATUS_NO_CHANGE_WITH_HOLDS,
+        }.get(status, status)
     return {
-        "status": receipt_status(
-            composed=composition.release is not None,
-            failures=failures,
-            dropped_notices=dropped,
-            blocked_clauses=composition.blocked_clauses,
-        ),
+        "status": status,
         "failures": failures,
         "dropped_notices": dropped,
         "blocked_clauses": list(composition.blocked_clauses),
         "superseded_notices": list(composition.superseded_notices),
         "carried_notices": list(composition.carried_notices),
+        "carried_predecessor_moved": list(composition.predecessor_moved),
+        **(
+            {"acknowledged_failures": matched, "stale_acknowledgments": stale}
+            if acknowledged
+            else {}
+        ),
     }
 
 
@@ -347,6 +417,11 @@ def _load_receipt_holds(
         "failures": receipt.get("failures"),
         "dropped_notices": receipt.get("dropped_notices"),
         "superseded_notices": receipt.get("superseded_notices"),
+        **{
+            key: receipt[key]
+            for key in ("acknowledged_failures", "carried_predecessor_moved")
+            if isinstance(receipt.get(key), list)
+        },
     }
     if not all(
         isinstance(holds[key], list)
@@ -374,8 +449,9 @@ def _run(args: argparse.Namespace) -> int:
             _print_table(report)
         return 1 if report["failures"] else 0
     if args.command in {"compose", "load"}:
+        acknowledged = _acknowledged(args.acknowledged_failures)
         composition, failures, dropped = _compose(args)
-        receipt = _holds(composition, failures, dropped)
+        receipt = _holds(composition, failures, dropped, acknowledged)
         if receipt["failures"] and not args.skip_failed:
             print(
                 "error: notice failures (use --skip-failed to leave them "
@@ -419,6 +495,7 @@ def _run(args: argparse.Namespace) -> int:
                 failures=holds and holds["failures"],
                 dropped_notices=holds and holds["dropped_notices"],
                 blocked_clauses=result["blocked_clauses"],
+                predecessor_moved=holds and holds.get("carried_predecessor_moved"),
             ),
             "failures": None if holds is None else holds["failures"],
             "dropped_notices": (
@@ -474,6 +551,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             command.add_argument("--base-run-id")
             command.add_argument("--dyslipidemia-odt", type=Path)
             command.add_argument("--skip-failed", action="store_true")
+            command.add_argument(
+                "--acknowledged-failures",
+                type=Path,
+                help=(
+                    "JSON list of known failures ({bundle, stage, error}, "
+                    "exactly as printed) that do not hold the batch"
+                ),
+            )
             command.add_argument(
                 "--allow-without-rendering-check", action="store_true"
             )

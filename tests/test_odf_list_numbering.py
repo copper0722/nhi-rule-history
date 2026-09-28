@@ -123,10 +123,12 @@ def document(
 
 
 A = list_style("A", level(1, "1", None, "."), level(2, "1", "(", ")"), level(3, "I"))
+_CONTINUE = 'text:continue-numbering="true"'
 B = list_style("B", level(1, "i"), level(2, "a", None, ")"))
 
 # name -> (document, {paragraph: expected}); an expected value is the
-# LibreOffice export prefix, or "!" plus the unsupported reason.
+# LibreOffice export prefix, "!" plus the unsupported reason, or "-" for a
+# paragraph LibreOffice discards (it draws no label and is not counted).
 CASES: dict[str, tuple[tuple[bytes, bytes, bytes], dict[str, str]]] = {
     "items_continuations_and_nesting": (
         document(
@@ -321,6 +323,31 @@ CASES: dict[str, tuple[tuple[bytes, bytes, bytes], dict[str, str]]] = {
          "P04": "    5. ",
          "P05": "!numbered_paragraph_without_list_id_or_style"},
     ),
+    # 2026-09-28 finding R2-H2: a list inside a covered (merged-away) cell
+    # was counted, so every later label of that list was one too high.
+    **{
+        f"covered_cell_lists_are_discarded_{name}": (
+            document(
+                '<table:table table:name="T1"><table:table-column '
+                'table:number-columns-repeated="2"/><table:table-row>'
+                '<table:table-cell table:number-rows-spanned="2">'
+                + lst("A", item(para("P01")))
+                + "</table:table-cell><table:table-cell>" + para("P02")
+                + "</table:table-cell></table:table-row><table:table-row>"
+                "<table:covered-table-cell>"
+                + lst("A", item(para("P03")), attributes=_CONTINUE)
+                + "</table:covered-table-cell><table:table-cell>"
+                + lst("A", item(para("P04")), attributes=_CONTINUE)
+                + "</table:table-cell></table:table-row></table:table>"
+                + lst("A", item(para("P05")), attributes=_CONTINUE),
+                automatic=A,
+                generator=generator,
+            ),
+            {"P01": "    1. ", "P02": "", "P03": "-", "P04": "    2. ",
+             "P05": "    3. "},
+        )
+        for name, generator in (("mso", MSO), ("other", OTHER))
+    },
     "word_list_format_must_agree": (
         document(
             lst("WA", item(para("P01"))) + lst("WB", item(para("P02"))),
@@ -371,7 +398,9 @@ class ListLabelRulesTest(unittest.TestCase):
             found = _labels(parts)
             for paragraph, prefix in expected.items():
                 with self.subTest(case=name, paragraph=paragraph):
-                    self.assertEqual(_expected(found[paragraph]), prefix)
+                    self.assertEqual(
+                        _expected(found[paragraph]), "" if prefix == "-" else prefix
+                    )
 
     def test_printed_prefix_uses_the_label_separator(self) -> None:
         found = _labels(CASES["label_followed_by_does_not_change_the_export"][0])
@@ -459,14 +488,19 @@ class LibreOfficeCrossCheckTest(unittest.TestCase):
             {name: fixture_odt(*parts) for name, (parts, _) in CASES.items()}
         )
         for name, (parts, expected) in CASES.items():
+            # A table row is one line with its cells joined by tabs.
             lines = {}
             for line in rendered[name].split("\n"):
-                match = re.search(r"P\d\d", line)
-                if match:
-                    lines[match.group(0)] = line[: match.start()]
+                for part in line.split("\t"):
+                    match = re.search(r"P\d\d", part)
+                    if match:
+                        lines[match.group(0)] = part[: match.start()]
             found = _labels(parts)
             for paragraph, pinned in expected.items():
                 with self.subTest(case=name, paragraph=paragraph):
+                    if pinned == "-":
+                        self.assertNotIn(paragraph, lines)
+                        continue
                     if pinned.startswith("!"):
                         continue
                     self.assertEqual(found[paragraph][1].export_prefix if

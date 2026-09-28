@@ -187,7 +187,7 @@ continuous_update:
       subscriber_site_per_clause_check: passed_21_of_21
     recurring_lane:
       cadence_minutes: 15
-      auto_activation: held_until_R2_H1_to_H4_fixed_and_verified
+      auto_activation: held_until_round4_rendering_fail_closed_B1_to_B4_fixed_and_verified
       post_effective_resolution: effective_unconsolidated_only_never_reconciled
       effective_date_alarm_cadence_hours: 6
     parser: src/nhi_rule_history/announced_notice.py
@@ -202,7 +202,10 @@ continuous_update:
       - official_rendering_mismatch
       - official_rendering_unverified
       - nested_table
-    list_label_rule: nhi-rule-history/odf-list-label/1.0.0
+    list_label_rule: nhi-rule-history/odf-list-label/1.1.0
+    parser_version: nhi-rule-history/announced-notice-parser/1.3.0
+    loader_version: nhi-rule-history/announced-overlay-loader/2.2.0
+    subscriber_sync_tick_lock: global_announced_lock_held_from_served_read_to_activation
     queue_manifest_identity: registered_canonical_bytes_with_bookkeeping_and_derived_layers_reverted_sources_pinned
     list_numbering_receipt: docs/audits/2026-09-28-announced-list-numbering-verification.json
     rehearsal_receipt: docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json

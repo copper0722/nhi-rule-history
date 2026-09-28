@@ -17,7 +17,7 @@
         "clauses": [
           {
             "clause_code": "8.2.19",
-            "component_manifest_sha256": "fdc6cb2df8248f4a46a9ba23bcb08003c4f4151e2b65054344aedbe6a35f6b3b",
+            "component_manifest_sha256": "f2658ccf0349872822ee16b0419db80697ecf1cdc0ed2c659b7666d013de078f",
             "generated_labels": [
               "1."
             ],
@@ -85,7 +85,7 @@
         "clauses": [
           {
             "clause_code": "9.139",
-            "component_manifest_sha256": "08b05575926eb2c19bc637028f3ab7bcde344830c7cb2e602618e705648fe7c6",
+            "component_manifest_sha256": "46795c8643993e3084b4549d127c98d99276dc1e6685b79a6544c03dfa87890e",
             "generated_labels": [
               "1.",
               "2."
@@ -172,7 +172,7 @@
         "clauses": [
           {
             "clause_code": "9.140",
-            "component_manifest_sha256": "2bd02adc67e3d9a50d112195e790edcf19586afa979f389bc4370aaf3d78ef16",
+            "component_manifest_sha256": "2d7416947593f598f41a68f58f2b0d8d7c36dd8c69af916559081db65e225182",
             "generated_labels": [
               "i.",
               "ii.",
@@ -266,7 +266,7 @@
         "clauses": [
           {
             "clause_code": "9.69",
-            "component_manifest_sha256": "092e79883f90d384b503b37467b5eb26bcbc9f516175ee81357be768c2f27cd1",
+            "component_manifest_sha256": "c9b45fcc966bd19896f2198fd3a0520c4f2bcc10153c000f7e73eefa80d3a5a9",
             "generated_labels": [
               "(1)",
               "(2)",
@@ -319,7 +319,7 @@
           },
           {
             "clause_code": "9.26",
-            "component_manifest_sha256": "d68d1ced3734e764d9984ceb7df41e94ce279be7035badf670170f303584fa42",
+            "component_manifest_sha256": "87c469f15e6be31edb7032ff0ebc2c085854b9f0b9e500285161a4fdfab17178",
             "generated_labels": [
               "(5)",
               "(6)"
@@ -358,7 +358,7 @@
           },
           {
             "clause_code": "9.5.1",
-            "component_manifest_sha256": "f227b9523338826a4cce84e61a15a1b560649fd8d4ca9cd3a91dfbc4d9f138d6",
+            "component_manifest_sha256": "bcb545f87e5ac398d7e6744d31776372e5fea7ffe6c6d3a0007fa39198502179",
             "generated_labels": [
               "1."
             ],
@@ -426,7 +426,7 @@
         "clauses": [
           {
             "clause_code": "3.3.32",
-            "component_manifest_sha256": "e4521cd339c612dbd22af63354f99dfb969d5542a12a0d2d1aa4fa30719239c1",
+            "component_manifest_sha256": "e1ddf14ee04de0a0bd1352ff8efee31fef0b6cb69b6a5464b3946d200c29854c",
             "generated_labels": [
               "1.",
               "(1)",

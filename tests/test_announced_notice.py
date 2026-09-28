@@ -15,10 +15,10 @@ from nhi_rule_history.announced_notice import (
     NoticeBundle,
     ODT_MEDIA_TYPE,
     PATCH_TEXT_JOIN,
+    _cell_items,
+    cell_rendering_check,
     clause_heading_code,
-    exact_in_rendering,
     is_omission_marker,
-    libreoffice_text_export,
     parse_comparison_document,
     parse_effective_statement,
     projection_block_reason,
@@ -26,8 +26,64 @@ from nhi_rule_history.announced_notice import (
     roc_date,
     sha256_text,
 )
+from nhi_rule_history.office_rendering import render_table_cells, uno_python
 from nhi_rule_history.pg.common import object_fingerprint
 from tools.build_announced_notice_fixture import fixture_odt
+
+
+def _office_available() -> bool:
+    binary = shutil.which("soffice")
+    return bool(binary and uno_python(binary))
+
+
+def _render(payload: bytes) -> dict:
+    rendering = render_table_cells({"notice": payload})["notice"]
+    assert rendering is not None, "LibreOffice did not render the fixture"
+    return rendering
+
+
+def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
+    """A cell rendering that draws every cell as the parser reads it.
+
+    ``text``/``label``/``separator`` map a paragraph's document order to what
+    is drawn instead, to model an office suite that disagrees.
+    """
+
+    text, label, separator = text or {}, label or {}, separator or {}
+
+    def paragraph(item) -> dict:
+        order = item.document_order
+        own_label = item.generated_label or ""
+        return {
+            "text": text.get(order, item.text),
+            "label": label.get(order, own_label),
+            "separator": separator.get(
+                order, item.numbering.separator if own_label else None
+            ),
+        }
+
+    return {
+        "rendering_version": "test",
+        "tables": [
+            [
+                [
+                    [
+                        paragraph(item)
+                        for item in _cell_items(
+                            notice.document.paragraphs,
+                            table_index,
+                            cell.row_index,
+                            cell.cell_index,
+                        )
+                        if not item.nested
+                    ]
+                    for cell in row
+                ]
+                for row in grid
+            ]
+            for table_index, grid in sorted(notice.document.top_tables.items())
+        ],
+    }
 
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "announced_notices"
@@ -369,19 +425,28 @@ class OfficialFixtureTest(unittest.TestCase):
         with self.assertRaisesRegex(AnnouncedNoticeError, "raw.md"):
             self._parse(broken)
 
-    @unittest.skipUnless(shutil.which("soffice"), "LibreOffice is unavailable")
+    @unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
     def test_independent_office_rendering(self) -> None:
         for notice in MANIFEST["notices"]:
             payload, parsed = self._parse(notice)
-            rendering = libreoffice_text_export(payload)
-            self.assertIsNotNone(rendering)
+            rendering = _render(payload)
             for clause in parsed.clauses:
                 with self.subTest(clause=clause.clause_code):
-                    self.assertEqual(exact_in_rendering(clause, rendering), "exact")
+                    self.assertEqual(
+                        cell_rendering_check(parsed, clause, rendering), "exact"
+                    )
             # Confusable negative: one changed character must not match.
             clause = parsed.clauses[0]
-            tampered = rendering.replace(clause.revised[-1].text, clause.revised[-1].text[:-1] + "X")
-            self.assertEqual(exact_in_rendering(clause, tampered), "mismatch")
+            last = clause.revised[-1]
+            tampered = _drawn(
+                parsed, text={last.document_order: last.text[:-1] + "X"}
+            )
+            self.assertEqual(
+                cell_rendering_check(parsed, clause, _drawn(parsed)), "exact"
+            )
+            self.assertEqual(
+                cell_rendering_check(parsed, clause, tampered), "mismatch"
+            )
 
 
 class ComparisonGrammarTest(unittest.TestCase):
@@ -447,6 +512,9 @@ class ComparisonGrammarTest(unittest.TestCase):
             _parse_payload(payload)
 
     def _listed_clause(self, style: str, levels: str):
+        return self._listed_notice(style, levels).clauses[0]
+
+    def _listed_notice(self, style: str, levels: str):
         body = (
             "<text:p>（自115年10月1日生效）</text:p><table:table>"
             "<table:table-row>" + _cell("修訂後給付規定") + _cell("原給付規定")
@@ -457,7 +525,7 @@ class ComparisonGrammarTest(unittest.TestCase):
             "</text:list-item></text:list></table:table-cell>"
             + _cell("無") + "</table:table-row></table:table>"
         )
-        return _parse_payload(_document(body, automatic_styles=levels)).clauses[0]
+        return _parse_payload(_document(body, automatic_styles=levels))
 
     def test_list_labels_are_printed_before_their_text(self) -> None:
         alignment = (
@@ -527,25 +595,30 @@ class ComparisonGrammarTest(unittest.TestCase):
             '<style:list-level-properties text:list-level-position-and-space-'
             'mode="label-alignment"/>'
         )
-        clause = self._listed_clause(
+        notice = self._listed_notice(
             "L1",
             '<text:list-style style:name="L1">'
             '<text:list-level-style-number text:level="1" style:num-prefix="(" '
             'style:num-suffix=")" style:num-format="1" text:start-value="5">'
             f"{alignment}</text:list-level-style-number></text:list-style>",
         )
+        clause = notice.clauses[0]
         self.assertEqual(clause.revised[1].printed_text, "(5)\t單獨用於")
-        head = "修訂後給付規定\t原給付規定\n9.139.Mogamulizumab：(115/10/1)\n"
-        exact = head + "    (5) 單獨用於\n       續行段落\t無\n"
-        self.assertEqual(exact_in_rendering(clause, exact), "exact")
-        for tampered in (
-            exact.replace("(5)", "(6)"),
-            exact.replace("    (5) 單獨用於", "(5)單獨用於"),
-            exact.replace("    (5) 單獨用於", "單獨用於"),
-            exact.replace("       續行段落", "續行段落"),
+        labelled, continued = (item.document_order for item in clause.revised[1:])
+        self.assertEqual(cell_rendering_check(notice, clause, _drawn(notice)), "exact")
+        for name, tampered in (
+            ("label", _drawn(notice, label={labelled: "(6)"})),
+            ("no label", _drawn(notice, label={labelled: ""})),
+            ("space", _drawn(notice, separator={labelled: " "})),
+            ("nothing", _drawn(notice, separator={labelled: ""})),
+            ("line break", _drawn(notice, separator={labelled: "\n"})),
+            ("continuation label", _drawn(notice, label={continued: "(6)"})),
+            ("text", _drawn(notice, text={continued: "續行"})),
         ):
-            with self.subTest(tampered=tampered):
-                self.assertEqual(exact_in_rendering(clause, tampered), "mismatch")
+            with self.subTest(tampered=name):
+                self.assertEqual(
+                    cell_rendering_check(notice, clause, tampered), "mismatch"
+                )
         self.assertIsNone(projection_block_reason(clause, "exact"))
         for check, reason in (
             ("mismatch", "official_rendering_mismatch"),
@@ -576,10 +649,14 @@ class ComparisonGrammarTest(unittest.TestCase):
             )
             return _document(body)
 
-        clause = _parse_payload(row(nested=True)).clauses[0]
+        notice = _parse_payload(row(nested=True))
+        clause = notice.clauses[0]
         self.assertTrue(any(item.nested for item in clause.revised))
         self.assertEqual(clause.blocked_reason, "nested_table")
-        self.assertEqual(exact_in_rendering(clause, "x"), "not_applicable_nested_table")
+        self.assertEqual(
+            cell_rendering_check(notice, clause, _drawn(notice)),
+            "not_applicable_nested_table",
+        )
         for check in ("exact", "not_applicable_nested_table", "unavailable"):
             self.assertEqual(projection_block_reason(clause, check), "nested_table")
         # Confusable negative: the same clause without the nested table.
@@ -620,6 +697,95 @@ class ComparisonGrammarTest(unittest.TestCase):
         with self.assertRaisesRegex(AnnouncedNoticeError, "previous row"):
             _parse_payload(_document(body))
 
+    def test_designation_inside_a_clause_cell_fails_closed(self) -> None:
+        # 2026-09-28 findings R2-H3 and HIGH-B: a designation-like paragraph
+        # inside a clause's cell was merged into the clause (the verifier's
+        # 9.139/9.140 probe), and the first fix looked only at the paragraph
+        # start.  Any position counts: after a line break, a tab, a run of
+        # spaces, a sentence or a word.
+        head = ["9.139.Foo：(115/10/1)", "限用於A"]
+        for paragraph in (
+            "9.140 Bar(115/10/1)",
+            "◎9.141.Baz(115/10/1)",
+            "9.57:Bar(115/10/1)",
+            "0.5.藥品給付通則：",
+            "９．１４０ Bar",
+            "　9.140 Bar",
+            "9.140：Bar",
+            "新增9.140 Bar",
+            "9·140 Bar",
+            "9-140.Bar",
+            "A9.140 Bar",
+            "9.140Bar(115/10/1)",
+            "9.140、Bar",
+            "9.140(Bar)",
+            "9.140，Bar",
+            "限用於A。9.140 Bar",
+            "9.140",
+            "限用於A<text:line-break/>9.140 Bar(115/10/1)",
+            "限用於A<text:tab/>9.140.Bar(115/10/1)",
+            '限用於A<text:s text:c="3"/>9.140.Bar(115/10/1)',
+        ):
+            with self.subTest(paragraph=paragraph), self.assertRaisesRegex(
+                AnnouncedNoticeError, "inside clause 9.139 reads like a designation"
+            ):
+                _parse_payload(_comparison([(head + [paragraph, "限用於B"], ["無"])]))
+        # The heading paragraph is read after its own code, and the original
+        # column is read the same way.
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, r"inside clause 9\.139 reads like a designation \(9\.140\)"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(["9.139.Foo：(115/10/1)<text:line-break/>9.140 Bar", "限用於B"],
+                      ["無"])]
+                )
+            )
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, r"inside clause 9\.2 reads like a designation \(9\.140\)"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(["9.2.Foo：(115/10/1)", "限用於A"], ["9.2.Foo：", "9.140 Bar"])]
+                )
+            )
+        # A row that would continue the clause above is read the same way.
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, "does not start with a clause designation"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(head, ["9.139.Foo：", "限用於"]),
+                     (["限用於A。9.140 Bar"], ["限用於"])]
+                )
+            )
+        # Confusable negatives: quantities, list items run into their word,
+        # single-level items, omission markers and cross-references stay text.
+        revised = [
+            "2.1.4.2.Rivaroxaban：(115/10/1)",
+            "2.18歲以上非瓣膜性心房纖維顫動病患",
+            "0.5 mg/kg以下",
+            "1.5倍以上",
+            "2.5 mg",
+            "1.5 mg",
+            "2.5mg每日一次",
+            "每日2.5 mg",
+            "Hb≧8.0 g/dL; BMD之-2.5 SD",
+            "eGFR≦30 mL/min/1.73 m2",
+            "bilirubin ≤ 3.0 x ULN",
+            "1.限用於",
+            "~2.(略)",
+            "(詳見9.24.1)",
+            "依2.6.1規定辦理",
+        ]
+        parsed = _parse_payload(
+            _comparison([(revised, ["2.1.4.2.Rivaroxaban：", revised[1]])])
+        )
+        self.assertEqual([c.clause_code for c in parsed.clauses], ["2.1.4.2"])
+        self.assertEqual(
+            [item.text for item in parsed.clauses[0].revised], revised
+        )
+
     def test_missing_registration_receipts_fail_closed(self) -> None:
         # 2026-09-28 finding L5: without raw.md receipts the block identity
         # check was skipped.
@@ -654,22 +820,261 @@ class ComparisonGrammarTest(unittest.TestCase):
             ):
                 _parse_payload(_comparison(rows, header=header), title=title)
 
-    def test_rendering_check_accepts_cell_boundaries_only(self) -> None:
-        parsed = _parse_payload(
-            _comparison([(["9.2.Carboplatin：", "限"], ["9.2.Carboplatin："])])
+    def test_prior_pre_announcement_phrase_is_not_a_pre_announcement(self) -> None:
+        # 2026-09-28 finding R2-L5: any title containing 預告 was refused,
+        # including an announcement that says it was pre-announced before.
+        rows = [(["2.1.1.X：(115/10/1)"], ["2.1.1.X："])]
+        proposal = ("建議修訂後給付規定", "原給付規定")
+        for title in (
+            "公告修正「藥品給付規定」部分規定（前經預告）",
+            "公告修正「藥品給付規定」部分規定(業經本署於115年8月1日預告)",
+        ):
+            with self.subTest(title=title):
+                parsed = _parse_payload(_comparison(rows, header=proposal), title=title)
+                self.assertEqual([c.clause_code for c in parsed.clauses], ["2.1.1"])
+        for title in (
+            "預告修正「藥品給付規定」部分規定草案",
+            "公告修正「藥品給付規定」部分規定（前經預告），並預告修正附表",
+            "有關預告修正「藥品給付規定」一案",
+        ):
+            with self.subTest(title=title), self.assertRaisesRegex(
+                AnnouncedNoticeError, "pre-announcement"
+            ):
+                _parse_payload(_comparison(rows), title=title)
+
+    def test_rendering_check_reads_the_clause_cell_only(self) -> None:
+        # 2026-09-28 finding R2-H1: the check searched the whole document's
+        # text export, so revised text shown only in another cell (typically
+        # the unchanged original column) passed as exact.
+        notice = _parse_payload(
+            _comparison(
+                [(["9.2.Carboplatin：(115/10/1)", "限用於卵巢癌。"],
+                  ["9.2.Carboplatin：", "限用於卵巢癌第一線。"])]
+            )
         )
-        clause = parsed.clauses[0]
+        clause = notice.clauses[0]
+        revised = clause.revised[1].document_order
+        self.assertEqual(cell_rendering_check(notice, clause, _drawn(notice)), "exact")
+        # Every revised paragraph stands in the document, but in the other
+        # column of the row.
+        swapped = _drawn(notice)
+        swapped["tables"][0][1].reverse()
+        self.assertEqual(cell_rendering_check(notice, clause, swapped), "mismatch")
         self.assertEqual(
-            exact_in_rendering(clause, "前格\t9.2.Carboplatin：\n限\t9.2.Carboplatin："),
-            "exact",
+            cell_rendering_check(
+                notice, clause, _drawn(notice, text={revised: "限用於肺癌。"})
+            ),
+            "mismatch",
         )
+        extra = _drawn(notice)
+        extra["tables"][0][1][0].append({"text": "", "label": "2.", "separator": "\t"})
+        self.assertEqual(cell_rendering_check(notice, clause, extra), "mismatch")
+        # Confusable negative: a blank unlabelled paragraph is not drawn text.
+        blank = _drawn(notice)
+        blank["tables"][0][1][0].append({"text": " ", "label": "", "separator": None})
+        self.assertEqual(cell_rendering_check(notice, clause, blank), "exact")
         self.assertEqual(
-            exact_in_rendering(clause, "x9.2.Carboplatin：\n限\n"), "mismatch"
+            cell_rendering_check(notice, clause, {"tables": []}), "mismatch"
         )
+        self.assertEqual(cell_rendering_check(notice, clause, None), "unavailable")
+
+
+def _probe_notice(parts: tuple[bytes, bytes, bytes]):
+    payload = fixture_odt(*parts)
+    sha = hashlib.sha256(payload).hexdigest()
+    attachment = NoticeAttachment(
+        declared_sequence=0,
+        file_name="attachment-000.odt",
+        media_type=ODT_MEDIA_TYPE,
+        sha256=sha,
+        byte_size=len(payload),
+        path=FIXTURES / "unused.odt",
+    )
+    document = read_odt_document(payload)
+    bundle = _bundle(attachment, raw_md_blocks=_receipts(attachment, document))
+    return payload, parse_comparison_document(bundle, attachment, document)
+
+
+def _probe_table(revised: str, original: str) -> str:
+    def cell(content: str) -> str:
+        return f"<table:table-cell>{content}</table:table-cell>"
+
+    return (
+        "<text:p>「藥品給付規定」修訂對照表</text:p>"
+        "<text:p>（自115年10月1日生效）</text:p>"
+        '<table:table table:name="CMP"><table:table-column '
+        'table:number-columns-repeated="2"/><table:table-row>'
+        + cell("<text:p>修訂後給付規定</text:p>")
+        + cell("<text:p>原給付規定</text:p>")
+        + "</table:table-row><table:table-row>"
+        + cell(revised)
+        + cell(original)
+        + "</table:table-row></table:table>"
+    )
+
+
+@unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
+class CellRenderingGateTest(unittest.TestCase):
+    """2026-09-28 finding R2-H1, end to end against LibreOffice itself.
+
+    Each probe is the verifier's: a revised cell whose reconstructed label or
+    separator is not what LibreOffice draws.  The whole-document text export
+    passed the first two as exact, because the same paragraph with that label
+    stands in the original column, and it cannot see a separator at all.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        from tests import test_odf_list_numbering as odf
+
+        numbered = odf.list_style("A1", odf.level(1, "1", None, "."))
+        other = odf.list_style("B2", odf.level(1, "1", None, "."))
+        continued = 'text:continue-numbering="true"'
+        word = odf.list_style(
+            "LFO1", *(odf.level(n, "1", None, ".") for n in range(1, 10))
+        ) + odf.list_style(
+            "LFO2",
+            *(
+                odf.level(n, "1", None, ".", start=3 if n == 1 else None)
+                for n in range(1, 10)
+            ),
+        )
+        newline = (
+            '<text:list-style style:name="NL"><text:list-level-style-number '
+            'text:level="1" style:num-format="1" style:num-suffix=".">'
+            "<style:list-level-properties text:list-level-position-and-space-"
+            'mode="label-alignment"><style:list-level-label-alignment '
+            'text:label-followed-by="nothing" loext:label-followed-by="newline"/>'
+            "</style:list-level-properties></text:list-level-style-number>"
+            "</text:list-style>"
+        )
+        heading = odf.para("9.139.Foo：")
+        cls.probes = {
+            # A level the style does not define: LibreOffice counts a phantom.
+            "phantom_level": odf.document(
+                odf.lst(
+                    "A1",
+                    odf.item(odf.lst(None, odf.item(odf.para("前言段落")))),
+                    attributes='xml:id="L1"',
+                )
+                + _probe_table(
+                    heading
+                    + odf.lst(
+                        "A1",
+                        odf.item(odf.para("單獨用於")),
+                        attributes='text:continue-list="L1"',
+                    ),
+                    heading + odf.lst("B2", odf.item(odf.para("單獨用於"))),
+                ),
+                automatic=numbered + other,
+                generator=odf.OTHER,
+            ),
+            # Word's merged form cell whose covered part holds a list item.
+            "covered_cell": odf.document(
+                '<table:table table:name="FORM"><table:table-column '
+                'table:number-columns-repeated="2"/><table:table-row>'
+                '<table:table-cell table:number-rows-spanned="2">'
+                + odf.lst("LFO1", odf.item(odf.para("檢附資料甲")), attributes=continued)
+                + "</table:table-cell><table:table-cell>" + odf.para("說明一")
+                + "</table:table-cell></table:table-row><table:table-row>"
+                "<table:covered-table-cell>"
+                + odf.lst("LFO1", odf.item(odf.para("")), attributes=continued)
+                + "</table:covered-table-cell><table:table-cell>"
+                + odf.para("說明二")
+                + "</table:table-cell></table:table-row></table:table>"
+                + _probe_table(
+                    heading
+                    + odf.lst("LFO1", odf.item(odf.para("單獨用於")), attributes=continued),
+                    heading
+                    + odf.lst("LFO2", odf.item(odf.para("單獨用於")), attributes=continued),
+                ),
+                automatic=word,
+                generator=odf.MSO,
+            ),
+            # LibreOffice's own extension: the label is followed by a line break.
+            "newline_separator": odf.document(
+                _probe_table(
+                    heading + odf.lst("NL", odf.item(odf.para("單獨用於"))),
+                    heading + odf.para("無"),
+                ),
+                automatic=newline,
+                generator=odf.OTHER,
+            ),
+            # Positive control: whitespace elements and a label, all as drawn.
+            "whitespace_positive": odf.document(
+                _probe_table(
+                    heading
+                    + odf.lst(
+                        "A1",
+                        odf.item(odf.para("限<text:s text:c=\"2\"/>用於<text:tab/>成人")),
+                        odf.item(odf.para("每日<text:line-break/>一次")),
+                    ),
+                    heading + odf.para("限用於成人"),
+                ),
+                automatic=numbered,
+                generator=odf.OTHER,
+            ),
+        }
+        cls.notices = {}
+        payloads = {}
+        for name, parts in cls.probes.items():
+            payloads[name], cls.notices[name] = _probe_notice(parts)
+        cls.renderings = render_table_cells(payloads)
+
+    def _check(self, name: str) -> tuple:
+        notice = self.notices[name]
+        clause = notice.clauses[0]
+        rendering = self.renderings[name]
+        self.assertIsNotNone(rendering)
+        check = cell_rendering_check(notice, clause, rendering)
+        return clause, check, projection_block_reason(clause, check)
+
+    def test_label_found_only_in_another_cell_is_a_mismatch(self) -> None:
+        clause, check, reason = self._check("phantom_level")
+        self.assertEqual(clause.revised[1].generated_label, "1.")
         self.assertEqual(
-            exact_in_rendering(clause, "    1. 9.2.Carboplatin：\n限\n"), "mismatch"
+            (check, reason), ("mismatch", "official_rendering_mismatch")
         )
-        self.assertEqual(exact_in_rendering(clause, None), "unavailable")
+
+    def test_list_in_a_covered_cell_is_not_counted(self) -> None:
+        # Finding R2-H2: LibreOffice discards the covered cell, so the revised
+        # item is its list's second.  Counting the covered item made it 3.,
+        # which the original column (started at 3) showed with the same text.
+        clause, check, reason = self._check("covered_cell")
+        self.assertEqual(clause.revised[1].printed_text, "2.\t單獨用於")
+        self.assertEqual((check, reason), ("exact", None))
+
+    def test_separator_the_suite_draws_differently_is_a_mismatch(self) -> None:
+        clause, check, reason = self._check("newline_separator")
+        self.assertEqual(clause.revised[1].printed_text, "1.單獨用於")
+        self.assertEqual(
+            (check, reason), ("mismatch", "official_rendering_mismatch")
+        )
+
+    def test_whitespace_elements_and_labels_render_as_parsed(self) -> None:
+        clause, check, reason = self._check("whitespace_positive")
+        self.assertEqual(
+            [item.printed_text for item in clause.revised[1:]],
+            ["1.\t限  用於\t成人", "2.\t每日\n一次"],
+        )
+        self.assertEqual((check, reason), ("exact", None))
+
+
+def _tampered(rendering: dict, notice, item, **change) -> dict:
+    """``rendering`` with ``item``'s paragraph in its own cell changed."""
+
+    copy = json.loads(json.dumps(rendering))
+    table = sorted(notice.document.top_tables).index(item.top_table_index)
+    cell = copy["tables"][table][item.top_row_index][item.top_cell_index]
+    matches = [
+        paragraph
+        for paragraph in cell
+        if paragraph.get("text") == item.text
+        and paragraph.get("label") == item.generated_label
+    ]
+    assert len(matches) == 1, "the paragraph is not unique in its cell"
+    matches[0].update(change)
+    return copy
 
 
 class NumberingFixtureTest(unittest.TestCase):
@@ -801,33 +1206,40 @@ class NumberingFixtureTest(unittest.TestCase):
         immunotherapy = by_code[("健保審字第1150672522號", "9.69")]
         self.assertTrue(any(item.nested for item in immunotherapy.revised))
 
-    @unittest.skipUnless(shutil.which("soffice"), "LibreOffice is unavailable")
+    @unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
     def test_independent_office_rendering(self) -> None:
+        parsed_notices = {}
         for notice in NUMBERING_MANIFEST["notices"]:
             payload, _, parsed = self._parse(notice)
-            rendering = libreoffice_text_export(payload)
+            parsed_notices[notice["reference_number"]] = (payload, notice, parsed)
+        renderings = render_table_cells(
+            {reference: payload for reference, (payload, _, _) in parsed_notices.items()}
+        )
+        for reference, (_, notice, parsed) in parsed_notices.items():
+            rendering = renderings[reference]
             self.assertIsNotNone(rendering)
             for clause, pinned in zip(
                 parsed.clauses, notice["expected"]["clauses"]
             ):
                 with self.subTest(clause=clause.clause_code):
                     self.assertEqual(
-                        exact_in_rendering(clause, rendering),
+                        cell_rendering_check(parsed, clause, rendering),
                         pinned["official_rendering_check"],
                     )
                 labelled = [item for item in clause.revised if item.generated_label]
                 if not labelled or pinned["official_rendering_check"] != "exact":
                     continue
-                # Confusable negative: the same text under a different label.
+                # Confusable negatives: LibreOffice's own cell with the same
+                # text under another label, or with another gap.
                 item = labelled[0]
-                wrong = item.export_prefix.replace(
-                    item.generated_label, "(" + item.generated_label + ")"
-                )
-                tampered = rendering.replace(
-                    item.export_prefix + item.text, wrong + item.text
-                )
-                self.assertNotEqual(tampered, rendering)
-                self.assertEqual(exact_in_rendering(clause, tampered), "mismatch")
+                for change in (
+                    {"label": "(" + item.generated_label + ")"},
+                    {"separator": " "},
+                ):
+                    tampered = _tampered(rendering, parsed, item, **change)
+                    self.assertEqual(
+                        cell_rendering_check(parsed, clause, tampered), "mismatch"
+                    )
 
 
 if __name__ == "__main__":

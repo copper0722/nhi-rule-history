@@ -1,5 +1,25 @@
 # Worklog
 
+## 2026-09-28 — Overlay loader 2.2.0 deployed; auto-activation still held
+
+- Merged the unattended-use hardening. It adds per-cell LibreOffice rendering
+  checks with labels and separators, and in-cell designation refusal.
+  Covered-cell lists now follow LibreOffice, and failures are isolated per
+  notice and per rendered document. Served resolution pins are part of the run
+  identity, activation locks the resolution table, rollback carries changed
+  resolutions back, and a moved predecessor is reported as its own
+  non-blocking hold.
+- Changed the subscriber sync's 2.6.1 entry tool to hold the global announced
+  lock from its read of the served run through any re-activation. The
+  independent verifier reproduced the race with the previous tool: an overlay
+  activation was silently reverted and the chain left inconsistent. With the
+  new tool the activation waited and committed. The 2.6.1 module itself is
+  unchanged, so its normalization and diff run identities stay the same.
+- Auto-activation of new composites stays held. The verifier constructed four
+  cases that pass the rendering gate while publishing wrong content: a
+  designation drawn by a list label, hidden text, bullets, and case
+  transforms. None occurs in the real data. They are the next hardening round.
+
 ## 2026-09-28 — Announced overlay release 2 in production; recurring lane registered
 
 - Composed read-only with the verified arguments. The run reproduced the
