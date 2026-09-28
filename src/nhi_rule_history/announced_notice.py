@@ -87,7 +87,10 @@ _ATTR_COLUMNS_REPEATED = f"{{{_TABLE}}}number-columns-repeated"
 _ATTR_ROWS_REPEATED = f"{{{_TABLE}}}number-rows-repeated"
 
 # Column headers observed in official comparison tables.  Anything else is
-# not a comparison table and is never guessed into one.
+# not a comparison table and is never guessed into one.  NHI announcements
+# sometimes keep the drafting label ``建議修訂後`` on the revised column; it is
+# announced text only inside an announcement (公告), never in a pre-announcement
+# (預告) or any other notice.
 _REVISED_HEADER_RE = re.compile(
     r"^(?P<prefix>建議)?修[訂正]後(?P<kind>給付規定|附表規定)$"
 )
@@ -105,6 +108,14 @@ _EFFECTIVE_WORD_RE = re.compile(r"生效")
 _CLAUSE_HEADING_RE = re.compile(
     r"^\s*(?P<code>[1-9][0-9]*(?:\.[0-9]+)+)\.(?![0-9])"
 )
+# Anything that may designate a clause or a general-rule item without the
+# strict heading form: a dotted number after optional marks (``9.140 Bar``,
+# ``9.57:Bar``, ``◎9.141.``, ``0.5.``) or an item ordinal (``五、``).  A
+# row holding one never continues the previous clause.
+_LOOSE_DESIGNATION_RE = re.compile(
+    r"^[^0-9A-Za-z\u3400-\u9fff]*"
+    r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
+)
 _APPENDIX_DESIGNATION_RE = re.compile(
     r"附表[一二三四五六七八九十百零〇]+(?:之[一二三四五六七八九十]+)?"
 )
@@ -117,13 +128,32 @@ _OMISSION_RE = re.compile(
     r"|(?:^|[\s:,、。)\]】~])略\s*[。.]?\s*$"
 )
 _UNSUPPORTED_CELL_TAGS = frozenset({_TAG_NOTE, _TAG_ANNOTATION})
+# Manifest rows of these roles, and raw.md, are source files: the parser
+# reads them or they identify the notice, so their size and SHA-256 are always
+# checked and a registration proof never undoes them.  Any other role is a
+# derived text layer (proofread.md and later layers) that the parser never
+# reads.
+SOURCE_FILE_ROLES = frozenset(
+    {
+        "declared_attachment",
+        "deterministic_extraction",
+        "detail_page",
+        "rss_observation",
+        "comparison_odt",
+        "comparison_pdf",
+    }
+)
 # Corpus bookkeeping may add or advance these ``extraction_status`` keys in
 # manifest.json after registration.  Each maps to the values the key may have
-# held at registration (``None``: absent); no other manifest byte may change.
+# held at registration (``None``: absent).
 _BOOKKEEPING_REVERSIONS: Mapping[str, tuple[str | None, ...]] = {
     "mineru": (None,),
     "proofread": ("not_started",),
 }
+# Top-level keys that the proofread lane adds after registration.  The parser
+# reads neither; the effective date comes from the attachment.
+_DERIVED_MANIFEST_KEYS = ("effective_date", "proofread_method")
+_MAX_DERIVED_ROWS = 8
 
 
 class AnnouncedNoticeError(PgLoadError):
@@ -215,73 +245,129 @@ class NoticeBundle:
     manifest_identity: Mapping[str, Any] | None = None
 
 
+def is_source_file_row(row: Mapping[str, Any]) -> bool:
+    """Whether a manifest file row is pinned source rather than derived."""
+
+    return (
+        row.get("role") in SOURCE_FILE_ROLES
+        or row.get("file_name") == "raw.md"
+    )
+
+
 def registered_manifest_identity(
     manifest_bytes: bytes, registered_sha256: str
 ) -> dict[str, Any]:
-    """Prove that manifest.json is the registered one, up to bookkeeping.
+    """Prove that manifest.json is the registered one, up to later lanes.
 
     Corpus registration records the SHA-256 of the canonical manifest bytes.
-    Later corpus bookkeeping may re-serialize manifest.json and add or
-    advance the ``extraction_status`` keys in ``_BOOKKEEPING_REVERSIONS``.
-    The registered bytes are rebuilt by reverting only those keys and must
-    hash to the recorded digest, which proves that every file row, hash and
-    identity field is exactly the registered one.  Anything else raises.
+    Later corpus lanes may re-serialize manifest.json, add or advance the
+    ``extraction_status`` keys in ``_BOOKKEEPING_REVERSIONS``, add the
+    top-level keys in ``_DERIVED_MANIFEST_KEYS`` and add rows for derived
+    text layers.  The registered manifest is rebuilt by undoing only such
+    changes and must hash to the recorded digest.  That proves every source
+    row (declared attachments, raw.md, the source pages), its size and hash,
+    and every identity field to be exactly the registered one; the source
+    bytes are then checked against those rows.  Anything else raises.
     """
 
     current = hashlib.sha256(manifest_bytes).hexdigest()
     if not re.fullmatch(r"[0-9a-f]{64}", registered_sha256 or ""):
         raise AnnouncedNoticeError("registration receipt has no manifest digest")
+    receipt = {
+        "registered_manifest_sha256": registered_sha256,
+        "current_manifest_sha256": current,
+    }
     if current == registered_sha256:
-        return {
-            "method": "identical_bytes",
-            "registered_manifest_sha256": registered_sha256,
-            "current_manifest_sha256": current,
-        }
+        return {"method": "identical_bytes", **receipt}
     try:
         manifest = json.loads(manifest_bytes)
     except ValueError as exc:
         raise AnnouncedNoticeError("corpus manifest is not JSON") from exc
-    status = manifest.get("extraction_status") if isinstance(manifest, dict) else None
-    if not isinstance(status, dict):
+    if not isinstance(manifest, dict):
         raise AnnouncedNoticeError(
             "corpus manifest differs from its registration receipt"
         )
-    keys = [key for key in _BOOKKEEPING_REVERSIONS if key in status]
-    choices = [
-        [("kept", status[key])]
-        + [
-            ("reverted", value)
-            for value in _BOOKKEEPING_REVERSIONS[key]
-            if value != status[key]
-        ]
-        for key in keys
+    status = manifest.get("extraction_status")
+    files = manifest.get("files")
+    files = files if isinstance(files, list) else []
+    derived = [
+        index
+        for index, row in enumerate(files)
+        if isinstance(row, dict) and not is_source_file_row(row)
     ]
-    for combination in itertools.product(*choices):
-        candidate_status = dict(status)
-        reverted: dict[str, Any] = {}
-        for key, (action, value) in zip(keys, combination):
-            if action != "reverted":
-                continue
-            reverted[key] = {"registered": value, "current": status[key]}
-            if value is None:
-                del candidate_status[key]
-            else:
-                candidate_status[key] = value
-        candidate = dict(manifest)
-        candidate["extraction_status"] = candidate_status
+    if len(derived) > _MAX_DERIVED_ROWS:
+        raise AnnouncedNoticeError(
+            "corpus manifest has too many derived rows to prove its "
+            "registration"
+        )
+    # One option list per undoable change: keep it (None) or undo it.
+    options: list[list[tuple[str, Any, Any] | None]] = []
+    if isinstance(status, dict):
+        for key, values in _BOOKKEEPING_REVERSIONS.items():
+            if key in status:
+                options.append(
+                    [None]
+                    + [
+                        ("extraction_status", key, value)
+                        for value in values
+                        if value != status[key]
+                    ]
+                )
+    for key in _DERIVED_MANIFEST_KEYS:
+        if key in manifest:
+            options.append([None, ("derived_key", key, None)])
+    for index in derived:
+        options.append([None, ("derived_row", index, None)])
+    for combination in itertools.product(*options):
+        undone = [change for change in combination if change is not None]
+        candidate = json.loads(json.dumps(manifest))
+        for kind, key, value in undone:
+            if kind == "extraction_status":
+                if value is None:
+                    del candidate["extraction_status"][key]
+                else:
+                    candidate["extraction_status"][key] = value
+            elif kind == "derived_key":
+                del candidate[key]
+        rows = {key for kind, key, _ in undone if kind == "derived_row"}
+        if rows:
+            candidate["files"] = [
+                row for index, row in enumerate(files) if index not in rows
+            ]
         rebuilt = hashlib.sha256(canonical_json_bytes(candidate)).hexdigest()
-        if rebuilt == registered_sha256:
-            return {
-                "method": "canonical_bytes_with_bookkeeping_reverted"
-                if reverted
-                else "canonical_bytes",
-                "registered_manifest_sha256": registered_sha256,
-                "current_manifest_sha256": current,
-                "reverted_extraction_status": reverted,
+        if rebuilt != registered_sha256:
+            continue
+        reverted = {
+            key: {"registered": value, "current": status[key]}
+            for kind, key, value in undone
+            if kind == "extraction_status"
+        }
+        derived = [
+            {"change": kind, "key": key}
+            if kind == "derived_key"
+            else {
+                "change": kind,
+                "file_name": files[key].get("file_name"),
+                "role": files[key].get("role"),
             }
+            for kind, key, _ in undone
+            if kind != "extraction_status"
+        ]
+        if derived:
+            method = "canonical_bytes_with_derived_layers_undone"
+        elif reverted:
+            method = "canonical_bytes_with_bookkeeping_reverted"
+        else:
+            method = "canonical_bytes"
+        return {
+            "method": method,
+            **receipt,
+            "reverted_extraction_status": reverted,
+            **({"undone_derived_layers": derived} if derived else {}),
+        }
     raise AnnouncedNoticeError(
         "corpus manifest differs from its registration receipt beyond "
-        "extraction-status bookkeeping"
+        "extraction-status bookkeeping and derived text layers"
     )
 
 
@@ -349,6 +435,10 @@ def read_notice_bundle(
         if not name or Path(name).name != name or name in names:
             raise AnnouncedNoticeError("corpus bundle file row is invalid")
         names.add(name)
+        if not is_source_file_row(row):
+            # A derived text layer is never read here, so later corpus lanes
+            # may rewrite it without changing the source identity.
+            continue
         path = bundle_dir / name
         if not path.is_file() or not inside(path):
             raise AnnouncedNoticeError(f"corpus bundle file is missing: {name}")
@@ -757,8 +847,15 @@ class AnnouncedClause:
 
     @property
     def blocked_reason(self) -> str | None:
-        """Why this clause's printed text cannot be reproduced exactly."""
+        """Why this clause's printed text cannot be reproduced exactly.
 
+        A table nested in the revised column would lose its rows and columns
+        as paragraph text, and the office rendering check cannot see it, so
+        such a clause is always held back.
+        """
+
+        if any(item.nested for item in self.revised):
+            return "nested_table"
         if self.numbering_blocked_reasons:
             return "unsupported_list_numbering"
         return None
@@ -994,6 +1091,46 @@ def parse_notice(bundle: NoticeBundle) -> ParsedNotice:
     return parse_comparison_document(bundle, attachment, document)
 
 
+def _continuation_refusal(
+    previous: Mapping[str, Any] | None,
+    row: tuple[int, int],
+    revised_segments: Sequence[tuple[str | None, Sequence[OdtParagraph]]],
+    original_segments: Sequence[tuple[str | None, Sequence[OdtParagraph]]],
+    *,
+    original_none: bool,
+) -> str | None:
+    """Why a row without a designation may not continue the previous clause.
+
+    Attributing a row to the clause above is an inference, so it needs
+    positive evidence: that clause ends on the row just above in the same
+    table, each column holds exactly one undesignated segment, the original
+    column does not mark a new clause (``無``), and no paragraph in either
+    column reads like a clause or general-rule designation.
+    """
+
+    if previous is None:
+        return "no clause precedes it"
+    table_index, row_index = row
+    if tuple(previous["rows"][-1]) != (table_index, row_index - 1):
+        return "the clause above does not end on the previous row"
+    if (
+        len(revised_segments) != 1
+        or len(original_segments) != 1
+        or original_segments[0][0] is not None
+    ):
+        return "a column is empty or holds a designation"
+    if original_none:
+        return "the original column marks a new clause"
+    for _, items in (*revised_segments, *original_segments):
+        for item in items:
+            if any(
+                _LOOSE_DESIGNATION_RE.match(grammar_text(text))
+                for text in (item.text, item.printed_text)
+            ):
+                return "a paragraph reads like a designation"
+    return None
+
+
 def parse_comparison_document(
     bundle: NoticeBundle,
     attachment: NoticeAttachment,
@@ -1007,13 +1144,30 @@ def parse_comparison_document(
     own_receipts = tuple(
         (item.block_id, item.block_text_sha256) for item in document.paragraphs
     )
-    if raw_receipts is not None and tuple(raw_receipts) != own_receipts:
+    if raw_receipts is None:
+        raise AnnouncedNoticeError(
+            "raw.md has no source-block receipts for the comparison attachment"
+        )
+    if tuple(raw_receipts) != own_receipts:
         raise AnnouncedNoticeError(
             "ODT blocks differ from the registered raw.md source blocks"
         )
     table_specs, ignored = _comparison_tables(document)
     if not table_specs:
         raise AnnouncedNoticeError("attachment has no official comparison table")
+    title = grammar_text(bundle.title).strip()
+    if "預告" in title:
+        raise AnnouncedNoticeError(
+            "the notice is a pre-announcement (預告), not announced text"
+        )
+    for table_index, spec in table_specs:
+        if spec["revised_header"].startswith("建議") and not title.startswith(
+            "公告"
+        ):
+            raise AnnouncedNoticeError(
+                f"comparison table {table_index} is a proposal (建議修訂後) "
+                "outside an announcement"
+            )
     if document.has_tracked_changes:
         raise AnnouncedNoticeError("ODT contains tracked changes")
 
@@ -1132,15 +1286,17 @@ def parse_comparison_document(
             revised_codes = [code for code, _ in revised_segments]
             original_codes = [code for code, _ in original_segments]
             if revised_codes[0] is None:
-                if (
-                    not clauses
-                    or original_codes[:1] != [None]
-                    or len(revised_segments) != 1
-                    or len(original_segments) != 1
-                ):
+                refusal = _continuation_refusal(
+                    clauses[-1] if clauses else None,
+                    (table.table_index, row_index),
+                    revised_segments,
+                    original_segments,
+                    original_none=original_none,
+                )
+                if refusal is not None:
                     raise AnnouncedNoticeError(
                         f"comparison row {table.table_index}/{row_index} "
-                        "does not start with a clause designation"
+                        f"does not start with a clause designation ({refusal})"
                     )
                 previous = clauses[-1]
                 previous["revised"].extend(revised_segments[0][1])

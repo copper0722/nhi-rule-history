@@ -73,7 +73,7 @@ from nhi_rule_history.pg.common import (
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/1.0.0"
+LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.0.0"
 GLOBAL_LOCK_KEY = "nhi-rule-history-announced-global"
 CIVIL_TIMEZONE = "Asia/Taipei"
 EMPTY_TEXT_SHA256 = sha256_text("")
@@ -106,6 +106,10 @@ STATUS_PASSED_WITH_HOLDS = "passed_with_holds"
 STATUS_NO_CHANGE = "no_change"
 STATUS_NO_CHANGE_WITH_HOLDS = "no_change_with_holds"
 _BLOCK_NOTES = {
+    "nested_table": (
+        "a table nested in the revised column would lose its rows and "
+        "columns as text"
+    ),
     "unsupported_list_numbering": (
         "ODF list numbering uses a feature whose printed labels are not "
         "reproduced"
@@ -445,6 +449,52 @@ def queued_bundles(
             (state,),
         ).fetchall()
     return [queued_bundle(row, corpus_root) for row in rows]
+
+
+def registered_bundles(dsn: str, *, corpus_root: Path) -> list[QueuedBundle]:
+    """Every bundle the update queue ever registered, whatever its state now.
+
+    The model lane moves work items on from ``corpus_registered``, so the
+    current state no longer finds them.  Each item's latest registration
+    receipt still names its bundle and pins its manifest digest.  A receipt
+    without a usable bundle path becomes a ``problem``, not an abort.
+    """
+
+    with _connect(dsn, read_only=True) as connection:
+        rows = connection.execute(
+            """
+            SELECT DISTINCT ON (transition.work_item_id)
+                   transition.work_item_id, item.first_title_raw,
+                   item.first_observed_at, transition.evidence_json
+            FROM nhi_rule_history_update_queue.work_item_transition transition
+            JOIN nhi_rule_history_update_queue.rss_work_item item
+              USING (work_item_id)
+            WHERE transition.to_state = 'corpus_registered'
+            ORDER BY transition.work_item_id, transition.transition_seq DESC
+            """
+        ).fetchall()
+    found: list[QueuedBundle] = []
+    rows = sorted(
+        rows,
+        key=lambda row: (row["first_observed_at"], str(row["work_item_id"])),
+    )
+    for row in rows:
+        try:
+            found.append(queued_bundle(row, corpus_root))
+        except AnnouncedReleaseError as exc:
+            evidence = row["evidence_json"] or {}
+            name = str(evidence.get("source_uid") or row["work_item_id"])
+            found.append(
+                QueuedBundle(
+                    work_item_id=str(row["work_item_id"]),
+                    source_uid=str(evidence.get("source_uid") or ""),
+                    bundle_dir=Path(corpus_root) / name,
+                    corpus_manifest_sha256="",
+                    first_title_raw=str(row["first_title_raw"]),
+                    problem=str(exc),
+                )
+            )
+    return found
 
 
 # ---------------------------------------------------------------------------

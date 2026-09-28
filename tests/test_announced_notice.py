@@ -108,8 +108,18 @@ def _bundle(
         manifest_sha256="0" * 64,
         attachments=(attachment,),
         announcement_items=announcement_items,
-        raw_md_blocks=raw_md_blocks or {},
+        raw_md_blocks={} if raw_md_blocks is None else raw_md_blocks,
     )
+
+
+def _receipts(attachment: NoticeAttachment, document) -> dict:
+    """raw.md source-block receipts as corpus registration writes them."""
+
+    return {
+        attachment.file_name: tuple(
+            (item.block_id, item.block_text_sha256) for item in document.paragraphs
+        )
+    }
 
 
 def _parse_payload(content_xml: bytes, **bundle_args: object):
@@ -124,6 +134,8 @@ def _parse_payload(content_xml: bytes, **bundle_args: object):
         path=FIXTURES / "unused.odt",
     )
     document = read_odt_document(payload)
+    if "raw_md_blocks" not in bundle_args:
+        bundle_args["raw_md_blocks"] = _receipts(attachment, document)
     return parse_comparison_document(_bundle(attachment, **bundle_args), attachment, document)
 
 
@@ -542,6 +554,105 @@ class ComparisonGrammarTest(unittest.TestCase):
         ):
             with self.subTest(check=check):
                 self.assertEqual(projection_block_reason(clause, check), reason)
+
+    def test_nested_table_is_never_projected(self) -> None:
+        # 2026-09-28 finding H2: a nested table was flattened into paragraph
+        # text and exempt from the rendering check.
+        def row(nested: bool) -> bytes:
+            table = (
+                "<table:table><table:table-row>" + _cell("體重") + _cell("劑量")
+                + "</table:table-row><table:table-row>" + _cell("&lt;50kg")
+                + _cell("1mg/kg") + "</table:table-row></table:table>"
+            )
+            body = (
+                "<text:p>（自115年10月1日生效）</text:p><table:table>"
+                "<table:table-row>" + _cell("修訂後給付規定") + _cell("原給付規定")
+                + "</table:table-row><table:table-row><table:table-cell>"
+                "<text:p>9.56.Foo(115/10/1)</text:p><text:p>劑量表如下：</text:p>"
+                + (table if nested else "")
+                + "<text:p>其餘不變。</text:p></table:table-cell>"
+                + _cell("9.56.Foo")
+                + "</table:table-row></table:table>"
+            )
+            return _document(body)
+
+        clause = _parse_payload(row(nested=True)).clauses[0]
+        self.assertTrue(any(item.nested for item in clause.revised))
+        self.assertEqual(clause.blocked_reason, "nested_table")
+        self.assertEqual(exact_in_rendering(clause, "x"), "not_applicable_nested_table")
+        for check in ("exact", "not_applicable_nested_table", "unavailable"):
+            self.assertEqual(projection_block_reason(clause, check), "nested_table")
+        # Confusable negative: the same clause without the nested table.
+        plain = _parse_payload(row(nested=False)).clauses[0]
+        self.assertIsNone(plain.blocked_reason)
+        self.assertIsNone(projection_block_reason(plain, "unavailable"))
+
+    def test_continuation_needs_positive_evidence(self) -> None:
+        # 2026-09-28 finding H1: any row without a strict heading continued
+        # the clause above.  Each probe must now fail closed.
+        first = (["9.139.Mogamulizumab：(115/10/1)", "單獨用於"], ["無"])
+        for revised, original in (
+            (["9.140 Bar(115/10/1)"], ["無"]),
+            (["9.57:Bar"], ["9.57:Bar"]),
+            (["◎9.141.Baz"], ["無"]),
+            (["0.5.藥品給付通則"], ["0.5.藥品給付通則"]),
+            (["五、藥品給付通則"], ["五、藥品給付通則"]),
+            (["表二", "2.18歲以上"], ["表二"]),
+            (["表二"], ["無"]),
+        ):
+            with self.subTest(row=revised[0]), self.assertRaisesRegex(
+                AnnouncedNoticeError, "does not start with a clause designation"
+            ):
+                _parse_payload(_comparison([first, (revised, original)]))
+        # A continuation must follow its clause directly, in the same table.
+        body = (
+            "<text:p>（自115年9月1日生效）</text:p>"
+            + "".join(
+                "<table:table><table:table-row>" + _cell("修訂後給付規定")
+                + _cell("原給付規定") + "</table:table-row><table:table-row>"
+                + _cell(*new) + _cell(*old) + "</table:table-row></table:table>"
+                for new, old in (
+                    (["2.6.1.給付規定表：(115/9/1)", "表一"], ["2.6.1.給付規定表：", "表一"]),
+                    (["表二"], ["表二"]),
+                )
+            )
+        )
+        with self.assertRaisesRegex(AnnouncedNoticeError, "previous row"):
+            _parse_payload(_document(body))
+
+    def test_missing_registration_receipts_fail_closed(self) -> None:
+        # 2026-09-28 finding L5: without raw.md receipts the block identity
+        # check was skipped.
+        payload = _comparison([(["2.1.1.X：(115/10/1)"], ["2.1.1.X："])])
+        self.assertEqual(len(_parse_payload(payload).clauses), 1)
+        for receipts in ({}, {"attachment-001.odt": (("block", "0" * 64),)}):
+            with self.subTest(receipts=receipts), self.assertRaisesRegex(
+                AnnouncedNoticeError, "no source-block receipts"
+            ):
+                _parse_payload(payload, raw_md_blocks=receipts)
+
+    def test_proposal_is_not_announced_text(self) -> None:
+        # 2026-09-28 finding L7.  NHI announcements may keep the drafting
+        # label 建議修訂後 on the revised column (1150671962 does, for 2.6.1);
+        # only a notice that is not an announcement makes it a proposal.
+        rows = [(["2.1.1.X：(115/10/1)"], ["2.1.1.X："])]
+        proposal = ("建議修訂後給付規定", "原給付規定")
+        for header in (proposal, ("修訂後給付規定", "原給付規定"),
+                       ("修正後給付規定", "原給付規定")):
+            with self.subTest(header=header[0]):
+                parsed = _parse_payload(
+                    _comparison(rows, header=header), title="公告修訂給付規定。"
+                )
+                self.assertEqual(parsed.tables[0].revised_header, header[0])
+        for title, header, message in (
+            ("修正給付規定。", proposal, "proposal"),
+            ("預告修正給付規定草案。", proposal, "pre-announcement"),
+            ("預告修正給付規定草案。", ("修訂後給付規定", "原給付規定"), "pre-announcement"),
+        ):
+            with self.subTest(title=title, header=header[0]), self.assertRaisesRegex(
+                AnnouncedNoticeError, message
+            ):
+                _parse_payload(_comparison(rows, header=header), title=title)
 
     def test_rendering_check_accepts_cell_boundaries_only(self) -> None:
         parsed = _parse_payload(

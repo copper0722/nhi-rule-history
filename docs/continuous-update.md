@@ -593,19 +593,33 @@ labelled as the revised column of the table and never as a complete clause.
 
 ### Parsing contract (`nhi_rule_history.announced_notice`)
 
-- Input is a registered corpus bundle. Every manifest file is re-hashed. Blocks
-  come from the project ODT parser and must equal the `raw.md` source-block
-  receipts written at registration. Queue mode also requires the manifest to be
-  the registered one: the queue receipt pins the SHA-256 of the canonical
-  manifest bytes, and corpus bookkeeping may later re-serialize `manifest.json`
-  and add or advance `extraction_status.mineru` or `.proofread`. The registered
-  bytes are rebuilt by reverting only those keys and must hash to the receipt,
-  which proves every file row and identity field unchanged; any other
-  difference is refused. The notice is then identified by the registered
-  digest, and the evidence records which keys were reverted.
+- Input is a registered corpus bundle. Source rows (declared attachments,
+  `raw.md`, the detail page and the feed observation) are re-hashed against
+  the manifest. Derived text layers (`proofread.md` and later layers) are
+  never read, so later corpus lanes may rewrite them. Blocks come from the
+  project ODT parser and must equal the `raw.md` source-block receipts written
+  at registration; a bundle without receipts for the comparison attachment
+  fails closed.
+- Queue mode also requires the manifest to be the registered one. Either its
+  bytes hash to the digest in the registration receipt, or the registered
+  manifest is rebuilt by undoing only later corpus changes and hashes to that
+  digest. The changes that may be undone are: `extraction_status` bookkeeping
+  (`mineru` absent, `proofread` `not_started`), the proofread lane's
+  top-level keys (`effective_date`, `proofread_method`) and derived-layer
+  rows. Source rows and identity fields are never undone, so the proof pins
+  the attachments and `raw.md` to their registered bytes. A derived row that
+  already existed at registration and changed later cannot be rebuilt, and
+  that bundle fails closed. The notice is then identified by the registered
+  digest, and the evidence records what was undone. `--queue-state` selects
+  work items by their
+  current state; `--queue-registered` selects every item ever registered,
+  because the model lane moves items on from `corpus_registered`.
 - A comparison table has exactly two columns: a revised header
-  (`修訂後給付規定`, `建議修訂後給付規定`, `修訂後附表規定`) and the
-  matching original header (`原給付規定`, `原附表規定`). Any other header,
+  (`修訂後給付規定`, `修正後給付規定`, `修訂後附表規定`) and the matching
+  original header (`原給付規定`, `原附表規定`). NHI announcements may keep the
+  drafting label `建議修訂後…` on the revised column (1150671962 does), so
+  that label is accepted only inside an announcement (a title beginning with
+  `公告`). A pre-announcement (`預告`) is never announced text. Any other header,
   merged cell, repeated cell, note or annotation in a comparison cell, or tracked
   change fails closed. Other tables, such as application forms, are ignored.
 - The effective date is the stand-alone statement `（自115年10月1日生效）` in
@@ -614,8 +628,13 @@ labelled as the revised column of the table and never as a complete clause.
   never used.
 - A clause starts at a paragraph whose dotted code ends in its own full stop
   (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
-  same codes, or the original column must read `無` (a new clause). A row
-  without a code continues the previous clause.
+  same codes, or the original column must read `無` (a new clause).
+- A row without a code continues the previous clause only on positive
+  evidence. The clause above must end on the previous row of the same table,
+  and each column must hold one undesignated segment. The original column
+  must not read `無`, and no paragraph may read like a designation: a dotted
+  number such as `9.140 `, `9.57:`, `◎9.141.` or `0.5.`, or an item ordinal
+  such as `五、`. Otherwise the notice fails closed.
 - An appendix table (`附表…`) becomes a pending effect because no dotted
   clause code exists for it. Listing and price changes named by the notice are
   also recorded as pending effects.
@@ -654,6 +673,9 @@ labelled as the revised column of the table and never as a complete clause.
   notes, and numbered paragraphs without a list id and style are not
   reproduced. A clause with such a paragraph is a pending effect with reason
   `unsupported_list_numbering`.
+- A table nested in a revised column is never flattened into text. The clause
+  is a pending effect with reason `nested_table`, whatever the rendering
+  check says.
 - A notice whose every clause is held back still enters the run. Its event
   lists each held-back clause in `unresolved_scope` with its `blocked_reason`,
   and each clause is a `pending_projection` effect. Served data therefore
@@ -665,9 +687,9 @@ labelled as the revised column of the table and never as a complete clause.
   prefix (four spaces per level, the reconstructed label or two spaces, one
   space), so a wrong label cannot match. A mismatch blocks the clause
   (`official_rendering_mismatch`). A clause with list paragraphs is projected
-  only when the check is `exact`; otherwise, including a nested table in the
-  revised column, it stays pending (`official_rendering_unverified`). `load`
-  requires this rendering unless the operator waives it explicitly.
+  only when the check is `exact`; otherwise it stays pending
+  (`official_rendering_unverified`). `load` requires this rendering unless the
+  operator waives it explicitly.
 
 ### Release composition (`nhi_rule_history.announced_release`)
 
@@ -694,6 +716,10 @@ that keeps everything the active run serves:
   the effective-date span and the rendering-check result.
 - `release_run.source_artifact_sha256` holds the fingerprint of the ordered
   (reference number, artifact hash) set.
+- Runs are sealed by loader `…/announced-overlay-loader/2.0.0`. The seal
+  covers exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader
+  1.0.0 runs also sealed the carried document tables. Activation accepts only
+  runs sealed by the current loader version.
 
 `load` seals the run, the resolutions and the re-bound projections in one
 transaction and changes nothing served. `activate` requires the expected
@@ -819,7 +845,8 @@ needs reviewed migrations:
 3. Only one clause-document diff run can be active, so the exact diff for a
    second clause needs multi-run activation.
 4. Appendix designations (`附表十八之五`) have no clause key.
-5. Generated list labels are rebuilt by `odf_list_numbering` and verified
-   against LibreOffice. The rendering check does not model LibreOffice's text
-   export of a nested table, so a revised column that contains one stays
-   pending.
+5. Generated list labels are rebuilt by `odf_list_numbering` for the ODF
+   numbering rules it implements and verified against LibreOffice; other list
+   features stay held back. A revised column that contains a nested table
+   stays pending (`nested_table`): neither the patch text nor the rendering
+   check models a table grid.

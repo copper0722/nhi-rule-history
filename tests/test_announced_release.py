@@ -25,6 +25,7 @@ from unittest import mock
 import psycopg
 
 from nhi_rule_history import announced_dyslipidemia as dyslipidemia
+from nhi_rule_history.contracts import canonical_json_bytes
 from nhi_rule_history.announced_notice import (
     CORPUS_BUNDLE_SCHEMA,
     ODT_MEDIA_TYPE,
@@ -327,6 +328,15 @@ def _synthetic_notice(
         raw_md_blocks={},
     )
     document = read_odt_document(payload, artifact_sha256=sha)
+    bundle = replace(
+        bundle,
+        raw_md_blocks={
+            attachment.file_name: tuple(
+                (item.block_id, item.block_text_sha256)
+                for item in document.paragraphs
+            )
+        },
+    )
     return parse_comparison_document(bundle, attachment, document)
 
 
@@ -1150,7 +1160,24 @@ def _write_bundle(
     bundle = root / relative
     bundle.mkdir(parents=True)
     payload = fixture_odt(content_xml)
-    raw = f"# 公告修訂藥品給付規定。\n\n## 公告事項\n\n一、{reference}。\n"
+    # The source-block receipts that corpus registration writes into raw.md.
+    receipts = "".join(
+        "<!-- source-block "
+        + json.dumps(
+            {
+                "attachment_file_name": "attachment-000.odt",
+                "block_id": item.block_id,
+                "raw_text_sha256": item.block_text_sha256,
+            },
+            ensure_ascii=False,
+        )
+        + " -->\n"
+        for item in read_odt_document(payload).paragraphs
+    )
+    raw = (
+        f"# 公告修訂藥品給付規定。\n\n## 公告事項\n\n一、{reference}。\n\n"
+        + receipts
+    )
     files = {"raw.md": raw.encode("utf-8"), "attachment-000.odt": payload}
     for name, data in files.items():
         (bundle / name).write_bytes(data)
@@ -1162,6 +1189,10 @@ def _write_bundle(
         "publish_date": "2026-09-15",
         "source_uid": f"gov_{reference}",
         "declared_attachment_count": 1,
+        "extraction_status": {
+            "deterministic_blocks": "done",
+            "proofread": "not_started",
+        },
         "files": [
             {
                 "file_name": "raw.md",
@@ -1179,9 +1210,7 @@ def _write_bundle(
             },
         ],
     }
-    (bundle / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
-    )
+    (bundle / "manifest.json").write_bytes(canonical_json_bytes(manifest))
     if corrupt:
         (bundle / "attachment-000.odt").write_bytes(payload + b"\0")
     return relative
@@ -1263,6 +1292,155 @@ class CliReceiptLiveTest(unittest.TestCase):
             command, "--dsn", self.pg.dsn, "--corpus-root", str(self.root),
             "--allow-without-rendering-check", *extra,
         ]
+
+    def _seed_registered(self, items: list[tuple[str, dict]]) -> None:
+        """Work items that reached corpus_registered and then moved on."""
+
+        with _connect(self.pg.dsn, read_only=False) as connection:
+            connection.execute("SET session_replication_role = replica")
+            for index, (source_uid, receipt) in enumerate(items):
+                work_item_id = str(uuid.uuid4())
+                guid = f"fixture-guid-{source_uid}"
+                connection.execute(
+                    """
+                    INSERT INTO nhi_rule_history_update_queue.rss_work_item (
+                      work_item_id, rss_identity_fingerprint,
+                      item_identity_kind, item_identity_value,
+                      source_feed_url, guid_raw, first_feed_observation_id,
+                      first_item_index, first_item_fingerprint,
+                      first_title_raw, first_link_raw, first_observed_at
+                    ) VALUES (%s,%s,'rss_guid',%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        work_item_id, sha256_text(guid), guid,
+                        "https://www.nhi.gov.tw/fixture-rss", guid,
+                        str(uuid.uuid4()), index, sha256_text(guid + ":item"),
+                        f"公告 {source_uid}",
+                        "https://www.nhi.gov.tw/ch/cp-00000-00000-3258-1.html",
+                        datetime(2026, 9, 1, index, tzinfo=timezone.utc),
+                    ),
+                )
+                steps = (
+                    ("acquired", "corpus_registered", receipt),
+                    ("corpus_registered", "proposal_running", {"step": 2}),
+                    ("proposal_running", "staged_needs_review", {"step": 3}),
+                )
+                for seq, (source, target, evidence) in enumerate(steps, 1):
+                    evidence = {"source_uid": source_uid, **evidence}
+                    connection.execute(
+                        """
+                        INSERT INTO nhi_rule_history_update_queue
+                          .work_item_transition (
+                          work_item_id, transition_seq, transition_id,
+                          from_state, to_state, actor_kind, evidence_sha256,
+                          evidence_json, source_job_id, recorded_at
+                        ) VALUES (%s,%s,%s,%s,%s,'fixture',%s,%s::jsonb,%s,%s)
+                        """,
+                        (
+                            work_item_id, seq, str(uuid.uuid4()), source,
+                            target, sha256_text(json_text(evidence)),
+                            json_text(evidence), str(uuid.uuid4()),
+                            datetime(2026, 9, 2, index, seq, tzinfo=timezone.utc),
+                        ),
+                    )
+            connection.commit()
+
+    def test_queue_registered_proves_each_bundle(self) -> None:
+        def receipt(relative: str) -> dict:
+            data = (self.root / relative / "manifest.json").read_bytes()
+            return {
+                "corpus_bundle_relative_path": relative,
+                "corpus_manifest_sha256": hashlib.sha256(data).hexdigest(),
+            }
+
+        rows = [
+            (["2.1.4.2.Rivaroxaban：(115/10/1)", "限用於心房纖維顫動。"],
+             ["2.1.4.2.Rivaroxaban：", "限用於靜脈血栓。"])
+        ]
+        resaved = _write_bundle(
+            self.root, "健保審字第1159000015號", notice_fixture._comparison(rows)
+        )
+        tampered = _write_bundle(
+            self.root, "健保審字第1159000016號", notice_fixture._comparison(rows)
+        )
+        items = [
+            (f"gov_{relative.split('/')[-1][4:]}", receipt(relative))
+            for relative in (
+                self.good, self.held, self.later, self.broken, resaved, tampered
+            )
+        ]
+        items.append(("gov_健保審字第1159000017號", {"note": "no bundle path"}))
+        # After registration the proofread lane re-saves one manifest with
+        # bookkeeping, metadata and a derived row; another manifest changes
+        # a source row, as a rewritten attachment would.
+        for relative, change in ((resaved, "derived"), (tampered, "source")):
+            path = self.root / relative / "manifest.json"
+            manifest = json.loads(path.read_bytes())
+            if change == "derived":
+                text = "校對稿".encode("utf-8")
+                (self.root / relative / "proofread.md").write_bytes(text)
+                manifest["extraction_status"].update(
+                    proofread="done", mineru="done"
+                )
+                manifest["proofread_method"] = "odt structural walker"
+                manifest["files"].append(
+                    {
+                        "file_name": "proofread.md",
+                        "role": "proofread",
+                        "sha256": hashlib.sha256(text).hexdigest(),
+                        "byte_size": len(text),
+                    }
+                )
+            else:
+                raw = (self.root / relative / "raw.md").read_bytes() + b"\n"
+                (self.root / relative / "raw.md").write_bytes(raw)
+                row = next(r for r in manifest["files"] if r["file_name"] == "raw.md")
+                row.update(sha256=hashlib.sha256(raw).hexdigest(), byte_size=len(raw))
+            path.write_bytes(canonical_json_bytes(manifest))
+        self._seed_registered(items)
+
+        code, receipt_json, _ = self._cli(
+            "compose", "--dsn", self.pg.dsn, "--corpus-root", str(self.root),
+            "--allow-without-rendering-check", "--queue-registered",
+            "--effective-on", "2026-10-01", "--skip-failed",
+        )
+        self.assertEqual((code, receipt_json["status"]), (3, "passed_with_holds"))
+        self.assertEqual(
+            sorted(
+                (item["bundle"], item["stage"], item["error"].split(":")[0])
+                for item in receipt_json["failures"]
+            ),
+            sorted(
+                [
+                    ("gov_健保審字第1159000014號", "parse", "corpus bundle size mismatch"),
+                    (
+                        "gov_健保審字第1159000016號",
+                        "queue",
+                        "corpus manifest differs from its registration receipt "
+                        "beyond extraction-status bookkeeping and derived text "
+                        "layers",
+                    ),
+                    (
+                        "gov_健保審字第1159000017號",
+                        "queue",
+                        "queue receipt has no safe bundle path",
+                    ),
+                ]
+            ),
+        )
+        self.assertEqual(
+            [item["reference_number"] for item in receipt_json["dropped_notices"]],
+            ["健保審字第1159000013號"],
+        )
+        self.assertEqual(
+            {item["reference_number"]: item["projected_clauses"]
+             for item in receipt_json["notices"]},
+            {
+                "健保審字第1159000011號": ["9.2"],
+                "健保審字第1159000012號": [],
+                "健保審字第1159000015號": ["2.1.4.2"],
+            },
+        )
 
     def test_receipts_report_failures_drops_and_held_back_clauses(self) -> None:
         selection = [

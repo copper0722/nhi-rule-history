@@ -1,10 +1,12 @@
 """Queued corpus bundles must be the registered ones, proven by hash.
 
 Corpus registration pins the SHA-256 of the canonical manifest bytes.  Later
-corpus bookkeeping may re-serialize manifest.json and add or advance
-``extraction_status`` progress keys.  Such a bundle is admitted only when
-reverting exactly those keys rebuilds the registered digest; any other
-manifest change, even one consistent with the files on disk, is refused.
+corpus lanes may re-serialize manifest.json, add or advance
+``extraction_status`` progress keys, and add derived text layers
+(``proofread.md``) with the proofread lane's metadata keys.  Such a bundle is
+admitted only when undoing exactly those changes rebuilds the registered
+digest; any other manifest change, even one consistent with the files on
+disk, is refused, and source bytes stay pinned.
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from nhi_rule_history.announced_release import (
     queued_bundle,
 )
 from nhi_rule_history.contracts import canonical_json_bytes
+from nhi_rule_history.announced_notice import read_odt_document
 from tests.test_announced_notice import _comparison, _odt
 
 
@@ -46,7 +49,23 @@ def _registered_bundle(root: Path) -> tuple[Path, dict]:
     odt = _odt(
         _comparison([(["9.4.Fixture：(115/9/1)", "限用於"], ["9.4.Fixture："])])
     )
-    raw_md = "# 公告\n\n## 公告事項\n\n修訂給付規定。\n".encode("utf-8")
+    # The source-block receipts that corpus registration writes into raw.md.
+    receipts = "".join(
+        "<!-- source-block "
+        + json.dumps(
+            {
+                "attachment_file_name": "attachment-000.odt",
+                "block_id": item.block_id,
+                "raw_text_sha256": item.block_text_sha256,
+            },
+            ensure_ascii=False,
+        )
+        + " -->\n"
+        for item in read_odt_document(odt).paragraphs
+    )
+    raw_md = ("# 公告\n\n## 公告事項\n\n修訂給付規定。\n\n" + receipts).encode(
+        "utf-8"
+    )
     (bundle / "attachment-000.odt").write_bytes(odt)
     (bundle / "raw.md").write_bytes(raw_md)
     manifest = {
@@ -202,6 +221,124 @@ class RegisteredManifestIdentityTest(unittest.TestCase):
             with self.subTest(digest=digest):
                 with self.assertRaisesRegex(AnnouncedNoticeError, "no manifest digest"):
                     registered_manifest_identity(b"{}", digest)
+
+
+def _proofread_lane(bundle: Path, manifest: dict) -> dict:
+    """Rewrite the bundle the way the proofread lane left 1150671962."""
+
+    rewritten = json.loads(json.dumps(manifest))
+    rewritten["extraction_status"].update(mineru="done", proofread="done")
+    rewritten["effective_date"] = "2026-09-01"
+    rewritten["proofread_method"] = "odt structural walker"
+    text = "校對稿".encode("utf-8")
+    (bundle / "proofread.md").write_bytes(text)
+    rewritten["files"].append(
+        {
+            "byte_size": len(text),
+            "file_name": "proofread.md",
+            "role": "proofread",
+            "sha256": _sha(text),
+        }
+    )
+    (bundle / "manifest.json").write_text(
+        json.dumps(rewritten, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return rewritten
+
+
+class DerivedLayerIdentityTest(unittest.TestCase):
+    """Derived text layers never break the source identity (1150671962)."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.bundle, self.manifest = _registered_bundle(self.root)
+        self.registered = _sha((self.bundle / "manifest.json").read_bytes())
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_derived_layers_are_undone_and_recorded(self) -> None:
+        _proofread_lane(self.bundle, self.manifest)
+        identity = registered_manifest_identity(
+            (self.bundle / "manifest.json").read_bytes(), self.registered
+        )
+        self.assertEqual(
+            identity["method"], "canonical_bytes_with_derived_layers_undone"
+        )
+        self.assertEqual(
+            identity["reverted_extraction_status"],
+            {
+                "mineru": {"registered": None, "current": "done"},
+                "proofread": {"registered": "not_started", "current": "done"},
+            },
+        )
+        self.assertEqual(
+            identity["undone_derived_layers"],
+            [
+                {"change": "derived_key", "key": "effective_date"},
+                {"change": "derived_key", "key": "proofread_method"},
+                {
+                    "change": "derived_row",
+                    "file_name": "proofread.md",
+                    "role": "proofread",
+                },
+            ],
+        )
+        # proofread.md is rewritten again without a manifest update (the
+        # 1150671962 size mismatch).  The parser never reads it.
+        (self.bundle / "proofread.md").write_bytes("第二版校對稿".encode("utf-8"))
+        bundle = read_notice_bundle(
+            self.bundle, registered_manifest_sha256=self.registered
+        )
+        self.assertEqual(bundle.manifest_sha256, self.registered)
+        self.assertEqual(
+            [clause.clause_code for clause in parse_notice(bundle).clauses],
+            ["9.4"],
+        )
+        self.assertEqual(read_notice_bundle(self.bundle).reference_number, REFERENCE)
+
+    def test_source_bytes_stay_pinned(self) -> None:
+        _proofread_lane(self.bundle, self.manifest)
+        for name in ("raw.md", "attachment-000.odt"):
+            original = (self.bundle / name).read_bytes()
+            (self.bundle / name).write_bytes(original + b" ")
+            with self.subTest(file=name), self.assertRaisesRegex(
+                AnnouncedNoticeError, f"mismatch: {name}"
+            ):
+                read_notice_bundle(
+                    self.bundle, registered_manifest_sha256=self.registered
+                )
+            (self.bundle / name).write_bytes(original)
+
+    def test_source_rows_are_never_undone(self) -> None:
+        # Confusable negative: the proofread lane's changes plus a source row
+        # change together with its file.
+        changed = _proofread_lane(self.bundle, self.manifest)
+        raw = (self.bundle / "raw.md").read_bytes() + b"\n"
+        (self.bundle / "raw.md").write_bytes(raw)
+        row = next(item for item in changed["files"] if item["file_name"] == "raw.md")
+        row.update(byte_size=len(raw), sha256=_sha(raw))
+        (self.bundle / "manifest.json").write_bytes(canonical_json_bytes(changed))
+        with self.assertRaisesRegex(AnnouncedNoticeError, "beyond extraction-status"):
+            registered_manifest_identity(
+                (self.bundle / "manifest.json").read_bytes(), self.registered
+            )
+
+    def test_a_derived_row_present_at_registration_may_not_change(self) -> None:
+        # Its registered hash is unknown once it changes, so the bundle fails
+        # closed rather than being guessed.
+        registered = _proofread_lane(self.bundle, self.manifest)
+        (self.bundle / "manifest.json").write_bytes(canonical_json_bytes(registered))
+        digest = _sha((self.bundle / "manifest.json").read_bytes())
+        changed = json.loads(json.dumps(registered))
+        changed["files"][-1]["sha256"] = "1" * 64
+        (self.bundle / "manifest.json").write_bytes(canonical_json_bytes(changed))
+        with self.assertRaisesRegex(AnnouncedNoticeError, "registration receipt"):
+            registered_manifest_identity(
+                (self.bundle / "manifest.json").read_bytes(), digest
+            )
 
 
 class QueuedBundleTest(unittest.TestCase):

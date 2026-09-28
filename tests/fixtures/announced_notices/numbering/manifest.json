@@ -289,7 +289,7 @@
             "omitted_text_present": true,
             "original_is_none": false,
             "original_text_sha256": "a64127eb673298835d44f4f698520353ccc33b71276a058ae123be8b0a67a89c",
-            "projection_block_reason": "official_rendering_unverified",
+            "projection_block_reason": "nested_table",
             "revised_block_count": 128,
             "revised_text_sha256": "49292c16ecf305920be4ff6f073e9ec8aca32588ce6ecf111a424a2f24ad87e1",
             "rows": [

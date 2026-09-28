@@ -9,9 +9,10 @@ activate  make a loaded run the served run (precondition-checked)
 rollback  re-activate the chain recorded when a run was activated
 
 Notices come from ``--notice`` bundle paths (relative to ``--corpus-root``)
-or from the update queue with ``--queue-state``; a queued bundle's manifest
-must be proven identical to its registration receipt.  No command calls a
-model.
+or from the update queue: ``--queue-state`` selects work items by their state
+now, ``--queue-registered`` every item that was ever registered.  A queued
+bundle's manifest must be proven to be the registered one.  No command calls
+a model.
 
 compose, load and activate print one JSON receipt on stdout; errors go to
 stderr.  Every receipt lists ``failures`` (notices that failed to parse, bind,
@@ -50,6 +51,7 @@ from nhi_rule_history.announced_release import (
     load_overlay_release,
     queued_bundles,
     receipt_status,
+    registered_bundles,
     rollback_overlay_release,
     served_clauses,
 )
@@ -71,16 +73,24 @@ def _bundles(
         (args.corpus_root / item, None) for item in args.notice or ()
     ]
     failures: list[dict[str, Any]] = []
+    selected = []
     if args.queue_state:
-        for item in queued_bundles(
-            args.dsn, corpus_root=args.corpus_root, state=args.queue_state
-        ):
-            if item.problem:
-                failures.append(
-                    {"bundle": item.bundle_dir.name, "error": item.problem}
-                )
-            else:
-                paths.append((item.bundle_dir, item.corpus_manifest_sha256))
+        selected.extend(
+            queued_bundles(
+                args.dsn, corpus_root=args.corpus_root, state=args.queue_state
+            )
+        )
+    if args.queue_registered:
+        selected.extend(
+            registered_bundles(args.dsn, corpus_root=args.corpus_root)
+        )
+    for item in selected:
+        if item.problem:
+            failures.append(
+                {"bundle": item.bundle_dir.name, "error": item.problem}
+            )
+        else:
+            paths.append((item.bundle_dir, item.corpus_manifest_sha256))
     unique: dict[Path, str | None] = {}
     for path, registered in paths:
         if unique.get(path) is None:
@@ -448,6 +458,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         command.add_argument("--notice", action="append")
         command.add_argument("--queue-state")
+        command.add_argument(
+            "--queue-registered",
+            action="store_true",
+            help=(
+                "every bundle the update queue ever registered, whatever the "
+                "work item's state now"
+            ),
+        )
         command.add_argument("--effective-on", action="append")
         command.add_argument("--json", action="store_true")
         if name == "verify":
