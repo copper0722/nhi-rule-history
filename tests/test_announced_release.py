@@ -1136,12 +1136,6 @@ class SupersedeLiveTest(unittest.TestCase):
         self.assertEqual(sorted(_public_patches(dsn)), ["9.2", "9.9"])
 
 
-_LISTED_CELL_STYLES = (
-    '<text:list-style style:name="L1">'
-    '<text:list-level-style-number text:level="1" style:num-suffix="." '
-    'style:num-format="1"/></text:list-style>'
-)
-
 
 def _write_bundle(
     root: Path, reference: str, content_xml: bytes, *, corrupt: bool = False
@@ -1207,22 +1201,20 @@ class CliReceiptLiveTest(unittest.TestCase):
                   ["9.2.Carboplatin：", "限用於卵巢癌第一線。"])]
             ),
         )
-        cls.labelled = _write_bundle(
+        cls.held = _write_bundle(
             cls.root,
             "健保審字第1159000012號",
-            notice_fixture._document(
-                "<text:p>（自115年10月1日生效）</text:p><table:table>"
-                "<table:table-row>" + notice_fixture._cell("修訂後給付規定")
-                + notice_fixture._cell("原給付規定")
-                + "</table:table-row><table:table-row><table:table-cell>"
-                "<text:p>9.139.Mogamulizumab：(115/10/1)</text:p>"
-                '<text:list text:style-name="L1"><text:list-item>'
-                "<text:p>單獨用於</text:p></text:list-item></text:list>"
-                "</table:table-cell>" + notice_fixture._cell("無")
-                + "</table:table-row></table:table>",
-                automatic_styles=_LISTED_CELL_STYLES,
+            notice_fixture._comparison(
+                [(["9.139.Mogamulizumab：(115/10/1)", "單獨用於。"], ["無"])]
             ),
         )
+        # The office rendering of this one attachment lacks its revised text,
+        # so its only clause is held back and the notice serves no patch.
+        cls.renderings = {
+            (cls.root / cls.held / "attachment-000.odt").read_bytes(): (
+                "與對照表無關的另一份文字\n"
+            )
+        }
         cls.later = _write_bundle(
             cls.root,
             "健保審字第1159000013號",
@@ -1248,10 +1240,13 @@ class CliReceiptLiveTest(unittest.TestCase):
 
     def _cli(self, *argv: str) -> tuple[int, dict | None, str]:
         stdout, stderr = io.StringIO(), io.StringIO()
-        # The office rendering check has its own tests; here it is waived so
-        # the receipts do not depend on the local office suite.
+        # The office suite has its own tests; here the rendering is fixed so
+        # the receipts do not depend on it.  Other attachments are unrendered,
+        # which --allow-without-rendering-check admits.
         with mock.patch.object(
-            cli, "libreoffice_text_export", return_value=None
+            cli,
+            "libreoffice_text_export",
+            side_effect=lambda payload, **_: self.renderings.get(payload),
         ), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(
             stderr
         ):
@@ -1267,7 +1262,7 @@ class CliReceiptLiveTest(unittest.TestCase):
 
     def test_receipts_report_failures_drops_and_held_back_clauses(self) -> None:
         selection = [
-            "--notice", self.good, "--notice", self.labelled,
+            "--notice", self.good, "--notice", self.held,
             "--notice", self.later, "--notice", self.broken,
             "--effective-on", "2026-10-01",
         ]
@@ -1303,7 +1298,8 @@ class CliReceiptLiveTest(unittest.TestCase):
         self.assertEqual(
             [(item["reference_number"], item["clause_code"], item["reason"],
               item["origin"]) for item in receipt["blocked_clauses"]],
-            [("健保審字第1159000012號", "9.139", "generated_list_label", "new")],
+            [("健保審字第1159000012號", "9.139", "official_rendering_mismatch",
+              "new")],
         )
         self.assertEqual(
             {item["reference_number"]: item["projected_clauses"]
@@ -1347,7 +1343,7 @@ class CliReceiptLiveTest(unittest.TestCase):
         self.assertEqual(
             [(item["clause_code"], item["reason"])
              for item in activated["blocked_clauses"]],
-            [("9.139", "generated_list_label")],
+            [("9.139", "official_rendering_mismatch")],
         )
         self.assertEqual(sorted(_public_patches(self.pg.dsn)), ["9.2", "9.9"])
         with _connect(self.pg.dsn, read_only=True) as connection:
@@ -1365,7 +1361,7 @@ class CliReceiptLiveTest(unittest.TestCase):
         # Everything selected is now carried: nothing to compose, holds stay.
         code, receipt, _ = self._cli(
             *self._batch(
-                "compose", "--notice", self.good, "--notice", self.labelled
+                "compose", "--notice", self.good, "--notice", self.held
             )
         )
         self.assertEqual((code, receipt["status"]), (3, "no_change_with_holds"))
