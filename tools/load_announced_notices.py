@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,7 @@ from nhi_rule_history.announced_release import (
 )
 
 
+CORPUS_ROOT_ENV = "NHI_RULE_HISTORY_CORPUS_ROOT"
 DYSLIPIDEMIA_BUNDLE = "2026/gov_健保審字第1150671962號"
 DYSLIPIDEMIA_ODT = "attachment-003.odt"
 
@@ -250,7 +252,16 @@ def main() -> int:
     for name in ("verify", "compose", "load"):
         command = sub.add_parser(name)
         command.add_argument("--dsn", required=True)
-        command.add_argument("--corpus-root", type=Path, required=True)
+        command.add_argument(
+            "--corpus-root",
+            type=Path,
+            default=(
+                Path(os.environ[CORPUS_ROOT_ENV])
+                if os.environ.get(CORPUS_ROOT_ENV)
+                else None
+            ),
+            help=f"tw-gov NHI bundle root; defaults to ${CORPUS_ROOT_ENV}",
+        )
         command.add_argument("--notice", action="append")
         command.add_argument("--queue-state")
         command.add_argument("--effective-on", action="append")
@@ -273,6 +284,8 @@ def main() -> int:
     rollback.add_argument("--dsn", required=True)
     rollback.add_argument("--from-run-id", required=True)
     args = parser.parse_args()
+    if args.command in {"verify", "compose", "load"} and args.corpus_root is None:
+        parser.error(f"--corpus-root or ${CORPUS_ROOT_ENV} is required")
 
     if args.command == "verify":
         report = _verification(args)
