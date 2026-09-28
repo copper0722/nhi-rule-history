@@ -1,5 +1,16 @@
 # Worklog
 
+## 2026-09-29 — Resolution guard v27 applied
+
+- Applied v27 at 2026-09-29 03:14:02 +08:00, after loader 2.3.0 was live and
+  the first recurring overlay fire and subscriber sync on it had passed with
+  no writes. The read-back function bodies equal the migration's, the
+  function attributes and triggers are unchanged, and no row changed.
+- Production controls, each in a rolled-back transaction: a resolution for a
+  run that was served before and is not served now is refused; one for the
+  served run is accepted. The rollback file's bodies equal the pre-apply
+  production bodies, so the rollback is exact.
+
 ## 2026-09-29 — Overlay loader 2.3.0 deployed; v27 pending; auto-activation still held
 
 - Merged round 5. The cell rendering check (rule 1.1.0) now also reports,

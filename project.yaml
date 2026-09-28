@@ -196,7 +196,7 @@ continuous_update:
     model_calls: none
     projection: patch_only_revised_column_overlay
     canonical_history_write: false
-    ddl_added: false
+    ddl_added: function_bodies_only_resolution_guard_v27
     blocked_projection_reasons:
       - unsupported_list_numbering
       - official_rendering_mismatch
@@ -212,7 +212,11 @@ continuous_update:
       rollback: pg/migrations/2026-09-28_nhi_rule_history_announced_resolution_guard_v27.rollback.sql
       scope: function_bodies_only_guard_patch_resolution_insert_and_set_patch_resolution
       independent_verification: passed
-      state: pending_apply_after_loader_2_3_0_live
+      state: applied
+      applied_at: "2026-09-29T03:14:02+08:00"
+      applied_after_loader: nhi-rule-history/announced-overlay-loader/2.3.0
+      readback: prosrc_equals_migration_bodies_attributes_and_triggers_unchanged_rows_unchanged
+      production_controls: refused_write_to_previously_served_run_and_accepted_write_to_served_run_both_rolled_back
     subscriber_sync_tick_lock: global_announced_lock_held_from_served_read_to_activation
     queue_manifest_identity: registered_canonical_bytes_with_bookkeeping_and_derived_layers_reverted_sources_pinned
     list_numbering_receipt: docs/audits/2026-09-28-announced-list-numbering-verification.json
