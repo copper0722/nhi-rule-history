@@ -666,9 +666,15 @@ transaction and changes nothing served. `activate` requires the expected
 sealed fingerprint and the expected served base. It also refuses a run that
 does not carry every notice and every clause patch (patch id, text hash,
 effective date) of the served run, so a stale run composed from an older base
-cannot unserve anything. It appends release, normalization, diff and
-reader-profile control events in one transaction and records the previous
-chain. `rollback` re-activates that recorded chain.
+cannot unserve anything. The subscriber sync runs the 2.6.1 loader with
+activation on every tick, and that loader re-activates its own run whenever
+the served run has no 2.6.1 composed version for the 2.6.1 notice artifact.
+So while the served run carries that version, `activate` refuses a run
+without it: the same version, composed text, reviewed composite patch and
+notice artifact. Before committing, it also runs the loader's own
+active-source query on the activated state. It appends release,
+normalization, diff and reader-profile control events in one transaction and
+records the previous chain. `rollback` re-activates that recorded chain.
 
 ### Failure isolation and receipts
 

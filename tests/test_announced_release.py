@@ -22,6 +22,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from unittest import mock
 
+import psycopg
+
 from nhi_rule_history import announced_dyslipidemia as dyslipidemia
 from nhi_rule_history.announced_notice import (
     CORPUS_BUNDLE_SCHEMA,
@@ -33,6 +35,7 @@ from nhi_rule_history.announced_notice import (
     sha256_text,
 )
 from nhi_rule_history.announced_release import (
+    LOADER_VERSION,
     AnnouncedReleaseError,
     SEALED_COUNT_TABLES,
     activate_overlay_release,
@@ -70,6 +73,7 @@ SERVED = {
     "9.9": "9.9.Fixture：(100/1/1)",
     "9.2": "9.2.Carboplatin：(100/1/1)\n限用於卵巢癌第一線。",
     "9.5": "9.5.Paclitaxel成分劑：(100/1/1)\n限用於轉移性乳癌。",
+    "2.6.1": "2.6.1.降血脂藥物：(100/1/1)",
 }
 TODAY = date(2026, 9, 28)
 
@@ -1386,6 +1390,297 @@ class CliReceiptLiveTest(unittest.TestCase):
         )
         self.assertEqual((code, receipt), (1, None))
         self.assertIn("error: the active announced run differs", error)
+
+
+DYSLIPIDEMIA_TEXT = "2.6.1.降血脂藥物：(115/9/1)"
+SERVED_DYSLIPIDEMIA_RUN = "aaaaaaaa-aaaa-5aaa-8aaa-aaaaaaaaaaaa"
+CARRYING_RUN = "bbbbbbbb-bbbb-5bbb-8bbb-bbbbbbbbbbbb"
+VERSIONLESS_RUN = "cccccccc-cccc-5ccc-8ccc-cccccccccccc"
+ORPHAN_RUN = "dddddddd-dddd-5ddd-8ddd-dddddddddddd"
+
+
+def _dyslipidemia_rows(
+    run_id: str, *, version: bool = True, orphan_patch: bool = False
+) -> dict[str, list[dict]]:
+    """Rows of a 2.6.1-shaped run as the 2.6.1 loader's query sees them.
+
+    ``orphan_patch`` points the patch at an effect the run lacks, which only
+    rows inserted past the foreign keys can do.
+    """
+
+    notice_id = "77777777-7777-5777-8777-777777777777"
+    effect_id = "88888888-8888-5888-8888-888888888888"
+    patch_id = "99999999-9999-5999-8999-999999999999"
+    rows = {
+        "notice_event": [
+            _hashed(
+                {
+                    "run_id": run_id,
+                    "notice_id": notice_id,
+                    "reference_number": dyslipidemia.NOTICE_REFERENCE,
+                    "title": dyslipidemia.NOTICE_TITLE,
+                    "official_url": dyslipidemia.NOTICE_URL,
+                    "published_on": dyslipidemia.PUBLICATION_DATE,
+                    "effective_on": dyslipidemia.EFFECTIVE_DATE,
+                    "civil_timezone": "Asia/Taipei",
+                    "source_artifact_sha256": (
+                        dyslipidemia.EXPECTED_ARTIFACT_SHA256
+                    ),
+                    "source_artifact_filename": (
+                        dyslipidemia.SOURCE_ARTIFACT_FILENAME
+                    ),
+                    "source_exact": True,
+                    "event_scope_complete": True,
+                    "unresolved_scope": [],
+                }
+            )
+        ],
+        "notice_effect": [
+            _hashed(
+                {
+                    "run_id": run_id,
+                    "effect_id": effect_id,
+                    "notice_id": notice_id,
+                    "effect_type": "clause_amendment",
+                    "clause_code": "2.6.1",
+                    "projection_status": "projected_source_exact_patch",
+                    "scope_note": "fixture 2.6.1 patch",
+                }
+            )
+        ],
+        "clause_patch": [
+            _hashed(
+                {
+                    "run_id": run_id,
+                    "patch_id": patch_id,
+                    "effect_id": str(uuid.uuid4()) if orphan_patch else effect_id,
+                    "clause_code": "2.6.1",
+                    "predecessor_text_sha256": sha256_text(SERVED["2.6.1"]),
+                    "effective_from": dyslipidemia.EFFECTIVE_DATE,
+                    "effective_until": None,
+                    "resolution_state": "verified_scheduled",
+                    "source_exact_patch_text": DYSLIPIDEMIA_TEXT,
+                    "source_exact_patch_sha256": sha256_text(DYSLIPIDEMIA_TEXT),
+                    "omitted_text_present": False,
+                    "composition_status": "reviewed_composite",
+                    "comparison_sha256": "1" * 64,
+                    "component_manifest_sha256": "2" * 64,
+                    "partial_event_projection": False,
+                    "unprocessed_event_scope": [],
+                    "public_note": "fixture 2.6.1 patch",
+                }
+            )
+        ],
+        "composed_clause_version": [],
+    }
+    if version:
+        rows["composed_clause_version"].append(
+            _hashed(
+                {
+                    "run_id": run_id,
+                    "version_id": "12121212-1212-5212-8212-121212121212",
+                    "patch_id": patch_id,
+                    "clause_code": "2.6.1",
+                    "effective_from": dyslipidemia.EFFECTIVE_DATE,
+                    "predecessor_publication_run_id": PUBLICATION_RUN,
+                    "predecessor_text_sha256": sha256_text(SERVED["2.6.1"]),
+                    "predecessor_source_artifact_sha256": "d" * 64,
+                    "composition_rule_version": "fixture",
+                    "composition_manifest_sha256": "3" * 64,
+                    "composed_text": DYSLIPIDEMIA_TEXT,
+                    "composed_text_sha256": sha256_text(DYSLIPIDEMIA_TEXT),
+                    "amendment_block_count": 1,
+                    "inherited_block_count": 1,
+                    "review_status": "deterministic_owner_directed",
+                    "public_note": "fixture 2.6.1 composite",
+                }
+            )
+        )
+    return rows
+
+
+def _insert_run(
+    dsn: str,
+    run_id: str,
+    rows: dict[str, list[dict]],
+    *,
+    loader_version: str,
+    fingerprint: str,
+    activate: bool = False,
+) -> None:
+    """Insert a sealed run directly, past triggers, as the base seed does."""
+
+    now = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    counts = {name: len(rows.get(name, ())) for name in SEALED_COUNT_TABLES}
+    with _connect(dsn, read_only=False) as connection:
+        connection.execute("SET session_replication_role = replica")
+        connection.execute(
+            """
+            INSERT INTO nhi_rule_history_announced.release_run (
+              run_id, state, loader_version, evaluator_version,
+              source_artifact_sha256, input_fingerprint, expected_counts,
+              verified_counts, table_fingerprints, output_fingerprint,
+              sealed_fingerprint, started_at, sealed_at
+            ) VALUES (%s,'sealed',%s,'fixture',%s,%s,%s::jsonb,%s::jsonb,
+                      '{}'::jsonb,%s,%s,%s,%s)
+            """,
+            (
+                run_id, loader_version, "f" * 64, fingerprint,
+                json_text(counts), json_text(counts), fingerprint,
+                fingerprint, now, now,
+            ),
+        )
+        for table, table_rows in rows.items():
+            for row in table_rows:
+                columns = list(row)
+                connection.execute(
+                    f"INSERT INTO nhi_rule_history_announced.{table} "
+                    f"({','.join(columns)}) VALUES ("
+                    + ",".join(
+                        "%s::jsonb" if isinstance(row[c], (list, dict)) else "%s"
+                        for c in columns
+                    )
+                    + ")",
+                    [
+                        json_text(row[c])
+                        if isinstance(row[c], (list, dict))
+                        else row[c]
+                        for c in columns
+                    ],
+                )
+        for patch in rows["clause_patch"]:
+            connection.execute(
+                """
+                INSERT INTO nhi_rule_history_announced.patch_resolution_event (
+                  run_id, patch_id, resolution_state, reason, evidence
+                ) VALUES (%s,%s,'verified_scheduled','fixture','{}')
+                """,
+                (run_id, patch["patch_id"]),
+            )
+        if activate:
+            connection.execute(
+                """
+                INSERT INTO nhi_rule_history_announced.release_control_event (
+                  run_id, action, reason, evidence
+                ) VALUES (%s,'activate','fixture 2.6.1 loader','{}')
+                """,
+                (run_id,),
+            )
+        connection.commit()
+
+
+class DyslipidemiaGuardLiveTest(unittest.TestCase):
+    """2026-09-28 finding F-L5: never unserve the 2.6.1 composed version.
+
+    The subscriber sync runs the 2.6.1 loader with activation on every tick;
+    if the served run has no 2.6.1 composed version for the 2.6.1 notice
+    artifact, the loader re-activates its own run and unserves every overlay
+    patch.  The loader's own query is the instrument here.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.pg = recovery_fixture.DisposablePostgres()
+        _apply_migrations(cls.pg)
+        _seed(cls.pg.dsn)
+        # A real composite, built while the fixture base was served, carries
+        # no 2.6.1 at all.
+        galafold = [
+            notice
+            for notice in _fixture_notices()
+            if "1150057033" in notice.bundle.reference_number
+        ]
+        cls.without = prepare_overlay_release(
+            cls.pg.dsn, galafold, base_run_id=BASE_RUN, today=TODAY
+        )
+        load_overlay_release(cls.pg.dsn, cls.without)
+        # Then a 2.6.1 run is served, as in production.
+        _insert_run(
+            cls.pg.dsn,
+            SERVED_DYSLIPIDEMIA_RUN,
+            _dyslipidemia_rows(SERVED_DYSLIPIDEMIA_RUN),
+            loader_version="fixture 2.6.1 loader",
+            fingerprint="a" * 64,
+            activate=True,
+        )
+        for run_id, rows, fingerprint in (
+            (CARRYING_RUN, _dyslipidemia_rows(CARRYING_RUN), "b" * 64),
+            (
+                VERSIONLESS_RUN,
+                _dyslipidemia_rows(VERSIONLESS_RUN, version=False),
+                "c" * 64,
+            ),
+            (
+                ORPHAN_RUN,
+                _dyslipidemia_rows(ORPHAN_RUN, orphan_patch=True),
+                "d" * 64,
+            ),
+        ):
+            _insert_run(
+                cls.pg.dsn,
+                run_id,
+                rows,
+                loader_version=LOADER_VERSION,
+                fingerprint=fingerprint,
+            )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.pg.close()
+
+    def _served_source(self) -> dict | None:
+        with psycopg.connect(self.pg.dsn) as connection:
+            return dyslipidemia._active_announced_source(connection)
+
+    def _activate(self, run_id: str, fingerprint: str) -> dict:
+        return activate_overlay_release(
+            self.pg.dsn,
+            run_id=run_id,
+            expected_sealed_fingerprint=fingerprint,
+            expected_base_run_id=SERVED_DYSLIPIDEMIA_RUN,
+        )
+
+    def test_activation_keeps_the_served_2_6_1_version(self) -> None:
+        served = self._served_source()
+        # Positive control: the loader's query sees the served 2.6.1 run.
+        self.assertEqual(served["run_id"], SERVED_DYSLIPIDEMIA_RUN)
+
+        # A composite built without 2.6.1 is refused.
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError, "served 2.6.1 composed version"
+        ):
+            self._activate(
+                self.without.run_id, self.without.sealed_fingerprint
+            )
+        # So is one that keeps the 2.6.1 notice and patch but not the
+        # composed version.
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError, "served 2.6.1 composed version"
+        ):
+            self._activate(VERSIONLESS_RUN, "c" * 64)
+        # Rows the base-table check accepts but the loader's view query
+        # cannot see are caught after activation, which then rolls back.
+        with mock.patch.object(
+            dyslipidemia, "verify_announced_material", return_value={}
+        ), self.assertRaisesRegex(
+            AnnouncedReleaseError, "would not find its composed version"
+        ):
+            self._activate(ORPHAN_RUN, "d" * 64)
+        self.assertEqual(self._served_source(), served)
+
+        # A composite carrying the served version activates, and the loader
+        # finds it in the new run.  The fixture has no 2.6.1 normalization,
+        # so the 2.6.1 receipt check (tested with the real material in the
+        # operator rehearsal) is replaced here; it must still be called.
+        with mock.patch.object(
+            dyslipidemia, "verify_announced_material", return_value={}
+        ) as verify:
+            activated = self._activate(CARRYING_RUN, "b" * 64)
+        verify.assert_called_once_with(CARRYING_RUN, conninfo=self.pg.dsn)
+        self.assertEqual(activated["served"]["release_run_id"], CARRYING_RUN)
+        self.assertEqual(
+            self._served_source(), {**served, "run_id": CARRYING_RUN}
+        )
 
 
 if __name__ == "__main__":

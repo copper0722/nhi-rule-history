@@ -2256,6 +2256,17 @@ def activate_overlay_release(
             raise AnnouncedReleaseError(
                 "the served run is not the expected base run"
             )
+        # The subscriber sync runs the 2.6.1 loader with activation on every
+        # tick.  If the served run has no 2.6.1 composed version for the
+        # 2.6.1 notice artifact, that loader re-activates its own run and
+        # unserves every overlay patch; read what it sees now, with its query.
+        served_dyslipidemia = dyslipidemia._active_announced_source(
+            _CursorAdapter(connection)
+        )
+        if served_dyslipidemia is not None:
+            _require_dyslipidemia_carried(
+                connection, run_id=run_id, served=served_dyslipidemia
+            )
         _require_served_rows_carried(
             connection, served_run_id=expected_base_run_id, run_id=run_id
         )
@@ -2311,6 +2322,17 @@ def activate_overlay_release(
             (run_id, reason, json_text(evidence)),
         )
         _activate_chain(connection, new_chain, reason=reason, evidence=evidence)
+        if served_dyslipidemia is not None:
+            # The same query on the activated state, before commit: the
+            # loader must find the carried version in the new run.
+            now_served = dyslipidemia._active_announced_source(
+                _CursorAdapter(connection)
+            )
+            if now_served != {**served_dyslipidemia, "run_id": run_id}:
+                raise AnnouncedReleaseError(
+                    "after activation the 2.6.1 loader would not find its "
+                    "composed version in the served run"
+                )
         connection.commit()
     return verify_served_chain(dsn, expected=new_chain) | {"previous": previous}
 
@@ -2357,6 +2379,49 @@ def rollback_overlay_release(
         _activate_chain(connection, previous, reason=reason, evidence=evidence)
         connection.commit()
     return verify_served_chain(dsn, expected=previous)
+
+
+def _require_dyslipidemia_carried(
+    connection: Any, *, run_id: str, served: Mapping[str, str]
+) -> None:
+    """Refuse a run that lacks the served 2.6.1 composed version.
+
+    Mirrors the 2.6.1 loader's active-source query on the unserved run: the
+    same version and composed text for clause 2.6.1, a reviewed composite
+    patch, and a notice with the 2.6.1 notice artifact.
+    """
+
+    carried = connection.execute(
+        f"""
+        SELECT 1
+        FROM {SCHEMA}.composed_clause_version version
+        JOIN {SCHEMA}.clause_patch patch
+          ON patch.run_id = version.run_id
+         AND patch.patch_id = version.patch_id
+        WHERE version.run_id = %s
+          AND version.clause_code = %s
+          AND version.version_id = %s
+          AND version.composed_text_sha256 = %s
+          AND patch.composition_status = 'reviewed_composite'
+          AND EXISTS (
+            SELECT 1 FROM {SCHEMA}.notice_event notice
+            WHERE notice.run_id = version.run_id
+              AND notice.source_artifact_sha256 = %s
+          )
+        """,
+        (
+            run_id,
+            DYSLIPIDEMIA_CLAUSE,
+            served["version_id"],
+            served["composed_text_sha256"],
+            dyslipidemia.EXPECTED_ARTIFACT_SHA256,
+        ),
+    ).fetchone()
+    if carried is None:
+        raise AnnouncedReleaseError(
+            "the run does not carry the served 2.6.1 composed version; the "
+            "subscriber sync would re-activate its own 2.6.1 run"
+        )
 
 
 def _require_served_rows_carried(
