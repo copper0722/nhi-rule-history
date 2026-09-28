@@ -187,7 +187,7 @@ continuous_update:
       subscriber_site_per_clause_check: passed_21_of_21
     recurring_lane:
       cadence_minutes: 15
-      auto_activation: held_until_round6_effective_statement_presentation_gate_O1_and_designation_B5_fixed_and_verified
+      auto_activation: held_until_round7_sign_prefix_F1_date_surfaces_O1_and_lock_timeouts_fixed_and_verified
       post_effective_resolution: effective_unconsolidated_only_never_reconciled
       effective_date_alarm_cadence_hours: 6
     parser: src/nhi_rule_history/announced_notice.py
@@ -203,9 +203,10 @@ continuous_update:
       - official_rendering_unverified
       - nested_table
     list_label_rule: nhi-rule-history/odf-list-label/1.1.0
-    parser_version: nhi-rule-history/announced-notice-parser/1.4.0
-    loader_version: nhi-rule-history/announced-overlay-loader/2.3.0
-    cell_rendering_rule: nhi-rule-history/office-cell-rendering/1.1.0
+    parser_version: nhi-rule-history/announced-notice-parser/1.5.0
+    loader_version: nhi-rule-history/announced-overlay-loader/2.4.0
+    cell_rendering_rule: nhi-rule-history/office-cell-rendering/1.2.0
+    body_text_rendering_check: statements_titles_and_comparison_headers_confirmed_against_libreoffice
     rollback_resolution_policy: carry_back_by_recency_refuse_when_both_changed
     resolution_guard_migration:
       forward: pg/migrations/2026-09-28_nhi_rule_history_announced_resolution_guard_v27.sql

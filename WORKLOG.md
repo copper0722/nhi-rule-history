@@ -1,5 +1,25 @@
 # Worklog
 
+## 2026-09-29 — Overlay loader 2.4.0 deployed; auto-activation still held
+
+- Merged round 6. The effective-date statements, comparison-table titles and
+  comparison headers are checked at parse for hidden, conditional or
+  annotated content (including style-based hiding), and compared with the
+  body text LibreOffice draws (rendering rule 1.2.0). Inside comparison
+  cells a dotted number after a break is a designation whatever follows,
+  except whole unit words, percent signs, brackets and listed versions
+  (parser 1.5.0). A refused rollback now says how to unblock it.
+- The independent verifier found it safe to deploy with the hold kept on. A
+  read-only compose on the served run carried 14 notices and reproduced 20
+  clauses, as in round 5, and the real patch hashes are unchanged across
+  versions.
+- Auto-activation stays held. The verifier found three gaps, none in the real
+  data: a sign before a heading suppresses the designation (a regression from
+  parser 1.4.0); the effective date a reader sees can still differ from the
+  one read, through inline text boxes, white digits, tab leaders, page
+  headers or footers, or two dates before one table; and a lane-side loader
+  timeout skips confirmation, rollback and the review request.
+
 ## 2026-09-29 — Resolution guard v27 applied
 
 - Applied v27 at 2026-09-29 03:14:02 +08:00, after loader 2.3.0 was live and
