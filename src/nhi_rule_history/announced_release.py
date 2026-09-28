@@ -435,6 +435,8 @@ def queued_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
         problem = "corpus manifest is missing"
     except AnnouncedNoticeError as exc:
         problem = str(exc)
+    except Exception as exc:  # a malformed manifest fails this bundle only
+        problem = describe_error(exc)
     return QueuedBundle(
         work_item_id=str(row["work_item_id"]),
         source_uid=str(evidence.get("source_uid") or ""),
@@ -444,6 +446,32 @@ def queued_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
         problem=problem,
         manifest_identity=identity,
     )
+
+
+def describe_error(exc: Exception) -> str:
+    """A failure message; unexpected exception types are named."""
+
+    if isinstance(exc, AnnouncedNoticeError):
+        return str(exc)
+    return f"{type(exc).__name__}: {exc}"
+
+
+def _receipt_bundle(row: Mapping[str, Any], corpus_root: Path) -> QueuedBundle:
+    """:func:`queued_bundle`, or a bundle that carries why it cannot be read."""
+
+    try:
+        return queued_bundle(row, corpus_root)
+    except Exception as exc:  # one receipt never aborts the batch
+        evidence = row["evidence_json"] if isinstance(row["evidence_json"], Mapping) else {}
+        name = str(evidence.get("source_uid") or row["work_item_id"])
+        return QueuedBundle(
+            work_item_id=str(row["work_item_id"]),
+            source_uid=str(evidence.get("source_uid") or ""),
+            bundle_dir=Path(corpus_root) / name,
+            corpus_manifest_sha256="",
+            first_title_raw=str(row["first_title_raw"]),
+            problem=describe_error(exc),
+        )
 
 
 def queued_bundles(
@@ -462,7 +490,7 @@ def queued_bundles(
             """,
             (state,),
         ).fetchall()
-    return [queued_bundle(row, corpus_root) for row in rows]
+    return [_receipt_bundle(row, corpus_root) for row in rows]
 
 
 def registered_bundles(dsn: str, *, corpus_root: Path) -> list[QueuedBundle]:
@@ -487,28 +515,11 @@ def registered_bundles(dsn: str, *, corpus_root: Path) -> list[QueuedBundle]:
             ORDER BY transition.work_item_id, transition.transition_seq DESC
             """
         ).fetchall()
-    found: list[QueuedBundle] = []
     rows = sorted(
         rows,
         key=lambda row: (row["first_observed_at"], str(row["work_item_id"])),
     )
-    for row in rows:
-        try:
-            found.append(queued_bundle(row, corpus_root))
-        except AnnouncedReleaseError as exc:
-            evidence = row["evidence_json"] or {}
-            name = str(evidence.get("source_uid") or row["work_item_id"])
-            found.append(
-                QueuedBundle(
-                    work_item_id=str(row["work_item_id"]),
-                    source_uid=str(evidence.get("source_uid") or ""),
-                    bundle_dir=Path(corpus_root) / name,
-                    corpus_manifest_sha256="",
-                    first_title_raw=str(row["first_title_raw"]),
-                    problem=str(exc),
-                )
-            )
-    return found
+    return [_receipt_bundle(row, corpus_root) for row in rows]
 
 
 # ---------------------------------------------------------------------------

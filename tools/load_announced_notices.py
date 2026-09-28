@@ -44,7 +44,6 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from nhi_rule_history.announced_notice import (
-    AnnouncedNoticeError,
     ParsedNotice,
     parse_notice,
     read_notice_bundle,
@@ -60,6 +59,7 @@ from nhi_rule_history.announced_release import (
     _connect,
     activate_overlay_release,
     compose_overlay_release,
+    describe_error,
     load_overlay_release,
     queued_bundles,
     receipt_status,
@@ -126,9 +126,9 @@ def _parse(
             notice = parse_notice(
                 read_notice_bundle(path, registered_manifest_sha256=registered)
             )
-        except AnnouncedNoticeError as exc:
+        except Exception as exc:  # one bundle never aborts the batch
             failures.append(
-                {"bundle": path.name, "stage": "parse", "error": str(exc)}
+                {"bundle": path.name, "stage": "parse", "error": describe_error(exc)}
             )
             continue
         if args.effective_on and notice.effective_on not in args.effective_on:

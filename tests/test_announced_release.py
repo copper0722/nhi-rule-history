@@ -42,6 +42,7 @@ from nhi_rule_history.announced_release import (
     LOADER_VERSION,
     PLACEHOLDER_RUN_ID,
     REPRODUCED_PATCH_KEYS,
+    _receipt_bundle,
     AnnouncedReleaseError,
     CarriedNotice,
     SEALED_COUNT_TABLES,
@@ -2074,6 +2075,72 @@ class CliReceiptLiveTest(unittest.TestCase):
                 "健保審字第1159000012號": [],
                 "健保審字第1159000015號": ["2.1.4.2"],
             },
+        )
+
+    def test_malformed_bundles_fail_alone(self) -> None:
+        # 2026-09-28 finding LOW: exceptions other than the parser's own
+        # (a manifest that is not JSON, an ODT whose XML is cut, a manifest
+        # row of the wrong type) aborted the whole batch.
+        rows = [(["9.9.Fixture：(115/10/1)"], ["9.9.Fixture："])]
+
+        def bundle(reference: str) -> tuple[str, Path]:
+            relative = _write_bundle(
+                self.root, reference, notice_fixture._comparison(rows)
+            )
+            return relative, self.root / relative
+
+        not_json, path = bundle("健保審字第1159000018號")
+        (path / "manifest.json").write_bytes(b"{not json")
+        cut_xml, path = bundle("健保審字第1159000019號")
+        payload = fixture_odt(b"<office:document-content")
+        (path / "attachment-000.odt").write_bytes(payload)
+        manifest = json.loads((path / "manifest.json").read_bytes())
+        for row in manifest["files"]:
+            if row["file_name"] == "attachment-000.odt":
+                row.update(sha256=hashlib.sha256(payload).hexdigest(),
+                           byte_size=len(payload))
+        (path / "manifest.json").write_bytes(canonical_json_bytes(manifest))
+        wrong_type, path = bundle("健保審字第1159000020號")
+        registered = hashlib.sha256((path / "manifest.json").read_bytes()).hexdigest()
+        manifest = json.loads((path / "manifest.json").read_bytes())
+        manifest["files"].append(
+            {"file_name": "x.md", "role": ["proofread"], "sha256": "0" * 64,
+             "byte_size": 1}
+        )
+        (path / "manifest.json").write_bytes(canonical_json_bytes(manifest))
+        # A queue receipt for it becomes a problem of that bundle alone.
+        queued = _receipt_bundle(
+            {"work_item_id": "w", "first_title_raw": "t",
+             "evidence_json": {"corpus_bundle_relative_path": wrong_type,
+                               "corpus_manifest_sha256": registered}},
+            self.root,
+        )
+        self.assertRegex(queued.problem, r"^[A-Za-z]+Error: ")
+        malformed = _receipt_bundle(
+            {"work_item_id": "w", "first_title_raw": "t", "evidence_json": ["x"]},
+            self.root,
+        )
+        self.assertRegex(malformed.problem, r"^[A-Za-z]+Error: ")
+
+        code, receipt, error = self._cli(
+            *self._batch(
+                "compose", "--notice", self.good, "--notice", not_json,
+                "--notice", cut_xml, "--effective-on", "2026-10-01",
+                "--skip-failed",
+            )
+        )
+        self.assertEqual((code, error), (3, ""))
+        failures = {
+            item["bundle"]: (item["stage"], item["error"].split(":")[0])
+            for item in receipt["failures"]
+        }
+        self.assertEqual(failures["gov_健保審字第1159000018號"], ("parse", "JSONDecodeError"))
+        self.assertEqual(failures["gov_健保審字第1159000019號"][0], "parse")
+        self.assertRegex(failures["gov_健保審字第1159000019號"][1], r"^[A-Za-z]+Error$")
+        # The good notice still composes.
+        self.assertIn(
+            "健保審字第1159000011號",
+            {item["reference_number"] for item in receipt["notices"]},
         )
 
     def test_acknowledged_failures_can_leave_the_batch_green(self) -> None:
