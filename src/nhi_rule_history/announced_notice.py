@@ -51,7 +51,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.2.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.3.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -113,12 +113,39 @@ _LOOSE_DESIGNATION_RE = re.compile(
     r"^[^0-9A-Za-z\u3400-\u9fff]*"
     r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
 )
-# Inside a clause's cell, a paragraph that opens with a dotted code followed by
-# white space, a full stop or a colon reads like another designation
-# (``9.140 Bar``, ``9.57:Bar``, ``◎9.141.``); a code run into the next word is
-# a list item or a quantity (``2.18歲以上`` is item 2, 18 years or older).
-_IN_CELL_DESIGNATION_RE = re.compile(
-    r"^[^0-9A-Za-z\u3400-\u9fff]*(?P<code>[0-9]+(?:\.[0-9]+)+)(?:$|[\s.:])"
+# Inside a clause's cell, anywhere in a paragraph (after a line break, a tab,
+# a run of spaces, a sentence or a word such as 新增), a dotted number that
+# names something reads like another clause designation.  Grammar runs on
+# NFKC text, where full-width digits and stops are ASCII.
+_CODE_TOKEN_RE = re.compile(
+    r"(?<![0-9.\u00b7\u30fb\u2027\u2219])"
+    r"(?P<code>[0-9]+(?:[.\u00b7\u30fb\u2027\u2219][0-9]+)+)(?![0-9])"
+)
+# A dotted number is a quantity, not a designation, after a comparison or
+# arithmetic sign (``≦ -2.5``, ``min/1.73``) or before a unit, a CJK word, a
+# closing bracket or a percent sign (``2.5 mg``, ``1.5倍``, ``2.18歲以上``).
+_QUANTITY_BEFORE_RE = re.compile(r"[<>=≤≥≦≧±×xX*/~～\-−–]\s*$")
+_QUANTITY_AFTER_RE = re.compile(
+    r"\s*(?:(?:mg|mcg|µg|μg|ug|ng|kg|g|ml|dl|l|iu|u|mmol|meq|sd|uln|mmhg|mm|cm"
+    r"|m2|m²|min|hr|h|x|×)(?![a-z])|[%)\]】\u3400-\u9fff])",
+    re.IGNORECASE,
+)
+# It names something when a Latin name follows, directly or after a heading
+# stop, colon, comma or bracket (``9.140 Bar``, ``9.140Bar``, ``9.57:Bar``,
+# ``9.140、Bar``, ``9.140(Bar)``), or when a stop or colon runs into a CJK name
+# (``0.5.藥品給付通則``).
+_DESIGNATION_AFTER_RE = re.compile(
+    r"\s*(?:[.:、,，(\[【]\s*)?[A-Za-z]|[.:](?=[\u3400-\u9fff])"
+)
+# Or when it stands alone on its line, or is written with a hyphen as a
+# heading (``9-140.Bar``) at the start of a line.
+_LINE_START_RE = re.compile(
+    r"(?:^|[\n\t]| {2,}|[。；;!?！？])[^0-9A-Za-z\u3400-\u9fff\n\t]*$"
+)
+_ALONE_AFTER_RE = re.compile(r"(?:[ ]*[.:、,，])?[ ]*(?:\n|$)")
+_HYPHEN_HEADING_RE = re.compile(
+    r"(?:^|(?<=[\n\t]))[^0-9A-Za-z\u3400-\u9fff\n\t]*"
+    r"(?P<code>[0-9]{1,2}-[0-9]{1,3})\.(?=[^0-9\s.])"
 )
 # A title may say the notice was pre-announced before (前經預告, 業經本署預告);
 # that phrase does not make it a pre-announcement.
@@ -975,14 +1002,44 @@ def _cell_items(
     )
 
 
-def _in_cell_designation(item: OdtParagraph) -> str | None:
-    """The code of a designation-like paragraph, if ``item`` reads as one."""
+def designation_codes(text: str, *, heading: bool = False) -> list[str]:
+    """Dotted numbers in ``text`` that read like a clause designation.
 
-    for text in (item.text, item.printed_text):
-        match = _IN_CELL_DESIGNATION_RE.match(grammar_text(text))
-        if match:
-            return match.group("code")
-    return None
+    ``text`` is paragraph character data, not a generated list label.  With
+    ``heading``, the paragraph's own strict heading code is not reported.
+    A number run into a CJK word (``2.18歲``, ``9.140藥品``) cannot be told
+    from a list item or a quantity and is not reported.
+    """
+
+    text = grammar_text(text)
+    skip = None
+    if heading:
+        match = _CLAUSE_HEADING_RE.match(text)
+        skip = match.start("code") if match else None
+    found: list[str] = []
+    for match in _CODE_TOKEN_RE.finditer(text):
+        if match.start() == skip:
+            continue
+        before, after = text[: match.start()], text[match.end() :]
+        if _QUANTITY_BEFORE_RE.search(before) or _QUANTITY_AFTER_RE.match(after):
+            continue
+        if _DESIGNATION_AFTER_RE.match(after) or (
+            _LINE_START_RE.search(before) and _ALONE_AFTER_RE.match(after)
+        ):
+            found.append(match.group("code"))
+    found.extend(match.group("code") for match in _HYPHEN_HEADING_RE.finditer(text))
+    return found
+
+
+def _refuse_designation(item: OdtParagraph, owner: str, *, heading: bool) -> None:
+    if item.nested:
+        return
+    codes = designation_codes(item.text, heading=heading)
+    if codes:
+        raise AnnouncedNoticeError(
+            f"a paragraph inside clause {owner} reads like a designation "
+            f"({codes[0]})"
+        )
 
 
 def _segments(
@@ -990,9 +1047,11 @@ def _segments(
 ) -> list[tuple[str | None, list[OdtParagraph]]]:
     """Split one cell at clause-heading paragraphs, keeping document order.
 
-    A paragraph inside a clause's segment that reads like another
-    designation fails closed: the clause might run on into a clause whose
-    heading is not in the strict form, and its text would be merged.
+    A paragraph inside a clause's segment, including the heading paragraph
+    after its own code, that holds anything reading like another designation
+    (:func:`designation_codes`) fails closed: the clause might run on into a
+    clause whose heading is not in the strict form, and its text would be
+    merged.
     """
 
     segments: list[tuple[str | None, list[OdtParagraph]]] = []
@@ -1006,16 +1065,12 @@ def _segments(
             )
         code = None if item.nested else clause_heading_code(item.text)
         if code is not None:
+            _refuse_designation(item, code, heading=True)
             segments.append((code, [item]))
         elif segments:
             owner = segments[-1][0]
-            if owner is not None and not item.nested:
-                designation = _in_cell_designation(item)
-                if designation is not None:
-                    raise AnnouncedNoticeError(
-                        f"a paragraph inside clause {owner} reads like a "
-                        f"designation ({designation})"
-                    )
+            if owner is not None:
+                _refuse_designation(item, owner, heading=False)
             segments[-1][1].append(item)
         else:
             segments.append((None, [item]))
@@ -1156,7 +1211,7 @@ def _continuation_refusal(
             if any(
                 _LOOSE_DESIGNATION_RE.match(grammar_text(text))
                 for text in (item.text, item.printed_text)
-            ):
+            ) or (not item.nested and designation_codes(item.text)):
                 return "a paragraph reads like a designation"
     return None
 

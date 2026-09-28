@@ -698,21 +698,49 @@ class ComparisonGrammarTest(unittest.TestCase):
             _parse_payload(_document(body))
 
     def test_designation_inside_a_clause_cell_fails_closed(self) -> None:
-        # 2026-09-28 finding R2-H3: the H1 fix covered rows only; a
-        # designation-like paragraph inside the same cell was merged into the
-        # clause above it (the verifier's 9.139/9.140 probe).
-        for revised in (
-            ["9.139.Foo：(115/10/1)", "限用於A", "9.140 Bar(115/10/1)", "限用於B"],
-            ["9.139.Foo：(115/10/1)", "限用於A", "9.57:Bar"],
-            ["9.139.Foo：(115/10/1)", "◎9.141.Baz"],
-            ["9.139.Foo：(115/10/1)", "0.5.藥品給付通則"],
-            ["9.139.Foo：(115/10/1)", "9.140"],
+        # 2026-09-28 findings R2-H3 and HIGH-B: a designation-like paragraph
+        # inside a clause's cell was merged into the clause (the verifier's
+        # 9.139/9.140 probe), and the first fix looked only at the paragraph
+        # start.  Any position counts: after a line break, a tab, a run of
+        # spaces, a sentence or a word.
+        head = ["9.139.Foo：(115/10/1)", "限用於A"]
+        for paragraph in (
+            "9.140 Bar(115/10/1)",
+            "◎9.141.Baz(115/10/1)",
+            "9.57:Bar(115/10/1)",
+            "0.5.藥品給付通則：",
+            "９．１４０ Bar",
+            "　9.140 Bar",
+            "9.140：Bar",
+            "新增9.140 Bar",
+            "9·140 Bar",
+            "9-140.Bar",
+            "A9.140 Bar",
+            "9.140Bar(115/10/1)",
+            "9.140、Bar",
+            "9.140(Bar)",
+            "9.140，Bar",
+            "限用於A。9.140 Bar",
+            "9.140",
+            "限用於A<text:line-break/>9.140 Bar(115/10/1)",
+            "限用於A<text:tab/>9.140.Bar(115/10/1)",
+            '限用於A<text:s text:c="3"/>9.140.Bar(115/10/1)',
         ):
-            with self.subTest(paragraph=revised[-1]), self.assertRaisesRegex(
+            with self.subTest(paragraph=paragraph), self.assertRaisesRegex(
                 AnnouncedNoticeError, "inside clause 9.139 reads like a designation"
             ):
-                _parse_payload(_comparison([(revised, ["無"])]))
-        # The original column is read the same way.
+                _parse_payload(_comparison([(head + [paragraph, "限用於B"], ["無"])]))
+        # The heading paragraph is read after its own code, and the original
+        # column is read the same way.
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, r"inside clause 9\.139 reads like a designation \(9\.140\)"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(["9.139.Foo：(115/10/1)<text:line-break/>9.140 Bar", "限用於B"],
+                      ["無"])]
+                )
+            )
         with self.assertRaisesRegex(
             AnnouncedNoticeError, r"inside clause 9\.2 reads like a designation \(9\.140\)"
         ):
@@ -721,15 +749,34 @@ class ComparisonGrammarTest(unittest.TestCase):
                     [(["9.2.Foo：(115/10/1)", "限用於A"], ["9.2.Foo：", "9.140 Bar"])]
                 )
             )
-        # Confusable negatives: an item number or quantity run into its word,
-        # a single-level item and an omission marker stay clause text.
+        # A row that would continue the clause above is read the same way.
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError, "does not start with a clause designation"
+        ):
+            _parse_payload(
+                _comparison(
+                    [(head, ["9.139.Foo：", "限用於"]),
+                     (["限用於A。9.140 Bar"], ["限用於"])]
+                )
+            )
+        # Confusable negatives: quantities, list items run into their word,
+        # single-level items, omission markers and cross-references stay text.
         revised = [
             "2.1.4.2.Rivaroxaban：(115/10/1)",
             "2.18歲以上非瓣膜性心房纖維顫動病患",
-            "1.限用於",
-            "~2.(略)",
+            "0.5 mg/kg以下",
+            "1.5倍以上",
+            "2.5 mg",
+            "1.5 mg",
             "2.5mg每日一次",
             "每日2.5 mg",
+            "Hb≧8.0 g/dL; BMD之-2.5 SD",
+            "eGFR≦30 mL/min/1.73 m2",
+            "bilirubin ≤ 3.0 x ULN",
+            "1.限用於",
+            "~2.(略)",
+            "(詳見9.24.1)",
+            "依2.6.1規定辦理",
         ]
         parsed = _parse_payload(
             _comparison([(revised, ["2.1.4.2.Rivaroxaban：", revised[1]])])
