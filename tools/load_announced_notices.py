@@ -22,6 +22,14 @@ back, with the reason).  Its ``status`` is ``passed`` or ``no_change`` only
 when all three are empty, and ``passed_with_holds`` or
 ``no_change_with_holds`` otherwise.  Exit status: 0 green, 3 completed with
 holds (a load did seal its run and an activation did serve it), 1 error.
+
+``--acknowledged-failures`` names a JSON list of failures already known and
+accepted, each ``{"bundle", "stage", "error"}`` exactly as a receipt prints
+it.  A failure that matches one exactly moves to ``acknowledged_failures``
+and neither holds the batch nor needs ``--skip-failed``; any other failure
+still does.  An acknowledgment that matches no failure any more is listed in
+``stale_acknowledgments`` and makes the status non-green until the list is
+updated.
 """
 
 from __future__ import annotations
@@ -31,7 +39,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from nhi_rule_history.announced_notice import (
     AnnouncedNoticeError,
@@ -42,7 +50,9 @@ from nhi_rule_history.announced_notice import (
 )
 from nhi_rule_history.announced_release import (
     STATUS_NO_CHANGE,
+    STATUS_NO_CHANGE_WITH_HOLDS,
     STATUS_PASSED,
+    STATUS_PASSED_WITH_HOLDS,
     AnnouncedReleaseError,
     Composition,
     _connect,
@@ -260,27 +270,79 @@ def _compose(
     return composition, failures, dropped
 
 
+_ACKNOWLEDGED_KEYS = ("bundle", "stage", "error")
+
+
+def _acknowledged(path: Path | None) -> list[dict[str, str]]:
+    """The acknowledged failures listed in ``path``, validated."""
+
+    if path is None:
+        return []
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise AnnouncedReleaseError(
+            f"cannot read the acknowledged failures: {exc}"
+        ) from exc
+    if not isinstance(entries, list) or not all(
+        isinstance(entry, dict)
+        and set(entry) >= set(_ACKNOWLEDGED_KEYS)
+        and all(isinstance(entry[key], str) for key in _ACKNOWLEDGED_KEYS)
+        for entry in entries
+    ):
+        raise AnnouncedReleaseError(
+            "acknowledged failures must be a JSON list of objects with "
+            "string bundle, stage and error"
+        )
+    return [{key: entry[key] for key in _ACKNOWLEDGED_KEYS} for entry in entries]
+
+
 def _holds(
     composition: Composition,
     failures: list[dict[str, Any]],
     dropped: list[dict[str, Any]],
+    acknowledged: Sequence[Mapping[str, str]] = (),
 ) -> dict[str, Any]:
     """Receipt head: status plus everything the batch did not serve."""
 
+    known = {tuple(entry[key] for key in _ACKNOWLEDGED_KEYS) for entry in acknowledged}
     failures = [*failures, *composition.failures]
+    matched = [
+        item
+        for item in failures
+        if tuple(item.get(key) for key in _ACKNOWLEDGED_KEYS) in known
+    ]
+    failures = [item for item in failures if item not in matched]
+    seen = {tuple(item[key] for key in _ACKNOWLEDGED_KEYS) for item in matched}
+    stale = [
+        dict(entry)
+        for entry in acknowledged
+        if tuple(entry[key] for key in _ACKNOWLEDGED_KEYS) not in seen
+    ]
     dropped = [*dropped, *composition.dropped_notices]
+    status = receipt_status(
+        composed=composition.release is not None,
+        failures=failures,
+        dropped_notices=dropped,
+        blocked_clauses=composition.blocked_clauses,
+    )
+    if stale:
+        status = {
+            STATUS_PASSED: STATUS_PASSED_WITH_HOLDS,
+            STATUS_NO_CHANGE: STATUS_NO_CHANGE_WITH_HOLDS,
+        }.get(status, status)
     return {
-        "status": receipt_status(
-            composed=composition.release is not None,
-            failures=failures,
-            dropped_notices=dropped,
-            blocked_clauses=composition.blocked_clauses,
-        ),
+        "status": status,
         "failures": failures,
         "dropped_notices": dropped,
         "blocked_clauses": list(composition.blocked_clauses),
         "superseded_notices": list(composition.superseded_notices),
         "carried_notices": list(composition.carried_notices),
+        **(
+            {"acknowledged_failures": matched, "stale_acknowledgments": stale}
+            if acknowledged
+            else {}
+        ),
     }
 
 
@@ -351,6 +413,11 @@ def _load_receipt_holds(
         "failures": receipt.get("failures"),
         "dropped_notices": receipt.get("dropped_notices"),
         "superseded_notices": receipt.get("superseded_notices"),
+        **(
+            {"acknowledged_failures": receipt["acknowledged_failures"]}
+            if isinstance(receipt.get("acknowledged_failures"), list)
+            else {}
+        ),
     }
     if not all(
         isinstance(holds[key], list)
@@ -378,8 +445,9 @@ def _run(args: argparse.Namespace) -> int:
             _print_table(report)
         return 1 if report["failures"] else 0
     if args.command in {"compose", "load"}:
+        acknowledged = _acknowledged(args.acknowledged_failures)
         composition, failures, dropped = _compose(args)
-        receipt = _holds(composition, failures, dropped)
+        receipt = _holds(composition, failures, dropped, acknowledged)
         if receipt["failures"] and not args.skip_failed:
             print(
                 "error: notice failures (use --skip-failed to leave them "
@@ -478,6 +546,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             command.add_argument("--base-run-id")
             command.add_argument("--dyslipidemia-odt", type=Path)
             command.add_argument("--skip-failed", action="store_true")
+            command.add_argument(
+                "--acknowledged-failures",
+                type=Path,
+                help=(
+                    "JSON list of known failures ({bundle, stage, error}, "
+                    "exactly as printed) that do not hold the batch"
+                ),
+            )
             command.add_argument(
                 "--allow-without-rendering-check", action="store_true"
             )

@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import tempfile
+import types
 import unittest
 import uuid
 from dataclasses import replace
@@ -38,11 +39,16 @@ from nhi_rule_history.announced_notice import (
 )
 from nhi_rule_history.announced_release import (
     LOADER_VERSION,
+    PLACEHOLDER_RUN_ID,
     AnnouncedReleaseError,
+    CarriedNotice,
     SEALED_COUNT_TABLES,
+    _served_differences,
+    _supersede_refusal,
     activate_overlay_release,
     compose_overlay_release,
     load_overlay_release,
+    notice_rows,
     prepare_overlay_release,
     read_base_chain,
     rollback_overlay_release,
@@ -677,7 +683,7 @@ class OverlayReleaseLiveTest(unittest.TestCase):
             [("8.1.3", "pending_projection")],
         )
         note = rows["notice_effect"][0]["scope_note"]
-        self.assertIn("independent office rendering", note)
+        self.assertIn("rendering of its own revised cell", note)
         self.assertEqual(rows["clause_patch"], [])
         self.assertEqual(
             composition.blocked_clauses,
@@ -910,6 +916,71 @@ SUPERSEDE_ROWS = [
 ]
 
 
+class ServedPatchPinTest(unittest.TestCase):
+    """2026-09-28 finding R2-M1: a supersede re-bound served predecessors.
+
+    The served patch and its fresh projection must agree on patch id, text,
+    effective date and predecessor, both when a carried notice is projected
+    again and when it is superseded.
+    """
+
+    def _pair(self, **served_change: str) -> tuple:
+        notice = _synthetic_notice(SUPERSEDE_REFERENCE, SUPERSEDE_ROWS)
+        fresh = notice_rows(
+            notice,
+            run_id=PLACEHOLDER_RUN_ID,
+            served_run_id="publication",
+            served={
+                code: {"raw_text_sha256": "a" * 64} for code in ("9.2", "9.5")
+            },
+            rendering_checks={"9.2": "exact", "9.5": "exact"},
+        )
+        patches = tuple(
+            {**row, **served_change} if row["clause_code"] == "9.2" else row
+            for row in fresh.rows["clause_patch"]
+        )
+        previous = CarriedNotice(
+            event=fresh.rows["notice_event"][0],
+            effects=tuple(fresh.rows["notice_effect"]),
+            patches=patches,
+            dependent_tables=(),
+        )
+        base = types.SimpleNamespace(
+            resolutions={
+                str(row["patch_id"]): {"resolution_state": "verified_scheduled"}
+                for row in patches
+            }
+        )
+        return previous, fresh, base
+
+    def test_identical_projection_is_reproduced(self) -> None:
+        previous, fresh, base = self._pair()
+        self.assertEqual(_served_differences(previous, fresh), [])
+        self.assertIsNone(_supersede_refusal(previous, fresh, base))
+
+    def test_new_predecessor_is_refused(self) -> None:
+        previous, fresh, base = self._pair(predecessor_text_sha256="b" * 64)
+        self.assertEqual(
+            _served_differences(previous, fresh),
+            ["9.2 (predecessor_text_sha256 differs)"],
+        )
+        self.assertEqual(
+            _supersede_refusal(previous, fresh, base),
+            "served clause 9.2 is not re-projected byte-identically "
+            "(predecessor_text_sha256 differs)",
+        )
+
+    def test_scope_fields_alone_are_not_a_difference(self) -> None:
+        # Confusable negative: a supersede rewrites these by design; they are
+        # reported as scope changes, not refused.
+        previous, fresh, base = self._pair(
+            partial_event_projection=True,
+            unprocessed_event_scope=[{"clause_code": "9.69"}],
+        )
+        self.assertEqual(_served_differences(previous, fresh), [])
+        self.assertIsNone(_supersede_refusal(previous, fresh, base))
+
+
 class SupersedeLiveTest(unittest.TestCase):
     """2026-09-28 finding M4: held-back clauses of a served notice."""
 
@@ -974,10 +1045,39 @@ class SupersedeLiveTest(unittest.TestCase):
         )
         self.assertIsNone(unchanged.release)
         self.assertEqual(
-            [item["reference_number"] for item in unchanged.carried_notices],
-            [SUPERSEDE_REFERENCE, HELD_REFERENCE],
+            [
+                (item["reference_number"], item["reproduced_clauses"])
+                for item in unchanged.carried_notices
+            ],
+            [(SUPERSEDE_REFERENCE, ["9.2"]), (HELD_REFERENCE, [])],
         )
+        self.assertEqual(unchanged.failures, ())
         self.assertEqual(unchanged.status, "no_change_with_holds")
+        # Finding R2-M2: a carried notice whose fresh parse no longer
+        # reproduces a served patch is a failure, not a green no-change; its
+        # carried rows stay served.
+        diverged = compose_overlay_release(
+            dsn,
+            [notice, held],
+            official_renderings={
+                SUPERSEDE_REFERENCE: FOREIGN_RENDERING,
+                HELD_REFERENCE: FOREIGN_RENDERING,
+            },
+            today=TODAY,
+        )
+        self.assertIsNone(diverged.release)
+        self.assertEqual(
+            [(item["reference_number"], item["stage"], item["error"])
+             for item in diverged.failures],
+            [(SUPERSEDE_REFERENCE, "carried",
+              "the fresh projection does not reproduce the served patches: "
+              "9.2 is held back now (official_rendering_mismatch)")],
+        )
+        self.assertEqual(
+            [item["reference_number"] for item in diverged.carried_notices],
+            [HELD_REFERENCE],
+        )
+        self.assertEqual(diverged.status, "no_change_with_holds")
         self.assertEqual(
             [(item["clause_code"], item["origin"])
              for item in unchanged.blocked_clauses],
@@ -1041,8 +1141,10 @@ class SupersedeLiveTest(unittest.TestCase):
             [
                 (
                     SUPERSEDE_REFERENCE,
-                    "supersede",
-                    "served clause 9.2 is not re-projected byte-identically",
+                    "carried",
+                    "the fresh projection does not reproduce the served "
+                    "patches: 9.2 (patch_id, source_exact_patch_sha256 "
+                    "differs)",
                 )
             ],
         )
@@ -1120,6 +1222,28 @@ class SupersedeLiveTest(unittest.TestCase):
                     "notice_id": notice.notice_id,
                     "served_clauses": ["9.2"],
                     "added_clauses": ["9.5"],
+                    # Finding R2-M1: the scope fields a supersede rewrites
+                    # are reported.
+                    "scope_changes": [
+                        {
+                            "clause_code": "9.2",
+                            "field": "partial_event_projection",
+                            "served": True,
+                            "fresh": False,
+                        },
+                        {
+                            "clause_code": "9.2",
+                            "field": "unprocessed_event_scope",
+                            "served": [
+                                {
+                                    "effect_type": "clause_amendment",
+                                    "clause_code": "9.5",
+                                    "blocked_reason": "official_rendering_mismatch",
+                                }
+                            ],
+                            "fresh": [],
+                        },
+                    ],
                 },
                 {
                     "reference_number": HELD_REFERENCE,
@@ -1128,6 +1252,7 @@ class SupersedeLiveTest(unittest.TestCase):
                     "notice_id": held.notice_id,
                     "served_clauses": [],
                     "added_clauses": ["3.3.28"],
+                    "scope_changes": [],
                 },
             ),
         )
@@ -1150,6 +1275,14 @@ class SupersedeLiveTest(unittest.TestCase):
         self.assertEqual(
             evidence[patch_92]["superseded_projection"]["run_id"],
             first.release.run_id,
+        )
+        # The superseded patch keeps its served resolution state and reason.
+        resolution_92 = next(
+            item for item in second.release.resolutions if item.patch_id == patch_92
+        )
+        self.assertEqual(
+            (resolution_92.resolution_state, resolution_92.reason),
+            ("verified_scheduled", "fixture reviewer undo"),
         )
         self.assertEqual(
             evidence[BASE_PATCH]["carried_forward"]["run_id"],
@@ -1191,6 +1324,72 @@ class SupersedeLiveTest(unittest.TestCase):
             ["9.5", "3.3.28"],
         )
         self.assertEqual(sorted(_public_patches(dsn)), ["9.2", "9.9"])
+
+        # 10. Finding R2-H4: 9.2 is withdrawn in the served run after
+        # `second` was composed.  Activating `second` would serve 9.2 as
+        # verified_scheduled again, so it is refused.
+        def resolve(run_id: str, patch_id: str, state: str, reason: str) -> None:
+            with _connect(dsn, read_only=False) as connection:
+                connection.execute(
+                    "SELECT nhi_rule_history_announced.set_patch_resolution("
+                    "%s,%s,%s,%s,'{}')",
+                    (run_id, patch_id, state, reason),
+                )
+                connection.commit()
+
+        resolve(first.release.run_id, patch_92, "withdrawn", "fixture withdrawal")
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError,
+            "does not carry the served run's current resolution of: 9.2;",
+        ):
+            activate_overlay_release(
+                dsn,
+                run_id=second.release.run_id,
+                expected_sealed_fingerprint=second.release.sealed_fingerprint,
+                expected_base_run_id=first.release.run_id,
+            )
+        self.assertEqual(
+            _public_patches(dsn)["9.2"]["current_resolution_state"], "withdrawn"
+        )
+        # A run composed now carries the withdrawal (and cannot supersede
+        # the withdrawn patch's notice); a resolution written meanwhile to a
+        # run that is not served does not stop it.
+        third = compose_overlay_release(
+            dsn, [notice, held], official_renderings=full, supersede=True,
+            today=TODAY,
+        )
+        self.assertEqual(
+            [item["error"] for item in third.failures],
+            ["served clause 9.2 is withdrawn; superseding would reset its "
+             "resolution"],
+        )
+        load_overlay_release(dsn, third.release)
+        resolve(
+            attempt.release.run_id, patch_92, "withdrawn", "unserved run note"
+        )
+        activate_overlay_release(
+            dsn,
+            run_id=third.release.run_id,
+            expected_sealed_fingerprint=third.release.sealed_fingerprint,
+            expected_base_run_id=first.release.run_id,
+        )
+        served_now = _public_patches(dsn)
+        self.assertEqual(sorted(served_now), ["3.3.28", "9.2", "9.9"])
+        self.assertEqual(served_now["9.2"]["current_resolution_state"], "withdrawn")
+
+        # 11. Finding R2-M3: `second` carries everything `third` serves, but
+        # it was composed on `first`; activating it now is refused.
+        with self.assertRaisesRegex(
+            AnnouncedReleaseError,
+            "composed on another base run: " + first.release.run_id,
+        ):
+            activate_overlay_release(
+                dsn,
+                run_id=second.release.run_id,
+                expected_sealed_fingerprint=second.release.sealed_fingerprint,
+                expected_base_run_id=third.release.run_id,
+            )
+        self.assertEqual(sorted(_public_patches(dsn)), ["3.3.28", "9.2", "9.9"])
 
 
 
@@ -1488,6 +1687,64 @@ class CliReceiptLiveTest(unittest.TestCase):
             },
         )
 
+    def test_acknowledged_failures_can_leave_the_batch_green(self) -> None:
+        # 2026-09-28 finding R2-L1: known failures made every queue batch
+        # non-green, so exit 3 and --skip-failed were noise.
+        selection = ["--notice", self.good, "--notice", self.broken]
+        code, receipt, _ = self._cli(
+            *self._batch("compose", *selection, "--skip-failed")
+        )
+        self.assertEqual((code, receipt["status"]), (3, "passed_with_holds"))
+        known = receipt["failures"]
+        self.assertEqual(
+            [(item["bundle"], item["stage"]) for item in known],
+            [("gov_健保審字第1159000014號", "parse")],
+        )
+        path = self.root / "acknowledged.json"
+
+        def acknowledge(entries: object) -> list[str]:
+            path.write_text(json.dumps(entries, ensure_ascii=False), encoding="utf-8")
+            return ["--acknowledged-failures", str(path)]
+
+        # Acknowledged exactly: green, and --skip-failed is not needed.
+        code, receipt, error = self._cli(
+            *self._batch("compose", *selection, *acknowledge(known))
+        )
+        self.assertEqual((code, receipt["status"], error), (0, "passed", ""))
+        self.assertEqual(
+            (receipt["failures"], receipt["acknowledged_failures"],
+             receipt["stale_acknowledgments"]),
+            ([], known, []),
+        )
+        # Confusable negative: one character more acknowledges nothing.
+        near = [{**known[0], "error": known[0]["error"] + "."}]
+        code, receipt, error = self._cli(
+            *self._batch("compose", *selection, *acknowledge(near))
+        )
+        self.assertEqual((code, receipt), (1, None))
+        self.assertIn("notice failures", error)
+        code, receipt, _ = self._cli(
+            *self._batch("compose", *selection, *acknowledge(near), "--skip-failed")
+        )
+        self.assertEqual((code, receipt["status"]), (3, "passed_with_holds"))
+        self.assertEqual(
+            (receipt["failures"], receipt["stale_acknowledgments"]), (known, near)
+        )
+        # A known failure that no longer occurs holds the batch until the
+        # list is updated.
+        code, receipt, _ = self._cli(
+            *self._batch("compose", "--notice", self.good, *acknowledge(known))
+        )
+        self.assertEqual((code, receipt["status"]), (3, "passed_with_holds"))
+        self.assertEqual(
+            (receipt["failures"], receipt["stale_acknowledgments"]), ([], known)
+        )
+        code, receipt, error = self._cli(
+            *self._batch("compose", *selection, *acknowledge({"bundle": "x"}))
+        )
+        self.assertEqual((code, receipt), (1, None))
+        self.assertIn("acknowledged failures must be", error)
+
     def test_receipts_report_failures_drops_and_held_back_clauses(self) -> None:
         selection = [
             "--notice", self.good, "--notice", self.held,
@@ -1731,8 +1988,13 @@ def _insert_run(
     loader_version: str,
     fingerprint: str,
     activate: bool = False,
+    carried_from: str | None = None,
 ) -> None:
-    """Insert a sealed run directly, past triggers, as the base seed does."""
+    """Insert a sealed run directly, past triggers, as the base seed does.
+
+    With ``carried_from``, a patch that run serves gets a resolution carried
+    from its current one there, as composition records it.
+    """
 
     now = datetime(2026, 9, 1, tzinfo=timezone.utc)
     counts = {name: len(rows.get(name, ())) for name in SEALED_COUNT_TABLES}
@@ -1773,13 +2035,37 @@ def _insert_run(
                     ],
                 )
         for patch in rows["clause_patch"]:
+            origin = connection.execute(
+                """
+                SELECT resolution_id, resolution_state, resolution_reason
+                FROM nhi_rule_history_announced.v_current_patch_resolution
+                WHERE run_id=%s AND patch_id=%s
+                """,
+                (carried_from, patch["patch_id"]),
+            ).fetchone() if carried_from else None
+            evidence = (
+                {}
+                if origin is None
+                else {
+                    "carried_forward": {
+                        "run_id": carried_from,
+                        "resolution_id": origin["resolution_id"],
+                    }
+                }
+            )
             connection.execute(
                 """
                 INSERT INTO nhi_rule_history_announced.patch_resolution_event (
                   run_id, patch_id, resolution_state, reason, evidence
-                ) VALUES (%s,%s,'verified_scheduled','fixture','{}')
+                ) VALUES (%s,%s,%s,%s,%s::jsonb)
                 """,
-                (run_id, patch["patch_id"]),
+                (
+                    run_id,
+                    patch["patch_id"],
+                    "verified_scheduled" if origin is None else origin["resolution_state"],
+                    "fixture" if origin is None else origin["resolution_reason"],
+                    json_text(evidence),
+                ),
             )
         if activate:
             connection.execute(
@@ -1846,6 +2132,7 @@ class DyslipidemiaGuardLiveTest(unittest.TestCase):
                 rows,
                 loader_version=LOADER_VERSION,
                 fingerprint=fingerprint,
+                carried_from=SERVED_DYSLIPIDEMIA_RUN,
             )
 
     @classmethod
