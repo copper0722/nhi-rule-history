@@ -636,47 +636,67 @@ labelled as the revised column of the table and never as a complete clause.
   or conditional section, hidden-paragraph, hidden-text or conditional-text
   field in a comparison cell, or tracked change fails closed. Other tables,
   such as application forms, are ignored.
+- The same refusal covers what the parser reads outside the comparison cells:
+  every body-text paragraph that reads `生效`, each comparison table's title
+  (the last body-text paragraph before it) and every table's header row.
+  There, a paragraph, character or cell style whose `text:display` is not
+  `true` also fails closed, through its parent styles and the default
+  paragraph style. So does a `生效` paragraph in a frame, text box, note or
+  annotation, which is not body text. The office rendering (below) checks
+  the same paragraphs again.
 - The effective date is the stand-alone statement `（自115年10月1日生效）` in
-  the same attachment, converted from the ROC calendar. Missing, unparseable, or
-  multiple differing dates fail closed. Feed, publication and capture times are
-  never used.
+  the same attachment, converted from the ROC calendar. Every body-text
+  paragraph that reads `生效` (on NFKC text) must be such a statement.
+  Missing, unparseable, or multiple differing dates fail closed. Feed,
+  publication and capture times are never used.
 - A clause starts at a paragraph whose dotted code ends in its own full stop
   (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
   same codes, or the original column must read `無` (a new clause).
 - Inside a clause's cell, in either column and in rows that would continue
-  the clause above, a dotted number anywhere in a paragraph that reads like a
-  designation fails the notice closed: the clause may run on into a clause
-  whose heading is not in the strict form. Both the character data and the
-  printed text are read, so a list label that draws `9.141` counts too. The
-  number may follow a line break, a tab, a run of spaces, a sentence or a
-  word (`新增9.140 Bar`, `A9.140 Bar`); its digits may be joined by a middle
-  dot (`9·140`); and the heading paragraph is read after its own code. The
-  tests run in this order:
-  1. At a line start, a number ended by its own stop (the strict heading
-     grammar: `9.141.Baz`, `0.5.藥品給付通則`) is a designation.
-  2. A quantity, a version or another code system's code is not a
-     designation: a number after a comparison or arithmetic sign
-     (`≦ -2.5`, `min/1.73`) or after a Latin word and a space (`AJCC 8.0`,
-     `RECIST 1.1`); a number before a unit, a percent sign or a closing
-     bracket (`2.5 mg`, `4.5 mU/L`, `1.8 Gy`, `3.5 gm/dl`); an ICD-10 code
-     (`K70.0`); and a number whose first part has three or more digits
-     (`115.10.1`) or with a part of four or more digits (`0.9444`).
-  3. At a line start, a CJK word after the number, directly or after a
-     space, colon, comma or bracket, makes it a designation (`9.140 抗癌藥物`,
-     `9.140（高單位…）`, `9.140高單位`), unless the word is a unit, age,
-     count or range word (`2.18歲以上`, `1.5倍`, `2.5以上`).
-  4. Anywhere, a Latin name after the number makes it a designation, also
-     after a stop, colon, comma, bracket, dash, dot or quote (`9.140 Bar`,
-     `9.140Bar`, `9.57:Bar`, `9.140(Bar)`, `9.140 - Bar`, `9.140「Bar」`).
-  5. A number alone on its line is a designation, and so is a hyphenated
-     heading followed by a Latin name (`9-140.Bar`, `9-140 Bar`).
+  the clause above, a dotted number that reads like a designation fails the
+  notice closed: the clause may run on into a clause whose heading is not in
+  the strict form. Both the character data and the printed text are read, so
+  a list label that draws `9.141` counts too, and the heading paragraph is
+  read after its own code. Where the number stands decides (loader 2.4.0,
+  parser 1.5.0; the rule is tightened for unattended activation):
+  1. A number whose first part has three or more digits (`115.10.1`) or with
+     a part of four or more (`0.9444`) is never a clause code. A number after
+     a comparison or arithmetic sign, a minus sign attached to it or a range
+     dash after another number is a quantity (`≦ 2.5`, `min/1.73`,
+     `≦ -2.5`, `BMD之-2.5SD`, `0.5-1.5`).
+  2. At the paragraph start, a line start (after a line break or tab), or
+     after whitespace or a break (`。；！？：，、` or a dash), followed by
+     marks only (`◎`, `（`), it is a designation whatever follows it
+     (`9.140 抗癌藥物`, `限用於A，9.140 抗癌藥物`, `9.140 分子標靶藥物`,
+     `9.140 G-CSF`, `Add 9.141 Baz`, `0.5` alone). The only exceptions:
+     - a whole unit word, a percent sign or a closing bracket right after
+       it, or a product or range with another number (`2.5 mg`, `2.5mg限`,
+       `4.5 mU/L`, `0.5 公絲以下`, `2.18歲以上`, `1.5倍`, `7.0%`, `(2.5)`,
+       `0.5x109/L`, `7.30 - 7.45`). A unit is a whole word: a single-letter
+       unit takes no letter, digit, hyphen or CJK character after it, and a
+       CJK unit no CJK character but a range or joining word (`以上`, `之`,
+       `或`...), so `G-CSF`, `L-asparaginase`, `H2`, `U-500`, `L型`, `分子`,
+       `克流感`, `支氣管`, `日本` and `點眼` are names;
+     - the version after a listed code system: `AJCC`, `RECIST`, `TLS` or
+       `version` and a space (`TLS` is the only one met in the corpus).
+  3. Right after a letter it is a designation with two or more stops
+     (`A10.3.9`); with one stop, an ICD-10 code (`K70.0`, `E11.65`) is not,
+     and any other number is when a Latin name follows (`A9.140 Bar`).
+  4. Right after a word it is a designation when a Latin name, not a unit,
+     follows (`新增9.140 Bar`). A cross-reference directly after its
+     reference word (`依9.69.之規定`, `詳見2.1.4.2.規定`) stays text.
+  5. A hyphenated heading at a line start followed by a Latin name is a
+     designation (`9-140.Bar`, `9-140 Bar`).
 
-  Cross-references in running text (`依9.69.之規定`, `詳見2.1.4.2.規定`)
-  stay text. A list item written with a Latin name at a line start
-  (`1.1 Rivaroxaban`) cannot be told from a designation and is refused.
-  Across the 21,528 table paragraphs of the 76 distinct NHI notice ODT
-  attachments in the corpus, 3 are flagged, none in a comparison table:
-  `0.5` and `99.99`, each alone on its line.
+  The price is availability, never content: a sub-item or a number
+  followed by a word that is not a unit (`1.1 限用於成人病患`, `1.0 版`,
+  `2.5 倍數`, `1.1 Rivaroxaban 15mg`) refuses the notice. None occurs in an
+  official comparison table in the corpus: of the 1,143 paragraphs of the
+  28 comparison documents (both columns, printed text included), 0 are
+  flagged. Outside the comparison tables, 11 of the 20,385 table paragraphs
+  are flagged, all `0.5` or `99.9`/`99.99` in two Pre-ESRD care-plan notices
+  (a data dictionary's `9(2)v9 99.9`); those tables are never read as
+  clause text.
 - A row without a code continues the previous clause only on positive
   evidence. The clause above must end on the previous row of the same table,
   and each column must hold one undesignated segment. The original column
@@ -733,12 +753,14 @@ labelled as the revised column of the table and never as a complete clause.
   served.
 - Verification opens the attachment in LibreOffice as an independent engine
   (`nhi_rule_history.office_rendering`, rule
-  `office-cell-rendering/1.1.0`). A private headless office process is read
+  `office-cell-rendering/1.2.0`). A private headless office process is read
   through UNO, from a child process whose interpreter can import `uno`
   (`NHI_RULE_HISTORY_UNO_PYTHON` overrides the choice). For each paragraph of
-  each cell of each top-level table it reads the text, the label LibreOffice
-  draws (`ListLabelString`) and what follows the label (the level's
-  `LabelFollowedBy`: tab, space, nothing or line break). The paragraph
+  each cell of each top-level table, and each paragraph of the body text
+  outside them (`flow`, with a marker where each table stands; frames, text
+  boxes, notes and annotations are not body text), it reads the text, the
+  label LibreOffice draws (`ListLabelString`) and what follows the label (the
+  level's `LabelFollowedBy`: tab, space, nothing or line break). The paragraph
   string includes text LibreOffice does not draw, and bullets have no label
   string, so each paragraph also reports these:
   - `hidden`: a hidden character attribute on the text, the paragraph or
@@ -771,6 +793,33 @@ labelled as the revised column of the table and never as a complete clause.
 
   The CLI renders an attachment only while its bytes still match the verified
   hash.
+- The text read outside the comparison cells is checked per notice
+  (`notice_rendering_check`). The parser's body-text paragraphs are aligned
+  one to one with the rendered ones, blank unlabelled paragraphs left out on
+  both sides, and:
+  - every `生效` statement and each comparison table's title has the same
+    text, label and separator, and is not hidden, bulleted or case-mapped;
+  - every rendered paragraph whose label or text reads `生效` is a parsed
+    statement, so a field that draws a date where the parser reads other text
+    is caught;
+  - each comparison table stands after the same paragraphs;
+  - every table's header reads as parsed: a comparison header with the same
+    text and drawn plainly, and no other table drawn with a comparison
+    header.
+
+  Otherwise the notice fails at stage `rendering`, and the rest of the batch
+  composes. A rendering that does not report the body text (rule 1.1.0)
+  cannot confirm a notice. `verify` reports the result per notice as
+  `body_text_rendering`.
+
+  | What the parser reads in the ODT | Structural gate (parse) | Rendering gate |
+  |---|---|---|
+  | Header row of every top-level table: which tables compare, column roles, kind | Notes, annotations, hiding fields, hidden or conditional sections and hiding styles refuse the notice | Same header text drawn plainly for a comparison table; no other table drawn with a comparison header |
+  | Every body-text paragraph with `生效`: the effective date | The same, plus list numbering, and a statement outside the body text | Same text, label and separator, drawn plainly; every drawn `生效` paragraph is a parsed statement |
+  | A comparison table's title: the appendix designation and title | The same | Same text, drawn plainly; the table stands after the same paragraphs |
+  | Comparison cells, both columns: designations, clause text, `無`, continuation | Notes, annotations, hiding fields and hidden or conditional sections refuse the notice | Per clause, the revised cells: same text, labels and separators, drawn plainly |
+  | Tables nested in a revised cell | Never read as clause text (`nested_table`) | Not compared |
+  | Tracked changes anywhere | Refuse the notice | Not compared |
 
 ### Release composition (`nhi_rule_history.announced_release`)
 
@@ -801,9 +850,9 @@ that keeps everything the active run serves:
   resolution of every patch (`base_resolution_pins`). After a resolution is
   written to the served run, the next compose is a new run that carries it;
   it never replays a loaded run with stale resolutions.
-- Runs are sealed by loader `…/announced-overlay-loader/2.3.0` (the cell
-  rendering check with presentation, rule 1.1.0; parser 1.4.0; list-label
-  rule 1.1.0). The seal covers
+- Runs are sealed by loader `…/announced-overlay-loader/2.4.0` (the cell and
+  body-text rendering checks, rule 1.2.0; parser 1.5.0; list-label rule
+  1.1.0). The seal covers
   exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader 1.0.0
   runs also sealed the carried document tables. Activation accepts only runs
   sealed by the current loader version; rollback restores a recorded chain
@@ -876,7 +925,8 @@ Composition isolates failures per notice. Each of these leaves one notice out
 and is reported, while the rest of the batch still composes:
 
 - the notice is listed twice in one batch;
-- a required office rendering is unavailable;
+- a required office rendering is unavailable, or the rendering does not
+  confirm the text read outside the comparison cells (stage `rendering`);
 - a clause cannot be bound to the served publication: it has an original
   column but no served clause, or it is marked new but is already served;
 - a clause would get a second patch for the same effective date, within the
