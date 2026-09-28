@@ -2,6 +2,37 @@
 
 最後核對：2026-09-28
 
+## 2026-09-28 — 自動編號標號重建與註冊 manifest 身分驗證（未載入正式庫）
+
+- 根因一：Word 產生的 ODT 以清單樣式自動編號，「1.」「(5)」不在文字資料內，
+  115/10/1 的 8.2.19、9.139、9.140、9.26、9.5.1、9.69 與 115/9/1 的 5.6.1、
+  9.43、8.2.19、3.3.32 因此暫不投影。
+- 新增 `odf_list_numbering`：依 LibreOffice Writer 規則重建標號（清單延續、
+  Word 文件依同樣式延續、編號樹、起始值、prefix/suffix、`display-levels`、
+  1/a/A/i/I 與單字元中文格式）；Word 文件另要求逐層計數模型與 ODF 1.4
+  `num-list-format` 一致。子彈、圖片、LibreOffice 不認得的格式（如 Word 的
+  `一, 十, 一百(繁), ...`，LibreOffice 會退成阿拉伯數字）、大綱編號等一律
+  fail closed。印出文字為「標號＋定位字元／空白／無＋內文」。
+- 驗證：語料庫內 26 份公告 ODT 共 234 個自動標號與 LibreOffice 26.2 逐一相同、
+  0 不符；新可投影條文的 58 個標號也都出現在官方 PDF 文字層、位於內文之前。
+  原已投影條文的文字、hash、component manifest 不變，且與現行 active run
+  的列相同（僅兄弟條文改為可投影時 `unprocessed_event_scope` 變動）。
+- 結果：115/10/1 新增可投影 8.2.19、9.139、9.140、9.26、9.5.1；115/9/1 的
+  5.6.1、9.43、8.2.19、3.3.32 對 LibreOffice 皆 exact。9.69 修訂後欄位含巢狀
+  表格，渲染核對無法建模，維持 pending（`official_rendering_unverified`）。
+- 根因二：115/9/1 五則 bundle 在註冊後被語料庫簿記改寫 `manifest.json`
+  （加 `extraction_status.mineru`、一則 `proofread` 前進、改為縮排格式），
+  佇列比對 bytes 因而拒收；附件、raw.md 與區塊收據都未變。改為以註冊收據的
+  canonical manifest hash 證明身分：只還原這兩個簿記欄位後 hash 必須相符，
+  其他任何差異仍拒收。五則皆通過。
+- 觀測（唯讀）：9/28 10:36–12:31 佇列已清空 `corpus_registered`（115/9/1 五則
+  `failed_terminal`、115/10/1 八則 `partition_required`、3.3.28 公告
+  `failed_terminal`），故佇列模式目前選不到公告；10:56 已啟用 run
+  `ce4454ed…`。已在該 run 內的公告（9.139、9.140、9.26、9.5.1 所屬）無法由本
+  loader 直接補投影。收據：
+  `docs/audits/2026-09-28-announced-list-numbering-verification.json`。
+- 未做：未寫入或啟用任何正式庫內容；獨立驗證待辦。
+
 ## 2026-09-28 — 公告修訂對照表的確定性 announced overlay（未載入正式庫）
 
 - 根因：公告抵達 `corpus_registered` 後，只能經模型 proposal 階段（排程 261）

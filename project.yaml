@@ -172,8 +172,12 @@ continuous_update:
     canonical_history_write: false
     ddl_added: false
     blocked_projection_reasons:
-      - generated_list_label
+      - unsupported_list_numbering
       - official_rendering_mismatch
+      - official_rendering_unverified
+    list_label_rule: nhi-rule-history/odf-list-label/1.0.0
+    queue_manifest_identity: registered_canonical_bytes_with_bookkeeping_reverted
+    list_numbering_receipt: docs/audits/2026-09-28-announced-list-numbering-verification.json
     rehearsal_receipt: docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json
     production_load: not_performed
     consumer_prerequisite: subscriber_export_must_accept_patch_only
