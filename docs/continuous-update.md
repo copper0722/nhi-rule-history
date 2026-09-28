@@ -622,8 +622,10 @@ labelled as the revised column of the table and never as a complete clause.
   `公告`). A pre-announcement (`預告`) is never announced text; a title that
   only says the notice was pre-announced before (`前經預告`, `業經本署…預告`)
   is not one. Any other header,
-  merged cell, repeated cell, note or annotation in a comparison cell, or tracked
-  change fails closed. Other tables, such as application forms, are ignored.
+  merged cell, repeated cell, note or annotation in a comparison cell, hidden
+  or conditional section, hidden-paragraph, hidden-text or conditional-text
+  field in a comparison cell, or tracked change fails closed. Other tables,
+  such as application forms, are ignored.
 - The effective date is the stand-alone statement `（自115年10月1日生效）` in
   the same attachment, converted from the ROC calendar. Missing, unparseable, or
   multiple differing dates fail closed. Feed, publication and capture times are
@@ -634,20 +636,37 @@ labelled as the revised column of the table and never as a complete clause.
 - Inside a clause's cell, in either column and in rows that would continue
   the clause above, a dotted number anywhere in a paragraph that reads like a
   designation fails the notice closed: the clause may run on into a clause
-  whose heading is not in the strict form. That covers a number after a line
-  break, a tab, a run of spaces, a sentence or a word (`新增9.140 Bar`,
-  `A9.140 Bar`), digits joined by a middle dot (`9·140`), and the heading
-  paragraph after its own code. It reads like a designation when:
-  - a Latin name follows it, directly or after a stop, colon, comma or
-    bracket (`9.140 Bar`, `9.140Bar`, `9.57:Bar`, `9.140、Bar`, `9.140(Bar)`);
-  - a stop or colon runs into a CJK name (`0.5.藥品給付通則`);
-  - it stands alone on its line;
-  - it is a hyphenated heading (`9-140.Bar`) at a line start.
+  whose heading is not in the strict form. Both the character data and the
+  printed text are read, so a list label that draws `9.141` counts too. The
+  number may follow a line break, a tab, a run of spaces, a sentence or a
+  word (`新增9.140 Bar`, `A9.140 Bar`); its digits may be joined by a middle
+  dot (`9·140`); and the heading paragraph is read after its own code. The
+  tests run in this order:
+  1. At a line start, a number ended by its own stop (the strict heading
+     grammar: `9.141.Baz`, `0.5.藥品給付通則`) is a designation.
+  2. A quantity, a version or another code system's code is not a
+     designation: a number after a comparison or arithmetic sign
+     (`≦ -2.5`, `min/1.73`) or after a Latin word and a space (`AJCC 8.0`,
+     `RECIST 1.1`); a number before a unit, a percent sign or a closing
+     bracket (`2.5 mg`, `4.5 mU/L`, `1.8 Gy`, `3.5 gm/dl`); an ICD-10 code
+     (`K70.0`); and a number whose first part has three or more digits
+     (`115.10.1`) or with a part of four or more digits (`0.9444`).
+  3. At a line start, a CJK word after the number, directly or after a
+     space, colon, comma or bracket, makes it a designation (`9.140 抗癌藥物`,
+     `9.140（高單位…）`, `9.140高單位`), unless the word is a unit, age,
+     count or range word (`2.18歲以上`, `1.5倍`, `2.5以上`).
+  4. Anywhere, a Latin name after the number makes it a designation, also
+     after a stop, colon, comma, bracket, dash, dot or quote (`9.140 Bar`,
+     `9.140Bar`, `9.57:Bar`, `9.140(Bar)`, `9.140 - Bar`, `9.140「Bar」`).
+  5. A number alone on its line is a designation, and so is a hyphenated
+     heading followed by a Latin name (`9-140.Bar`, `9-140 Bar`).
 
-  A quantity is never reported: a number after a comparison or arithmetic
-  sign (`≦ -2.5`, `min/1.73`), or before a unit, a CJK word, a closing bracket
-  or a percent sign (`2.5 mg`, `0.5 mg/kg`, `1.5倍`, `2.18歲以上`). A number
-  run into a CJK word cannot be told from a list item and is not reported.
+  Cross-references in running text (`依9.69.之規定`, `詳見2.1.4.2.規定`)
+  stay text. A list item written with a Latin name at a line start
+  (`1.1 Rivaroxaban`) cannot be told from a designation and is refused.
+  Across the 21,528 table paragraphs of the 76 distinct NHI notice ODT
+  attachments in the corpus, 3 are flagged, none in a comparison table:
+  `0.5` and `99.99`, each alone on its line.
 - A row without a code continues the previous clause only on positive
   evidence. The clause above must end on the previous row of the same table,
   and each column must hold one undesignated segment. The original column
@@ -704,16 +723,27 @@ labelled as the revised column of the table and never as a complete clause.
   served.
 - Verification opens the attachment in LibreOffice as an independent engine
   (`nhi_rule_history.office_rendering`, rule
-  `office-cell-rendering/1.0.0`). A private headless office process is read
+  `office-cell-rendering/1.1.0`). A private headless office process is read
   through UNO, from a child process whose interpreter can import `uno`
   (`NHI_RULE_HISTORY_UNO_PYTHON` overrides the choice). For each paragraph of
   each cell of each top-level table it reads the text, the label LibreOffice
   draws (`ListLabelString`) and what follows the label (the level's
-  `LabelFollowedBy`: tab, space, nothing or line break). Each revised cell of
-  a clause is aligned with the cell at the same table, row and column; blank
-  unlabelled paragraphs and nested tables are left out on both sides. Every
-  paragraph of the cell must have the same text, and each of the clause's own
-  paragraphs must carry the same label and separator. A label that only
+  `LabelFollowedBy`: tab, space, nothing or line break). The paragraph
+  string includes text LibreOffice does not draw, and bullets have no label
+  string, so each paragraph also reports these:
+  - `hidden`: a hidden character attribute on the text, the paragraph or
+    the label's character style; a hiding field; or a hidden or conditional
+    section.
+  - `bullet`: the bullet or image a list level draws instead of a label.
+  - `transform`: a case map (upper, lower or title case, small caps) on the
+    text or the label.
+
+  Each revised cell of a clause is aligned with the cell at the same table,
+  row and column; blank unlabelled paragraphs and nested tables are left out
+  on both sides. Every paragraph of the cell must have the same text, none
+  may be hidden, bulleted or case-mapped (a rendering that does not report
+  these cannot confirm the cell), and each of the clause's own paragraphs
+  must carry the same label and separator. A label that only
   matches another cell (for example the unchanged original column) or a gap
   LibreOffice draws differently is therefore a mismatch, which blocks the
   clause (`official_rendering_mismatch`). A clause with list paragraphs is
@@ -721,9 +751,16 @@ labelled as the revised column of the table and never as a complete clause.
   (`official_rendering_unverified`). `load` requires this rendering unless the
   operator waives it explicitly. The whole-document text export used before
   loader 2.1.0 could not tell cells apart and could not see separators.
-  Documents are reported as they finish. A document that crashes the office
-  process or stalls it (120 s by default) stays unrendered, and the other
-  documents get a fresh process. Only that notice then fails at `rendering`.
+  Documents are reported as they finish:
+  - A document that crashes the office process or stalls it (120 s by
+    default) stays unrendered, and the other documents get a fresh process.
+    Only that notice then fails at `rendering`.
+  - A process that ends between documents is restarted for the rest.
+  - A progress line cut by a crash is skipped.
+  - The office's temporary files stay in the batch's work directory.
+
+  The CLI renders an attachment only while its bytes still match the verified
+  hash.
 
 ### Release composition (`nhi_rule_history.announced_release`)
 
@@ -754,8 +791,9 @@ that keeps everything the active run serves:
   resolution of every patch (`base_resolution_pins`). After a resolution is
   written to the served run, the next compose is a new run that carries it;
   it never replays a loaded run with stale resolutions.
-- Runs are sealed by loader `…/announced-overlay-loader/2.2.0` (the cell
-  rendering check, parser 1.3.0 and list-label rule 1.1.0). The seal covers
+- Runs are sealed by loader `…/announced-overlay-loader/2.3.0` (the cell
+  rendering check with presentation, rule 1.1.0; parser 1.4.0; list-label
+  rule 1.1.0). The seal covers
   exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader 1.0.0
   runs also sealed the carried document tables. Activation accepts only runs
   sealed by the current loader version; rollback restores a recorded chain
@@ -787,13 +825,33 @@ active-source query on the activated state. It appends release,
 normalization, diff and reader-profile control events in one transaction and
 records the previous chain. `rollback` re-activates that recorded chain.
 
-Rollback carries resolutions back. For each patch served by both runs whose
-current state or reason in the rolled-back run differs, the restored run gets
-a new resolution with that state and reason. Its evidence is carried
-verbatim, with `carried_forward` naming the source event, and the rollback
-receipt and control event list the patches as `carried_back_resolutions`. A
-withdrawal written while the later run was served therefore survives
-rollback.
+Rollback carries resolutions back by recency. For each patch served by both
+runs whose current state or reason differs, the rolled-back run's first
+resolution names the restored run's event it was carried from. Then:
+- If only the rolled-back run changed since (for example a withdrawal
+  written while it was served), the restored run gets a new resolution with
+  that state and reason; its evidence is carried verbatim, with
+  `carried_forward` naming the source event.
+- If only the restored run changed since, it keeps its newer resolution
+  (`kept_newer_restored`).
+- If both changed, the rollback is refused.
+
+The rollback receipt and control event list every decision as
+`carried_back_resolutions`. The restored run is activated before anything is
+written to it.
+
+Migration `2026-09-28_nhi_rule_history_announced_resolution_guard_v27`
+(with its rollback file; design-gated, applied separately) moves the
+resolution writer's rules into the database:
+- every resolution insert, through `set_patch_resolution` or directly,
+  takes the global announced lock;
+- it is refused for a run that was served before and is not the served run
+  now;
+- a run that has never been served, for example a freshly loaded one, still
+  takes its first resolutions.
+
+A writer that read the served run before an activation therefore gets an
+error instead of losing its write to the unserved run.
 
 The subscriber sync's 2.6.1 tick (`tools/load_announced_dyslipidemia.py`)
 runs the loader in one database session. That session holds the global
