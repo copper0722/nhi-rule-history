@@ -1,2 +1,3 @@
 docs/audits/*review*.md whitespace=-trailing-space
 tests/fixtures/announced_notices/*.xml -text
+tests/fixtures/announced_notices/numbering/*.xml -text

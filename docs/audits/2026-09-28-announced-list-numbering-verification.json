@@ -1,0 +1,1098 @@
+{
+  "schema": "nhi-rule-history/announced-list-numbering-verification/v1",
+  "recorded_on": "2026-09-28",
+  "scope": "Announced-notice overlay: reconstruction of ODF automatic list labels (Task A) and registered-manifest identity for queued corpus bundles (Task B). Every database access was a read-only session against the production database; nothing was loaded, activated or written.",
+  "code": {
+    "base_commit": "a1e0f11",
+    "list_labels_commit": "4a501f5",
+    "manifest_identity_commit": "0abe4ea",
+    "parser_version": "nhi-rule-history/announced-notice-parser/1.1.0",
+    "list_label_rule": "nhi-rule-history/odf-list-label/1.0.0"
+  },
+  "independent_engine": {
+    "name": "LibreOffice",
+    "version": "26.2.5.2",
+    "export_filter": "txt:Text (encoded):UTF8",
+    "profile": "throwaway user installation per run"
+  },
+  "clause_verification_before_after": [
+    {
+      "reference_number": "健保審字第1150672430號",
+      "clause_code": "9.113",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "0ab8f6eb8bd3a9d461ce60220bb4f56c10ffa5fb710566d7e1246d6d0217d4f9"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "0ab8f6eb8bd3a9d461ce60220bb4f56c10ffa5fb710566d7e1246d6d0217d4f9",
+        "component_manifest_sha256": "69f2cf7ff1129c3310b705f3233258fedfdfad6330634f619eb1e629cb2718fb"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": []
+    },
+    {
+      "reference_number": "健保審字第1150672381號",
+      "clause_code": "4.2",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "75d10936c7475822d8c0c559015a184e8145ef09a800663505f5f44b964427c4"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "75d10936c7475822d8c0c559015a184e8145ef09a800663505f5f44b964427c4",
+        "component_manifest_sha256": "8453daefb358cc56bfdf9f09e45de3ef530d6542b27f0e6209e1e51c55754f90"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": []
+    },
+    {
+      "reference_number": "健保審字第1150672509號",
+      "clause_code": "8.1.3",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "55a8f26939a582e75abd6a343efeccb1a0d0b3db189cba1f736403f91d11625d"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "55a8f26939a582e75abd6a343efeccb1a0d0b3db189cba1f736403f91d11625d",
+        "component_manifest_sha256": "1c363d9fdd3e5973022e2d06f4bb02e5edfc5e8939b9ac0f6bf50dbe0b5c13e0"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": []
+    },
+    {
+      "reference_number": "健保審字第1150057031號",
+      "clause_code": "8.2.19",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 1,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "a927c588bcb0bc916162291172273e30df0c99767aa2d3ad4391284dc58b6655"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 1,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "071bca29ef294234cd03e0010fc3e025889830c1df5c9da42e1628b3b13789c7",
+        "component_manifest_sha256": "fdc6cb2df8248f4a46a9ba23bcb08003c4f4151e2b65054344aedbe6a35f6b3b"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150056995號",
+      "clause_code": "2.1.4.2",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "4f45bd4b305322d6d2e8e420dfa50ce846cae8bdb5b5beb6d3e40ab69731e03c"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "4f45bd4b305322d6d2e8e420dfa50ce846cae8bdb5b5beb6d3e40ab69731e03c",
+        "component_manifest_sha256": "0f71432341d7cc2adf99dab1fb8830daba35973dd0af948e974a8f07f688412d"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": []
+    },
+    {
+      "reference_number": "健保審字第1150057033號",
+      "clause_code": "3.3.28",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "3ed66319a86930e2da01f66fcc0a8a61909996eeee6c33f776ed8eb2e6703509"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "3ed66319a86930e2da01f66fcc0a8a61909996eeee6c33f776ed8eb2e6703509",
+        "component_manifest_sha256": "26b3781cca1b50e0e228bc7c70edcbce655531dc11990c7e1a87bc84544f453e"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": []
+    },
+    {
+      "reference_number": "健保審字第1150056967號",
+      "clause_code": "9.139",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 2,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "78c80b2d7c43ca7adb923fa489c46519eac940566fdf443294d4b5d77434d8b4"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 2,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "dcdf9b86967260012c520c10c91a9bf5755bf9c44e42b07b15691e3b896b3dce",
+        "component_manifest_sha256": "08b05575926eb2c19bc637028f3ab7bcde344830c7cb2e602618e705648fe7c6"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150056967號",
+      "clause_code": "9.56",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "31a7ca535e4dcaf3dedbf9bfdcd1357da76269a4bd7e6f5c694943c0cb64f147"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "31a7ca535e4dcaf3dedbf9bfdcd1357da76269a4bd7e6f5c694943c0cb64f147",
+        "component_manifest_sha256": "4d1e03a51b451e86a086176887df8658f9ddc71d270bab90f78ef80656c6ef18"
+      },
+      "patch_row_columns_changed_vs_base_commit": [
+        "unprocessed_event_scope"
+      ],
+      "patch_row_columns_differing_from_active_run": [
+        "unprocessed_event_scope"
+      ]
+    },
+    {
+      "reference_number": "健保審字第1150056971號",
+      "clause_code": "9.140",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 9,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "62893fa053620162e12c004324dd3f9ae6ac71c7060d7403e53532d7f9799858"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 9,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "7ea36c3b03e2ef260b8cc537c29d601b567fe1040be3088eb8b380b2879d3388",
+        "component_manifest_sha256": "2bd02adc67e3d9a50d112195e790edcf19586afa979f389bc4370aaf3d78ef16"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150056971號",
+      "clause_code": "9.103",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "a4e4c387cf0fe438f14b1ec0b66d2599cb3451a98c7c8b8aa54889dbee7e026e"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "a4e4c387cf0fe438f14b1ec0b66d2599cb3451a98c7c8b8aa54889dbee7e026e",
+        "component_manifest_sha256": "7d1c4a62801d72c20bf6a2464ec99a9af6bfdc96a14f2c5cb4044abcb6c76e2d"
+      },
+      "patch_row_columns_changed_vs_base_commit": [
+        "unprocessed_event_scope"
+      ],
+      "patch_row_columns_differing_from_active_run": [
+        "unprocessed_event_scope"
+      ]
+    },
+    {
+      "reference_number": "健保審字第1150672522號",
+      "clause_code": "9.69",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "not_applicable_nested_table",
+        "generated_labels": 16,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "5a72d32784e2bf8acaad64aba16b3ef1864af89e03a11fd26ee50ef9ca3523e3"
+      },
+      "after": {
+        "libreoffice_check": "not_applicable_nested_table",
+        "generated_labels": 16,
+        "list_numbering_unsupported": [],
+        "projection_gate": "official_rendering_unverified",
+        "revised_text_sha256": "49292c16ecf305920be4ff6f073e9ec8aca32588ce6ecf111a424a2f24ad87e1",
+        "component_manifest_sha256": null
+      },
+      "patch_row_columns_changed_vs_base_commit": null,
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150672522號",
+      "clause_code": "9.2",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "bdbff22ad1165cdf58222b6eb54d32ad9bb96e0cf5c701c06f8b88d758d627ab"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "bdbff22ad1165cdf58222b6eb54d32ad9bb96e0cf5c701c06f8b88d758d627ab",
+        "component_manifest_sha256": "6ef545ead48efdbda2718d4e8dbb3be70eda272bba9b258735b3869f25ffcfdd"
+      },
+      "patch_row_columns_changed_vs_base_commit": [
+        "unprocessed_event_scope"
+      ],
+      "patch_row_columns_differing_from_active_run": [
+        "unprocessed_event_scope"
+      ]
+    },
+    {
+      "reference_number": "健保審字第1150672522號",
+      "clause_code": "9.26",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 2,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "5ee2d30fdbd02c73d280f126c3dcac6338d5cafcff284b3c11cd0f980368befd"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 2,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "75a92e5c430b68fa054ef023f2efe9427aae0a873d1b0e8000197945e41f9131",
+        "component_manifest_sha256": "d68d1ced3734e764d9984ceb7df41e94ce279be7035badf670170f303584fa42"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150672522號",
+      "clause_code": "9.5",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "59cab4a6d711bc7d3301bd1bd30fb9b3b9ce15708fbd3278029c0c18338407db"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "59cab4a6d711bc7d3301bd1bd30fb9b3b9ce15708fbd3278029c0c18338407db",
+        "component_manifest_sha256": "7f9cea15ef9dde5f30c0b8f739193581d23907ab350b0103b7a79fe95a53a804"
+      },
+      "patch_row_columns_changed_vs_base_commit": [
+        "unprocessed_event_scope"
+      ],
+      "patch_row_columns_differing_from_active_run": [
+        "unprocessed_event_scope"
+      ]
+    },
+    {
+      "reference_number": "健保審字第1150672522號",
+      "clause_code": "9.5.1",
+      "effective_on": "2026-10-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 1,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "30cae97594d3a7dfa2a78fc0735eba2a08473ee7a02ab4336c38764271dd36f5"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 1,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "8f2e561b00b1a70e52225089206f16cd3903c0533d0498af9f734a9a1ae9ab53",
+        "component_manifest_sha256": "f227b9523338826a4cce84e61a15a1b560649fd8d4ca9cd3a91dfbc4d9f138d6"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150054837號",
+      "clause_code": "5.6.1",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 2,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "baa2f54f6048d7e99e4db92132335110df69641b5a80b04f9a6860fd1d081fe4"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 2,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "82f5e56b6ce191af5955d2d9ca026088ca8cb2aa865b95a1b1538266bb482278",
+        "component_manifest_sha256": "1a1977719f8fc40f48c365f01577cc285508e4178671fa059c23105fff525065"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150055637號",
+      "clause_code": "9.20",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "4bb1d1fc4055198f3f0bdeb9118eb076771b726fb5fb45c8168e5aa883f40fd5"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "4bb1d1fc4055198f3f0bdeb9118eb076771b726fb5fb45c8168e5aa883f40fd5",
+        "component_manifest_sha256": "4344a90579c0e3aa20d8493a424aa70a9d542bb996b7f3f9b463aa0c85a52e9d"
+      },
+      "patch_row_columns_changed_vs_base_commit": [
+        "partial_event_projection",
+        "unprocessed_event_scope"
+      ],
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150055637號",
+      "clause_code": "9.43",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 1,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "71c5e257d470360157116f6bd6fbe6acefe2052837148129c656fa4028a44946"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 1,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "41531d63b67c88dce3349f4cbf7b0571ac09b3ec35145d816eee9536d7c9ec9b",
+        "component_manifest_sha256": "4b703977e1c69bcac99fd5c56c09fb9d1e6579e6588424bf34e36888bf3b68a8"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150055748號",
+      "clause_code": "8.2.19",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 1,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "c1b2e08f3d6de19e7dcfe20cb7885b4077ce7fccd7db2b143093b8f7c143e90d"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 1,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "fbbea4059db6fcea53a6808cce47a080bed8b8d4adabb01e1723eb24522355e6",
+        "component_manifest_sha256": "420c3829da7410faa772205f590341859b25f1333d852d20f7f6781b239b3c8d"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150055691號",
+      "clause_code": "3.3.32",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "mismatch",
+        "generated_labels": 23,
+        "blocked_reason": "generated_list_label",
+        "projection_gate": "generated_list_label",
+        "revised_text_sha256": "f5ea5ca977900597b114bd4c2f72433794ab233605e1f9fdc2b153af59231f4d"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 23,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "4ef94cefb220ab3b43bfbe7dfe2bf65a788d3b17be5f1742694045060570b009",
+        "component_manifest_sha256": "e4521cd339c612dbd22af63354f99dfb969d5542a12a0d2d1aa4fa30719239c1"
+      },
+      "patch_row_columns_changed_vs_base_commit": "new_patch",
+      "patch_row_columns_differing_from_active_run": null
+    },
+    {
+      "reference_number": "健保審字第1150055348號",
+      "clause_code": "9.4",
+      "effective_on": "2026-09-01",
+      "before": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "blocked_reason": null,
+        "projection_gate": null,
+        "revised_text_sha256": "835900cf180c363aafc562c265bccd8bde9ab1774ed088ea1f7ac626aef23a3a"
+      },
+      "after": {
+        "libreoffice_check": "exact",
+        "generated_labels": 0,
+        "list_numbering_unsupported": [],
+        "projection_gate": null,
+        "revised_text_sha256": "835900cf180c363aafc562c265bccd8bde9ab1774ed088ea1f7ac626aef23a3a",
+        "component_manifest_sha256": "bb17442ff4c7f54bd32fa0e85409f9a40b067a5cb185554ffe4dadd891753856"
+      },
+      "patch_row_columns_changed_vs_base_commit": [],
+      "patch_row_columns_differing_from_active_run": null
+    }
+  ],
+  "engine_vs_libreoffice_all_notice_odts": {
+    "method": "Every text:p/text:h of each notice ODT attachment in the corpus: the reconstructed LibreOffice text-export prefix (four spaces per list level, label or two spaces, one space; empty outside lists) must equal the prefix LibreOffice wrote before that paragraph.",
+    "documents": 26,
+    "totals": {
+      "labelled_equal": 234,
+      "labelled_different": 0,
+      "plain_equal": 1835,
+      "plain_different": 0,
+      "unsupported": {
+        "number_format_unsupported": 17,
+        "outline_number": 1
+      },
+      "frame_text_not_exported": 4
+    },
+    "per_document": [
+      {
+        "reference_number": "健保審字第1150053809號",
+        "attachment": "attachment-002.odt",
+        "sha256": "6d50f8b73a1cc8af969ce2deac5a49cee1d2cc5ca1c49aec7c8842b06f823b21",
+        "labelled_equal": 26,
+        "labelled_different": 0,
+        "plain_equal": 52,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150054837號",
+        "attachment": "attachment-002.odt",
+        "sha256": "c43ddf5916b297845ce348c93cf08828edbe5264f54571d6571d890abb26adff",
+        "labelled_equal": 4,
+        "labelled_different": 0,
+        "plain_equal": 25,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055156號",
+        "attachment": "attachment-001.odt",
+        "sha256": "fd7bccdd4ba87231f361ef512e5caa624c2af0461ed5e4ee2adb37289fcd8b62",
+        "labelled_equal": 4,
+        "labelled_different": 0,
+        "plain_equal": 25,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055348號",
+        "attachment": "attachment-002.odt",
+        "sha256": "993d22a985cacdb98879f7daa9eeebbc7eda65fa75be7533194165342eb6d4fb",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 18,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055406號",
+        "attachment": "attachment-003.odt",
+        "sha256": "70e59baeca091070ac63a1ed6383d82a19ccc0695c50d6c3b0c7e57d249e5874",
+        "labelled_equal": 10,
+        "labelled_different": 0,
+        "plain_equal": 8,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055418號",
+        "attachment": "attachment-002.odt",
+        "sha256": "f6cbe42b14188c8bbc089e013d85f95440b8e8e8356069d6d53df6a3d82d96c5",
+        "labelled_equal": 6,
+        "labelled_different": 0,
+        "plain_equal": 9,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055429號",
+        "attachment": "attachment-003.odt",
+        "sha256": "b889fc0648ac26def2194d584d525e4555afe974737541aaf11eb992d587ca76",
+        "labelled_equal": 9,
+        "labelled_different": 0,
+        "plain_equal": 87,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {
+          "number_format_unsupported": 1
+        },
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055452號",
+        "attachment": "attachment-002.odt",
+        "sha256": "cfc42ac316f8bb91c7943361d01b4e159139da84a3f32367b08917cd4461a922",
+        "labelled_equal": 20,
+        "labelled_different": 0,
+        "plain_equal": 77,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055478號",
+        "attachment": "attachment-003.odt",
+        "sha256": "9048fca7063d3d5a39e31668f13a6a9008532ad78aa8928d3810697ed9aef116",
+        "labelled_equal": 8,
+        "labelled_different": 0,
+        "plain_equal": 38,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055637號",
+        "attachment": "attachment-000.odt",
+        "sha256": "8022e24bf70e69c3abe86dca76bc179fe329f2d1570f443184312b16bec7dd61",
+        "labelled_equal": 2,
+        "labelled_different": 0,
+        "plain_equal": 42,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055691號",
+        "attachment": "attachment-003.odt",
+        "sha256": "484fc26ec3bce447873e117631065c718ca54c5d247a78f7ddb609e0750cbdc1",
+        "labelled_equal": 30,
+        "labelled_different": 0,
+        "plain_equal": 40,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150055748號",
+        "attachment": "attachment-002.odt",
+        "sha256": "4c768294aa3c7049e11353234eb0d74d5e63e012622fd677cbf29220f415c565",
+        "labelled_equal": 21,
+        "labelled_different": 0,
+        "plain_equal": 142,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 2,
+        "unsupported": {
+          "number_format_unsupported": 8
+        },
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150056967號",
+        "attachment": "attachment-002.odt",
+        "sha256": "75e28dca0d41fb9b9ca992ade0f489b2e569cbb5d741c5321ba3ee5afe6a901a",
+        "labelled_equal": 2,
+        "labelled_different": 0,
+        "plain_equal": 24,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150056971號",
+        "attachment": "attachment-003.odt",
+        "sha256": "ab11c9f4a53056cf408fac78534b3d6c1935a8ebe3cb1607262129d4b94e29eb",
+        "labelled_equal": 9,
+        "labelled_different": 0,
+        "plain_equal": 73,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150056995號",
+        "attachment": "attachment-002.odt",
+        "sha256": "792ce0e3c2bff525063882c2e732b587f233adde21587aaf53d25f2263e23334",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 37,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {
+          "outline_number": 1
+        },
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150057031號",
+        "attachment": "attachment-003.odt",
+        "sha256": "1dc4cccc10028413fdba29a99bf6aa0b1627f1352777ea6efdd31fbd3e0192d6",
+        "labelled_equal": 22,
+        "labelled_different": 0,
+        "plain_equal": 145,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 2,
+        "unsupported": {
+          "number_format_unsupported": 8
+        },
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150057033號",
+        "attachment": "attachment-003.odt",
+        "sha256": "e6ae30c32ec293b711bc75d2fc0b5897ff8a7d2ee2cd2869e8915e773112093d",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 48,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150671800號",
+        "attachment": "attachment-002.odt",
+        "sha256": "1f70219f52fbccef52c80146e9d59515f661d1fb5ba90792f5ee826d07198f35",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 10,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 1
+      },
+      {
+        "reference_number": "健保審字第1150671887號",
+        "attachment": "attachment-001.odt",
+        "sha256": "4cec34b9d33050be55960986aa3780398a0d7edfc41eda60150c93f46e22f264",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 50,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 1
+      },
+      {
+        "reference_number": "健保審字第1150671889號",
+        "attachment": "attachment-007.odt",
+        "sha256": "423af6bc2fba8e727607e70c0b30e86edc040923b2eefc511f9baf62b2e2a5b4",
+        "labelled_equal": 3,
+        "labelled_different": 0,
+        "plain_equal": 54,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 1
+      },
+      {
+        "reference_number": "健保審字第1150671946號",
+        "attachment": "attachment-002.odt",
+        "sha256": "d14d619048399b2dd3f416043ff08b9cc1d0bbaed39d790956745cd006ad22e5",
+        "labelled_equal": 16,
+        "labelled_different": 0,
+        "plain_equal": 104,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150671962號",
+        "attachment": "attachment-003.odt",
+        "sha256": "207dde0b40e9ed0238b6b40746f2450d98205f6d39d5e167ec2b41c9ec8f9e44",
+        "labelled_equal": 1,
+        "labelled_different": 0,
+        "plain_equal": 396,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150672381號",
+        "attachment": "attachment-000.odt",
+        "sha256": "1c5829bf5a447080a2222e4bc0fb486eee55137a100e053c8e4a96ef15ff4fb4",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 39,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150672430號",
+        "attachment": "attachment-001.odt",
+        "sha256": "01e402a48125d665fbba9477ce7609e1e85149ca7dabc23bff91775fb4c83f25",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 20,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      },
+      {
+        "reference_number": "健保審字第1150672509號",
+        "attachment": "attachment-001.odt",
+        "sha256": "5793f99c735db4e139b823fd6de8dfa2eb298df9b72f407227b43b8d01e32ae6",
+        "labelled_equal": 0,
+        "labelled_different": 0,
+        "plain_equal": 36,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 1
+      },
+      {
+        "reference_number": "健保審字第1150672522號",
+        "attachment": "attachment-002.odt",
+        "sha256": "d98797bf9db4f7e8f21a2e7fb9942b67338f468ea89ba15f596a3ecb62a0863c",
+        "labelled_equal": 41,
+        "labelled_different": 0,
+        "plain_equal": 236,
+        "plain_different": 0,
+        "empty_paragraphs_labelled": 0,
+        "unsupported": {},
+        "frame_text_not_exported": 0
+      }
+    ]
+  },
+  "official_pdf_text_layer_check": {
+    "method": "For each generated label of the clauses made projectable here and of 9.69: NFKC, whitespace-free PDF text (pdftotext -raw) of the notice PDF attachments must contain label + the first ten characters of the paragraph text. Heuristic print evidence only.",
+    "labels_checked": 58,
+    "label_precedes_text": 58,
+    "shifted_label_also_present": 6,
+    "negative_control_note": "The shifted-label control is not clean: a shifted label is also found where it is a substring of the true one (v. in iv., x. in ix.) or where the same text is printed with another label in an appendix form."
+  },
+  "previously_projected_rows_vs_active_run": {
+    "active_run_id": "ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd",
+    "result": "For 2.1.4.2, 3.3.28, 4.2, 8.1.3 and 9.113 every clause_patch column equals the active run. For 9.56, 9.103, 9.2 and 9.5 only unprocessed_event_scope differs, because sibling clauses are now projected. Text, hashes, patch ids and component manifests are byte-identical."
+  },
+  "registered_manifest_identity_2026_09_01": [
+    {
+      "reference_number": "健保審字第1150054837號",
+      "queue_state_at_check": "failed_terminal",
+      "previous_byte_rule_admits": false,
+      "identity_problem": null,
+      "method": "canonical_bytes_with_bookkeeping_reverted",
+      "registered_manifest_sha256": "106af224c6155f83be7bc11a56ef126e78c13cee68163e8c485d45b2c7681cc8",
+      "current_manifest_sha256": "7316dfac2a5b7f928f2820a198e92cec7399db250a371ecc71027a3f7f5f0ce3",
+      "reverted_extraction_status": {
+        "mineru": {
+          "registered": null,
+          "current": "done"
+        },
+        "proofread": {
+          "registered": "not_started",
+          "current": "done"
+        }
+      },
+      "parsed_clauses": [
+        "5.6.1"
+      ],
+      "effective_on": "2026-09-01"
+    },
+    {
+      "reference_number": "健保審字第1150055637號",
+      "queue_state_at_check": "failed_terminal",
+      "previous_byte_rule_admits": false,
+      "identity_problem": null,
+      "method": "canonical_bytes_with_bookkeeping_reverted",
+      "registered_manifest_sha256": "a6ec66141c6ac6fb7ff4250378db35a292121da233708085d0aaa249f0b90eec",
+      "current_manifest_sha256": "b45539b0e189e95eb02103380316f053ebf0bc97649300e6f4d89acb9923d2af",
+      "reverted_extraction_status": {
+        "mineru": {
+          "registered": null,
+          "current": "done"
+        }
+      },
+      "parsed_clauses": [
+        "9.20",
+        "9.43"
+      ],
+      "effective_on": "2026-09-01"
+    },
+    {
+      "reference_number": "健保審字第1150055748號",
+      "queue_state_at_check": "failed_terminal",
+      "previous_byte_rule_admits": false,
+      "identity_problem": null,
+      "method": "canonical_bytes_with_bookkeeping_reverted",
+      "registered_manifest_sha256": "bf20b8517085914d5f9743ae69fa2ac1aa02735d0ed1d7a870b6375996baacc4",
+      "current_manifest_sha256": "b31fd109e5c9c42ed7d951bbefb0c9030f3ba1bf3134a9b5a05ff36990e5c934",
+      "reverted_extraction_status": {
+        "mineru": {
+          "registered": null,
+          "current": "done"
+        }
+      },
+      "parsed_clauses": [
+        "8.2.19"
+      ],
+      "effective_on": "2026-09-01"
+    },
+    {
+      "reference_number": "健保審字第1150055691號",
+      "queue_state_at_check": "failed_terminal",
+      "previous_byte_rule_admits": false,
+      "identity_problem": null,
+      "method": "canonical_bytes_with_bookkeeping_reverted",
+      "registered_manifest_sha256": "74a6da9b27f5077b5200a69b9f89f67c5d4881a486455941dd808287d66aabe1",
+      "current_manifest_sha256": "8022dffa3e1b3e976b022f932ac4a4f2bb27783011ff6f4ac4158c114df0cb36",
+      "reverted_extraction_status": {
+        "mineru": {
+          "registered": null,
+          "current": "done"
+        }
+      },
+      "parsed_clauses": [
+        "3.3.32"
+      ],
+      "effective_on": "2026-09-01"
+    },
+    {
+      "reference_number": "健保審字第1150055348號",
+      "queue_state_at_check": "failed_terminal",
+      "previous_byte_rule_admits": false,
+      "identity_problem": null,
+      "method": "canonical_bytes_with_bookkeeping_reverted",
+      "registered_manifest_sha256": "5c67618ec5989c829bbd0c8ae7510e0d21740456542472e645b5eea0097767b6",
+      "current_manifest_sha256": "923fda779d73229bdd26e74b6de350e55950dc5631bd3e0943b1d37c7a6e836a",
+      "reverted_extraction_status": {
+        "mineru": {
+          "registered": null,
+          "current": "done"
+        }
+      },
+      "parsed_clauses": [
+        "9.4"
+      ],
+      "effective_on": "2026-09-01"
+    }
+  ],
+  "compose_replays_on_active_base": {
+    "method": "Read-only prepare_overlay_release on the active run, with the notices selected by replaying each work item's recorded corpus_registered receipt (the live queue no longer holds them). Notices already carried by the active run are excluded by design.",
+    "runs": [
+      {
+        "base_run_id": "ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd",
+        "effective_on": "2026-10-01",
+        "run_id": "ab2c2470-9c82-5695-b17f-5c1d4402c1d7",
+        "sealed_fingerprint": "3f8d16b78a868bf108d298bbda93807b5d8b9f4fde8b6aa725046a4ea91045d2",
+        "expected_counts": {
+          "clause_patch": 11,
+          "composed_clause_block": 406,
+          "composed_clause_diff_hunk": 1,
+          "composed_clause_reimbursement_code": 609,
+          "composed_clause_tagging_block_input": 406,
+          "composed_clause_terminology_occurrence": 6,
+          "composed_clause_version": 1,
+          "decision_input": 29,
+          "decision_model": 1,
+          "model_product_code": 609,
+          "notice_effect": 26,
+          "notice_event": 10,
+          "patch_component": 337,
+          "reimbursement_product_snapshot": 609,
+          "risk_branch": 21,
+          "risk_category": 6,
+          "risk_predicate": 34
+        },
+        "notices": [
+          {
+            "pending": [
+              {
+                "clause_code": null,
+                "effect_type": "reimbursed_item_change"
+              }
+            ],
+            "projected": [
+              "8.2.19"
+            ],
+            "reference_number": "健保審字第1150057031號"
+          }
+        ]
+      },
+      {
+        "base_run_id": "ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd",
+        "effective_on": "2026-09-01",
+        "run_id": "cfd5c66b-d952-5e4c-a92d-d71252a19bf0",
+        "sealed_fingerprint": "e5ac86b207413b55ebe918088a97a0a1472495f474ed91e7e847e15341b3ce53",
+        "expected_counts": {
+          "clause_patch": 16,
+          "composed_clause_block": 406,
+          "composed_clause_diff_hunk": 1,
+          "composed_clause_reimbursement_code": 609,
+          "composed_clause_tagging_block_input": 406,
+          "composed_clause_terminology_occurrence": 6,
+          "composed_clause_version": 1,
+          "decision_input": 29,
+          "decision_model": 1,
+          "model_product_code": 609,
+          "notice_effect": 34,
+          "notice_event": 14,
+          "patch_component": 337,
+          "reimbursement_product_snapshot": 609,
+          "risk_branch": 21,
+          "risk_category": 6,
+          "risk_predicate": 34
+        },
+        "notices": [
+          {
+            "pending": [
+              {
+                "clause_code": null,
+                "effect_type": "reimbursed_item_change"
+              }
+            ],
+            "projected": [
+              "5.6.1"
+            ],
+            "reference_number": "健保審字第1150054837號"
+          },
+          {
+            "pending": [
+              {
+                "clause_code": null,
+                "effect_type": "reimbursed_item_change"
+              }
+            ],
+            "projected": [
+              "9.4"
+            ],
+            "reference_number": "健保審字第1150055348號"
+          },
+          {
+            "pending": [],
+            "projected": [
+              "9.20",
+              "9.43"
+            ],
+            "reference_number": "健保審字第1150055637號"
+          },
+          {
+            "pending": [
+              {
+                "clause_code": null,
+                "effect_type": "reimbursed_item_change"
+              }
+            ],
+            "projected": [
+              "3.3.32"
+            ],
+            "reference_number": "健保審字第1150055691號"
+          },
+          {
+            "pending": [
+              {
+                "clause_code": null,
+                "effect_type": "reimbursed_item_change"
+              }
+            ],
+            "projected": [
+              "8.2.19"
+            ],
+            "reference_number": "健保審字第1150055748號"
+          }
+        ]
+      }
+    ],
+    "base_commit_result": "no notice has a projectable clause (both dates)"
+  },
+  "queue_state_observed": {
+    "observed_at": "2026-09-28T15:00:00+08:00",
+    "corpus_registered_items": 0,
+    "transitions": "Five 2026-09-01 notices moved to failed_terminal (NHI_UPDATE_BUNDLE_UNAVAILABLE) 10:36-11:11; eight 2026-10-01 notices to partition_required 11:21-12:31; 1150057033 to failed_terminal (NHI_WORKER_PRIMARY_AND_FALLBACK_FAILED) 12:01. Run ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd was activated at 10:56:22."
+  },
+  "tests": {
+    "command": "make test with every PostgreSQL test on a throwaway initdb cluster",
+    "result_this_branch": "70 + 561 tests OK (1 skipped in the first set)",
+    "result_base_commit_same_environment": "70 + 541 tests OK (1 skipped in the first set)",
+    "public_tree_check": "passed"
+  },
+  "non_claims": [
+    "Nothing was loaded, activated or written in any production database.",
+    "9.69 remains pending: its revised column contains a nested table, whose LibreOffice text export this check does not model.",
+    "Clauses in notices already carried by the active run (9.139, 9.140, 9.26, 9.5.1) cannot be added to it by this loader; a rollback to the previous base or a re-projection lane is required.",
+    "Microsoft Word itself was not run; agreement with its print rests on the counter-model and list-format checks and the PDF text layer.",
+    "Labels are verified against LibreOffice 26.2.5.2; another version may render differently and is not claimed.",
+    "Run ids depend on the code fingerprint and change with any edit to the three announced modules."
+  ]
+}

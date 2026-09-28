@@ -1,0 +1,503 @@
+{
+  "notices": [
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品新收載項目明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第8節 免疫製劑 Immunologic agents 8.2.19.Danicopan (如Voydeya)、iptacopan (如Fabhalta)、pegcetacoplan (如Aspaveli/Empaveli)」給付規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 3,
+        "file_name": "attachment-003.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 30065,
+        "official_sha256": "1dc4cccc10028413fdba29a99bf6aa0b1627f1352777ea6efdd31fbd3e0192d6"
+      },
+      "expected": {
+        "block_count": 175,
+        "clauses": [
+          {
+            "clause_code": "8.2.19",
+            "component_manifest_sha256": "fdc6cb2df8248f4a46a9ba23bcb08003c4f4151e2b65054344aedbe6a35f6b3b",
+            "generated_labels": [
+              "1."
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": false,
+            "original_text_sha256": "d80c56516a582e479cf49e4af5a7c85ecf1b651c306bf00eade9f970c9c9b617",
+            "projection_block_reason": null,
+            "revised_block_count": 19,
+            "revised_text_sha256": "071bca29ef294234cd03e0010fc3e025889830c1df5c9da42e1628b3b13789c7",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "labelled_block_count": 22
+      },
+      "fixture": {
+        "derivation": "official content.xml with exact office:body bytes; list styles, outline style, ODF 1.4 list formats and paragraph styles reduced to the attributes list labels depend on; generator from meta.xml (tools/build_announced_notice_fixture.py --numbering)",
+        "files": {
+          "content": {
+            "byte_size": 59496,
+            "file_name": "1150057031.content.xml",
+            "sha256": "ee80199d57fe6e7c7ee8453ce8f38b531dd7bf545c44b49dd4402fccd7c23290"
+          },
+          "meta": {
+            "byte_size": 302,
+            "file_name": "1150057031.meta.xml",
+            "sha256": "284d537ff7e4cb930705eb60e0d46ff150adfa03ffef9835df7683d3624e53c9"
+          },
+          "styles": {
+            "byte_size": 5020,
+            "file_name": "1150057031.styles.xml",
+            "sha256": "0508fc72e6960465cceee6637f44a075bea26ed1137019b72678aed4c56c95a7"
+          }
+        },
+        "libreoffice_rendering_sha256": "ef340314fb34f5e539666ab78b3ddc59de543949839db7b38270e4ad65a751f1"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20421-b4c5a-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_count": 175,
+      "raw_md_block_receipts_sha256": "c15971ebaa9a19a871106646ad3214126df110d9b6f44c6b05d672e218589846",
+      "reference_number": "健保審字第1150057031號",
+      "source_uid": "gov_健保審字第1150057031號",
+      "title": "公告暫予支付含pegcetacoplan成分藥品Aspaveli/Empaveli 1080mg solution for infusion及其藥品給付規定。"
+    },
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品新收載項目明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第9節抗癌瘤藥物Antineoplastics drugs 9.139. Mogamulizumab（如Poteligeo）及9.56.Brentuximab vedotin（如Adcetris）」部分規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 2,
+        "file_name": "attachment-002.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 12594,
+        "official_sha256": "75e28dca0d41fb9b9ca992ade0f489b2e569cbb5d741c5321ba3ee5afe6a901a"
+      },
+      "expected": {
+        "block_count": 26,
+        "clauses": [
+          {
+            "clause_code": "9.139",
+            "component_manifest_sha256": "08b05575926eb2c19bc637028f3ab7bcde344830c7cb2e602618e705648fe7c6",
+            "generated_labels": [
+              "1.",
+              "2."
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": true,
+            "original_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "projection_block_reason": null,
+            "revised_block_count": 7,
+            "revised_text_sha256": "dcdf9b86967260012c520c10c91a9bf5755bf9c44e42b07b15691e3b896b3dce",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.56",
+            "component_manifest_sha256": "4d1e03a51b451e86a086176887df8658f9ddc71d270bab90f78ef80656c6ef18",
+            "generated_labels": [],
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "963895a2a7bc78062fdaa8746bf58182f1487b4c375e93d6e6ac831ab0ad33e3",
+            "projection_block_reason": null,
+            "revised_block_count": 6,
+            "revised_text_sha256": "31a7ca535e4dcaf3dedbf9bfdcd1357da76269a4bd7e6f5c694943c0cb64f147",
+            "rows": [
+              [
+                0,
+                2
+              ]
+            ]
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "labelled_block_count": 2
+      },
+      "fixture": {
+        "derivation": "official content.xml with exact office:body bytes; list styles, outline style, ODF 1.4 list formats and paragraph styles reduced to the attributes list labels depend on; generator from meta.xml (tools/build_announced_notice_fixture.py --numbering)",
+        "files": {
+          "content": {
+            "byte_size": 10315,
+            "file_name": "1150056967.content.xml",
+            "sha256": "1d87273581d84278cd2dd629424816e4e0165fe08874ff945e9a1cf0d44bd2ba"
+          },
+          "meta": {
+            "byte_size": 302,
+            "file_name": "1150056967.meta.xml",
+            "sha256": "284d537ff7e4cb930705eb60e0d46ff150adfa03ffef9835df7683d3624e53c9"
+          },
+          "styles": {
+            "byte_size": 2348,
+            "file_name": "1150056967.styles.xml",
+            "sha256": "e4b84b8c426ddf57f2a5e651cfe0f02ed2d844f9772cb80a2b0e5af6337af5e6"
+          }
+        },
+        "libreoffice_rendering_sha256": "4adc6461de98e9d34753693f81e8a5e49d90924ccd73a3716f81aeee393ffd1c"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20428-4e0b9-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_count": 26,
+      "raw_md_block_receipts_sha256": "cf6cde04f2545847b2f5ad0e1de5c517c802906c558ed416cc7fe8cb7cca2b9f",
+      "reference_number": "健保審字第1150056967號",
+      "source_uid": "gov_健保審字第1150056967號",
+      "title": "公告暫予支付含mogamulizumab成分藥品Poteligeo 4 mg/mL concentrate for solution for infusion 及其藥品給付規定暨修訂含brentuximab vedotin成分藥品給付規定。"
+    },
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品新收載項目明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第9節抗癌瘤藥物Antineoplastics drugs 9.140. Axicabtagene ciloleucel（如Yescarta）及9.103.Tisagenlecleucel（如Kymriah）」部分規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 3,
+        "file_name": "attachment-003.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 14924,
+        "official_sha256": "ab11c9f4a53056cf408fac78534b3d6c1935a8ebe3cb1607262129d4b94e29eb"
+      },
+      "expected": {
+        "block_count": 82,
+        "clauses": [
+          {
+            "clause_code": "9.140",
+            "component_manifest_sha256": "2bd02adc67e3d9a50d112195e790edcf19586afa979f389bc4370aaf3d78ef16",
+            "generated_labels": [
+              "i.",
+              "ii.",
+              "iii.",
+              "iv.",
+              "v.",
+              "vi.",
+              "vii.",
+              "viii.",
+              "ix."
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": true,
+            "original_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "projection_block_reason": null,
+            "revised_block_count": 42,
+            "revised_text_sha256": "7ea36c3b03e2ef260b8cc537c29d601b567fe1040be3088eb8b380b2879d3388",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.103",
+            "component_manifest_sha256": "7d1c4a62801d72c20bf6a2464ec99a9af6bfdc96a14f2c5cb4044abcb6c76e2d",
+            "generated_labels": [],
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "515553455c2cfbfc9c5ad80b2a04dd79ea7cc7e7edb0b8526778cce045592773",
+            "projection_block_reason": null,
+            "revised_block_count": 17,
+            "revised_text_sha256": "a4e4c387cf0fe438f14b1ec0b66d2599cb3451a98c7c8b8aa54889dbee7e026e",
+            "rows": [
+              [
+                0,
+                2
+              ]
+            ]
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "labelled_block_count": 9
+      },
+      "fixture": {
+        "derivation": "official content.xml with exact office:body bytes; list styles, outline style, ODF 1.4 list formats and paragraph styles reduced to the attributes list labels depend on; generator from meta.xml (tools/build_announced_notice_fixture.py --numbering)",
+        "files": {
+          "content": {
+            "byte_size": 16645,
+            "file_name": "1150056971.content.xml",
+            "sha256": "da7ca8473ead914b51d1aef15b58ac840c309d7fd95af97518e1b2485c53caa9"
+          },
+          "meta": {
+            "byte_size": 302,
+            "file_name": "1150056971.meta.xml",
+            "sha256": "284d537ff7e4cb930705eb60e0d46ff150adfa03ffef9835df7683d3624e53c9"
+          },
+          "styles": {
+            "byte_size": 2348,
+            "file_name": "1150056971.styles.xml",
+            "sha256": "e4b84b8c426ddf57f2a5e651cfe0f02ed2d844f9772cb80a2b0e5af6337af5e6"
+          }
+        },
+        "libreoffice_rendering_sha256": "9259f3733cf97bb260d5f3e8ac09116c76fb8459a7095b306862520dc5d844e8"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20429-6c691-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_count": 82,
+      "raw_md_block_receipts_sha256": "7ccb2bc1eb16a04a3f73f311a7ed9ab93d607b105cc17bdb85dea20283872a8f",
+      "reference_number": "健保審字第1150056971號",
+      "source_uid": "gov_健保審字第1150056971號",
+      "title": "公告暫予支付含axicabtagene ciloleucel成分藥品Yescarta suspension for intravenous infusion及其藥品給付規定暨修訂含tisagenlecleucel成分藥品給付規定。"
+    },
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品新收載品項明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第9節抗癌瘤藥物Antineoplastics drugs 9.69.免疫檢查點抑制劑、9.2. Carboplatin、9.26. Pemetrexed及9.5.1. Paclitaxel成分注射劑」部分規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 2,
+        "file_name": "attachment-002.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 42497,
+        "official_sha256": "d98797bf9db4f7e8f21a2e7fb9942b67338f468ea89ba15f596a3ecb62a0863c"
+      },
+      "expected": {
+        "block_count": 277,
+        "clauses": [
+          {
+            "clause_code": "9.69",
+            "component_manifest_sha256": "092e79883f90d384b503b37467b5eb26bcbc9f516175ee81357be768c2f27cd1",
+            "generated_labels": [
+              "(1)",
+              "(2)",
+              "(3)",
+              "(4)",
+              "(5)",
+              "(6)",
+              "(10)",
+              "(11)",
+              "2.",
+              "(1)",
+              "(2)",
+              "(3)",
+              "(4)",
+              "3.",
+              "(1)",
+              "4."
+            ],
+            "official_rendering_check": "not_applicable_nested_table",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "a64127eb673298835d44f4f698520353ccc33b71276a058ae123be8b0a67a89c",
+            "projection_block_reason": "nested_table",
+            "revised_block_count": 128,
+            "revised_text_sha256": "49292c16ecf305920be4ff6f073e9ec8aca32588ce6ecf111a424a2f24ad87e1",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.2",
+            "component_manifest_sha256": "6ef545ead48efdbda2718d4e8dbb3be70eda272bba9b258735b3869f25ffcfdd",
+            "generated_labels": [],
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "219b66a847a306e4801fd762a740441ff1d8930b7927032e009bac055607ade2",
+            "projection_block_reason": null,
+            "revised_block_count": 5,
+            "revised_text_sha256": "bdbff22ad1165cdf58222b6eb54d32ad9bb96e0cf5c701c06f8b88d758d627ab",
+            "rows": [
+              [
+                0,
+                2
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.26",
+            "component_manifest_sha256": "d68d1ced3734e764d9984ceb7df41e94ce279be7035badf670170f303584fa42",
+            "generated_labels": [
+              "(5)",
+              "(6)"
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "1697ed4898eaf05e64de15bb93784b5ee5e2a082c63db90fc7a665421a6f2eae",
+            "projection_block_reason": null,
+            "revised_block_count": 7,
+            "revised_text_sha256": "75a92e5c430b68fa054ef023f2efe9427aae0a873d1b0e8000197945e41f9131",
+            "rows": [
+              [
+                0,
+                3
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.5",
+            "component_manifest_sha256": "7f9cea15ef9dde5f30c0b8f739193581d23907ab350b0103b7a79fe95a53a804",
+            "generated_labels": [],
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": false,
+            "original_text_sha256": "3df73c53310038bdaf0ef8f697be05a8f2fc88b70c9d385feb0907af8e7e4d2e",
+            "projection_block_reason": null,
+            "revised_block_count": 1,
+            "revised_text_sha256": "59cab4a6d711bc7d3301bd1bd30fb9b3b9ce15708fbd3278029c0c18338407db",
+            "rows": [
+              [
+                0,
+                4
+              ]
+            ]
+          },
+          {
+            "clause_code": "9.5.1",
+            "component_manifest_sha256": "f227b9523338826a4cce84e61a15a1b560649fd8d4ca9cd3a91dfbc4d9f138d6",
+            "generated_labels": [
+              "1."
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": true,
+            "original_is_none": false,
+            "original_text_sha256": "54de7520bd872417492d34816ebfb3412b2c17cc2f6a5020706b2ba1a1e4e0db",
+            "projection_block_reason": null,
+            "revised_block_count": 5,
+            "revised_text_sha256": "8f2e561b00b1a70e52225089206f16cd3903c0533d0498af9f734a9a1ae9ab53",
+            "rows": [
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ],
+        "effective_on": "2026-10-01",
+        "labelled_block_count": 41
+      },
+      "fixture": {
+        "derivation": "official content.xml with exact office:body bytes; list styles, outline style, ODF 1.4 list formats and paragraph styles reduced to the attributes list labels depend on; generator from meta.xml (tools/build_announced_notice_fixture.py --numbering)",
+        "files": {
+          "content": {
+            "byte_size": 79302,
+            "file_name": "1150672522.content.xml",
+            "sha256": "6e7c5f75b8ce4aebcad8b27fcd2a1d7c6d6d238983f2893372194284594c22b0"
+          },
+          "meta": {
+            "byte_size": 302,
+            "file_name": "1150672522.meta.xml",
+            "sha256": "284d537ff7e4cb930705eb60e0d46ff150adfa03ffef9835df7683d3624e53c9"
+          },
+          "styles": {
+            "byte_size": 3754,
+            "file_name": "1150672522.styles.xml",
+            "sha256": "35b8ab3dc59573fac8491105e5d1466846feb22b05c91fb9d42a8ef64cae6402"
+          }
+        },
+        "libreoffice_rendering_sha256": "2f3311714173f6341f9a46b8ea454f0ea5a59f5e0d3bc9b2b9272ebdd31eda78"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20426-816a9-3258-1.html",
+      "published_on": "2026-09-15",
+      "raw_md_block_count": 277,
+      "raw_md_block_receipts_sha256": "0c36d82953a6c1fc652f0f093ea8c182ad5a63db256fc300867cdfc9d2adc8c0",
+      "reference_number": "健保審字第1150672522號",
+      "source_uid": "gov_健保審字第1150672522號",
+      "title": "公告暫予支付含tislelizumab成分藥品Tevimbra Concentrated Solution for Infusion及修訂9.69.免疫檢查點抑制劑、9.2. Carboplatin、9.26. Pemetrexed及9.5.1. Paclitaxel成分注射劑藥品給付規定。"
+    },
+    {
+      "announcement_items": [
+        "一、「全民健康保險藥品新收載項目明細表」如附件1。",
+        "二、修訂「全民健康保險藥物給付項目及支付標準－第六編第八十三條之藥品給付規定第3節代謝及營養劑 Metabolic & nutrient agents 3.3.32. Maralixibat chloride（如 Livmarli）」給付規定，給付規定修訂對照表如附件2。"
+      ],
+      "attachment": {
+        "declared_sequence": 3,
+        "file_name": "attachment-003.odt",
+        "media_type": "application/vnd.oasis.opendocument.text",
+        "official_byte_size": 17479,
+        "official_sha256": "484fc26ec3bce447873e117631065c718ca54c5d247a78f7ddb609e0750cbdc1"
+      },
+      "expected": {
+        "block_count": 70,
+        "clauses": [
+          {
+            "clause_code": "3.3.32",
+            "component_manifest_sha256": "e4521cd339c612dbd22af63354f99dfb969d5542a12a0d2d1aa4fa30719239c1",
+            "generated_labels": [
+              "1.",
+              "(1)",
+              "(2)",
+              "2.",
+              "(1)",
+              "(2)",
+              "I.",
+              "i.",
+              "ii.",
+              "iii.",
+              "iv.",
+              "v.",
+              "vi.",
+              "vii.",
+              "II.",
+              "i.",
+              "ii.",
+              "(3)",
+              "I.",
+              "II.",
+              "3.",
+              "4.",
+              "5."
+            ],
+            "official_rendering_check": "exact",
+            "omitted_text_present": false,
+            "original_is_none": true,
+            "original_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "projection_block_reason": null,
+            "revised_block_count": 25,
+            "revised_text_sha256": "4ef94cefb220ab3b43bfbe7dfe2bf65a788d3b17be5f1742694045060570b009",
+            "rows": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        ],
+        "effective_on": "2026-09-01",
+        "labelled_block_count": 30
+      },
+      "fixture": {
+        "derivation": "official content.xml with exact office:body bytes; list styles, outline style, ODF 1.4 list formats and paragraph styles reduced to the attributes list labels depend on; generator from meta.xml (tools/build_announced_notice_fixture.py --numbering)",
+        "files": {
+          "content": {
+            "byte_size": 23822,
+            "file_name": "1150055691.content.xml",
+            "sha256": "b90bc26659aa9d8eb2e021314e9901cd0049b6ff5d9f253c05793faedc016899"
+          },
+          "meta": {
+            "byte_size": 302,
+            "file_name": "1150055691.meta.xml",
+            "sha256": "284d537ff7e4cb930705eb60e0d46ff150adfa03ffef9835df7683d3624e53c9"
+          },
+          "styles": {
+            "byte_size": 4386,
+            "file_name": "1150055691.styles.xml",
+            "sha256": "221acf213f4460fad91346a78b0da952e4b3621e5b62500668fa6b7cd8da821e"
+          }
+        },
+        "libreoffice_rendering_sha256": "1f5ed909879c9230cb867ae17ac6c06906869b598705f7b95c90ef5951de13cf"
+      },
+      "official_url": "https://www.nhi.gov.tw/ch/cp-20358-df406-3258-1.html",
+      "published_on": "2026-08-14",
+      "raw_md_block_count": 70,
+      "raw_md_block_receipts_sha256": "52a635012fa2907c4552851131e2dee6f95f30efd51ecc475ce54c164aa54b20",
+      "reference_number": "健保審字第1150055691號",
+      "source_uid": "gov_健保審字第1150055691號",
+      "title": "公告暫予支付含maralixibat chloride成分藥品Livmarli oral solution及其藥品給付規定。"
+    }
+  ]
+}

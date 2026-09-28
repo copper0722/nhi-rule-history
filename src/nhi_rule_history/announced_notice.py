@@ -17,12 +17,18 @@ Parsing fails closed.  An unknown table grammar, an ambiguous or missing
 effective date, a designation mismatch between the two columns, an unsupported
 ODF feature, or any disagreement between this module's own XML traversal and
 the project ODT block parser raises :class:`AnnouncedNoticeError`.
+
+Automatic list labels (``1.``, ``(5)``) are not character data.  They are
+reconstructed by :mod:`nhi_rule_history.odf_list_numbering` and printed
+before the paragraph text followed by the label's tab, space or nothing; a
+clause with a list feature that module does not reproduce is held back.
 """
 
 from __future__ import annotations
 
 import hashlib
 import io
+import itertools
 import json
 import re
 import shutil
@@ -37,12 +43,18 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 from xml.etree import ElementTree
 
+from nhi_rule_history.contracts import canonical_json_bytes
 from nhi_rule_history.current_publication import semantic_comparison_text
+from nhi_rule_history.odf_list_numbering import (
+    LIST_LABEL_RULE_VERSION,
+    ListLabel,
+    resolve_list_labels,
+)
 from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.0.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.1.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -56,7 +68,6 @@ _UUID_NAMESPACE = uuid.UUID("5b0c7d7e-2f55-4b6f-a2c4-6f1d8e0b9a31")
 _OFFICE = "urn:oasis:names:tc:opendocument:xmlns:office:1.0"
 _TEXT = "urn:oasis:names:tc:opendocument:xmlns:text:1.0"
 _TABLE = "urn:oasis:names:tc:opendocument:xmlns:table:1.0"
-_STYLE = "urn:oasis:names:tc:opendocument:xmlns:style:1.0"
 _TAG_P = f"{{{_TEXT}}}p"
 _TAG_H = f"{{{_TEXT}}}h"
 _TAG_S = f"{{{_TEXT}}}s"
@@ -74,30 +85,12 @@ _ATTR_COLUMNS_SPANNED = f"{{{_TABLE}}}number-columns-spanned"
 _ATTR_ROWS_SPANNED = f"{{{_TABLE}}}number-rows-spanned"
 _ATTR_COLUMNS_REPEATED = f"{{{_TABLE}}}number-columns-repeated"
 _ATTR_ROWS_REPEATED = f"{{{_TABLE}}}number-rows-repeated"
-_TAG_LIST = f"{{{_TEXT}}}list"
-_TAG_LIST_ITEM = f"{{{_TEXT}}}list-item"
-_TAG_NUMBERED_PARAGRAPH = f"{{{_TEXT}}}numbered-paragraph"
-_TAG_LIST_STYLE = f"{{{_TEXT}}}list-style"
-_TAG_OUTLINE_STYLE = f"{{{_TEXT}}}outline-style"
-_TAG_LEVEL_BULLET = f"{{{_TEXT}}}list-level-style-bullet"
-_TAG_LEVEL_IMAGE = f"{{{_TEXT}}}list-level-style-image"
-_TAG_OUTLINE_LEVEL = f"{{{_TEXT}}}outline-level-style"
-_TAG_STYLE = f"{{{_STYLE}}}style"
-_ATTR_TEXT_STYLE_NAME = f"{{{_TEXT}}}style-name"
-_ATTR_STYLE_NAME = f"{{{_STYLE}}}name"
-_ATTR_STYLE_FAMILY = f"{{{_STYLE}}}family"
-_ATTR_PARENT_STYLE = f"{{{_STYLE}}}parent-style-name"
-_ATTR_LIST_STYLE_NAME = f"{{{_STYLE}}}list-style-name"
-_ATTR_DEFAULT_OUTLINE_LEVEL = f"{{{_STYLE}}}default-outline-level"
-_ATTR_LEVEL = f"{{{_TEXT}}}level"
-_ATTR_OUTLINE_LEVEL = f"{{{_TEXT}}}outline-level"
-_ATTR_IS_LIST_HEADER = f"{{{_TEXT}}}is-list-header"
-_ATTR_NUM_FORMAT = f"{{{_STYLE}}}num-format"
-_ATTR_NUM_PREFIX = f"{{{_STYLE}}}num-prefix"
-_ATTR_NUM_SUFFIX = f"{{{_STYLE}}}num-suffix"
 
 # Column headers observed in official comparison tables.  Anything else is
-# not a comparison table and is never guessed into one.
+# not a comparison table and is never guessed into one.  NHI announcements
+# sometimes keep the drafting label ``建議修訂後`` on the revised column; it is
+# announced text only inside an announcement (公告), never in a pre-announcement
+# (預告) or any other notice.
 _REVISED_HEADER_RE = re.compile(
     r"^(?P<prefix>建議)?修[訂正]後(?P<kind>給付規定|附表規定)$"
 )
@@ -115,6 +108,14 @@ _EFFECTIVE_WORD_RE = re.compile(r"生效")
 _CLAUSE_HEADING_RE = re.compile(
     r"^\s*(?P<code>[1-9][0-9]*(?:\.[0-9]+)+)\.(?![0-9])"
 )
+# Anything that may designate a clause or a general-rule item without the
+# strict heading form: a dotted number after optional marks (``9.140 Bar``,
+# ``9.57:Bar``, ``◎9.141.``, ``0.5.``) or an item ordinal (``五、``).  A
+# row holding one never continues the previous clause.
+_LOOSE_DESIGNATION_RE = re.compile(
+    r"^[^0-9A-Za-z\u3400-\u9fff]*"
+    r"(?:[0-9]+(?:\.[0-9]+)+|[一二三四五六七八九十百]+、)"
+)
 _APPENDIX_DESIGNATION_RE = re.compile(
     r"附表[一二三四五六七八九十百零〇]+(?:之[一二三四五六七八九十]+)?"
 )
@@ -127,6 +128,32 @@ _OMISSION_RE = re.compile(
     r"|(?:^|[\s:,、。)\]】~])略\s*[。.]?\s*$"
 )
 _UNSUPPORTED_CELL_TAGS = frozenset({_TAG_NOTE, _TAG_ANNOTATION})
+# Manifest rows of these roles, and raw.md, are source files: the parser
+# reads them or they identify the notice, so their size and SHA-256 are always
+# checked and a registration proof never undoes them.  Any other role is a
+# derived text layer (proofread.md and later layers) that the parser never
+# reads.
+SOURCE_FILE_ROLES = frozenset(
+    {
+        "declared_attachment",
+        "deterministic_extraction",
+        "detail_page",
+        "rss_observation",
+        "comparison_odt",
+        "comparison_pdf",
+    }
+)
+# Corpus bookkeeping may add or advance these ``extraction_status`` keys in
+# manifest.json after registration.  Each maps to the values the key may have
+# held at registration (``None``: absent).
+_BOOKKEEPING_REVERSIONS: Mapping[str, tuple[str | None, ...]] = {
+    "mineru": (None,),
+    "proofread": ("not_started",),
+}
+# Top-level keys that the proofread lane adds after registration.  The parser
+# reads neither; the effective date comes from the attachment.
+_DERIVED_MANIFEST_KEYS = ("effective_date", "proofread_method")
+_MAX_DERIVED_ROWS = 8
 
 
 class AnnouncedNoticeError(PgLoadError):
@@ -215,6 +242,133 @@ class NoticeBundle:
     attachments: tuple[NoticeAttachment, ...]
     announcement_items: tuple[str, ...]
     raw_md_blocks: Mapping[str, tuple[tuple[str, str], ...]]
+    manifest_identity: Mapping[str, Any] | None = None
+
+
+def is_source_file_row(row: Mapping[str, Any]) -> bool:
+    """Whether a manifest file row is pinned source rather than derived."""
+
+    return (
+        row.get("role") in SOURCE_FILE_ROLES
+        or row.get("file_name") == "raw.md"
+    )
+
+
+def registered_manifest_identity(
+    manifest_bytes: bytes, registered_sha256: str
+) -> dict[str, Any]:
+    """Prove that manifest.json is the registered one, up to later lanes.
+
+    Corpus registration records the SHA-256 of the canonical manifest bytes.
+    Later corpus lanes may re-serialize manifest.json, add or advance the
+    ``extraction_status`` keys in ``_BOOKKEEPING_REVERSIONS``, add the
+    top-level keys in ``_DERIVED_MANIFEST_KEYS`` and add rows for derived
+    text layers.  The registered manifest is rebuilt by undoing only such
+    changes and must hash to the recorded digest.  That proves every source
+    row (declared attachments, raw.md, the source pages), its size and hash,
+    and every identity field to be exactly the registered one; the source
+    bytes are then checked against those rows.  Anything else raises.
+    """
+
+    current = hashlib.sha256(manifest_bytes).hexdigest()
+    if not re.fullmatch(r"[0-9a-f]{64}", registered_sha256 or ""):
+        raise AnnouncedNoticeError("registration receipt has no manifest digest")
+    receipt = {
+        "registered_manifest_sha256": registered_sha256,
+        "current_manifest_sha256": current,
+    }
+    if current == registered_sha256:
+        return {"method": "identical_bytes", **receipt}
+    try:
+        manifest = json.loads(manifest_bytes)
+    except ValueError as exc:
+        raise AnnouncedNoticeError("corpus manifest is not JSON") from exc
+    if not isinstance(manifest, dict):
+        raise AnnouncedNoticeError(
+            "corpus manifest differs from its registration receipt"
+        )
+    status = manifest.get("extraction_status")
+    files = manifest.get("files")
+    files = files if isinstance(files, list) else []
+    derived = [
+        index
+        for index, row in enumerate(files)
+        if isinstance(row, dict) and not is_source_file_row(row)
+    ]
+    if len(derived) > _MAX_DERIVED_ROWS:
+        raise AnnouncedNoticeError(
+            "corpus manifest has too many derived rows to prove its "
+            "registration"
+        )
+    # One option list per undoable change: keep it (None) or undo it.
+    options: list[list[tuple[str, Any, Any] | None]] = []
+    if isinstance(status, dict):
+        for key, values in _BOOKKEEPING_REVERSIONS.items():
+            if key in status:
+                options.append(
+                    [None]
+                    + [
+                        ("extraction_status", key, value)
+                        for value in values
+                        if value != status[key]
+                    ]
+                )
+    for key in _DERIVED_MANIFEST_KEYS:
+        if key in manifest:
+            options.append([None, ("derived_key", key, None)])
+    for index in derived:
+        options.append([None, ("derived_row", index, None)])
+    for combination in itertools.product(*options):
+        undone = [change for change in combination if change is not None]
+        candidate = json.loads(json.dumps(manifest))
+        for kind, key, value in undone:
+            if kind == "extraction_status":
+                if value is None:
+                    del candidate["extraction_status"][key]
+                else:
+                    candidate["extraction_status"][key] = value
+            elif kind == "derived_key":
+                del candidate[key]
+        rows = {key for kind, key, _ in undone if kind == "derived_row"}
+        if rows:
+            candidate["files"] = [
+                row for index, row in enumerate(files) if index not in rows
+            ]
+        rebuilt = hashlib.sha256(canonical_json_bytes(candidate)).hexdigest()
+        if rebuilt != registered_sha256:
+            continue
+        reverted = {
+            key: {"registered": value, "current": status[key]}
+            for kind, key, value in undone
+            if kind == "extraction_status"
+        }
+        derived = [
+            {"change": kind, "key": key}
+            if kind == "derived_key"
+            else {
+                "change": kind,
+                "file_name": files[key].get("file_name"),
+                "role": files[key].get("role"),
+            }
+            for kind, key, _ in undone
+            if kind != "extraction_status"
+        ]
+        if derived:
+            method = "canonical_bytes_with_derived_layers_undone"
+        elif reverted:
+            method = "canonical_bytes_with_bookkeeping_reverted"
+        else:
+            method = "canonical_bytes"
+        return {
+            "method": method,
+            **receipt,
+            "reverted_extraction_status": reverted,
+            **({"undone_derived_layers": derived} if derived else {}),
+        }
+    raise AnnouncedNoticeError(
+        "corpus manifest differs from its registration receipt beyond "
+        "extraction-status bookkeeping and derived text layers"
+    )
 
 
 def _raw_md_sections(raw_md: str) -> tuple[tuple[str, ...], dict[str, list]]:
@@ -237,8 +391,15 @@ def _raw_md_sections(raw_md: str) -> tuple[tuple[str, ...], dict[str, list]]:
     return tuple(items), blocks
 
 
-def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
-    """Read one registered corpus bundle and verify its file inventory."""
+def read_notice_bundle(
+    bundle_dir: Path, *, registered_manifest_sha256: str | None = None
+) -> NoticeBundle:
+    """Read one registered corpus bundle and verify its file inventory.
+
+    With ``registered_manifest_sha256`` (the queue's registration receipt)
+    the manifest must be proven identical to the registered one, and the
+    notice is identified by the registered digest.
+    """
 
     bundle_dir = Path(bundle_dir)
     real_root = bundle_dir.resolve(strict=True)
@@ -254,6 +415,13 @@ def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
     if not manifest_path.is_file() or not inside(manifest_path):
         raise AnnouncedNoticeError("corpus bundle manifest is missing")
     manifest_bytes = manifest_path.read_bytes()
+    identity = (
+        None
+        if registered_manifest_sha256 is None
+        else registered_manifest_identity(
+            manifest_bytes, registered_manifest_sha256
+        )
+    )
     manifest = json.loads(manifest_bytes)
     if manifest.get("schema") != CORPUS_BUNDLE_SCHEMA:
         raise AnnouncedNoticeError("corpus bundle schema is unsupported")
@@ -267,6 +435,10 @@ def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
         if not name or Path(name).name != name or name in names:
             raise AnnouncedNoticeError("corpus bundle file row is invalid")
         names.add(name)
+        if not is_source_file_row(row):
+            # A derived text layer is never read here, so later corpus lanes
+            # may rewrite it without changing the source identity.
+            continue
         path = bundle_dir / name
         if not path.is_file() or not inside(path):
             raise AnnouncedNoticeError(f"corpus bundle file is missing: {name}")
@@ -311,12 +483,17 @@ def read_notice_bundle(bundle_dir: Path) -> NoticeBundle:
         title=str(manifest.get("title_zh") or ""),
         official_url=official_url,
         published_on=published_on,
-        manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        manifest_sha256=(
+            hashlib.sha256(manifest_bytes).hexdigest()
+            if identity is None
+            else identity["registered_manifest_sha256"]
+        ),
         attachments=tuple(attachments),
         announcement_items=items,
         raw_md_blocks={
             name: tuple(values) for name, values in raw_blocks.items()
         },
+        manifest_identity=identity,
     )
 
 
@@ -338,7 +515,37 @@ class OdtParagraph:
     top_row_index: int | None
     top_cell_index: int | None
     nested: bool
-    generated_label: str | None = None
+    numbering: ListLabel | None = None
+
+    @property
+    def generated_label(self) -> str | None:
+        """The automatic list label drawn before the text, if any."""
+
+        if self.numbering is None or self.numbering.status != "labelled":
+            return None
+        return self.numbering.label
+
+    @property
+    def numbering_blocked(self) -> str | None:
+        """Why list numbering here cannot be reproduced, if it cannot."""
+
+        if self.numbering is None or self.numbering.status != "unsupported":
+            return None
+        return self.numbering.reason or "unsupported"
+
+    @property
+    def printed_text(self) -> str:
+        """The text as printed: generated label, its separator, then text."""
+
+        if self.numbering is None:
+            return self.text
+        return self.numbering.printed_prefix + self.text
+
+    @property
+    def export_prefix(self) -> str:
+        """What LibreOffice's text export writes before ``text``."""
+
+        return "" if self.numbering is None else self.numbering.export_prefix
 
 
 @dataclass(frozen=True)
@@ -395,123 +602,6 @@ def _paragraph_text(element: ElementTree.Element, *, render: bool) -> str:
     return "".join(parts)
 
 
-class _LabelResolver:
-    """Decide whether ODF numbering draws a label that is not character data.
-
-    A list item's first paragraph, a numbered paragraph, or an outline-numbered
-    heading may display a generated label such as ``1.`` or ``(5)``.  The
-    label is not in the XML text, so reproducing it would need the full ODF
-    numbering algorithm.  This resolver only answers whether a label can be
-    drawn; an unresolvable style is treated as drawing one (fail closed).
-    """
-
-    def __init__(self, *roots: ElementTree.Element) -> None:
-        self.list_styles: dict[str, ElementTree.Element] = {}
-        self.paragraph_styles: dict[str, ElementTree.Element] = {}
-        self.outline: ElementTree.Element | None = None
-        for root in roots:
-            for node in root.iter(_TAG_LIST_STYLE):
-                self.list_styles.setdefault(
-                    node.attrib.get(_ATTR_STYLE_NAME, ""), node
-                )
-            for node in root.iter(_TAG_STYLE):
-                if node.attrib.get(_ATTR_STYLE_FAMILY) == "paragraph":
-                    self.paragraph_styles.setdefault(
-                        node.attrib.get(_ATTR_STYLE_NAME, ""), node
-                    )
-            for node in root.iter(_TAG_OUTLINE_STYLE):
-                self.outline = self.outline or node
-
-    def _paragraph_list_style(self, name: str | None) -> str | None:
-        seen: set[str] = set()
-        while name and name not in seen:
-            seen.add(name)
-            style = self.paragraph_styles.get(name)
-            if style is None:
-                return None
-            if style.attrib.get(_ATTR_LIST_STYLE_NAME):
-                return style.attrib[_ATTR_LIST_STYLE_NAME]
-            name = style.attrib.get(_ATTR_PARENT_STYLE)
-        return None
-
-    @staticmethod
-    def _draws(level_style: ElementTree.Element | None) -> bool:
-        if level_style is None:
-            return True
-        if level_style.tag in {_TAG_LEVEL_BULLET, _TAG_LEVEL_IMAGE}:
-            return True
-        return any(
-            level_style.attrib.get(attribute)
-            for attribute in (_ATTR_NUM_FORMAT, _ATTR_NUM_PREFIX, _ATTR_NUM_SUFFIX)
-        )
-
-    def label(
-        self,
-        element: ElementTree.Element,
-        lineage: Sequence[ElementTree.Element],
-    ) -> str | None:
-        """Return why a label may be drawn before ``element``, else None."""
-
-        if element.tag == _TAG_H and element.attrib.get(_ATTR_OUTLINE_LEVEL):
-            if element.attrib.get(_ATTR_IS_LIST_HEADER) == "true":
-                return None
-            if self.outline is None:
-                return None
-            # Office suites number a heading from the outline style only when
-            # its paragraph style is assigned to an outline level; an empty
-            # list-style-name on the style chain suppresses the number.
-            assigned = False
-            name = element.attrib.get(_ATTR_TEXT_STYLE_NAME)
-            seen: set[str] = set()
-            while name and name not in seen:
-                seen.add(name)
-                style = self.paragraph_styles.get(name)
-                if style is None:
-                    break
-                if style.attrib.get(_ATTR_LIST_STYLE_NAME) == "":
-                    return None
-                if style.attrib.get(_ATTR_DEFAULT_OUTLINE_LEVEL):
-                    assigned = True
-                    break
-                name = style.attrib.get(_ATTR_PARENT_STYLE)
-            if not assigned:
-                return None
-            level = element.attrib[_ATTR_OUTLINE_LEVEL]
-            for child in self.outline:
-                if child.tag == _TAG_OUTLINE_LEVEL and child.attrib.get(
-                    _ATTR_LEVEL
-                ) == level:
-                    return "outline_number" if self._draws(child) else None
-            return None
-        parent = lineage[0] if lineage else None
-        if parent is not None and parent.tag == _TAG_NUMBERED_PARAGRAPH:
-            return "numbered_paragraph"
-        if parent is None or parent.tag != _TAG_LIST_ITEM:
-            return None
-        first = next(
-            (child for child in parent if child.tag in {_TAG_P, _TAG_H}), None
-        )
-        if first is not element:
-            return None
-        lists = [node for node in lineage if node.tag == _TAG_LIST]
-        if not lists:
-            return "list_item_without_list"
-        level = str(len(lists))
-        outermost = lists[-1]
-        style_name = outermost.attrib.get(_ATTR_TEXT_STYLE_NAME)
-        if not style_name:
-            style_name = self._paragraph_list_style(
-                element.attrib.get(_ATTR_TEXT_STYLE_NAME)
-            )
-        style = self.list_styles.get(style_name or "")
-        if style is None:
-            return "list_style_unresolved"
-        for child in style:
-            if child.attrib.get(_ATTR_LEVEL) == level:
-                return "list_label" if self._draws(child) else None
-        return "list_level_unresolved"
-
-
 def _positive(element: ElementTree.Element, attribute: str) -> int:
     raw = element.attrib.get(attribute, "1")
     try:
@@ -538,17 +628,17 @@ def read_odt_document(
     blocks = inspected["blocks"]
     try:
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            names = archive.namelist()
             content = archive.read("content.xml")
-            styles = (
-                archive.read("styles.xml")
-                if "styles.xml" in archive.namelist()
-                else None
-            )
+            styles = archive.read("styles.xml") if "styles.xml" in names else None
+            meta = archive.read("meta.xml") if "meta.xml" in names else None
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
         raise AnnouncedNoticeError("ODT container is malformed") from exc
     root = ElementTree.fromstring(content)
-    labels = _LabelResolver(
-        root, *(() if styles is None else (ElementTree.fromstring(styles),))
+    numbering = resolve_list_labels(
+        root,
+        None if styles is None else ElementTree.fromstring(styles),
+        None if meta is None else ElementTree.fromstring(meta),
     )
     body = root.find(f".//{{{_OFFICE}}}text")
     if body is None:
@@ -672,9 +762,7 @@ def read_odt_document(
                 top_row_index=top_position[1] if top_position else None,
                 top_cell_index=top_position[2] if top_position else None,
                 nested=nested,
-                generated_label=labels.label(
-                    element, list(ancestors(element))
-                ),
+                numbering=numbering.get(id(element)),
             )
         )
     return OdtDocument(
@@ -719,18 +807,18 @@ class AnnouncedClause:
 
     @property
     def patch_text(self) -> str:
-        return PATCH_TEXT_JOIN.join(item.text for item in self.revised)
+        return PATCH_TEXT_JOIN.join(item.printed_text for item in self.revised)
 
     @property
     def original_text(self) -> str:
-        return PATCH_TEXT_JOIN.join(item.text for item in self.original)
+        return PATCH_TEXT_JOIN.join(item.printed_text for item in self.original)
 
     @property
     def omission_orders(self) -> tuple[int, ...]:
         return tuple(
             item.document_order
             for item in self.revised
-            if is_omission_marker(item.text)
+            if is_omission_marker(item.printed_text)
         )
 
     @property
@@ -740,11 +828,36 @@ class AnnouncedClause:
         )
 
     @property
-    def blocked_reason(self) -> str | None:
-        """Why this clause's printed text cannot be reproduced exactly."""
+    def numbering_blocked_reasons(self) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                {
+                    item.numbering_blocked
+                    for item in self.revised
+                    if item.numbering_blocked
+                }
+            )
+        )
 
-        if self.generated_label_orders:
-            return "generated_list_label"
+    @property
+    def requires_rendering_check(self) -> bool:
+        """Whether list numbering must be confirmed by an office rendering."""
+
+        return any(item.numbering is not None for item in self.revised)
+
+    @property
+    def blocked_reason(self) -> str | None:
+        """Why this clause's printed text cannot be reproduced exactly.
+
+        A table nested in the revised column would lose its rows and columns
+        as paragraph text, and the office rendering check cannot see it, so
+        such a clause is always held back.
+        """
+
+        if any(item.nested for item in self.revised):
+            return "nested_table"
+        if self.numbering_blocked_reasons:
+            return "unsupported_list_numbering"
         return None
 
     def component_manifest(self) -> list[dict[str, Any]]:
@@ -762,14 +875,15 @@ class AnnouncedClause:
             if index:
                 scalar += len(PATCH_TEXT_JOIN)
                 byte += separator_bytes
-            length = len(item.text)
-            byte_length = len(item.text.encode("utf-8"))
+            text = item.printed_text
+            length = len(text)
+            byte_length = len(text.encode("utf-8"))
             manifest.append(
                 {
                     "source_block_id": item.block_id,
                     "source_locator": dict(item.locator),
                     "raw_text_sha256": item.block_text_sha256,
-                    "rendered_text_sha256": sha256_text(item.text),
+                    "rendered_text_sha256": sha256_text(text),
                     "patch_text_scalar_span": [scalar, scalar + length],
                     "patch_text_utf8_span": [byte, byte + byte_length],
                     "top_level_cell": [
@@ -778,13 +892,29 @@ class AnnouncedClause:
                         item.top_cell_index,
                     ],
                     "nested_table_paragraph": item.nested,
-                    "omission_marker": is_omission_marker(item.text),
-                    "generated_label": item.generated_label,
+                    "omission_marker": is_omission_marker(text),
+                    "generated_label": _label_manifest(item),
                 }
             )
             scalar += length
             byte += byte_length
         return manifest
+
+
+def _label_manifest(item: OdtParagraph) -> dict[str, Any] | None:
+    """The generated prefix of one block, or ``None`` when it has none."""
+
+    if item.generated_label is None or item.numbering is None:
+        return None
+    prefix = item.numbering.printed_prefix
+    return {
+        "label": item.generated_label,
+        "separator": item.numbering.separator,
+        "prefix_scalar_length": len(prefix),
+        "prefix_utf8_length": len(prefix.encode("utf-8")),
+        "rule_version": LIST_LABEL_RULE_VERSION,
+        "evidence": dict(item.numbering.evidence),
+    }
 
 
 @dataclass(frozen=True)
@@ -816,7 +946,7 @@ class ParsedNotice:
 
 
 def _cell_text(items: Sequence[OdtParagraph]) -> str:
-    return "".join(item.text for item in items)
+    return "".join(item.printed_text for item in items)
 
 
 def _header_key(items: Sequence[OdtParagraph]) -> str:
@@ -845,6 +975,13 @@ def _segments(
 
     segments: list[tuple[str | None, list[OdtParagraph]]] = []
     for item in items:
+        if item.numbering is not None and not item.nested and (
+            clause_heading_code(item.text)
+            or clause_heading_code(item.printed_text)
+        ):
+            raise AnnouncedNoticeError(
+                "a list-numbered paragraph reads as a clause designation"
+            )
         code = None if item.nested else clause_heading_code(item.text)
         if code is not None:
             segments.append((code, [item]))
@@ -954,6 +1091,46 @@ def parse_notice(bundle: NoticeBundle) -> ParsedNotice:
     return parse_comparison_document(bundle, attachment, document)
 
 
+def _continuation_refusal(
+    previous: Mapping[str, Any] | None,
+    row: tuple[int, int],
+    revised_segments: Sequence[tuple[str | None, Sequence[OdtParagraph]]],
+    original_segments: Sequence[tuple[str | None, Sequence[OdtParagraph]]],
+    *,
+    original_none: bool,
+) -> str | None:
+    """Why a row without a designation may not continue the previous clause.
+
+    Attributing a row to the clause above is an inference, so it needs
+    positive evidence: that clause ends on the row just above in the same
+    table, each column holds exactly one undesignated segment, the original
+    column does not mark a new clause (``無``), and no paragraph in either
+    column reads like a clause or general-rule designation.
+    """
+
+    if previous is None:
+        return "no clause precedes it"
+    table_index, row_index = row
+    if tuple(previous["rows"][-1]) != (table_index, row_index - 1):
+        return "the clause above does not end on the previous row"
+    if (
+        len(revised_segments) != 1
+        or len(original_segments) != 1
+        or original_segments[0][0] is not None
+    ):
+        return "a column is empty or holds a designation"
+    if original_none:
+        return "the original column marks a new clause"
+    for _, items in (*revised_segments, *original_segments):
+        for item in items:
+            if any(
+                _LOOSE_DESIGNATION_RE.match(grammar_text(text))
+                for text in (item.text, item.printed_text)
+            ):
+                return "a paragraph reads like a designation"
+    return None
+
+
 def parse_comparison_document(
     bundle: NoticeBundle,
     attachment: NoticeAttachment,
@@ -967,13 +1144,30 @@ def parse_comparison_document(
     own_receipts = tuple(
         (item.block_id, item.block_text_sha256) for item in document.paragraphs
     )
-    if raw_receipts is not None and tuple(raw_receipts) != own_receipts:
+    if raw_receipts is None:
+        raise AnnouncedNoticeError(
+            "raw.md has no source-block receipts for the comparison attachment"
+        )
+    if tuple(raw_receipts) != own_receipts:
         raise AnnouncedNoticeError(
             "ODT blocks differ from the registered raw.md source blocks"
         )
     table_specs, ignored = _comparison_tables(document)
     if not table_specs:
         raise AnnouncedNoticeError("attachment has no official comparison table")
+    title = grammar_text(bundle.title).strip()
+    if "預告" in title:
+        raise AnnouncedNoticeError(
+            "the notice is a pre-announcement (預告), not announced text"
+        )
+    for table_index, spec in table_specs:
+        if spec["revised_header"].startswith("建議") and not title.startswith(
+            "公告"
+        ):
+            raise AnnouncedNoticeError(
+                f"comparison table {table_index} is a proposal (建議修訂後) "
+                "outside an announcement"
+            )
     if document.has_tracked_changes:
         raise AnnouncedNoticeError("ODT contains tracked changes")
 
@@ -983,6 +1177,10 @@ def parse_comparison_document(
         for item in flow
         if _EFFECTIVE_WORD_RE.search(item.text)
     ]
+    if any(item.numbering is not None for item, _ in statements):
+        raise AnnouncedNoticeError(
+            "an effective-date statement carries list numbering"
+        )
     unparsed = [item for item, value in statements if value is None]
     if unparsed:
         raise AnnouncedNoticeError(
@@ -1081,22 +1279,24 @@ def parse_comparison_document(
             original_none = (
                 len(original_items) == 1
                 and _NONE_CELL_RE.fullmatch(
-                    grammar_text(original_items[0].text).strip()
+                    grammar_text(original_items[0].printed_text).strip()
                 )
                 is not None
             )
             revised_codes = [code for code, _ in revised_segments]
             original_codes = [code for code, _ in original_segments]
             if revised_codes[0] is None:
-                if (
-                    not clauses
-                    or original_codes[:1] != [None]
-                    or len(revised_segments) != 1
-                    or len(original_segments) != 1
-                ):
+                refusal = _continuation_refusal(
+                    clauses[-1] if clauses else None,
+                    (table.table_index, row_index),
+                    revised_segments,
+                    original_segments,
+                    original_none=original_none,
+                )
+                if refusal is not None:
                     raise AnnouncedNoticeError(
                         f"comparison row {table.table_index}/{row_index} "
-                        "does not start with a clause designation"
+                        f"does not start with a clause designation ({refusal})"
                     )
                 previous = clauses[-1]
                 previous["revised"].extend(revised_segments[0][1])
@@ -1219,15 +1419,17 @@ def old_column_comparison(
             "old_equals_served_semantic": False,
             "old_paragraphs_found_in_served": None,
         }
-    old_text = "\n".join(item.text for item in clause.original)
+    old_text = "\n".join(item.printed_text for item in clause.original)
     served_semantic = semantic_comparison_text(served_text)
     substantive = [
-        item for item in clause.original if not is_omission_marker(item.text)
+        item
+        for item in clause.original
+        if not is_omission_marker(item.printed_text)
     ]
     found = sum(
         1
         for item in substantive
-        if semantic_comparison_text(item.text) in served_semantic
+        if semantic_comparison_text(item.printed_text) in served_semantic
     )
     return {
         "served_clause_present": True,
@@ -1246,13 +1448,15 @@ def revised_paragraphs_in_served(
         return None
     served_semantic = semantic_comparison_text(served_text)
     substantive = [
-        item for item in clause.revised if not is_omission_marker(item.text)
+        item
+        for item in clause.revised
+        if not is_omission_marker(item.printed_text)
     ]
     return [
         sum(
             1
             for item in substantive
-            if semantic_comparison_text(item.text) in served_semantic
+            if semantic_comparison_text(item.printed_text) in served_semantic
         ),
         len(substantive),
     ]
@@ -1305,9 +1509,12 @@ def exact_in_rendering(clause: AnnouncedClause, rendering: str | None) -> str:
 
     LibreOffice writes each paragraph on its own line, joins the last
     paragraph of one cell to the next cell with a tab, and keeps whitespace
-    elements.  Blank paragraphs are dropped on both sides.  The revised text
-    must appear verbatim, starting at a line start and ending at a line end or
-    a cell boundary.
+    elements.  A list paragraph starts with four spaces per list level, then
+    its label (two spaces when it draws none) and one space; the expected
+    lines are built from each paragraph's reconstructed label, so a wrong
+    label cannot match.  Blank paragraphs are dropped on both sides.  The
+    revised text must appear verbatim, starting at a line start and ending at
+    a line end or a cell boundary.
     """
 
     if rendering is None:
@@ -1319,7 +1526,7 @@ def exact_in_rendering(clause: AnnouncedClause, rendering: str | None) -> str:
     needle = "\n".join(
         line
         for item in clause.revised
-        for line in item.text.split("\n")
+        for line in (item.export_prefix + item.text).split("\n")
         if line.strip()
     )
     start = 0
@@ -1336,6 +1543,24 @@ def exact_in_rendering(clause: AnnouncedClause, rendering: str | None) -> str:
         start = position + 1
 
 
+def projection_block_reason(
+    clause: AnnouncedClause, rendering_check: str | None
+) -> str | None:
+    """Why a clause must stay a pending effect instead of a patch, if so.
+
+    A clause whose paragraphs carry list numbering is projected only when the
+    independent office rendering shows exactly the reconstructed labels.
+    """
+
+    if clause.blocked_reason:
+        return clause.blocked_reason
+    if rendering_check == "mismatch":
+        return "official_rendering_mismatch"
+    if clause.requires_rendering_check and rendering_check != "exact":
+        return "official_rendering_unverified"
+    return None
+
+
 def verification_row(
     notice: ParsedNotice,
     clause: AnnouncedClause,
@@ -1346,6 +1571,7 @@ def verification_row(
     whitespace_blocks = sum(
         1 for item in clause.revised if item.text != item.block_text
     )
+    rendering_check = exact_in_rendering(clause, rendering)
     return {
         "reference_number": notice.bundle.reference_number,
         "clause_code": clause.clause_code,
@@ -1355,14 +1581,16 @@ def verification_row(
         else None,
         "revised_block_count": len(clause.revised),
         "revised_text_sha256": sha256_text(clause.patch_text),
-        "revised_equals_official_rendering": exact_in_rendering(
-            clause, rendering
-        ),
+        "revised_equals_official_rendering": rendering_check,
         "revised_blocks_with_whitespace_elements": whitespace_blocks,
         "revised_blocks_with_generated_labels": len(
             clause.generated_label_orders
         ),
+        "list_numbering_unsupported": list(clause.numbering_blocked_reasons),
         "blocked_reason": clause.blocked_reason,
+        "projection_block_reason": projection_block_reason(
+            clause, rendering_check
+        ),
         "omitted_text_present": bool(clause.omission_orders),
         "continued_across_rows": clause.continued,
         "original_is_none": clause.original_is_none,
