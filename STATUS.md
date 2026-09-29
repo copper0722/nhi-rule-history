@@ -2,6 +2,34 @@
 
 最後核對：2026-09-29
 
+## 2026-09-29 — 唯讀 facade schema nhi_rules（v28）已套用（卡 #2678 選項 B）
+
+- 一個唯讀 schema、13 個 view，疊在既有 store 上：現行條文（publication）、已公告
+  修正與生效日（announced，含 10/1 批）、通則版本鏈（clause＋edition）、公告與來源
+  （update_queue）。沒有 table、函式、trigger 或寫入者，不搬資料，不改任何 loader、
+  lane、hold 或既有消費者。一頁地圖：`docs/read-facade.md`。
+- 套用 2026-09-29 10:13:58 +08:00，套用檔 sha256 前綴 `58d7cdfbefd0`。新連線讀回
+  （已入庫的 readback 檔）所有 `ok` 欄皆 `t`：13 個 view 皆 security_invoker、不可寫、
+  僅 owner 可讀；各 view 列數等於來源（條文 639、區塊 13,874、日期 3,487、來源檔
+  16、patch 21、composed 1、公告效果 36、通則版本 29／變更 26／版本來源 15、公告
+  28）；顯示的文字雜湊全部相符。
+- 獨立驗證：PASS-WITH-NOTES（驗證檔 `92435acfcd1c`）。驗證者要求的修正在套用前完成：
+  通則 hunk 的 `change_kind` 改為 panel 的語意分類（保留 `source_change_kind`）、
+  `sort_key` 位數上限、註解措辭、共址公告不再只顯示最小字號、耦合說明。修正後只重跑
+  拋棄式叢集測試（PG 18／17 各 13 項，0 skip；announced-release 回歸 27 項），並在
+  正式庫做交易內預演（回滾）。
+- 消費者抽查（對 panel API，不是來源表）：2.1.4.2 與 9.5（10/1 patch）、2.6.1
+  （composed）、通則 0.4（10 版本、9 轉換、18 hunk）、3.3.32（新條文）＋28 則公告，
+  80 項 0 失敗；通則 hunk 的 `change_kind` 與 panel 26/26 一致（修正前有 8 條不同）。
+- 誠實邊界：版本鏈只有通則；文中日期不是法定生效日；`current_clause` 是 07-29 封存
+  的那批分章檔，已公告或已生效但尚未併入者只在 `announced_patch`。
+- 回滾：同名 `.rollback.sql`（先刪 13 個 view 再刪 schema，RESTRICT，不動任何資料）；
+  更早的 v18／v21／clause_v1／edition_v1 回滾用 `DROP SCHEMA … CASCADE`，須先回滾
+  v28。registry 登記在私有 repo 另有成對 migration。
+- 觀察（不處理）：通則 0.6 在 clause store 比 publication 多一個結尾空白（去空白後
+  12/12 相同）；第二次封存的 clause import 會讓通則兩個 view 變空（與 panel 的
+  history endpoint 行為相同）。
+
 ## 2026-09-29 — overlay loader 2.4.0 部署（自動啟用仍暫停）
 
 - 部署 loader 2.4.0／parser 1.5.0／渲染規則 1.2.0：生效日陳述句、比較表標題與

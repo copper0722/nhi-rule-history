@@ -122,6 +122,40 @@ service_surfaces:
     live_verification: docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json
     integration_status: live_verified
 
+read_facade:
+  purpose: one_schema_readable_end_to_end_current_text_announced_amendments_general_principles_chain_notices
+  schema: nhi_rules
+  card: 2678
+  option: B_read_only_views_over_existing_stores
+  objects: 13_views_no_table_no_function_no_trigger_no_writer
+  authority: none_the_source_stores_stay_authoritative
+  access: security_invoker_not_updatable_owner_only_no_grant_to_public
+  migration:
+    forward: pg/migrations/2026-09-29_nhi_rule_history_read_facade_v28.sql
+    rollback: pg/migrations/2026-09-29_nhi_rule_history_read_facade_v28.rollback.sql
+    rollback_mode: drop_the_thirteen_views_then_the_schema_restrict_no_cascade
+    readback: database/queries/read-facade-readback-v28.sql
+    independent_verification: passed_with_notes_fixes_applied_before_apply_disposable_tests_rerun
+    state: applied
+    applied_at: "2026-09-29T10:13:58+08:00"
+    applied_file_sha256_prefix: 58d7cdfbefd0
+    verified_file_sha256_prefix: 92435acfcd1c
+    readback_after_apply: fresh_connection_every_ok_column_true
+    consumer_spot_check: five_clauses_plus_notices_against_the_reader_api_80_checks_0_failures
+  map: docs/read-facade.md
+  reads:
+    current_text: nhi_rule_history_publication
+    announced: nhi_rule_history_announced_active_release
+    general_principles_chain: nhi_rule_history_clause_and_nhi_rule_history_edition
+    notices: nhi_rule_history_update_queue_and_nhi_rule_history_update_ops
+  not_claimed:
+    - version_chain_beyond_general_principles
+    - legal_effective_dates_from_in_text_dates
+  known_observations:
+    - general_principle_0_6_clause_store_text_has_one_trailing_space_versus_publication
+    - a_second_sealed_clause_import_would_empty_the_general_principles_views_like_the_reader_history_endpoint
+  consumers: none
+
 continuous_update:
   source_poll:
     task_id: 260

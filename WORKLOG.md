@@ -1,5 +1,32 @@
 # Worklog
 
+## 2026-09-29 — Read-only facade schema nhi_rules (v28) applied
+
+- Built card #2678 option B: 13 views over the publication, announced-release,
+  clause/edition and update-queue stores. Views only: no table, function,
+  trigger or writer; no data moved; no loader, lane, hold or consumer touched.
+  All views are security_invoker, not updatable, and open to the owner only.
+  Map for the class: `docs/read-facade.md`.
+- Applied 2026-09-29 10:13:58 +08:00 (file sha256 prefix `58d7cdfbefd0`).
+  Fresh-connection readback with the committed readback file: every `ok`
+  column true; per-view row counts equal the source tables; every text shown
+  hashes to its published sha256.
+- Independent verification passed with notes on the file `92435acfcd1c`.
+  Fixes made before apply: the general-principles hunk `change_kind` now
+  follows the reader API (latest sealed diff run) with the store's kind kept as
+  `source_change_kind` (8 of 26 hunks differed before); a bounded `sort_key`
+  cast; comment wording; shared-address notices list all reference numbers;
+  the coupling note. Only the disposable-cluster tests were rerun (PG 18 and
+  17, 13 tests each, no skips; announced-release regression 27 tests), plus a
+  rolled-back dry run on the production database.
+- Consumer-path spot check against the reader API (not the source tables): five
+  clauses (a general-principles chain, two 10-01 patches, the composed 2.6.1,
+  a new clause) and all 28 notices, 80 checks, 0 failures.
+- Observations left as they are: clause 0.6 has one trailing space more in the
+  clause store than in the publication; a second sealed clause import would
+  empty the two general-principles views, as it does the reader history
+  endpoint.
+
 ## 2026-09-29 — Overlay loader 2.4.0 deployed; auto-activation still held
 
 - Merged round 6. The effective-date statements, comparison-table titles and

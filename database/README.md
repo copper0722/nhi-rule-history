@@ -38,6 +38,7 @@ model:
 | `nhi_rule_history_edition` | complete source-edition containers | `通則`: 15 cumulative editions |
 | `nhi_rule_history_clause` | canonical single-clause source-observed version chains | 12 clauses, 152 observations, 29 text states, 17 edges, 26 hunks |
 | `nhi_rule_history_terminology` | append-only concepts, aliases, external-code links, block scan receipts and exact clause occurrences | v1 reviewed seed: 79 concepts, 371 aliases, 13,874 blocks, 1,916 occurrences |
+| `nhi_rules` | read-only facade: views over the stores above (current text, announced amendments, `通則` version chain, notices); no table, no writer, not an authority | 13 views, see [../docs/read-facade.md](../docs/read-facade.md) |
 
 `nhi_rule_history_edition` is upstream provenance, not the canonical version
 unit shown to readers. `nhi_rule_history_clause` gives every top-level clause
