@@ -15,6 +15,9 @@ dependencies = [
   "psycopg[binary]>=3.1,<4",
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
 [project.scripts]
 nhi-rule-history = "nhi_rule_history.cli:main"
 

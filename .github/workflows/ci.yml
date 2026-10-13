@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install project dependencies
-        run: python -m pip install .
+        run: python -m pip install ".[test]"
       - name: Install SQLite CLI
         run: sudo apt-get update && sudo apt-get install -y sqlite3
       - name: Run parser and loader tests

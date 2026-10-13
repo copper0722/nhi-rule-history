@@ -1,5 +1,19 @@
 # Worklog
 
+## 2026-10-13 — Diff-card generator on main (presentation lane, tool only)
+
+- Added `tools/diff_cards/`, `docs/diff-cards.md` and `tests/test_diff_cards.py`:
+  deterministic code-diff style comparison cards for one amendment (HTML lookup
+  page plus 1080x1350 card pages; PNGs are derived and stay out of Git). Three
+  source lanes: the NHI ODT 修訂對照表, a hand-reviewed row spec for statutes,
+  and administrative-rule points from the gazette text with an order-number
+  identity gate and a summary gate. Presentation only: no PostgreSQL write, no
+  clause-history promotion, no complete-history claim.
+- The rendered card sets (`publications/diff-cards/`) are not part of this
+  commit.
+- The tests are pytest-style: `make test` runs them after the unittest
+  discovery, and CI installs the `test` extra (`pip install ".[test]"`).
+
 ## 2026-10-13 — Overlay auto-activation released under named residual classes
 
 - Released the recurring overlay lane's activation switch at 2026-10-13

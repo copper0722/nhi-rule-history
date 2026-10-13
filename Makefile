@@ -6,6 +6,7 @@ MANIFEST := data/manifests/nhi-history-odt-v1.jsonl
 test:
 	$(PYTHON) -m unittest discover -s .script/nhi-rule-history/tests -p 'test_*.py'
 	PYTHONPATH=src $(PYTHON) -m unittest discover -s tests -p 'test_*.py'
+	PYTHONPATH=src $(PYTHON) -m pytest -q -p no:cacheprovider tests/test_diff_cards.py
 
 validate-manifest:
 	$(PYTHON) tools/validate_manifest.py $(MANIFEST)
