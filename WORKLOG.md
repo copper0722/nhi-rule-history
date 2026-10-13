@@ -1,5 +1,49 @@
 # Worklog
 
+## 2026-10-13 — Overlay auto-activation released under named residual classes
+
+- Released the recurring overlay lane's activation switch at 2026-10-13
+  14:44:41 +08:00 through the existing private migration pair (one
+  configuration value on one row, before-image kept; the paired rollback holds
+  again; neither direction changes what is served). Nothing was waiting: the
+  official feed has carried no new drug-rule amendment notice since the
+  2026-09-15 batch. The served run is still `2813b674…` and the loader 2.4.0;
+  the round-7 candidate (2.5.0) is not deployed.
+- Basis: the route the independent verifier itself named in round 6 beside its
+  "do not release" verdict, namely that the controller accepts the residual
+  classes by name and every activation review compares the served effective
+  date with the official PDF. The audit tier ruled for that route; the producer
+  did not self-accept. Accepted classes, each with no instance in the official
+  corpus (28 comparison documents, 1,081 comparison paragraphs, 94 real in-cell
+  headings): a sign before a heading merges it into the clause above (a
+  regression of parser 1.5.0); the effective date a reader sees can differ from
+  the parsed one through inline text boxes, white or tiny digits, tab leaders,
+  page headers or footers, or two statements before one table (the last wins);
+  the lane's loader-timeout path, whose fix is deployed and producer-tested but
+  not independently verified.
+- Compensating control: each activation still passes every existing gate and
+  the panel and subscriber-export confirmation with rollback, and files one
+  review request. The reviewer compares, against the notice's official PDF and
+  not the ODT, the effective date, the revised-column text (no second
+  designation inside one patch), and that served plus held clauses cover the
+  whole comparison table; within 24 hours and always before the effective date;
+  a mismatch is rolled back first and recorded as the first real instance.
+- Hold again when a real instance appears, a review is overdue, or the owner
+  asks to read each batch before it is served.
+- Read-only check the same day: the 21 served patches equal the live subscriber
+  JSON per clause (code, reference number, effective date, patch SHA-256). The
+  revised text of 2.6.1, 2.1.4.2, 3.3.28, 4.2 and 8.1.3 is found line by line in
+  the same clause of the official 115.9.22 chapter files, whose headings state
+  115/9/1 or 115/10/1; 2.6.1 still normalizes to `c85cbcdd…`, as on 2026-09-14.
+- Not done, a separate release: the current publication is still the
+  2026-07-29 seal, while chapters 1, 2, 3, 4, 5, 8 and 9 have newer official
+  editions (through 115.9.22). Three consumers must change before a reload: the
+  2.6.1 loader that the subscriber sync runs on every tick (its predecessor
+  text hash is fixed, so a chapter file that already holds the 115/9/1 text is
+  refused), the terminology tagging run (bound to the publication run, to be
+  loaded again), and the reader page, which has no presentation for a patch
+  already merged into the current chapter file.
+
 ## 2026-09-29 — Read-only facade schema nhi_rules (v28) applied
 
 - Built card #2678 option B: 13 views over the publication, announced-release,

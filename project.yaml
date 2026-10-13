@@ -201,7 +201,7 @@ continuous_update:
     auto_promotion_enabled: false
     unavailable_update_bundle: failed_terminal_NHI_UPDATE_BUNDLE_UNAVAILABLE_zero_worker_calls
   announced_notice_overlay:
-    status: release_2_live_recurring_lane_registered_activation_held
+    status: release_2_live_recurring_lane_registered_activation_released
     recorded_on: "2026-09-28"
     release_1:
       run_id: ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd
@@ -221,7 +221,17 @@ continuous_update:
       subscriber_site_per_clause_check: passed_21_of_21
     recurring_lane:
       cadence_minutes: 15
-      auto_activation: held_until_round7_sign_prefix_F1_date_surfaces_O1_and_lock_timeouts_fixed_and_verified
+      auto_activation: released_under_named_residual_classes_with_per_activation_official_pdf_review
+      auto_activation_released_at: "2026-10-13T14:44:41+08:00"
+      auto_activation_basis: verifier_round_6_alternative_residual_classes_accepted_by_name_ruled_by_audit_tier
+      auto_activation_accepted_residual_classes:
+        - sign_prefixed_in_cell_heading_merges_into_clause_above_F1
+        - effective_date_drawn_differently_from_parsed_text_O1
+        - lane_loader_timeout_path_fix_deployed_not_independently_verified
+      auto_activation_residual_instances_in_official_corpus: 0
+      auto_activation_review: each_activation_compared_with_official_pdf_within_24_hours_and_before_effective_date
+      auto_activation_hold_again_when: real_instance_or_review_overdue_or_owner_request
+      round_7_candidate_loader_2_5_0: not_deployed
       post_effective_resolution: effective_unconsolidated_only_never_reconciled
       effective_date_alarm_cadence_hours: 6
     parser: src/nhi_rule_history/announced_notice.py

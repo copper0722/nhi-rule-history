@@ -647,8 +647,23 @@ labelled as the revised column of the table and never as a complete clause.
 - The effective date is the stand-alone statement `（自115年10月1日生效）` in
   the same attachment, converted from the ROC calendar. Every body-text
   paragraph that reads `生效` (on NFKC text) must be such a statement.
-  Missing, unparseable, or multiple differing dates fail closed. Feed,
-  publication and capture times are never used.
+  A missing or unparseable date fails closed. Each comparison table takes
+  the last statement that stands before it; a table with no statement
+  before it takes the document's date only when every statement gives the
+  same one, and otherwise fails closed. Feed, publication and capture times
+  are never used.
+- Accepted residual (2026-10-13; no instance in the official corpus). The
+  date a reader sees can still differ from the parsed one while every gate
+  reads `exact`: digits that an inline text box or frame draws inside a
+  statement (frame content is in neither the parsed text nor the compared
+  rendering), white or very small digits, tab-leader digits, a date that
+  stands only in a page header or footer or inside another table, and two
+  statements before one table, where the earlier one is ignored. Inside a
+  comparison cell, a sign in front of a heading (`＊9.141.…`) suppresses the
+  designation, so that heading runs on into the clause above. These classes
+  are not detected. Each activation is therefore reviewed against the
+  notice's official PDF: the effective date, the revised-column text with
+  no second designation inside one patch, and the full list of clauses.
 - A clause starts at a paragraph whose dotted code ends in its own full stop
   (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
   same codes, or the original column must read `無` (a new clause).
