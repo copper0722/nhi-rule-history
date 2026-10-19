@@ -52,16 +52,35 @@ from nhi_rule_history.update.workers import (
 )
 
 
+FIXTURE_ZIP_DATE_TIME = (1980, 1, 1, 0, 0, 0)
+
+
+def _fixture_zip_info(filename: str) -> zipfile.ZipInfo:
+    """Pin the entry timestamp so repeated fixture builds are byte-identical.
+
+    ``writestr`` with a plain name stamps ``time.localtime()`` into the DOS
+    header at two-second granularity, so two builds of the same fixture can
+    differ in bytes and therefore in ``artifact_sha256``. Byte-replay
+    verification binds that digest, so a drifting fixture turns a replay
+    assertion into a clock race.
+    """
+
+    info = zipfile.ZipInfo(filename)
+    info.date_time = FIXTURE_ZIP_DATE_TIME
+    info.compress_type = zipfile.ZIP_STORED
+    return info
+
+
 def fixture_odt(new_text: str = "9.4 新條文完整文字") -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
-            "mimetype",
+            _fixture_zip_info("mimetype"),
             "application/vnd.oasis.opendocument.text",
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr(
-            "content.xml",
+            _fixture_zip_info("content.xml"),
             f"""<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -89,12 +108,12 @@ def fixture_nested_table_odt() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
-            "mimetype",
+            _fixture_zip_info("mimetype"),
             "application/vnd.oasis.opendocument.text",
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr(
-            "content.xml",
+            _fixture_zip_info("content.xml"),
             """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -126,12 +145,12 @@ def fixture_text_box_paragraph_odt() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
-            "mimetype",
+            _fixture_zip_info("mimetype"),
             "application/vnd.oasis.opendocument.text",
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr(
-            "content.xml",
+            _fixture_zip_info("content.xml"),
             """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -155,12 +174,12 @@ def fixture_structural_table_odt() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
-            "mimetype",
+            _fixture_zip_info("mimetype"),
             "application/vnd.oasis.opendocument.text",
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr(
-            "content.xml",
+            _fixture_zip_info("content.xml"),
             """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -201,12 +220,12 @@ def fixture_nested_duplicate_regression_odt(
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
-            "mimetype",
+            _fixture_zip_info("mimetype"),
             "application/vnd.oasis.opendocument.text",
             compress_type=zipfile.ZIP_STORED,
         )
         archive.writestr(
-            "content.xml",
+            _fixture_zip_info("content.xml"),
             f"""<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -381,6 +400,25 @@ class ContinuousUpdateTests(unittest.TestCase):
             detail_response=detail,
             attachments=attachments,
         ).seal()
+
+    def test_zip_fixtures_carry_a_pinned_entry_timestamp(self) -> None:
+        for builder in (
+            fixture_odt,
+            fixture_nested_table_odt,
+            fixture_text_box_paragraph_odt,
+            fixture_structural_table_odt,
+            fixture_nested_duplicate_regression_odt,
+        ):
+            with self.subTest(fixture=builder.__name__):
+                payload = builder()
+                self.assertEqual(payload, builder())
+                entries = zipfile.ZipFile(io.BytesIO(payload)).infolist()
+                self.assertTrue(entries)
+                for entry in entries:
+                    self.assertEqual(
+                        entry.date_time,
+                        FIXTURE_ZIP_DATE_TIME,
+                    )
 
     def test_rss_exact_identity_filter_and_attachment_dedup(self) -> None:
         items = parse_rss(fixture_feed())

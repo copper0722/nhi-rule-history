@@ -1,5 +1,35 @@
 # Worklog
 
+## 2026-10-19 — CI `verify`: deterministic ODT test fixtures
+
+- `ci` / `verify` failed on `main` (run 39245941165) in `make test`:
+  `test_continuous_update.ContinuousUpdateTests.test_existing_v12_target_replays_without_byte_changes`
+  raised `ContractError: existing corpus raw markdown does not verify`. Product
+  code was correct; the fixture was not.
+- Root cause: the ODT fixtures in `tests/test_continuous_update.py` called
+  `ZipFile.writestr` with a plain entry name, so each build stamped
+  `time.localtime()` into the DOS header at two-second granularity. The test
+  builds two bundles from two separate fixture calls and asserts a byte-exact
+  replay; `raw.md` embeds each block's `artifact_sha256`, which is the SHA-256
+  of those ODT bytes. Two calls that straddled a two-second boundary therefore
+  produced different digests and a different `raw.md`. Measured window between
+  the two calls: 0.0136 s, so roughly a 0.7 % failure rate per run — the test
+  was a clock race, not a code defect.
+- Repair: every entry is now written through `_fixture_zip_info`, which pins
+  `date_time` to `(1980, 1, 1, 0, 0, 0)` and `compress_type` to `ZIP_STORED`,
+  the same shape `tests/test_canonical_promotion_migrations.py` already used.
+  `test_zip_fixtures_carry_a_pinned_entry_timestamp` is the mechanical guard;
+  reverting the helper makes it fail on all five fixtures.
+  `test_bundle_seal_verify_and_idempotent_replay` carried the same latent race
+  and is fixed by the same change.
+- The byte-replay contract and `artifact_sha256` binding are unchanged. No test
+  assertion was relaxed to make CI pass.
+- Verified on Python 3.12 in a fresh `pip install '.[test]'` environment:
+  `make test` (70 + 558 unittest, 46 pytest, zero failures), plus the steps the
+  red run never reached — `make validate-manifest`, `make sqlite-smoke`,
+  `make public-tree-check`. A repro that forces the two fixture builds across a
+  two-second boundary fails before this change and passes after it.
+
 ## 2026-10-19 — Git-diff card store (v29) and `load-pg` (card #2495), not applied
 
 - Added the migration pair `2026-10-19_nhi_rule_history_diff_card_v29` (schema
