@@ -34,9 +34,11 @@
     holds an invisible character.
   - `general_principle_patches_admitted` sends its word-boundary pattern as a bound parameter, which no session
     setting can change; it was the only backslash literal in the loader's SQL.
-  - Versions: a run sealed by loader 2.4.1 exists since 2026-10-20 00:15, `activate` accepts only a run sealed by the
-    current loader version and every patch's evidence names the loader, parser and cut rule, so the changed
-    behaviour carries new numbers. Patch ids and hashes do not depend on them.
+  - Versions: loader 2.4.1 was deployed on 2026-10-20 at 00:07 and the lane activated a run sealed by it at 00:15
+    (run `68041b0b-4e7a-5254-82fa-d3664140ea83`), `activate` accepts only a run sealed by the current loader version
+    and every patch's evidence names the loader, parser and cut rule, so the changed behaviour carries new numbers
+    (a minor step for the cut rule, as the repo does for a tightened rule: text rule, list-label rule). Patch ids and
+    hashes do not depend on them.
 - Verification (producer's own):
   - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70 legacy tests (1
     skipped), 748 unittest tests (7 skipped) and 60 pytest tests (before this round 731 unittest tests). The v30
@@ -65,12 +67,14 @@
     `load-pg --dry-run` rebuilds all 28 stored comparisons, the Alhemo one included, identically (0 readback
     mismatches, so the generator version stays 1.0.0) and equals the receipt of 37ec9e9 as a whole; a read-only
     `compose` of every registered notice re-proves the 16 carried notices and equals the receipt of 37ec9e9 (nothing
-    dropped, the same three blocked clauses); the `verify` table equals that of 37ec9e9, and the text hash of each of
-    the 26 served `patch_only` patches, the five of 1150057388 included, equals a fresh parse. The five served
-    patches (ids ff414477, fa90ca9a, 1a5478ec, 80a1ce26, 676688bb; predecessor and patch hashes) equal the listing
-    the composition printed before the load. The real bundle on throw-away clusters (v30 applied after a
-    held 0.4, and v30 from the start) gives the same patches under PostgreSQL 17 and 18, and the same output as 37ec9e9
-    but for the run ids.
+    dropped, the same three blocked clauses). It composes no release (`no_change_with_holds`): the carried re-proof
+    compares the patch id, patch hash, effective date and predecessor hash of every served patch and reproduces all
+    five of 1150057388, so the lane has nothing to load or activate for it. The `verify` table equals that of 37ec9e9,
+    and the text hash of each of the 26 served `patch_only` patches, the five of 1150057388 included, equals a fresh
+    parse. The five served patches (ids ff414477, fa90ca9a, 1a5478ec, 80a1ce26, 676688bb; predecessor and patch
+    hashes) equal the listing the composition printed before the load. The real bundle on throw-away clusters (v30
+    applied after a held 0.4, and v30 from the start) gives the same patches under PostgreSQL 17 and 18, and the same
+    output as 37ec9e9 but for the run ids.
 - Not done, and what is left to the acceptor:
   - The bracketed-form rule is a choice: `（五）～（十二）(略)` right after point 四 is held, a bracketed range anywhere
     else is sub-item text. Dropping the rule is one commit.
@@ -81,10 +85,13 @@
 
 ## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice; migration v30 (cards #3275, #2678)
 
-- Status read back read-only on 2026-10-20, 00:30-00:40 (Asia/Taipei): v30 is applied (the readback query returns all `t`: the
-  check is the v30 pattern, the other two same-named checks are untouched); the change was merged to `main` (37ec9e9) and the active run is sealed by loader
-  2.4.1 (sealed 00:15:21) and serves the five patches of notice 1150057388 (0.4, 4.2, 4.2.7, 4.2.8, 4.2.9, effective
-  2026-11-01). The bullets below record the change as it stood when written; the 2026-10-20 entry follows it up.
+- Status (Asia/Taipei): migration v30 was applied on 2026-10-19 at about 23:22; the change was merged to `main`
+  (37ec9e9), deployed as loader 2.4.1 / parser 1.5.1 on 2026-10-20 at 00:07 and activated by the recurring lane at
+  00:15 (run `68041b0b-4e7a-5254-82fa-d3664140ea83`, sealed 00:15:21), which serves the five patches of notice
+  1150057388 (0.4, 4.2, 4.2.7, 4.2.8, 4.2.9, effective 2026-11-01). A read-only readback on 2026-10-20 (00:30-00:40)
+  agrees: the v30 readback query returns all `t` (the check is the v30 pattern, the other two same-named checks are
+  untouched) and that run is the active one. The bullets below record the change as it stood when written; the
+  2026-10-20 entry follows it up.
 - Defect: notice 健保審字第1150057388號 (concizumab / Alhemo, published 2026-10-14, effective
   2026-11-01) opens its 修訂對照表 with the 藥品給付規定通則 row. The row has no dotted
   designation, parser 1.5.0 read it as a continuation of a clause above, found none and refused the
