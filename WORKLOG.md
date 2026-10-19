@@ -1,7 +1,75 @@
 # Worklog
 
-## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice; migration v30 (cards #3275, #2678), not applied, not deployed
+## 2026-10-20 — 通則 rows: the independent re-verification's notes (cards #3275, #2678)
 
+- Notes of the independent re-verification of the merged change (37ec9e9): (4) an omission line that does not
+  start with `<ordinal>、` (`五至十二、(略)`, `五~十二、(略)`, `第五、~十二、(略)`, `（五）～（十二）(略)`) is no marker, so
+  it ran on as the last paragraph of the point above it and into 0.4's patch text; (2) the detector's
+  word-boundary pattern was a string literal in the SQL, so with `standard_conforming_strings` off `\m` read as
+  `m`, matched nothing, a second CHECK on `clause_code` went unseen and the detector answered true; (1) two mutants
+  of the previous round survived every test: `fullmatch` -> `match` in the detector (a suffix beyond `NOT VALID`)
+  and the leading connector read from the first character instead of after white space.
+- Change (parser 1.5.2, loader 2.4.2, 通則 cut rule 1.1.0; card generator version stays 1.0.0):
+  - `comparison_grammar.reads_like_an_omission_marker`, used by `split_general_principle` (`read_point_marker`, which
+    the card store and the list-label guard also call, is untouched; nested-table paragraphs stay exempt). A
+    paragraph that is not a marker, starts with a bare or 第-prefixed CJK ordinal and ends in an omission is
+    `omission_marker_lookalike`, whatever stands between the ordinals. A paragraph that starts with an ordinal in
+    brackets is one only when its first ordinal is the next top-level ordinal (latest marker + 1): it is then
+    equally the omitted points that follow and the point's own sub-item omission, and the cut cannot tell. A
+    bracketed range that starts anywhere else is sub-item text and stays in the point: the official row carries
+    `（三）~（四）(略)` inside point 四, so the served 0.4 is byte for byte the same. The refusal holds only that row
+    in the parser (`revised_` / `original_omission_marker_lookalike`; the dotted clauses project) and makes no
+    card in the card generator. Of 252 lines that end in an omission in the 28 registered comparison documents, 6
+    are markers, 2 are that bracketed sub-item line and none starts with a bare ordinal, so no real row is touched.
+    A sentence that starts with a numeral and ends in an omission, or a real sub-item omission that starts at the
+    next point's number, would be held too (fail closed).
+  - `general_principle_patches_admitted` sends its word-boundary pattern as a bound parameter, which no session
+    setting can change; it was the only backslash literal in the loader's SQL.
+  - Versions: a run sealed by loader 2.4.1 exists since 2026-10-20 00:15, `activate` accepts only a run sealed by the
+    current loader version and every patch's evidence names the loader, parser and cut rule, so the changed
+    behaviour carries new numbers. Patch ids and hashes do not depend on them.
+- Verification (producer's own):
+  - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70 legacy tests (1
+    skipped), 742 unittest tests (7 skipped) and 60 pytest tests (before this round 731 unittest tests). The v30
+    module (16 tests) also passes against PostgreSQL 17. ruff findings per file and rule equal the baseline;
+    `public-tree-check`, `validate-manifest` and `sqlite-smoke` pass.
+  - New tests: grammar (the four lookalikes, a sweep over the connector between the ordinals, the bracketed rule at
+    every latest ordinal, controls, nested tables, the official row's final line replaced by each variant and by the
+    forms that are read, a connector after white space), notice (row held alone in each column, 0.4 not projected,
+    dotted clauses unchanged), card store (no card; the read forms build the same blocks), detector (a session with
+    `standard_conforming_strings` off, checked with `SHOW`, reads v30 alone as admitted and a second CHECK as not;
+    `NO INHERIT`, and on PostgreSQL 18 `NOT ENFORCED`, are not read).
+  - Mutation controls on an export of the tip: the 22 of the previous round, the 13 of the independent verifier
+    and 15 new ones (the lookalike check deleted, bare head not read, bracketed head never or always a lookalike,
+    off by one, nested-table paragraphs checked, a marker line not excluded, no omission required, the check before
+    the outside-a-point check, 第 not read, the leading connector read without the white space (B8), `match` for
+    `fullmatch` (D2), the pattern a literal again, a second check never looked for) are all killed, and the verifier's
+    own set kills B8 and D2 now; the unmutated modules (163 tests) pass.
+  - The three committed card publications (38 html files) re-render byte for byte the same with the old and the new
+    generator.
+  - Read-only against the production database with the notice served (active run sealed by loader 2.4.1):
+    `load-pg --dry-run` rebuilds all 28 stored comparisons, the Alhemo one included, identically (0 readback
+    mismatches, so the generator version stays 1.0.0) and equals the receipt of 37ec9e9 as a whole; a read-only
+    `compose` of every registered notice re-proves the 16 carried notices and equals the receipt of 37ec9e9 (nothing
+    dropped, the same three blocked clauses); the `verify` table equals that of 37ec9e9, and the text hash of each of
+    the 26 served `patch_only` patches, the five of 1150057388 included, equals a fresh parse. The five served
+    patches (ids ff414477, fa90ca9a, 1a5478ec, 80a1ce26, 676688bb; predecessor and patch hashes) equal the listing
+    the composition printed before the load. The real bundle on throw-away clusters (v30 applied after a
+    held 0.4, and v30 from the start) gives the same patches under PostgreSQL 17 and 18, and the same output as 37ec9e9
+    but for the run ids.
+- Not done, and what is left to the acceptor:
+  - The bracketed-form rule is a choice: `（五）～（十二）(略)` right after point 四 is held, a bracketed range anywhere
+    else is sub-item text. Dropping the rule is one commit.
+  - `project.yaml`, `STATUS.md` and the sealed-by line above still name loader 2.4.0 and parser 1.5.0.
+  - A held 通則 row (no clause code) shows in loader receipts but not in the lane's effective-date alarm or the
+    website's pending list, which read clause-coded effects; no live instance exists.
+
+## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice; migration v30 (cards #3275, #2678)
+
+- Status read back read-only on 2026-10-20, 00:30-00:40 (Asia/Taipei): v30 is applied (the readback query returns all `t`: the
+  check is the v30 pattern, the other two same-named checks are untouched); the change was merged to `main` (37ec9e9) and the active run is sealed by loader
+  2.4.1 (sealed 00:15:21) and serves the five patches of notice 1150057388 (0.4, 4.2, 4.2.7, 4.2.8, 4.2.9, effective
+  2026-11-01). The bullets below record the change as it stood when written; the 2026-10-20 entry follows it up.
 - Defect: notice 健保審字第1150057388號 (concizumab / Alhemo, published 2026-10-14, effective
   2026-11-01) opens its 修訂對照表 with the 藥品給付規定通則 row. The row has no dotted
   designation, parser 1.5.0 read it as a continuation of a clause above, found none and refused the
@@ -47,7 +115,7 @@
     (`^(0[.][1-9][0-9]*|[1-9][0-9]*(?:[.][0-9]+)+)$`); the same-named checks of `composed_clause_version`
     and `clause_reader_profile` are untouched. The forward file refuses unless the v21 check is in place; the
     rollback restores the v21 check exactly and refuses while any `clause_patch` row holds a `0.N` code, which
-    means for good once a run that holds one has been loaded (sealed runs are write-once). Not applied.
+    means for good once a run that holds one has been loaded (sealed runs are write-once).
   - Loader: `blocked_clauses` also lists a held 通則 row (under its designation), so a receipt that
     holds one is not green.
   - Card store: a 通則 row is one `clause` block per point it amends (`clause_id` and `clause_codes`
@@ -94,10 +162,11 @@
     body-text check passes. The text hash of each of the 21 served `patch_only` patches equals a fresh
     parse under both the old and the new parser.
 - Not done, and what is left to the acceptor:
-  - v30 is not applied, so 0.4 is not served. Applying it is irreversible in practice once a run
-    that holds a `0.4` patch has been loaded.
-  - The change is not deployed; `project.yaml` and `STATUS.md` still describe loader 2.4.0 and
-    parser 1.5.0 as the deployed versions, and the independent acceptance has not run.
+  - (When written) v30 was not applied, so 0.4 was not served; applying it is irreversible in practice once a run
+    that holds a `0.4` patch has been loaded. It has since been applied and that run is loaded and active (status
+    line above), so v30 cannot be rolled back.
+  - (When written) the change was not deployed and `project.yaml` and `STATUS.md` described loader 2.4.0 and
+    parser 1.5.0 as the deployed versions; they still do, this log does not update them.
   - The unmerged round-7 candidate branch already names parser 1.6.x and loader 2.5.0; this change
     takes parser 1.5.1 and loader 2.4.1 so main does not claim those numbers, and that branch needs
     renumbering when it is integrated.
