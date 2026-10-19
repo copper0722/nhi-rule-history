@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 import unittest
 from pathlib import Path
 
@@ -24,6 +25,12 @@ FIXTURE = json.loads(
 # Row 1 of the official table is the 通則 row: heading, 一、~三、(略), the 四 point (7 paragraphs),
 # 五、~十二、(略).
 GENERAL_ROW = FIXTURE["rows"][0]
+
+
+def _visible(text: str) -> str:
+    """``text`` without its invisible control and format characters (white space kept)."""
+
+    return "".join(char for char in text if char.isspace() or unicodedata.category(char) not in {"Cc", "Cf"})
 
 
 class NoneCellTest(unittest.TestCase):
@@ -203,6 +210,66 @@ class LookalikeTest(unittest.TestCase):
                      "四、注射藥品之使用原則：", "五、～十二(略)", "一、－三、(略)"):
             with self.subTest(text=text):
                 self.assertFalse(reads_like_an_omission_marker(text, 4))
+
+
+class HiddenMarkerTest(unittest.TestCase):
+    """A marker an invisible character hides: the character stream has none, a reader sees one."""
+
+    INVISIBLE = ("\u200b", "\u200c", "\u200d", "\u2060", "\ufeff", "\u00ad", "\u200e", "\u200f", "\u180e", "\x00", "\x1b")
+    HIDDEN = ("五、~十二、(略)", "五至十二、(略)", "（五）～（十二）(略)", "五、丙：", "十、(略)", "第五、~十二、(略)")
+
+    @staticmethod
+    def column(line: str) -> list[str]:
+        return [GENERAL_PRINCIPLE_HEADING, "四、甲：", "（一）乙", line]
+
+    def test_an_invisible_character_in_front_of_a_marker_refuses_the_cut(self) -> None:
+        # without the refusal such a line is no marker, so it runs on as text of the point above it (a hidden point
+        # merges into the previous point, a hidden omission marker into its patch)
+        for char in self.INVISIBLE:
+            for line in self.HIDDEN:
+                with self.subTest(char=hex(ord(char)), line=line):
+                    split = split_general_principle(self.column(char + line))
+                    self.assertEqual((split.points, split.refusal), ((), "marker_behind_invisible_characters"))
+
+    def test_an_invisible_character_inside_a_marker_refuses_the_cut_too(self) -> None:
+        for char in self.INVISIBLE:
+            for line in self.HIDDEN:
+                with self.subTest(char=hex(ord(char)), line=line):
+                    split = split_general_principle(self.column(line[:1] + char + line[1:]))
+                    # a line that is a bare-head lookalike as it stands is refused as that one
+                    self.assertIn(split.refusal, {"marker_behind_invisible_characters", "omission_marker_lookalike"})
+                    self.assertEqual(split.points, ())
+
+    def test_what_an_invisible_character_does_not_change(self) -> None:
+        # a line that does not read as a marker either way stays the text of the point, wherever the character stands
+        for char in self.INVISIBLE:
+            for line in ("注射藥品使用時機", "（二）乙：", "注射藥品(略)", "備註：策略", "1.~8.(略)", "（三）~（四）(略)"):
+                for text in (char + line, line[:2] + char + line[2:], line + char):
+                    with self.subTest(char=hex(ord(char)), text=text):
+                        split = split_general_principle(self.column(text))
+                        self.assertEqual((split.points, split.refusal), (((4, 1, 4),), None))
+        # white space is visible: it is not removed, so a space or a tab between the ordinal and 、 is read as before
+        # (no marker; a tab is a control character, which is why the check has to keep white space)
+        for gap in (" ", "\t", "\u3000", "\u00a0"):
+            with self.subTest(gap=repr(gap)):
+                split = split_general_principle(self.column(f"五{gap}、丙："))
+                self.assertEqual((split.points, split.refusal), (((4, 1, 4),), None))
+        # ordinary white space in front of a marker is read as before
+        split = split_general_principle(self.column("\u3000五、丙："))
+        self.assertEqual((split.points, split.refusal), (((4, 1, 3), (5, 3, 4)), None))
+        split = split_general_principle(self.column("\t五、~十二、(略)"))
+        self.assertEqual((split.points, split.omissions, split.refusal), (((4, 1, 3),), ((3, 5, 12),), None))
+
+    def test_a_hidden_marker_in_a_nested_table_is_the_points_own_text(self) -> None:
+        texts = self.column("\u200b五、丙：")
+        self.assertEqual(split_general_principle(texts).refusal, "marker_behind_invisible_characters")
+        split = split_general_principle(texts, plain={3})
+        self.assertEqual((split.points, split.refusal), (((4, 1, 4),), None))
+
+    def test_the_official_row_has_no_invisible_character(self) -> None:
+        for column in ("new", "old"):
+            for text in GENERAL_ROW[column]:
+                self.assertEqual(_visible(text), text)
 
 
 class SplitTest(unittest.TestCase):

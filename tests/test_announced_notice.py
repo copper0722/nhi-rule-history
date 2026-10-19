@@ -2256,6 +2256,31 @@ class GeneralPrincipleRowTest(unittest.TestCase):
                 self.assertEqual(parsed.other_effects, ())
                 self.assertEqual(parsed.clauses[0].revised[-1].printed_text, variant)
 
+    def test_a_marker_an_invisible_character_hides_holds_the_row_even_in_one_column(self) -> None:
+        # A zero-width space, a byte-order mark or a soft hyphen draws as nothing, so the character stream has no
+        # marker where a reader sees one and the line used to run on as text of point 四.  In one column only, the
+        # point sets would agree and the patch would carry a stray line (or point 五) while the original is clean:
+        # the row is held alone, in either column.
+        for char in ("\u200b", "\ufeff", "\u00ad"):
+            for variant in ("五、~十二、(略)", "五至十二、(略)", "（五）～（十二）(略)"):
+                for column, change in (
+                    ("revised", lambda n, o, c=char, v=variant: (n[:9] + [c + v], o)),
+                    ("original", lambda n, o, c=char, v=variant: (n, o[:9] + [c + v])),
+                    ("both", lambda n, o, c=char, v=variant: (n[:9] + [c + v], o[:9] + [c + v])),
+                ):
+                    with self.subTest(char=hex(ord(char)), variant=variant, column=column):
+                        parsed = parse_alhemo(self.with_general_row(change))
+                        self.assertEqual([clause.clause_code for clause in parsed.clauses], self.DOTTED)
+                        (held,) = parsed.other_effects
+                        side = "original" if column == "original" else "revised"
+                        self.assertEqual(
+                            (held.key, held.blocked_reason),
+                            ("general-principle:0/1", f"{side}_marker_behind_invisible_characters"))
+        # the same character in front of plain text is only text of the point
+        parsed = parse_alhemo(self.with_general_row(lambda n, o: (n[:9] + ["\u200b附註"] + n[9:], o[:9] + ["\u200b附註"] + o[9:])))
+        self.assertEqual([clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED])
+        self.assertEqual(parsed.other_effects, ())
+
     def test_the_cut_does_not_hold_what_it_can_read(self) -> None:
         # Confusable negatives: each variation is still a readable row.
         new, old = self.general_row()

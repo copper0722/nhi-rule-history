@@ -155,6 +155,11 @@ def test_a_point_is_a_block_of_its_own_and_can_be_excluded_by_its_code():
         odd = [GENERAL, "一、~三、(略)", "四、甲：", "（一）乙", last]
         with pytest.raises(ValueError, match=r"cannot be cut into points \(omission_marker_lookalike\)"):
             build_blocks({"clauses": [{"new": odd, "old": odd}]}, {})
+    # a marker that an invisible character hides is refused too
+    for hidden in ("\u200b五、~十二、(略)", "\ufeff五至十二、(略)", "\u00ad五、丙："):
+        odd = [GENERAL, "一、~三、(略)", "四、甲：", "（一）乙", hidden]
+        with pytest.raises(ValueError, match=r"cannot be cut into points \(marker_behind_invisible_characters\)"):
+            build_blocks({"clauses": [{"new": odd, "old": odd}]}, {})
 
 
 def test_a_general_principle_row_needs_the_heading_in_both_columns():

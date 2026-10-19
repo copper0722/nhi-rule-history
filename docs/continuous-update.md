@@ -698,7 +698,14 @@ labelled as the revised column of the table and never as a complete clause.
   starts at the next point's number is held as well (the 28 registered
   documents hold none: of 252 lines that end in an omission, 6 are markers, 2
   are that bracketed sub-item line and none starts with a bare ordinal; nested
-  table paragraphs are exempt). Point N is clause `0.N`, the project-assigned
+  table paragraphs are exempt). A marker or lookalike that an invisible
+  character hides (a zero-width space, a byte-order mark, a soft hyphen, a
+  direction mark, a control character, in front of the marker or inside it) is
+  no marker in the character stream although a reader sees one, so a line that
+  reads as a marker or lookalike only once those characters are removed is
+  `marker_behind_invisible_characters` and holds the row (none of the 13,876
+  published clause lines and 2,553 paragraph texts of the 28 registered
+  documents holds an invisible character). Point N is clause `0.N`, the project-assigned
   code (`code_origin=project_assigned`, the publication's `0.1`–`0.12`), bound
   to the served `0.N`; its patch is exactly the point's revised paragraphs and
   its original paragraphs are the same point of the original column. Points are
@@ -709,7 +716,8 @@ labelled as the revised column of the table and never as a complete clause.
   `blocked_reason` in the unresolved scope, listed under `blocked_clauses`): a
   heading in one column only, an original that reads `無`, a column with text
   outside any point, an unreadable ordinal or range, ordinals that do not
-  strictly increase, a line that only looks like an omission marker, a column
+  strictly increase, a line that only looks like an omission marker or is a
+  marker behind an invisible character, a column
   without a point, point codes that differ between the columns, a marker drawn
   by a list label, or a paragraph that reads like a clause designation. The rest of the notice projects as usual. A row that goes
   on from a 通則 point (a point spanning two rows) still refuses the notice.

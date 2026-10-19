@@ -12,7 +12,8 @@ dependency:
   (``四、注射藥品之使用原則：``).  A run of points the table leaves out is one
   paragraph naming the range and the omission (``一、~三、(略)``): an
   omission marker, never a point.  A line that only looks like one
-  (``五至十二、(略)``) is never absorbed into the point above it: the cut
+  (``五至十二、(略)``), or a marker an invisible character hides
+  (``<U+200B>五、丙：``), is never absorbed into the point above it: the cut
   refuses it.
 
 Grammar matching runs on NFKC text, so full-width forms (``（無）``,
@@ -194,6 +195,40 @@ def reads_like_an_omission_marker(text: str, latest: int) -> bool:
     return head is not None and cjk_ordinal(head["ordinal"]) == latest + 1
 
 
+def _without_invisible_characters(text: str) -> str:
+    """The NFKC text without its invisible control and format characters.
+
+    A zero-width space, a byte-order mark, a soft hyphen or a direction mark is
+    drawn as nothing: a reader sees a marker where the character stream has
+    none.  White space is kept (the grammar reads it).
+    """
+
+    return "".join(
+        char
+        for char in grammar_text(text)
+        if char.isspace() or unicodedata.category(char) not in {"Cc", "Cf"}
+    )
+
+
+def _refusal_for_unmarked_line(text: str, latest: int) -> str | None:
+    """Why a paragraph that is no marker cannot be plain text of the point above it, or ``None``.
+
+    Either it only reads like an omission marker (``omission_marker_lookalike``), or it reads as a marker, or as
+    such a lookalike, once its invisible characters are removed
+    (``marker_behind_invisible_characters``).
+    """
+
+    if reads_like_an_omission_marker(text, latest):
+        return "omission_marker_lookalike"
+    bare = _without_invisible_characters(text)
+    if bare != grammar_text(text) and (
+        read_point_marker(bare) is not None
+        or reads_like_an_omission_marker(bare, latest)
+    ):
+        return "marker_behind_invisible_characters"
+    return None
+
+
 def split_general_principle(
     texts: Sequence[str], *, plain: Collection[int] = frozenset()
 ) -> GeneralPrincipleSplit:
@@ -212,8 +247,10 @@ def split_general_principle(
     point, when an ordinal or range cannot be read, when ordinals do not
     strictly increase (a repeated point, or a sub-list that starts over), when
     a paragraph only reads like an omission marker
-    (:func:`reads_like_an_omission_marker`; ``omission_marker_lookalike``), or
-    when the column holds no point at all.  Nothing is joined, skipped or
+    (:func:`reads_like_an_omission_marker`; ``omission_marker_lookalike``),
+    when a paragraph reads as a marker or such a lookalike only once its
+    invisible characters are removed (``marker_behind_invisible_characters``),
+    or when the column holds no point at all.  Nothing is joined, skipped or
     inferred.
     """
 
@@ -230,8 +267,8 @@ def split_general_principle(
         if token is None:
             if open_point is None and grammar_text(texts[index]).strip():
                 return GeneralPrincipleSplit(refusal="text_outside_a_point")
-            if index not in plain and reads_like_an_omission_marker(texts[index], latest):
-                return GeneralPrincipleSplit(refusal="omission_marker_lookalike")
+            if index not in plain and (reason := _refusal_for_unmarked_line(texts[index], latest)):
+                return GeneralPrincipleSplit(refusal=reason)
             continue
         kind, first, last = token
         if first <= latest:

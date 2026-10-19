@@ -346,6 +346,11 @@ class SerialisationTest(unittest.TestCase):
                 with self.subTest(variant=variant, column=column), self.assertRaisesRegex(
                         ValueError, rf"{column} column cannot be cut into points \(omission_marker_lookalike\)"):
                     pg_store.comparison_from_table(alhemo_table(change))
+        # and so does a marker an invisible character hides
+        for variant in ("\u200b五、~十二、(略)", "\ufeff五至十二、(略)", "\u00ad五、丙："):
+            with self.subTest(variant=variant), self.assertRaisesRegex(
+                    ValueError, r"revised column cannot be cut into points \(marker_behind_invisible_characters\)"):
+                pg_store.comparison_from_table(alhemo_table(lambda n, o, v=variant: (n[:9] + [v], o)))
         official = pg_store.comparison_from_table(alhemo_table())["blocks"]
         for variant in ("五、~十二、(略) 。", "五、~ 十二、(略)", "五、~十二、( 略 )"):
             with self.subTest(variant=variant):
