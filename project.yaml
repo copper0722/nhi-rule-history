@@ -122,6 +122,30 @@ service_surfaces:
     live_verification: docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json
     integration_status: live_verified
 
+announced_general_principle_code:
+  purpose: let_the_announced_layer_hold_a_project_assigned_general_principle_point_as_a_patch_code_0_N
+  schema: nhi_rule_history_announced
+  cards: [3275, 2678]
+  objects: one_check_constraint_clause_patch_clause_code_check_widened_nothing_else_touched
+  untouched_same_named_checks:
+    - composed_clause_version_clause_code_check
+    - clause_reader_profile_clause_code_check
+  detector: general_principle_patches_admitted_reads_the_live_constraint_not_a_version_number
+  migration:
+    forward: pg/migrations/2026-10-19_nhi_rule_history_announced_general_principle_code_v30.sql
+    rollback: pg/migrations/2026-10-19_nhi_rule_history_announced_general_principle_code_v30.rollback.sql
+    rollback_mode: restore_the_v21_check_refuses_while_any_project_assigned_patch_row_exists
+    readback: database/queries/announced-general-principle-code-readback-v30.sql
+    independent_verification: passed_with_notes_disposable_postgresql_17_and_18_before_apply
+    state: applied
+    applied_at: "2026-10-19T23:22:00+08:00"
+    applied_at_precision: minute
+    applied_file_sha256_prefix: 9ce89624369d
+    readback_after_apply: fresh_connection_every_verdict_and_probe_true_60_rows_0_violations
+    rollback_possible_now: false_the_served_run_holds_the_0_4_patch
+  first_served: 0_4_of_notice_1150057388_in_run_68041b0b_activated_2026-10-20T00:15:00+08:00
+  map: docs/continuous-update.md
+
 diff_card_store:
   purpose: git_diff_card_data_of_each_announced_amendment_notice_official_comparison_table
   schema: nhi_rule_history_diff_card
@@ -224,7 +248,7 @@ continuous_update:
     auto_promotion_enabled: false
     unavailable_update_bundle: failed_terminal_NHI_UPDATE_BUNDLE_UNAVAILABLE_zero_worker_calls
   announced_notice_overlay:
-    status: release_2_live_recurring_lane_registered_activation_released
+    status: release_3_live_recurring_lane_registered_activation_released
     recorded_on: "2026-09-28"
     release_1:
       run_id: ce4454ed-b580-58b0-a8ab-0d1a07e6a5fd
@@ -242,6 +266,21 @@ continuous_update:
       still_pending: ["9.69", "2.6.2", "2.6.3"]
       independent_verification: passed
       subscriber_site_per_clause_check: passed_21_of_21
+    release_3:
+      run_id: 68041b0b-4e7a-5254-82fa-d3664140ea83
+      loader_version: nhi-rule-history/announced-overlay-loader/2.4.1
+      parser_version: nhi-rule-history/announced-notice-parser/1.5.1
+      deployed_at: "2026-10-20T00:07:00+08:00"
+      activated_at: "2026-10-20T00:15:00+08:00"
+      activated_by: recurring_lane
+      notice: 健保審字第1150057388號
+      effective_on: "2026-11-01"
+      served_patch_only_clauses: ["0.4", "4.2", "4.2.7", "4.2.8", "4.2.9"]
+      general_principle_points_served: ["0.4"]
+      requires_migration: announced_general_principle_code_v30
+      independent_verification: passed_two_rounds_against_the_official_pdf
+      activation_review: resolved
+      subscriber_site_per_clause_check: passed_5_of_5_at_390_and_1280_px_after_the_2026_10_20_00_34_sync_deploy
     recurring_lane:
       cadence_minutes: 15
       auto_activation: released_under_named_residual_classes_with_per_activation_official_pdf_review
@@ -269,9 +308,10 @@ continuous_update:
       - official_rendering_mismatch
       - official_rendering_unverified
       - nested_table
+      - general_principle_patch_needs_v30
     list_label_rule: nhi-rule-history/odf-list-label/1.1.0
-    parser_version: nhi-rule-history/announced-notice-parser/1.5.0
-    loader_version: nhi-rule-history/announced-overlay-loader/2.4.0
+    parser_version: nhi-rule-history/announced-notice-parser/1.5.1
+    loader_version: nhi-rule-history/announced-overlay-loader/2.4.1
     cell_rendering_rule: nhi-rule-history/office-cell-rendering/1.2.0
     body_text_rendering_check: statements_titles_and_comparison_headers_confirmed_against_libreoffice
     rollback_resolution_policy: carry_back_by_recency_refuse_when_both_changed
@@ -289,7 +329,7 @@ continuous_update:
     queue_manifest_identity: registered_canonical_bytes_with_bookkeeping_and_derived_layers_reverted_sources_pinned
     list_numbering_receipt: docs/audits/2026-09-28-announced-list-numbering-verification.json
     rehearsal_receipt: docs/audits/2026-09-28-announced-notice-overlay-rehearsal.json
-    production_load: release_2_live
+    production_load: release_3_live
     consumer_prerequisite: subscriber_export_capability_marker_lists_patch_only
 
 announced_dyslipidemia_release:
