@@ -110,19 +110,21 @@ def source_pairs(table: Mapping[str, Any]) -> list[tuple[str, list[str], list[st
 
 
 def clause_codes_of(clause_id: str, old: Sequence[str], new: Sequence[str]) -> list[str]:
-    """The clause codes a clause block serves: its own id, then the clause headings nested under it.
+    """The clause codes a clause block serves: its own id, then every clause heading in its row.
 
-    A nested heading (9.5 -> 9.5.1) is taken from the revised paragraphs in column order, then, for
-    those found only in the original paragraphs (a sub-clause this amendment deletes), from the
-    original column; each code appears once.  The announced layer splits a row at its nested
-    headings into one patch per code, so the block of the row serves each of them.  The heading
-    grammar is the overlay's own (NFKC, strict stop).
+    A heading is a paragraph that starts with a clause designation, as the announced overlay's
+    grammar reads it (NFKC, strict stop).  The announced layer splits a row at its headings into one
+    patch per code, so the block of the row serves each of them: a heading nested under the row's
+    clause (the row of 9.5 holds 9.5.1) and a sibling clause that shares the row (a 9.2 row that
+    also holds 9.26 and 9.69) alike.  Headings come from the revised paragraphs in column order,
+    then those only the original paragraphs have (a sub-clause this amendment deletes); each code
+    appears once.
     """
 
     codes = [clause_id]
     for text in (*new, *old):
         code = clause_heading_code(text)
-        if code and code != clause_id and code.startswith(clause_id + ".") and code not in codes:
+        if code and code not in codes:
             codes.append(code)
     return codes
 

@@ -293,19 +293,62 @@ class SerialisationTest(unittest.TestCase):
         self.assertEqual(pg_store.clause_codes_of("9.8", old, []), ["9.8", "9.8.3", "9.8.1", "9.8.4"])
         self.assertEqual(pg_store.clause_codes_of("9.8", ["9.8.A："], ["9.8.A："]), ["9.8"])
 
-    def test_only_headings_nested_under_the_clause_are_added_to_the_codes(self) -> None:
-        # a heading nested under the row's clause is served by the row; a sibling clause that
-        # shares the row, or a number inside the text, is not
+    def test_every_heading_at_a_paragraph_start_is_served_by_the_row(self) -> None:
         def codes(new, old=()):
             return pg_store.clause_codes_of("9.8", old, new)
 
+        # nested and sibling headings alike, in column order; the row's own id comes first
         self.assertEqual(codes(["9.8.A：", "9.8.1.B：", "9.8.1.2.C：", "9.9.D：", "9.80.E："]),
-                         ["9.8", "9.8.1", "9.8.1.2"])
-        self.assertEqual(codes(["9.8.A：", "限用於 9.8.1.", "1.9.8.1.x"]), ["9.8"])
-        self.assertEqual(codes(["9.8.A：", "9.9.D："], ["9.8.A：", "9.10.E："]), ["9.8"])
+                         ["9.8", "9.8.1", "9.8.1.2", "9.9", "9.80"])
+        self.assertEqual(codes(["9.9.D：", "9.8.A："]), ["9.8", "9.9"])
+        self.assertEqual(codes(["9.8.A：", "9.9.D："], ["9.8.A：", "9.10.E："]), ["9.8", "9.9", "9.10"])
+        # a number that is not a heading is not served: inside the text, a list item, an unfinished stop
+        self.assertEqual(codes(["9.8.A：", "限用於 9.8.1.", "（9.9.）", "2.18歲", "3.5mg", "(1)9.9.X"]), ["9.8"])
         # the overlay's grammar reads full-width digits and stops
         self.assertEqual(codes(["９.８.１．B："]), ["9.8", "9.8.1"])
-        self.assertEqual(pg_store.clause_codes_of("10.3", [], ["10.3.A：", "10.3.8.B：", "10.30.C："]), ["10.3", "10.3.8"])
+        self.assertEqual(pg_store.clause_codes_of("10.3", [], ["10.3.A：", "10.3.8.B：", "10.30.C："]),
+                         ["10.3", "10.3.8", "10.30"])
+
+    def test_a_row_that_holds_sibling_clauses_serves_them_and_so_does_the_attachment(self) -> None:
+        # the shape of notice 1150671889: one table row whose cell holds the 9.2 clause and, further
+        # down, the headings of 9.26 and 9.69
+        new = ["9.2.Fixture：(115/9/1)", "限用於甲", "9.26.Sibling：(115/9/1)", "限用於乙", "9.69.Other：(115/9/1)", "限用於丙"]
+        old = ["9.2.Fixture：", "限用於甲", "9.26.Sibling：", "限用於乙", "9.69.Other：", "限用於丁"]
+        (block,) = pg_store.comparison_from_table(read_table(_odt(_comparison([(new, old)]))))["blocks"]
+        self.assertEqual((block["clause_id"], block["clause_codes"]), ("9.2", ["9.2", "9.26", "9.69"]))
+        self.assertEqual((block["adds"], block["dels"]), (4, 4))  # three edited headings and the last paragraph
+        body = (
+            "<text:p>「藥品給付規定」修訂對照表</text:p><text:p>（自115年10月1日生效）</text:p>"
+            + comparison_table(("修訂後給付規定", "原給付規定"), [(new, old)])
+            + "<text:p>附表二十 測試表單</text:p>"
+            + comparison_table(("修訂後附表規定", "原附表規定"), [(["甲表（新）"], ["甲表（舊）"])])
+        )
+        clause, attachment = pg_store.comparison_from_table(read_table(_odt(_document(body))))["blocks"]
+        self.assertEqual(clause["clause_codes"], ["9.2", "9.26", "9.69"])
+        self.assertEqual((attachment["block_kind"], attachment["clause_codes"]), ("attachment", ["9.2", "9.26", "9.69"]))
+
+    def test_the_proposed_revised_header_builds_like_the_2_6_1_notice(self) -> None:
+        # the 2.6.1 notice prints 建議修訂後給付規定; its first table holds one clause row, and two
+        # further 給付 tables hold more rows (2.6.2 and 2.6.3 in the real notice)
+        header = ("建議修訂後給付規定", "原給付規定")
+        body = (
+            "<text:p>「藥品給付規定」修訂對照表</text:p><text:p>（自115年9月1日生效）</text:p>"
+            + comparison_table(header, [(["2.6.1.Fixture表：(115/9/1)", "限用於甲"], ["2.6.1.Fixture表："])])
+            + comparison_table(header, [(["表二內容（新）"], ["表二內容（舊）"])])
+            + "<text:p>表三</text:p>"
+            + comparison_table(header, [(["2.6.2.Second：(115/9/1)"], ["2.6.2.Second："]),
+                                         (["2.6.3.Third：(115/9/1)"], ["2.6.3.Third："])])
+        )
+        comparison = pg_store.comparison_from_table(read_table(_odt(_document(body))))
+        self.assertEqual([(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"])
+                          for b in comparison["blocks"]], [
+            (0, "clause", "2.6.1", ["2.6.1"]),
+            (1, "attachment", "附表（表1）", ["2.6.1"]),
+            (2, "attachment", "附表（表2）", ["2.6.1"]),
+            (3, "attachment", "附表（表2）", ["2.6.1"]),
+        ])
+        for block in comparison["blocks"]:
+            pg_store.check_replay(block)
 
     def test_segments(self) -> None:
         self.assertEqual(pg_store.segments("abcdef", []), [{"text": "abcdef", "mark": False}])

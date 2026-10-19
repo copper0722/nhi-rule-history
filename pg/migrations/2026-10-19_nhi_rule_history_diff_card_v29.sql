@@ -111,11 +111,11 @@ CREATE TABLE nhi_rule_history_diff_card.comparison_block (
 COMMENT ON TABLE nhi_rule_history_diff_card.comparison_block IS
   'The blocks of a comparison in display order. Write-once, and committed only together with every other block of the comparison.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.block_kind IS
-  'clause = a row of the first comparison table; attachment = a revised 附表 table (原／修訂後 附表規定).';
+  'clause = a row of the first comparison table; attachment = a row of a further comparison table (usually a revised 附表; the 2.6.1 notice also has further 給付規定 tables).';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_id IS
   'The clause code of the row (for example 9.5), or the short title of the revised 附表 for an attachment.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_codes IS
-  'Clause codes this block serves, each once. Clause block: its own clause_id, then every clause heading nested under it, taken from the revised paragraphs in column order and then, for those found only there, from the original paragraphs (a sub-clause the amendment deletes). The row of 9.5 serves 9.5 and 9.5.1, which the announced layer splits into two patches. Attachment block: the union of the clause_codes of every clause block of the same comparison, in block order.';
+  'Clause codes this block serves, each once. Clause block: its own clause_id, then the clause of every paragraph of its row that starts with a clause designation (the announced overlay''s heading grammar), from the revised paragraphs in column order and then, for those only the original paragraphs have, from the original column (for example a sub-clause the amendment deletes). The announced layer splits a row at its headings into one patch per code, so the row of 9.5 serves 9.5 and 9.5.1 (nested), and a 9.2 row that also holds 9.26 and 9.69 serves all three (siblings). Attachment block: the union of the clause_codes of every clause block of the same comparison, in block order; the headings inside the attachment''s own rows are not added.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.path IS
   'Display path of the card file, for example 藥品給付規定/9.5.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.badge IS

@@ -19,22 +19,26 @@
   layer records as `source_artifact_sha256`). Presentation data only: no
   clause-history promotion, no legal-effective-date claim, no model call.
 - Read-only dry run against the production database before the migration is
-  applied: 30 registered notice bundles, 1 with a bad queue receipt, 26 turn
-  into a comparison, 3 are listed as failed (one with a partial attachment
-  inventory, the 2.6.1 notice whose table header reads 建議修訂後給付規定, and
-  the 通則 notice, which has no clause number). 15 of the 16 source files the
-  announced layer serves get a card; the 16th is the 2.6.1 composite.
+  applied: 30 registered notice bundles, 1 with a bad queue receipt, 27 turn
+  into a comparison, 2 are listed as failed (one with a partial attachment
+  inventory, and the 通則 notice, which has no clause number). All 16 source
+  files the announced layer serves get a card, the 2.6.1 notice included.
 - The loader takes the same ODT attachment the overlay parses (the candidate
   loop of `parse_notice`) but does not need the overlay's full parse, so
   older notices whose raw.md receipts differ from the ODT still get a card in
   the store; the website exports only the source files the announced layer
   serves. Nothing here changes the overlay, its code fingerprint or what is
   served.
-- `clause_codes` rules as ruled by the accepting owner: a clause block serves its own id, then the
-  headings nested under it (revised column order, then headings only the original column has, such
-  as a sub-clause the amendment deletes); an attachment block serves the union of its notice's
-  clause blocks' codes in block order. The load-pg receipt lists each source file's blocks with
-  `clause_id` and `clause_codes`.
+- `clause_codes` rules, as ruled by the accepting owner: a clause block serves its own id, then the
+  clause of every paragraph of its row that starts with a clause designation (the overlay's heading
+  grammar), revised column first and then headings only the original column has. So the row of 9.5
+  serves 9.5 and 9.5.1, and a 9.2 row that also holds 9.26 and 9.69 serves all three. An attachment
+  block serves the union of its notice's clause blocks' codes in block order. The load-pg receipt
+  lists each source file's blocks with `clause_id` and `clause_codes`.
+- `sources_nhi.HEADER_RE` takes an optional 建議 prefix on the revised header, which the 2.6.1 notice
+  prints; the kind (給付 or 附表) still comes from the two headers together. The 38 html files of
+  the three committed card publications re-render byte for byte the same with the old and the new
+  generator, and the nine-notice ODT snapshot of the NHI publication is byte-identical between them.
 - Not applied: the migration is applied, and `load-pg` first run, by the
   accepting owner, never by the producer. Rollback is the paired file (drops the
   view, tables, functions and schema with RESTRICT; the rows are rebuilt by

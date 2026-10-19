@@ -27,7 +27,8 @@ python -m tools.diff_cards.build render PUB
 
 - 來源是每則公告的 ODT「藥品給付規定修訂對照表」，以 owner 的
   `extract_odt_blocks` 取段落；第 0 列表頭必須是「修訂後給付規定｜原給付規定」，
-  否則不收。舊欄為「無」即新增條文。
+  否則不收。修訂後欄的標題可印成「建議修訂後給付規定」（2.6.1 公告），型別（給付或附表）仍由兩欄標題共同決定。
+  舊欄為「無」即新增條文。
 - 比較採 NFKC 並忽略空白與段首條列編號（ODT 自動編號不在擷取文字內），
   所以相容字、全半形與編號差異不標示；顯示文字一律為來源原文。
 - 段落先對齊、再以相似度配對修改段，逐字 diff 標出改動；每段只出現一次
@@ -93,7 +94,7 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 | 物件 | 內容 |
 |---|---|
 | `comparison` | 一份官方 ODT 對照表在一個產生器版本下的比較。鍵是 ODT 位元組的 SHA-256（與公告層的 `source_artifact_sha256` 同值）加 `generator_version`；唯讀（write-once） |
-| `comparison_block` | 該比較的區塊，依顯示順序：第一張表的每一列是一個 `clause` 區塊，每張「修訂後附表規定」表是一個 `attachment` 區塊 |
+| `comparison_block` | 該比較的區塊，依顯示順序：第一張表的每一列是一個 `clause` 區塊；之後每張「修訂後…規定｜原…規定」表的每一列是一個 `attachment` 區塊（多半是修訂後附表；2.6.1 公告的後續表格也是給付規定表，同樣列為 `attachment`） |
 | `v_public_comparison_block` | 讀取契約：每份來源檔取最新的比較（`loaded_at` 再 `generator_version`），一個區塊一列 |
 
 規則：
@@ -113,7 +114,7 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 | `comparison_sha256` | text | 該比較全部區塊的雜湊，見下 |
 | `extra_table_count` | integer | ODT 內未比較的多欄表格數 |
 | `block_order` | integer | 從 0 起的顯示順序 |
-| `block_kind` | text | `clause`（第一張表的一列）或 `attachment`（一張修訂後附表） |
+| `block_kind` | text | `clause`（第一張表的一列）或 `attachment`（之後某張對照表的一列，多半是修訂後附表） |
 | `clause_id` | text | 條號（如 `9.5`），附表區塊為附表簡稱（如 `附表十八之五`） |
 | `clause_codes` | text[] | 這個區塊服務的條號，見「對應規則」 |
 | `path` | text | 卡片檔案路徑，如 `藥品給付規定/9.5` |
@@ -142,14 +143,17 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 
 1. 公告 patch 的 `source_artifact_sha256` 等於 `v_public_comparison_block.source_artifact_sha256`。
 2. 區塊的選擇看 `clause_codes`：patch 的 `clause_code` 屬於區塊的 `clause_codes`。
-3. `clause` 區塊的 `clause_codes` 依序是：自己的 `clause_id`；巢狀在它底下的條號標題，先取修訂後段落
-   （依修訂後欄的出現順序），再取只出現在原段落的（本次修正刪掉的子條文，依原欄順序）；每個條號只出現一次。
-   判斷用公告層自己的標題文法。例：官方對照表的 `9.5` 那一列含 `9.5.1.` 標題，公告層把它拆成 `9.5` 與
-   `9.5.1` 兩筆 patch，兩筆都對到同一個區塊，`clause_codes` 為 `9.5` 與 `9.5.1`；此時 `clause_id` 與
-   patch 的條號不同，卡片註明「官方對照表此列為 9.5（含 9.5.1）」。同一列內並列的兄弟條號不算巢狀，不列入。
+3. `clause` 區塊的 `clause_codes` 依序是：自己的 `clause_id`；那一列任何一個以條號標題開頭的段落所指的條號
+   （判斷用公告層自己的標題文法：NFKC、條號後有句點），先取修訂後段落（依修訂後欄的出現順序），再取只出現在
+   原段落的（例如本次修正刪掉的子條文，依原欄順序）；每個條號只出現一次。公告層把一列依標題拆成一條條
+   patch，所以區塊服務這一列裡的每一個條號，巢狀的與並列的都算。例：官方對照表的 `9.5` 那一列含 `9.5.1.`
+   標題，公告層把它拆成 `9.5` 與 `9.5.1` 兩筆 patch，兩筆都對到同一個區塊，`clause_codes` 為 `9.5` 與
+   `9.5.1`；此時 `clause_id` 與 patch 的條號不同，卡片註明「官方對照表此列為 9.5（含 9.5.1）」。並列的例子：
+   一份公告的 `9.2` 那一列同時含 `9.26.` 與 `9.69.` 標題，區塊的 `clause_codes` 為 `9.2`、`9.26`、`9.69`。
+   段落中間出現的條號、清單項（如 `2.18歲`）不是標題，不列入。
 4. `attachment` 區塊的 `clause_codes` 是同一份比較所有 `clause` 區塊的 `clause_codes` 的聯集（依區塊順序，
-   去重，含巢狀條號），附表隨該公告的每一筆 patch 一起顯示。例：`9.5` 那一列的區塊服務 `9.5` 與 `9.5.1`，
-   同一份公告的附表區塊也服務 `9.5` 與 `9.5.1`。
+   去重，含巢狀與並列條號），附表隨該公告的每一筆 patch 一起顯示。例：`9.5` 那一列的區塊服務 `9.5` 與
+   `9.5.1`，同一份公告的附表區塊也服務 `9.5` 與 `9.5.1`。附表區塊自己那一列裡的標題不另外列入。
 5. 公告 patch 文字與區塊段落逐位元組不同（公告層把 ODT 自動編號印成 `1.` 加 Tab，並把巢狀條文拆開），
    比對文字時兩邊都用 `tools.diff_cards.core.key`；patch 文字依空白行切開後，等於區塊 `new_paragraphs`
    的連續一段。
@@ -182,8 +186,7 @@ PYTHONPATH=src python -m tools.diff_cards.build load-pg [--dsn DSN] [--corpus-ro
   `superseded`）。每個登錄項目是
   `problem`、`parsed`、或解析階段就 `failed` 三者之一（寫入階段才失敗的項目同時計入 `parsed` 與 `failed`）。
   無法成為卡片的 bundle 只列在 `failed`，不影響其他 bundle；
-  目前會出現的有：附件清單不完整的公告，以及表頭不是「修訂後給付規定｜原給付規定」的公告（如表頭為
-  「建議修訂後給付規定」的 2.6.1，與沒有條號的通則公告）。
+  目前會出現的有：附件清單不完整的公告，以及第一張表沒有條號的通則公告。
 - 結束狀態：0 表示執行完成（失敗只是列出）；1 表示基礎設施錯誤（連不上、正式執行時沒有 v29 schema）或讀回不符；
   2 表示缺連線字串或 bundle 根目錄。
 - `--dry-run`：照常建好並驗證每份比較，但只開唯讀連線，不寫入；schema 尚未套用時回條的 `store_schema`
