@@ -27,7 +27,7 @@ import unicodedata
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
-GENERAL_PRINCIPLE_RULE_VERSION = "nhi-rule-history/general-principle-points/1.0.0"
+GENERAL_PRINCIPLE_RULE_VERSION = "nhi-rule-history/general-principle-points/1.1.0"
 GENERAL_PRINCIPLE_LABEL = "通則"
 GENERAL_PRINCIPLE_HEADING = "藥品給付規定通則"
 

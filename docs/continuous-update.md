@@ -686,7 +686,7 @@ labelled as the revised column of the table and never as a complete clause.
   point either: it is `range_marker_unreadable` and holds the row, because
   reading it as a point would invent point N. A line that only looks like an
   omission marker for top-level points is never absorbed into the point above
-  it either: a paragraph that is not a marker, starts with a bare or 第-prefixed
+  it either (parser 1.5.2, rule 1.1.0): a paragraph that is not a marker, starts with a bare or 第-prefixed
   CJK ordinal and ends in an omission (`五至十二、(略)`, `五~十二、(略)`,
   `第五、~十二、(略)`) is `omission_marker_lookalike` and holds the row, and so
   does an omission line that starts with a bracketed ordinal whose first
@@ -725,7 +725,7 @@ labelled as the revised column of the table and never as a complete clause.
   anything it cannot read is false, a further condition in the check
   (`... AND clause_code <> '0.50'`), a suffix beyond `NOT VALID` (`NO INHERIT`,
   PostgreSQL 18's `NOT ENFORCED`) and a second CHECK that bears on the code
-  included. The query that finds the other checks on the column sends its
+  included. The query that finds the other checks on the column (loader 2.4.2) sends its
   word-boundary pattern as a bound parameter, so a session with
   `standard_conforming_strings` off cannot turn `\m` into `m` and hide one. Compose, `verify`, and `load` all ask. Before v30 the point is a held
   clause (`general_principle_patch_needs_v30`: a pending clause effect with the
