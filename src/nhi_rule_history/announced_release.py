@@ -49,6 +49,7 @@ from zoneinfo import ZoneInfo
 from nhi_rule_history import announced_dyslipidemia as dyslipidemia
 from nhi_rule_history import reader_profile
 from nhi_rule_history.announced_notice import (
+    GENERAL_PRINCIPLE_PATCH_HOLD,
     LIST_LABEL_RULE_VERSION,
     PARSER_VERSION,
     PATCH_TEXT_JOIN,
@@ -123,6 +124,10 @@ _BLOCK_NOTES = {
     "official_rendering_unverified": (
         "reconstructed list labels are not confirmed by an independent "
         "office rendering"
+    ),
+    GENERAL_PRINCIPLE_PATCH_HOLD: (
+        "its project-assigned 0.N code is not admitted by the announced "
+        "layer's clause code check until migration v30 is applied"
     ),
 }
 
@@ -566,11 +571,63 @@ def _public_note(clause: AnnouncedClause, header: str) -> str:
 
 
 def clause_block_reason(
-    clause: AnnouncedClause, rendering_check: str | None
+    clause: AnnouncedClause,
+    rendering_check: str | None,
+    *,
+    general_principle_patches: bool = False,
 ) -> str | None:
     """Fail-closed projection gate for one parsed clause."""
 
-    return projection_block_reason(clause, rendering_check)
+    return projection_block_reason(
+        clause,
+        rendering_check,
+        general_principle_patches=general_principle_patches,
+    )
+
+
+PATCH_CODE_CHECK = "clause_patch_clause_code_check"
+_CHECK_PATTERN_RE = re.compile(r"~ '((?:[^']|'')*)'::text")
+
+
+def general_principle_patches_admitted(connection: Any) -> bool:
+    """Whether the database's clause code check admits every ``0.N`` patch code.
+
+    A 通則 point is clause ``0.N``.  The announced layer's
+    ``clause_patch_clause_code_check`` admitted dotted codes only until
+    migration v30; a ``0.N`` patch row is refused by an unmigrated database.
+    The check reads the live constraint, not a version number: it takes the
+    pattern the constraint tests and has PostgreSQL's own regular-expression
+    engine test it against ``0.1`` to ``0.99`` (every code the cut can read)
+    and against dotted codes.  Anything it cannot read, a constraint that is
+    missing or one that admits only some of them, is false, so the same code
+    is safe before and after the migration.
+    """
+
+    row = connection.execute(
+        """
+        SELECT pg_get_constraintdef(con.oid) AS definition
+        FROM pg_constraint con
+        WHERE con.conrelid = to_regclass(%s) AND con.conname = %s
+          AND con.contype = 'c'
+        """,
+        (f"{SCHEMA}.clause_patch", PATCH_CODE_CHECK),
+    ).fetchone()
+    if row is None:
+        return False
+    match = _CHECK_PATTERN_RE.search(row["definition"])
+    if match is None:
+        return False
+    pattern = match.group(1).replace("''", "'")
+    probe = connection.execute(
+        """
+        SELECT (SELECT bool_and(('0.' || n) ~ %s)
+                FROM generate_series(1, 99) AS n) AS project_assigned,
+               (SELECT bool_and(code ~ %s)
+                FROM (VALUES ('2.1.4.2'), ('4.2.9')) AS dotted(code)) AS dotted
+        """,
+        (pattern, pattern),
+    ).fetchone()
+    return bool(probe["project_assigned"] and probe["dotted"])
 
 
 def notice_rows(
@@ -581,6 +638,7 @@ def notice_rows(
     served: Mapping[str, Mapping[str, Any]],
     rendering_checks: Mapping[str, str] | None = None,
     observe_publication: bool = False,
+    general_principle_patches: bool = False,
 ) -> NoticeRows:
     """The rows one notice contributes to a run.
 
@@ -590,6 +648,11 @@ def notice_rows(
     ``observe_publication`` is set: then the predecessor records what the
     publication holds now, so that a served patch can be compared with it.
     Such rows are never loaded.
+
+    A 通則 point (clause ``0.N``) becomes a patch only when
+    ``general_principle_patches`` says the database admits its code
+    (:func:`general_principle_patches_admitted`); otherwise it is a pending
+    effect held back with :data:`GENERAL_PRINCIPLE_PATCH_HOLD`.
     """
 
     notice_id = notice.notice_id
@@ -598,7 +661,13 @@ def notice_rows(
     blocked = {
         clause.clause_code: reason
         for clause in notice.clauses
-        if (reason := clause_block_reason(clause, checks.get(clause.clause_code)))
+        if (
+            reason := clause_block_reason(
+                clause,
+                checks.get(clause.clause_code),
+                general_principle_patches=general_principle_patches,
+            )
+        )
     }
     unresolved = [
         *(
@@ -1607,6 +1676,8 @@ class Composition:
     dropped_notices: tuple[Mapping[str, Any], ...]
     blocked_clauses: tuple[Mapping[str, Any], ...]
     predecessor_moved: tuple[Mapping[str, Any], ...] = ()
+    # Whether the database admitted 0.N patch codes when this was composed.
+    general_principle_patches: bool = False
 
     @property
     def status(self) -> str:
@@ -1722,6 +1793,10 @@ def compose_overlay_release(
                 for clause in notice.clauses
             ],
         )
+        # What the database's clause code check admits decides whether a 通則
+        # point (clause 0.N) is a patch or a held clause; the same code is safe
+        # before and after the check is widened.
+        general_principle_patches = general_principle_patches_admitted(connection)
         preliminary: list[NoticeRows] = []
         superseding: dict[str, CarriedNotice] = {}
         superseded: dict[str, dict[str, Any]] = {}
@@ -1737,6 +1812,7 @@ def compose_overlay_release(
                 rendering_checks=rendering_checks[
                     notice.bundle.reference_number
                 ],
+                general_principle_patches=general_principle_patches,
                 **options,
             )
 
@@ -1893,6 +1969,7 @@ def compose_overlay_release(
                 dropped_notices=tuple(dropped),
                 blocked_clauses=tuple(blocked_clauses(base.rows, {})),
                 predecessor_moved=tuple(predecessor_moved),
+                general_principle_patches=general_principle_patches,
             )
         # The run identity must not depend on the order notices were listed in.
         admitted.sort(key=lambda item: item.notice.bundle.reference_number)
@@ -1946,6 +2023,7 @@ def compose_overlay_release(
                 rendering_checks=rendering_checks[
                     item.notice.bundle.reference_number
                 ],
+                general_principle_patches=general_principle_patches,
             )
             for item in admitted
         ]
@@ -2129,6 +2207,7 @@ def compose_overlay_release(
         dropped_notices=tuple(dropped),
         blocked_clauses=tuple(blocked_clauses(frozen, origins)),
         predecessor_moved=tuple(predecessor_moved),
+        general_principle_patches=general_principle_patches,
     )
 
 
@@ -2295,6 +2374,18 @@ def load_overlay_release(dsn: str, release: OverlayRelease) -> dict[str, Any]:
                 )
             connection.rollback()
             return verify_overlay_release(dsn, release) | {"replayed": True}
+        # A 0.N patch composed while the database admitted its code is refused
+        # here, before anything is written, if the check was narrowed again
+        # since: the load names the cause instead of failing on the INSERT.
+        if any(
+            str(row["clause_code"]).startswith("0.")
+            for row in release.rows["clause_patch"]
+        ) and not general_principle_patches_admitted(connection):
+            raise AnnouncedReleaseError(
+                "load refused: the release holds a project-assigned 0.N patch "
+                "but the announced layer's clause code check does not admit "
+                "it (migration v30); nothing was written; compose again"
+            )
         connection.execute(
             f"""
             INSERT INTO {SCHEMA}.release_run (

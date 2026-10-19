@@ -20,6 +20,7 @@ from nhi_rule_history.announced_notice import (
     NoticeAttachment,
     NoticeBundle,
     ODT_MEDIA_TYPE,
+    GENERAL_PRINCIPLE_PATCH_HOLD,
     OdtParagraph,
     PATCH_TEXT_JOIN,
     _cell_items,
@@ -2318,15 +2319,18 @@ class GeneralPrincipleRowTest(unittest.TestCase):
         for clause in parsed.clauses:
             with self.subTest(clause=clause.clause_code):
                 self.assertEqual(cell_rendering_check(parsed, clause, rendering), "exact")
-                self.assertIsNone(projection_block_reason(clause, "exact"))
+                self.assertIsNone(
+                    projection_block_reason(clause, "exact", general_principle_patches=True)
+                )
         row = verification_row(
-            parsed, parsed.clauses[0], served_text=None, rendering=rendering
+            parsed, parsed.clauses[0], served_text=None, rendering=rendering,
+            general_principle_patches=True,
         )
         self.assertEqual(
             (row["clause_code"], row["effective_on"], row["revised_equals_official_rendering"],
              row["revised_block_count"], row["omitted_text_present"], row["blocked_reason"],
-             row["original_is_none"], row["continued_across_rows"]),
-            ("0.4", "2026-11-01", "exact", 7, True, None, False, False),
+             row["projection_block_reason"], row["original_is_none"], row["continued_across_rows"]),
+            ("0.4", "2026-11-01", "exact", 7, True, None, None, False, False),
         )
         # confusable negative: LibreOffice draws the row's cell with other text
         new, _ = self.general_row()
@@ -2339,6 +2343,38 @@ class GeneralPrincipleRowTest(unittest.TestCase):
         self.assertEqual(
             projection_block_reason(parsed.clauses[0], "mismatch"), "official_rendering_mismatch"
         )
+
+    def test_a_point_is_held_until_the_database_admits_its_code(self) -> None:
+        parsed = parse_alhemo()
+        general, *dotted = parsed.clauses
+        # a caller that does not know gets the hold: fail closed
+        self.assertEqual(projection_block_reason(general, "exact"), GENERAL_PRINCIPLE_PATCH_HOLD)
+        self.assertEqual(GENERAL_PRINCIPLE_PATCH_HOLD, "general_principle_patch_needs_v30")
+        self.assertIsNone(projection_block_reason(general, "exact", general_principle_patches=True))
+        # only a 通則 point is held; the dotted clauses of the notice are not
+        for clause in dotted:
+            self.assertIsNone(projection_block_reason(clause, "exact"))
+        # a more specific hold keeps its own name
+        self.assertEqual(
+            projection_block_reason(general, "mismatch", general_principle_patches=True),
+            "official_rendering_mismatch",
+        )
+        self.assertEqual(
+            projection_block_reason(general, "mismatch"), "official_rendering_mismatch"
+        )
+        # the verification table mirrors the hold, so a caller that mirrors the loader's gate holds it too
+        held = verification_row(parsed, general, served_text=None, rendering=None)
+        self.assertEqual(
+            (held["blocked_reason"], held["projection_block_reason"]),
+            (GENERAL_PRINCIPLE_PATCH_HOLD, GENERAL_PRINCIPLE_PATCH_HOLD),
+        )
+        admitted = verification_row(
+            parsed, general, served_text=None, rendering=None, general_principle_patches=True
+        )
+        self.assertEqual((admitted["blocked_reason"], admitted["projection_block_reason"]), (None, None))
+        for clause in dotted:
+            row = verification_row(parsed, clause, served_text=None, rendering=None)
+            self.assertIsNone(row["blocked_reason"], clause.clause_code)
 
 
 if __name__ == "__main__":

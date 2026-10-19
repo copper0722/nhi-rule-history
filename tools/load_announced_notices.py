@@ -62,6 +62,7 @@ from nhi_rule_history.announced_release import (
     activate_overlay_release,
     compose_overlay_release,
     describe_error,
+    general_principle_patches_admitted,
     load_overlay_release,
     queued_bundles,
     receipt_status,
@@ -186,6 +187,9 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
     with _connect(args.dsn, read_only=True) as connection:
         codes = [c.clause_code for n in notices for c in n.clauses]
         served_run_id, served = served_clauses(connection, codes)
+        # The table mirrors the loader's gate: a 通則 point (clause 0.N) is held
+        # while the database's clause code check does not admit its code.
+        general_principle_patches = general_principle_patches_admitted(connection)
     renderings = {} if args.no_libreoffice else _renderings(notices)
     body_text: dict[str, str] = {}
     for notice in notices:
@@ -202,6 +206,7 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
                 clause,
                 served_text=None if current is None else current["raw_text"],
                 rendering=rendering,
+                general_principle_patches=general_principle_patches,
             )
             row["already_in_active_run"] = (
                 notice.bundle.reference_number in carried
@@ -209,6 +214,7 @@ def _verification(args: argparse.Namespace) -> dict[str, Any]:
             rows.append(row)
     return {
         "served_publication_run_id": served_run_id,
+        "general_principle_patches_admitted": general_principle_patches,
         "notices": [
             {
                 "reference_number": n.bundle.reference_number,
@@ -373,9 +379,11 @@ def _release_summary(composition: Composition) -> dict[str, Any]:
             "run_id": None,
             "base_run_id": composition.base_run_id,
             "base_sealed_fingerprint": composition.base_sealed_fingerprint,
+            "general_principle_patches_admitted": composition.general_principle_patches,
         }
     return {
         "run_id": release.run_id,
+        "general_principle_patches_admitted": composition.general_principle_patches,
         "base_run_id": str(release.base.run["run_id"]),
         "base_sealed_fingerprint": release.base.run["sealed_fingerprint"],
         "input_fingerprint": release.input_fingerprint,

@@ -669,7 +669,7 @@ labelled as the revised column of the table and never as a complete clause.
   same codes, or the original column must read `無` (a new clause). The
   original cell reads `無` in any of its forms: `無`, `(無)`, `（無）`, `無。`
   (the check runs on NFKC text, so full-width parentheses fold).
-- A 通則 row (Copper 2026-10-19; parser 1.6.0, loader 2.4.1; notice
+- A 通則 row (Copper 2026-10-19; parser 1.5.1, loader 2.4.1; notice
   1150057388, whose first row has no dotted code). A comparison row whose first
   paragraph is the chapter heading `藥品給付規定通則` (NFKC, spacing ignored)
   never reaches the clause grammar above. Each column is cut by its top-level
@@ -683,19 +683,37 @@ labelled as the revised column of the table and never as a complete clause.
   code (`code_origin=project_assigned`, the publication's `0.1`–`0.12`), bound
   to the served `0.N`; its patch is exactly the point's revised paragraphs and
   its original paragraphs are the same point of the original column. Points are
-  never joined and nothing is inferred. The cut fails closed with a named
-  reason, and then only that row is held back, as a pending effect without a
-  clause code (designation `通則`, `blocked_reason` in the unresolved scope,
-  listed under `blocked_clauses`): a heading in one column only, an original
-  that reads `無`, a column with text outside any point, an unreadable
-  ordinal or range, ordinals that do not strictly increase, a column without a
-  point, point codes that differ between the columns, a marker drawn by a list
-  label, or a paragraph that reads like a clause designation. The rest of the
-  notice projects as usual. A row that goes on from a 通則 point (a point
-  spanning two rows) still refuses the notice. Loading a `0.N` patch also needs
-  `nhi_rule_history_announced.clause_patch_clause_code_check` to admit the
-  project-assigned form; the publication layer's check already does, the
-  announced layer's (migration v21) admits only dotted codes starting 1–9.
+  never joined and nothing is inferred. The code that checks the clause exists
+  is the bind step (`served_clauses` reads the publication), not the parser.
+  The cut fails closed with a named reason, and then only that row is held
+  back, as a pending effect without a clause code (designation `通則`,
+  `blocked_reason` in the unresolved scope, listed under `blocked_clauses`): a
+  heading in one column only, an original that reads `無`, a column with text
+  outside any point, an unreadable ordinal or range, ordinals that do not
+  strictly increase, a column without a point, point codes that differ between
+  the columns, a marker drawn by a list label, or a paragraph that reads like a
+  clause designation. The rest of the notice projects as usual. A row that goes
+  on from a 通則 point (a point spanning two rows) still refuses the notice.
+- A `0.N` point is a patch only when the database says it can hold one.
+  `nhi_rule_history_announced.clause_patch_clause_code_check` admitted dotted
+  codes starting 1–9 only until migration v30, which widens that one check (not
+  the two same-named checks of `composed_clause_version` and
+  `clause_reader_profile`) to the publication layer's pattern. The loader does
+  not look at a version number: `general_principle_patches_admitted` reads the
+  live constraint and has PostgreSQL's own regular-expression engine test
+  `0.1` to `0.99` and dotted codes against it; anything it cannot read is
+  false. Compose, `verify`, and `load` all ask. Before v30 the point is a held
+  clause (`general_principle_patch_needs_v30`: a pending clause effect with the
+  code `0.N`, listed under `blocked_clauses`, and in the verification table's
+  `blocked_reason`, so a caller that mirrors the loader's gate holds the same
+  clause) and the other clauses of the notice load and activate as usual. After
+  v30 the same code projects the point as a `patch_only` patch. A notice served
+  with the point held is then "carried with a newly projectable clause", and the
+  existing supersede path adds the point without changing any served patch.
+  `load` re-checks inside its transaction and refuses a release that holds a
+  `0.N` patch if the check was narrowed since compose, before it writes
+  anything. v30 cannot be rolled back once a run that holds a `0.N` patch has
+  been loaded: a loaded run is write-once.
 - Inside a clause's cell, in either column and in rows that would continue
   the clause above, a dotted number that reads like a designation fails the
   notice closed: the clause may run on into a clause whose heading is not in

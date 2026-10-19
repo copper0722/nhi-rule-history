@@ -79,6 +79,8 @@ from tools.build_announced_notice_fixture import fixture_odt
 
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "pg" / "migrations"
+V30_FORWARD = MIGRATIONS / "2026-10-19_nhi_rule_history_announced_general_principle_code_v30.sql"
+V30_ROLLBACK = MIGRATIONS / "2026-10-19_nhi_rule_history_announced_general_principle_code_v30.rollback.sql"
 BASE_RUN = "11111111-1111-5111-8111-111111111111"
 PUBLICATION_RUN = "22222222-2222-5222-8222-222222222222"
 BASE_NOTICE = "33333333-3333-5333-8333-333333333333"
@@ -104,9 +106,15 @@ def _hashed(row: dict) -> dict:
     return out
 
 
-def _apply_migrations(pg: recovery_fixture.DisposablePostgres) -> None:
+def _apply_migrations(
+    pg: recovery_fixture.DisposablePostgres, *, exclude: tuple[str, ...] = ()
+) -> None:
+    """Apply every forward migration; ``exclude`` names files left unapplied."""
+
     pending = sorted(
-        path for path in MIGRATIONS.glob("*.sql") if "rollback" not in path.name
+        path
+        for path in MIGRATIONS.glob("*.sql")
+        if "rollback" not in path.name and path.name not in exclude
     )
     while pending:
         applied = [
@@ -126,13 +134,17 @@ def _apply_migrations(pg: recovery_fixture.DisposablePostgres) -> None:
         "2026-07-29_nhi_rule_history_clause_components_v25.sql",
         "2026-07-30_nhi_rule_history_clause_reader_profile_v26.sql",
         "2026-09-28_nhi_rule_history_announced_resolution_guard_v27.sql",
+        V30_FORWARD.name,
     }
-    missing = required & {path.name for path in pending}
+    missing = (required - set(exclude)) & {path.name for path in pending}
     if missing:
         raise AssertionError(f"migrations did not apply: {sorted(missing)}")
 
 
-def _seed(dsn: str) -> None:
+def _seed(dsn: str, served: dict[str, str] | None = None) -> None:
+    """Seed the base run and the publication; ``served`` replaces the served clause texts."""
+
+    served = SERVED if served is None else served
     now = datetime(2026, 9, 1, tzinfo=timezone.utc)
     with _connect(dsn, read_only=False) as connection:
         connection.execute("SET session_replication_role = replica")
@@ -162,7 +174,7 @@ def _seed(dsn: str) -> None:
             " (run_id) VALUES (%s)",
             (PUBLICATION_RUN,),
         )
-        for code, text in SERVED.items():
+        for code, text in served.items():
             connection.execute(
                 """
                 INSERT INTO nhi_rule_history_publication.current_clause (
@@ -1108,13 +1120,14 @@ class GeneralPrincipleRowsTest(unittest.TestCase):
     """The rows a 通則 notice contributes to a run (notice 1150057388, Alhemo), without a database.
 
     Clause ``0.N`` is the project's code for the Nth principle; the served text it binds to is
-    the publication's ``0.N``.  A row the parser cannot cut is a pending effect without a clause
-    code, listed as held back under its designation.
+    the publication's ``0.N``.  It is a patch only when the database's clause code check admits the
+    code (migration v30) and a held clause until then.  A row the parser cannot cut is a pending
+    effect without a clause code, listed as held back under its designation.
     """
 
     SERVED_CODES = ("0.4", "4.2", "4.2.7", "4.2.8")
 
-    def rows(self, notice, **checks: str):
+    def rows(self, notice, *, patches: bool = True, **checks: str):
         served = {
             code: {"raw_text_sha256": sha256_text("served " + code)} for code in self.SERVED_CODES
         }
@@ -1127,6 +1140,7 @@ class GeneralPrincipleRowsTest(unittest.TestCase):
             served_run_id="publication",
             served=served,
             rendering_checks=rendering_checks,
+            general_principle_patches=patches,
         )
 
     def test_the_point_binds_to_the_served_clause_like_a_dotted_one(self) -> None:
@@ -1148,6 +1162,49 @@ class GeneralPrincipleRowsTest(unittest.TestCase):
                          ("2026-11-01", True, []))
         self.assertEqual(blocked_clauses(projected.rows), [])
 
+    def test_the_point_is_held_while_the_database_does_not_admit_its_code(self) -> None:
+        notice = notice_fixture.parse_alhemo()
+        reason = "general_principle_patch_needs_v30"
+        for held in (self.rows(notice, patches=False),
+                     notice_rows(  # a caller that does not say gets the hold
+                         notice, run_id=PLACEHOLDER_RUN_ID, served_run_id="publication",
+                         served={code: {"raw_text_sha256": sha256_text("served " + code)}
+                                 for code in self.SERVED_CODES},
+                         rendering_checks={c.clause_code: "exact" for c in notice.clauses})):
+            patches = sorted(row["clause_code"] for row in held.rows["clause_patch"])
+            # the dotted clauses of the notice are served; only the point waits
+            self.assertEqual(patches, ["4.2", "4.2.7", "4.2.8", "4.2.9"])
+            entry = {"effect_type": "clause_amendment", "clause_code": "0.4", "blocked_reason": reason}
+            event = held.rows["notice_event"][0]
+            self.assertEqual((event["event_scope_complete"], event["unresolved_scope"]), (False, [entry]))
+            (effect,) = [row for row in held.rows["notice_effect"] if row["clause_code"] == "0.4"]
+            self.assertEqual(effect["projection_status"], "pending_projection")
+            self.assertIn("migration v30", effect["scope_note"])
+            for patch in held.rows["clause_patch"]:
+                self.assertTrue(patch["partial_event_projection"])
+                self.assertEqual(patch["unprocessed_event_scope"], [entry])
+            listed = blocked_clauses(held.rows, {"健保審字第0000000000號": "new"})
+            self.assertEqual(
+                [(row["clause_code"], row["reason"], row["origin"]) for row in listed],
+                [("0.4", reason, "new")],
+            )
+            self.assertEqual(
+                receipt_status(composed=True, failures=[], dropped_notices=[], blocked_clauses=listed),
+                STATUS_PASSED_WITH_HOLDS,
+            )
+
+    def test_a_held_point_changes_only_the_point(self) -> None:
+        notice = notice_fixture.parse_alhemo()
+        admitted, held = self.rows(notice), self.rows(notice, patches=False)
+
+        def stable(rows, code):
+            (patch,) = [row for row in rows.rows["clause_patch"] if row["clause_code"] == code]
+            return {k: v for k, v in patch.items()
+                    if k not in {"source_row_sha256", "partial_event_projection", "unprocessed_event_scope"}}
+
+        for code in ("4.2", "4.2.7", "4.2.8", "4.2.9"):
+            self.assertEqual(stable(admitted, code), stable(held, code), code)
+
     def test_only_the_point_carries_the_general_principle_evidence(self) -> None:
         projected = self.rows(notice_fixture.parse_alhemo())
         by_code = {
@@ -1157,8 +1214,7 @@ class GeneralPrincipleRowsTest(unittest.TestCase):
         record = by_code["0.4"]["general_principle"]
         self.assertEqual((record["label"], record["point_ordinal"]), ("通則", 4))
         self.assertEqual(len(record["omitted_ranges"]), 4)
-        self.assertEqual(by_code["0.4"]["omission_marker_document_orders"], sorted(
-            by_code["0.4"]["omission_marker_document_orders"]))
+        self.assertEqual(len(by_code["0.4"]["omission_marker_document_orders"]), 3)
         for code in ("4.2", "4.2.7", "4.2.8", "4.2.9"):
             self.assertNotIn("general_principle", by_code[code], code)
         self.assertEqual(by_code["0.4"]["parser_version"], by_code["4.2"]["parser_version"])

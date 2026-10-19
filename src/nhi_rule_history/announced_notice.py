@@ -60,7 +60,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.6.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.5.1"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -2244,14 +2244,27 @@ def notice_rendering_check(
     return None
 
 
+# A 通則 point is clause ``0.N``, a code the announced layer's clause code check
+# admitted only dotted codes for until migration v30.  The database says whether
+# it admits one now (``announced_release.general_principle_patches_admitted``);
+# until then the point is held back like any clause the loader cannot project.
+GENERAL_PRINCIPLE_PATCH_HOLD = "general_principle_patch_needs_v30"
+
+
 def projection_block_reason(
-    clause: AnnouncedClause, rendering_check: str | None
+    clause: AnnouncedClause,
+    rendering_check: str | None,
+    *,
+    general_principle_patches: bool = False,
 ) -> str | None:
     """Why a clause must stay a pending effect instead of a patch, if so.
 
     A clause whose paragraphs carry list numbering is projected only when
     LibreOffice's rendering of its own revised cells shows exactly the
-    reconstructed labels and separators (:func:`cell_rendering_check`).
+    reconstructed labels and separators (:func:`cell_rendering_check`).  A 通則
+    point (clause ``0.N``) is projected only when the database admits its code
+    in a patch (``general_principle_patches``); a caller that does not know
+    gets the hold.
     """
 
     if clause.blocked_reason:
@@ -2260,6 +2273,8 @@ def projection_block_reason(
         return "official_rendering_mismatch"
     if clause.requires_rendering_check and rendering_check != "exact":
         return "official_rendering_unverified"
+    if clause.general_principle is not None and not general_principle_patches:
+        return GENERAL_PRINCIPLE_PATCH_HOLD
     return None
 
 
@@ -2269,11 +2284,26 @@ def verification_row(
     *,
     served_text: str | None,
     rendering: Mapping[str, Any] | None,
+    general_principle_patches: bool = False,
 ) -> dict[str, Any]:
+    """One row of the verification table.
+
+    ``blocked_reason`` names every hold the loader's own gate applies without
+    the office rendering: the clause's text cannot be reproduced exactly, or
+    (``general_principle_patches`` false) the database does not yet admit the
+    code of a 通則 point.  A caller that mirrors the loader's gate holds the
+    same clauses the loader holds.
+    """
+
     whitespace_blocks = sum(
         1 for item in clause.revised if item.text != item.block_text
     )
     rendering_check = cell_rendering_check(notice, clause, rendering)
+    schema_hold = (
+        GENERAL_PRINCIPLE_PATCH_HOLD
+        if clause.general_principle is not None and not general_principle_patches
+        else None
+    )
     return {
         "reference_number": notice.bundle.reference_number,
         "clause_code": clause.clause_code,
@@ -2289,9 +2319,11 @@ def verification_row(
             clause.generated_label_orders
         ),
         "list_numbering_unsupported": list(clause.numbering_blocked_reasons),
-        "blocked_reason": clause.blocked_reason,
+        "blocked_reason": clause.blocked_reason or schema_hold,
         "projection_block_reason": projection_block_reason(
-            clause, rendering_check
+            clause,
+            rendering_check,
+            general_principle_patches=general_principle_patches,
         ),
         "omitted_text_present": bool(clause.omission_orders),
         "continued_across_rows": clause.continued,
