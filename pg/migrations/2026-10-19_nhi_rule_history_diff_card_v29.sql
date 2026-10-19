@@ -111,7 +111,7 @@ CREATE TABLE nhi_rule_history_diff_card.comparison_block (
 COMMENT ON TABLE nhi_rule_history_diff_card.comparison_block IS
   'The blocks of a comparison in display order. Write-once, and committed only together with every other block of the comparison.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.block_kind IS
-  'clause = a row of the first comparison table; attachment = a row of a further comparison table (usually a revised 附表; the 2.6.1 notice also has further 給付規定 tables).';
+  'clause = a row that starts with a clause heading: a row of the first comparison table, or of a further 給付規定 table (the 2.6.2 and 2.6.3 rows of the 2.6.1 notice); attachment = any other row of a further comparison table (usually a revised 附表). Clause blocks come first in block_order.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_id IS
   'The clause code of the row (for example 9.5), or the short title of the revised 附表 for an attachment.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_codes IS

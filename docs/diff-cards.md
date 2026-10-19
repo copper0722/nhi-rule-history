@@ -94,7 +94,7 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 | 物件 | 內容 |
 |---|---|
 | `comparison` | 一份官方 ODT 對照表在一個產生器版本下的比較。鍵是 ODT 位元組的 SHA-256（與公告層的 `source_artifact_sha256` 同值）加 `generator_version`；唯讀（write-once） |
-| `comparison_block` | 該比較的區塊，依顯示順序：第一張表的每一列是一個 `clause` 區塊；之後每張「修訂後…規定｜原…規定」表的每一列是一個 `attachment` 區塊（多半是修訂後附表；2.6.1 公告的後續表格也是給付規定表，同樣列為 `attachment`） |
+| `comparison_block` | 該比較的區塊，依顯示順序：先是 `clause` 區塊，再是 `attachment` 區塊。第一張表的每一列是 `clause`；之後的「修訂後給付規定｜原給付規定」表中，以條號標題開頭的列也是 `clause`（2.6.1 公告的 2.6.2、2.6.3 兩列）；其餘列（多半是修訂後附表）是 `attachment` |
 | `v_public_comparison_block` | 讀取契約：每份來源檔取最新的比較（`loaded_at` 再 `generator_version`），一個區塊一列 |
 
 規則：
@@ -114,8 +114,8 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 | `comparison_sha256` | text | 該比較全部區塊的雜湊，見下 |
 | `extra_table_count` | integer | ODT 內未比較的多欄表格數 |
 | `block_order` | integer | 從 0 起的顯示順序 |
-| `block_kind` | text | `clause`（第一張表的一列）或 `attachment`（之後某張對照表的一列，多半是修訂後附表） |
-| `clause_id` | text | 條號（如 `9.5`），附表區塊為附表簡稱（如 `附表十八之五`） |
+| `block_kind` | text | `clause`（以條號標題開頭的一列：第一張表，或之後的給付規定表）或 `attachment`（之後對照表的其他列，多半是修訂後附表） |
+| `clause_id` | text | 條號（如 `9.5`），附表區塊為附表簡稱（如 `附表十八之五`；沒有標題的表為 `附表（表N）`） |
 | `clause_codes` | text[] | 這個區塊服務的條號，見「對應規則」 |
 | `path` | text | 卡片檔案路徑，如 `藥品給付規定/9.5` |
 | `badge` | text | `修訂`；原欄為「無」的新條文是 `新增` |
@@ -150,7 +150,10 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
    標題，公告層把它拆成 `9.5` 與 `9.5.1` 兩筆 patch，兩筆都對到同一個區塊，`clause_codes` 為 `9.5` 與
    `9.5.1`；此時 `clause_id` 與 patch 的條號不同，卡片註明「官方對照表此列為 9.5（含 9.5.1）」。並列的例子：
    一份公告的 `9.2` 那一列同時含 `9.26.` 與 `9.69.` 標題，區塊的 `clause_codes` 為 `9.2`、`9.26`、`9.69`。
-   段落中間出現的條號、清單項（如 `2.18歲`）不是標題，不列入。
+   段落中間出現的條號、清單項（如 `2.18歲`）不是標題，不列入。之後的給付規定表中以條號標題開頭的列
+   （第一個修訂後段落；修訂後欄為「無」即本次刪除時看原欄第一段）同樣是 `clause` 區塊：`clause_id` 是該條號，
+   `path` 是 `藥品給付規定/<條號>`，原欄為「無」時 `badge` 為 `新增`，建法與第一張表的列相同。刪除列的修訂後側就是官方表上的那一段「無」（`new_paragraphs` 為 `["無"]`，`badge` 為 `修訂`）。例：2.6.1 公告第一張
+   表只有 `2.6.1` 一列，後面一張給付規定表有 `2.6.2`、`2.6.3` 兩列，三者都是 `clause` 區塊。
 4. `attachment` 區塊的 `clause_codes` 是同一份比較所有 `clause` 區塊的 `clause_codes` 的聯集（依區塊順序，
    去重，含巢狀與並列條號），附表隨該公告的每一筆 patch 一起顯示。例：`9.5` 那一列的區塊服務 `9.5` 與
    `9.5.1`，同一份公告的附表區塊也服務 `9.5` 與 `9.5.1`。附表區塊自己那一列裡的標題不另外列入。
@@ -173,7 +176,9 @@ PYTHONPATH=src python -m tools.diff_cards.build load-pg [--dsn DSN] [--corpus-ro
 - 只共用「選哪份附件」，不要求公告層能完整解析：公告層因 raw.md 收據不符等原因解析不了的舊公告，仍可由 ODT
   本身產生卡片。這些卡片存在庫裡，網站只匯出公告層實際提供的來源檔。
 - 用 `sources_nhi.read_table` 與 `build_blocks`（無編輯文字、不排除條文）產生區塊，轉成上述列物件，逐區塊做
-  重播檢查，算 `comparison_sha256`。每份比較在一個交易內寫入（先取 advisory lock、再確認尚未存在）；
+  重播檢查，算 `comparison_sha256`。`build_blocks` 把之後各表的每一列都當附表區塊；上一節所說「以條號標題
+  開頭的給付規定表列」改為 `clause` 區塊是在 `pg_store` 內分類，不動 `build_blocks`，所以卡片 render 線的輸出不變，
+  `clause` 區塊排在 `attachment` 區塊之前。每份比較在一個交易內寫入（先取 advisory lock、再確認尚未存在）；
   已存在的 `(source_artifact_sha256, generator_version)` 不動。
 - 寫完用新連線經 `v_public_comparison_block` 讀回，從 PostgreSQL 回來的列重算雜湊並比對：與庫內存的 `comparison_sha256`、
   各區塊的 `rows_sha256`、這次剛建的比較，並重做重播檢查。已存在的比較也一併讀回；若同一版本號下產生器已改變，庫內列與剛建的不同，

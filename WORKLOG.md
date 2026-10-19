@@ -35,6 +35,11 @@
   serves 9.5 and 9.5.1, and a 9.2 row that also holds 9.26 and 9.69 serves all three. An attachment
   block serves the union of its notice's clause blocks' codes in block order. The load-pg receipt
   lists each source file's blocks with `clause_id` and `clause_codes`.
+- Clause rows of further tables: `build_blocks` turns every row of a further comparison table into an
+  attachment block. The card store (in `pg_store`, not in `build_blocks`) makes a row of a further
+  給付規定 table a clause block when its first revised paragraph starts with a clause heading (the
+  first original paragraph when the revised cell reads 無), built exactly like a first-table row.
+  The 2.6.1 notice's 2.6.2 and 2.6.3 rows are such rows. Clause blocks come first in block order.
 - `sources_nhi.HEADER_RE` takes an optional 建議 prefix on the revised header, which the 2.6.1 notice
   prints; the kind (給付 or 附表) still comes from the two headers together. The 38 html files of
   the three committed card publications re-render byte for byte the same with the old and the new

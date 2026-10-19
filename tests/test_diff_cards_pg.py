@@ -165,6 +165,24 @@ def comparison_table(header: tuple[str, str], rows: Sequence[tuple[list[str], li
     )
 
 
+def shape_2_6_1_body() -> str:
+    """The shape of the 2.6.1 notice: a first table with one clause row, a further 給付規定 table whose row has no
+    heading, one that holds two clause rows (2.6.3 is a new clause: its original cell reads 無), and a 附表 table
+    whose row merely looks like a heading."""
+
+    header = ("建議修訂後給付規定", "原給付規定")
+    return (
+        "<text:p>「藥品給付規定」修訂對照表</text:p><text:p>（自115年9月1日生效）</text:p>"
+        + comparison_table(header, [(["2.6.1.Fixture表：(115/9/1)", "限用於甲"], ["2.6.1.Fixture表："])])
+        + comparison_table(header, [(["表二內容（新）"], ["表二內容（舊）"])])
+        + "<text:p>表三</text:p>"
+        + comparison_table(header, [(["2.6.2.Second：(115/9/1)", "限用於乙"], ["2.6.2.Second：", "限用於丙"]),
+                                     (["2.6.3.Third：(115/9/1)", "限用於丁"], ["無"])])
+        + "<text:p>附表二十 測試表單</text:p>"
+        + comparison_table(("修訂後附表規定", "原附表規定"), [(["2.6.4.Looks like a heading", "戊"], ["己"])])
+    )
+
+
 def contiguous_run(part: list[str], whole: list[str]) -> int:
     """Index where ``part`` occurs as a contiguous run of ``whole``, or -1."""
 
@@ -327,28 +345,71 @@ class SerialisationTest(unittest.TestCase):
         self.assertEqual(clause["clause_codes"], ["9.2", "9.26", "9.69"])
         self.assertEqual((attachment["block_kind"], attachment["clause_codes"]), ("attachment", ["9.2", "9.26", "9.69"]))
 
-    def test_the_proposed_revised_header_builds_like_the_2_6_1_notice(self) -> None:
-        # the 2.6.1 notice prints 建議修訂後給付規定; its first table holds one clause row, and two
-        # further 給付 tables hold more rows (2.6.2 and 2.6.3 in the real notice)
-        header = ("建議修訂後給付規定", "原給付規定")
-        body = (
-            "<text:p>「藥品給付規定」修訂對照表</text:p><text:p>（自115年9月1日生效）</text:p>"
-            + comparison_table(header, [(["2.6.1.Fixture表：(115/9/1)", "限用於甲"], ["2.6.1.Fixture表："])])
-            + comparison_table(header, [(["表二內容（新）"], ["表二內容（舊）"])])
-            + "<text:p>表三</text:p>"
-            + comparison_table(header, [(["2.6.2.Second：(115/9/1)"], ["2.6.2.Second："]),
-                                         (["2.6.3.Third：(115/9/1)"], ["2.6.3.Third："])])
-        )
-        comparison = pg_store.comparison_from_table(read_table(_odt(_document(body))))
-        self.assertEqual([(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"])
-                          for b in comparison["blocks"]], [
-            (0, "clause", "2.6.1", ["2.6.1"]),
-            (1, "attachment", "附表（表1）", ["2.6.1"]),
-            (2, "attachment", "附表（表2）", ["2.6.1"]),
-            (3, "attachment", "附表（表2）", ["2.6.1"]),
+    def test_rows_of_a_further_reimbursement_table_that_start_with_a_heading_are_clause_blocks(self) -> None:
+        comparison = pg_store.comparison_from_table(read_table(_odt(_document(shape_2_6_1_body()))))
+        blocks = comparison["blocks"]
+        self.assertEqual([(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"], b["badge"])
+                          for b in blocks], [
+            (0, "clause", "2.6.1", ["2.6.1"], "修訂"),
+            (1, "clause", "2.6.2", ["2.6.2"], "修訂"),
+            (2, "clause", "2.6.3", ["2.6.3"], "新增"),  # the original cell reads 無, as in the first table
+            # the true attachments follow; the row without a heading and the 附表 row with one stay attachments,
+            # and an attachment's own headings are not added to what it serves
+            (3, "attachment", "附表（表1）", ["2.6.1", "2.6.2", "2.6.3"], "修訂"),
+            (4, "attachment", "附表二十", ["2.6.1", "2.6.2", "2.6.3"], "修訂"),
         ])
-        for block in comparison["blocks"]:
+        self.assertEqual((blocks[1]["path"], blocks[1]["hunk_old"], blocks[1]["hunk_new"]),
+                         ("藥品給付規定/2.6.2", "第1～2段", "第1～2段"))
+        self.assertEqual((blocks[2]["old_paragraphs"], blocks[2]["hunk_old"], blocks[2]["hunk_new"]),
+                         ([], "（無）", "第1～2段"))
+        self.assertEqual({row["kind"] for row in blocks[2]["rows"]}, {"add"})
+        for block in blocks:
             pg_store.check_replay(block)
+
+    def test_the_real_2_6_1_rows_make_three_clause_blocks(self) -> None:
+        def row(code):
+            return {"old": CLAUSES["clauses"][code]["old"], "new": CLAUSES["clauses"][code]["new"]}
+
+        table = {"sha256": "1" * 64, "clauses": [row("2.6.1")], "extra_tables": [1, 3, 5, 6],
+                 "extra_comparisons": [{"index": 4, "kind": "給付", "title": None, "rows": [row("2.6.2"), row("2.6.3")]}]}
+        comparison = pg_store.comparison_from_table(table)
+        self.assertEqual([(b["clause_id"], b["clause_codes"], b["hunk_old"], b["hunk_new"], b["block_kind"])
+                          for b in comparison["blocks"]], [
+            ("2.6.1", ["2.6.1"], "第1段", "第1～2段", "clause"),
+            ("2.6.2", ["2.6.2"], "第1～4段", "第1～4段", "clause"),
+            ("2.6.3", ["2.6.3"], "第1～3段", "第1～4段", "clause"),
+        ])
+        self.assertEqual(comparison["extra_table_count"], 4)
+
+    def test_a_further_table_clause_row_is_built_exactly_like_a_first_table_row(self) -> None:
+        def row(code):
+            return {"old": CLAUSES["clauses"][code]["old"], "new": CLAUSES["clauses"][code]["new"]}
+
+        def table(first, further):
+            return {"sha256": "2" * 64, "clauses": [row(first)], "extra_tables": [],
+                    "extra_comparisons": [{"index": 3, "kind": "給付", "title": None, "rows": [row(further)]}]}
+
+        for first, further in (("9.139", "9.5"), ("9.5", "9.139")):  # an edited row and a new clause (original 無)
+            with self.subTest(further=further):
+                as_first = pg_store.comparison_from_table(table(further, first))["blocks"][0]
+                as_further = pg_store.comparison_from_table(table(first, further))["blocks"][1]
+                self.assertEqual(as_further, {**as_first, "block_order": 1})
+
+    def test_a_further_table_row_whose_revised_cell_reads_none_is_a_deleted_clause(self) -> None:
+        deleted = {"new": ["無"], "old": ["2.6.5.Removed：(100/1/1)", "限用於甲", "限用於乙"]}
+        table = {"sha256": "3" * 64, "extra_tables": [],
+                 "clauses": [{"old": CLAUSES["clauses"]["2.6.1"]["old"], "new": CLAUSES["clauses"]["2.6.1"]["new"]}],
+                 "extra_comparisons": [{"index": 2, "kind": "給付", "title": None, "rows": [deleted]}]}
+        _, block = pg_store.comparison_from_table(table)["blocks"]
+        self.assertEqual((block["block_kind"], block["clause_id"], block["clause_codes"], block["badge"]),
+                         ("clause", "2.6.5", ["2.6.5"], "修訂"))
+        self.assertEqual((block["old_paragraphs"], block["new_paragraphs"]), (deleted["old"], ["無"]))
+        self.assertEqual((block["dels"], block["adds"], block["hunk_old"], block["hunk_new"]), (3, 1, "第1～3段", "第1段"))
+        # neither cell has a clause to name: the row is an attachment
+        for none_row in ({"new": ["無"], "old": ["無"]}, {"new": ["無"], "old": ["限用於甲"]}):
+            with self.subTest(none_row=none_row):
+                table["extra_comparisons"][0]["rows"] = [none_row]
+                self.assertEqual(pg_store.comparison_from_table(table)["blocks"][1]["block_kind"], "attachment")
 
     def test_segments(self) -> None:
         self.assertEqual(pg_store.segments("abcdef", []), [{"text": "abcdef", "mark": False}])
@@ -521,6 +582,7 @@ class DiffCardStoreTest(unittest.TestCase):
         cls.nested = write_bundle(root, "1150000009", [(_odt(_comparison([(
             ["9.7.Fixture：", "9.7.1.Nested：(115/10/1)", "限用於丙"], ["9.7.Fixture：", "9.7.1.Nested：", "限用於丁"])])),
             ODT_MEDIA_TYPE)])
+        cls.shape_2_6_1 = write_bundle(root, "1150000010", [(_odt(_document(shape_2_6_1_body())), ODT_MEDIA_TYPE)])
         cls.root = root
 
     @classmethod
@@ -749,6 +811,20 @@ class DiffCardStoreTest(unittest.TestCase):
             refused = self.load(bundles)
         self.assertEqual(refused["counts"]["failed"], 5)
         self.assertEqual({c["outcome"] for c in refused["comparisons"]}, {"failed"})
+
+    def test_clause_rows_of_further_tables_are_stored_and_found_by_their_code(self) -> None:
+        receipt = self.load([self.shape_2_6_1])
+        self.assertEqual((receipt["counts"]["inserted"], receipt["readback"]["mismatches"]), (1, []))
+        self.assertEqual(
+            self.rows("SELECT block_order, block_kind, clause_id, clause_codes FROM nhi_rule_history_diff_card."
+                      "v_public_comparison_block ORDER BY block_order"),
+            [(0, "clause", "2.6.1", ["2.6.1"]), (1, "clause", "2.6.2", ["2.6.2"]), (2, "clause", "2.6.3", ["2.6.3"]),
+             (3, "attachment", "附表（表1）", ["2.6.1", "2.6.2", "2.6.3"]),
+             (4, "attachment", "附表二十", ["2.6.1", "2.6.2", "2.6.3"])])
+        # a pending clause is matched to its own block and to the attachments that serve the whole notice
+        self.assertEqual(
+            self.rows("SELECT block_order FROM nhi_rule_history_diff_card.v_public_comparison_block "
+                      "WHERE '2.6.3' = ANY (clause_codes) ORDER BY block_order"), [(2,), (3,), (4,)])
 
     def test_nested_clause_and_attachment_codes_are_served(self) -> None:
         self.load([*self.real, self.nested])

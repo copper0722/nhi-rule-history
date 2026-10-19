@@ -1,7 +1,46 @@
 {
  "schema": "nhi-rule-history/diff-card-test-fixture/v1",
- "source": "Paragraphs of the public NHI drug-rule comparison tables effective 2026-10-01 (ODT table cells, verbatim), and the announced patch texts of two clauses as the announced layer holds them. Only the paragraphs the tests replay.",
+ "source": "Paragraphs of the public NHI drug-rule comparison tables effective 2026-10-01 (ODT table cells, verbatim): the 9.5 and 9.139 rows, and the 2.6.1 notice's first row and its two rows of a further 給付規定 table (2.6.2, 2.6.3). Also two announced patch texts as the announced layer holds them. Only the paragraphs the tests replay.",
  "clauses": {
+  "2.6.1": {
+   "reference_number": "健保審字第1150671962號",
+   "old": [
+    "2.6.1.全民健康保險降血脂藥物給付規定表（86/1/1、87/4/1、87/7/1、91/9/1、93/9/1、97/7/1、102/8/1、108/2/1）"
+   ],
+   "new": [
+    "2.6.1.全民健康保險降血脂藥物給付規定表（86/1/1、87/4/1、87/7/1、91/9/1、93/9/1、97/7/1、102/8/1、108/2/1、115/9/1）",
+    "降膽固醇藥物，適用全民健康保險降膽固醇藥物給付規定表一。但下表所列項目不適用表一，僅適用全民健康保險降膽固醇藥物給付規定表二。(115/9/1)"
+   ]
+  },
+  "2.6.2": {
+   "reference_number": "健保審字第1150671962號",
+   "new": [
+    "2.6.2.Ezetimibe：(94/6/1、115/9/1)",
+    "限用於原發性高膽固醇血症、同型接合子家族性高膽固醇血症、同型接合子性麥脂醇血症(植物脂醇血症)患者，並符合下列條件之一者：",
+    "1.對statins類藥品發生無法耐受藥物不良反應（如Severe myalgia、Myositis）者。(94/6/1、115/9/1)",
+    "2.經使用statins類藥品單一治療6-8週未達治療目標者，得合併使用本類藥品與statins類藥品。但下表所列項目，需經使用statins類藥品單一治療3個月未達治療目標者，始得與statins類藥品併用。(115/9/1)"
+   ],
+   "old": [
+    "2.6.2.Ezetimibe(如Ezetrol Tablets)：(94/6/1)",
+    "原發性高膽固醇血症、同型接合子家族性高膽固醇血症、同型接合子性麥脂醇血症(植物脂醇血症)患者並符合下列條件之一者：",
+    "符合全民健康保險降血脂藥物給付規定表且對Statins類藥品發生無法耐受藥物不良反應（如Severe myalgia、Myositis）者。",
+    "2.符合全民健康保險降血脂藥物給付規定表經使用Statins類藥品單一治療3個月未達治療目標者，得合併使用本案藥品與Statins類藥品。"
+   ]
+  },
+  "2.6.3": {
+   "reference_number": "健保審字第1150671962號",
+   "new": [
+    "2.6.3.含ezetimibe及statin類之複方製劑：(95/12/1、106/8/1、111/11/1、112/12/1、115/9/1)：",
+    "1.限用於原發性高膽固醇血症、同型接合子家族性高膽固醇血症(HOFH) 病患。(106/8/1、115/9/1)",
+    "2.經使用statin類藥品單一治療6-8週未達治療目標者，得使用本類藥品。但下表所列項目，需經使用statin類藥品單一治療3個月未達治療目標者，始得使用。(115/9/1)",
+    "3.本品不得與gemfibrozil併用。(106/8/1)"
+   ],
+   "old": [
+    "2.6.3.含ezetimibe及statin類之複方製劑（如Vytorin、Atozet、Cretrol、Tonvasca）：(95/12/1、106/8/1、111/11/1、112/12/1)：",
+    "1.限用於原發性高膽固醇血症、同型接合子家族性高膽固醇血症(HOFH) 病患並符合全民健康保險降血脂藥物給付規定表，經使用statin類藥品單一治療3個月未達治療目標者。(106/8/1)",
+    "2.本品不得與gemfibrozil併用。(106/8/1)"
+   ]
+  },
   "9.5": {
    "reference_number": "健保審字第1150672522號",
    "old": [

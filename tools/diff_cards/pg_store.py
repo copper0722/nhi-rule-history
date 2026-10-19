@@ -46,8 +46,8 @@ from nhi_rule_history.announced_release import (
 )
 from nhi_rule_history.pg.common import json_text, object_fingerprint
 
-from .core import Block, Row
-from .sources_nhi import build_blocks, read_table
+from .core import Block, Row, para_range, verify_block
+from .sources_nhi import build_blocks, clause_rows, read_table
 
 GENERATOR_VERSION = "nhi-rule-history/diff-cards-pg/1.0.0"
 RECEIPT_SCHEMA = "nhi-rule-history/diff-card-load-receipt/v1"
@@ -97,16 +97,73 @@ def comparison_attachment(bundle: NoticeBundle) -> tuple[NoticeAttachment, bytes
     return candidates[0]
 
 
-def source_pairs(table: Mapping[str, Any]) -> list[tuple[str, list[str], list[str]]]:
-    """(block kind, old paragraphs, new paragraphs) in the order ``build_blocks`` returns blocks."""
+def further_clause_code(row: Mapping[str, Any]) -> str | None:
+    """The clause code of a row of a further 給付規定 table, or None when the row is not a clause row.
 
-    pairs: list[tuple[str, list[str], list[str]]] = []
-    for clause in table["clauses"]:
-        old = [] if clause["old"] == ["無"] else list(clause["old"])
-        pairs.append(("clause", old, list(clause["new"])))
-    for extra in table.get("extra_comparisons", []):
-        pairs.extend(("attachment", list(pair["old"]), list(pair["new"])) for pair in extra["rows"])
-    return pairs
+    A row is a clause row when its first revised paragraph starts with a clause heading (the
+    announced overlay's grammar).  When the revised cell reads 無, the clause is deleted and the
+    first original paragraph decides.
+    """
+
+    revised, original = row["new"], row["old"]
+    if revised == ["無"]:
+        first = original[0] if original and original != ["無"] else ""
+    else:
+        first = revised[0] if revised else ""
+    return clause_heading_code(first) if first else None
+
+
+def deleted_clause_block(row: Mapping[str, Any], code: str) -> Block:
+    """The block of a clause row whose revised cell reads 無, built like ``build_blocks`` builds a clause."""
+
+    old, new = list(row["old"]), list(row["new"])
+    rows = clause_rows(old, new)
+    block = Block(
+        path=f"藥品給付規定/{code}", badge="修訂", badge_kind="m", fn="", rows=rows,
+        adds=sum(1 for r in rows if r.kind == "add"), dels=sum(1 for r in rows if r.kind == "del"),
+        hunk_old=para_range(list(range(1, len(old) + 1)), "段"),
+        hunk_new=para_range(list(range(1, len(new) + 1)), "段"), clause_id=code,
+    )
+    verify_block(block, old, new)
+    return block
+
+
+def clause_paragraphs(cell: Sequence[str]) -> list[str]:
+    """A cell's paragraphs; 無 in the original column means the clause is new, so there are none."""
+
+    return [] if list(cell) == ["無"] else list(cell)
+
+
+def plan_blocks(table: Mapping[str, Any]) -> list[tuple[str, Block, list[str], list[str]]]:
+    """(block kind, card block, old paragraphs, new paragraphs) in block order.
+
+    ``build_blocks`` turns the rows of the first table into clause blocks and every row of every
+    further comparison table into an attachment block.  Here a row of a further 給付規定 table that
+    starts with a clause heading (the 2.6.2 and 2.6.3 rows of the 2.6.1 notice) is a clause block as
+    well, built exactly like a row of the first table, and the remaining rows stay attachment blocks.
+    Clause blocks come first (first table, then the further tables in order), attachment blocks after.
+    ``sources_nhi`` is untouched, so the card publications render as before.
+    """
+
+    plain = build_blocks(dict(table), {}, ())
+    first_table = table["clauses"]
+    further = [(extra["kind"], row) for extra in table.get("extra_comparisons", []) for row in extra["rows"]]
+    if len(plain) != len(first_table) + len(further):
+        raise CardError("card blocks and source rows differ in number")
+    clauses = [("clause", block, clause_paragraphs(row["old"]), list(row["new"]))
+               for block, row in zip(plain[:len(first_table)], first_table, strict=True)]
+    attachments = []
+    for block, (kind, row) in zip(plain[len(first_table):], further, strict=True):
+        code = further_clause_code(row) if kind == "給付" else None
+        if code is None:
+            attachments.append(("attachment", block, list(row["old"]), list(row["new"])))
+            continue
+        if row["new"] == ["無"]:
+            clause = deleted_clause_block(row, code)
+        else:
+            (clause,) = build_blocks({"clauses": [row], "extra_comparisons": []}, {}, ())
+        clauses.append(("clause", clause, clause_paragraphs(row["old"]), list(row["new"])))
+    return clauses + attachments
 
 
 def clause_codes_of(clause_id: str, old: Sequence[str], new: Sequence[str]) -> list[str]:
@@ -278,16 +335,13 @@ def comparison_from_table(table: Mapping[str, Any]) -> dict[str, Any]:
     Every block is checked against the replay invariant before it is returned.
     """
 
-    blocks = build_blocks(dict(table), {}, ())
-    pairs = source_pairs(table)
-    if len(blocks) != len(pairs):
-        raise CardError("card blocks and source rows differ in number")
+    plan = plan_blocks(table)
     clause_codes = []
-    for block, (kind, old, new) in zip(blocks, pairs, strict=True):
+    for kind, block, old, new in plan:
         if kind != "clause":
             clause_codes.append(None)
             continue
-        if clause_heading_code(new[0]) != block.clause_id:
+        if clause_heading_code(old[0] if new == ["無"] else new[0]) != block.clause_id:
             raise CardError(f"{block.path}: the clause heading differs between the card parser and the overlay grammar")
         clause_codes.append(clause_codes_of(block.clause_id, old, new))
     # an attachment table belongs to the whole notice: it serves every code its clause blocks serve
@@ -295,7 +349,7 @@ def comparison_from_table(table: Mapping[str, Any]) -> dict[str, Any]:
     if not notice_codes:
         raise CardError("the comparison table holds no clause row")
     objects = []
-    for order, (block, (kind, old, new)) in enumerate(zip(blocks, pairs, strict=True)):
+    for order, (kind, block, old, new) in enumerate(plan):
         obj = block_object(order, kind, block, old, new, clause_codes[order] or notice_codes)
         check_replay(obj)
         objects.append(obj)
