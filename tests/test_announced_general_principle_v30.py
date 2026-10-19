@@ -184,8 +184,11 @@ class MigrationLiveTest(unittest.TestCase):
         self.assertFalse(self.accepts("0.4"))
         self.assertFalse(self.detected())
 
-    def replace_check(self, expression: str | None, *, not_valid: bool = False) -> None:
-        """Put another check in place (NOT VALID: the probes need not hold for the rows already there)."""
+    def replace_check(self, expression: str | None, *, not_valid: bool = False, suffix: str = "") -> None:
+        """Put another check in place (NOT VALID: the probes need not hold for the rows already there).
+
+        ``suffix`` follows the expression (``" NO INHERIT"``); PostgreSQL prints it after the expression too.
+        """
 
         with psycopg.connect(self.pg.dsn) as connection:
             connection.execute(
@@ -193,7 +196,7 @@ class MigrationLiveTest(unittest.TestCase):
             if expression is not None:
                 connection.execute(
                     f"ALTER TABLE nhi_rule_history_announced.clause_patch ADD CONSTRAINT {CHECK_NAME} "
-                    f"CHECK ({expression})" + (" NOT VALID" if not_valid else ""))
+                    f"CHECK ({expression}){suffix}" + (" NOT VALID" if not_valid else ""))
             connection.commit()
 
     def test_the_detector_fails_closed_on_a_check_it_cannot_read_or_that_admits_only_some_codes(self) -> None:
@@ -221,6 +224,57 @@ class MigrationLiveTest(unittest.TestCase):
         finally:
             self.replace_check(f"clause_code ~ '{V21_PATTERN}'")
         self.assertFalse(self.detected())
+
+    def test_a_check_with_a_suffix_beyond_not_valid_is_not_read(self) -> None:
+        # Verifier mutant D2 (fullmatch -> match): the shape must match the whole definition.  `NO INHERIT`, and on
+        # PostgreSQL 18 `NOT ENFORCED`, after the expression is a constraint the detector does not read, so the
+        # point stays held; the plain check (control) is read.
+        pattern = f"clause_code ~ '{V30_PATTERN}'"
+        cases = [
+            ("plain v30 (control)", "", False, True),
+            ("NO INHERIT", " NO INHERIT", False, False),
+            ("NO INHERIT, NOT VALID", " NO INHERIT", True, False),
+        ]
+        if int(self.rows("SHOW server_version_num")[0][0]) >= 180000:
+            cases.append(("NOT ENFORCED", " NOT ENFORCED", False, False))
+        try:
+            for name, suffix, not_valid, expected in cases:
+                with self.subTest(check=name):
+                    self.replace_check(pattern, not_valid=not_valid, suffix=suffix)
+                    if suffix:  # the instrument: PostgreSQL really prints the suffix after the expression
+                        self.assertIn(suffix.strip(), self.definition())
+                    self.assertEqual(self.detected(), expected)
+        finally:
+            self.replace_check(f"clause_code ~ '{V21_PATTERN}'")
+        self.assertFalse(self.detected())
+
+    def test_a_session_that_reads_backslashes_as_escapes_does_not_blind_the_detector(self) -> None:
+        # Verifier finding: the pattern that finds a second CHECK on clause_code was a string literal.  With
+        # standard_conforming_strings off its `\m` read as `m`, it matched nothing, and the second check went
+        # unseen.  The pattern is a bound parameter now, so the session setting cannot change it.
+        self.pg.psql(file=V30_FORWARD)
+
+        def detect(setting: str | None) -> bool:
+            with _connect(self.pg.dsn, read_only=True) as connection:
+                if setting:
+                    connection.execute(setting)
+                    self.assertEqual(
+                        connection.execute("SHOW standard_conforming_strings").fetchone()["standard_conforming_strings"],
+                        "off")  # the instrument: the session really is in that mode
+                return general_principle_patches_admitted(connection)
+
+        off = "SET standard_conforming_strings = off"
+        self.assertTrue(detect(None))
+        self.assertTrue(detect(off))  # positive control: v30 alone is read in that session too
+        extra = "clause_patch_no_fifty"
+        try:
+            self.pg.psql(command=f"ALTER TABLE nhi_rule_history_announced.clause_patch ADD CONSTRAINT {extra} "
+                                 "CHECK (clause_code <> '0.50') NOT VALID")
+            self.assertFalse(detect(None))
+            self.assertFalse(detect(off))
+        finally:
+            self.pg.psql(command=f"ALTER TABLE nhi_rule_history_announced.clause_patch DROP CONSTRAINT IF EXISTS {extra}")
+        self.assertTrue(detect(off))
 
     def test_another_check_on_the_code_makes_the_detector_fail_closed(self) -> None:
         # the further condition may sit in a second constraint instead of the named one

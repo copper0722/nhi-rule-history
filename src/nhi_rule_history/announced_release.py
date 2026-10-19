@@ -592,6 +592,10 @@ PATCH_CODE_CHECK = "clause_patch_clause_code_check"
 _CHECK_SHAPE_RE = re.compile(
     r"CHECK \(\(clause_code ~ '((?:[^']|'')*)'::text\)\)(?: NOT VALID)?"
 )
+# Finds every CHECK that bears on the column.  It is sent as a bound parameter, never written into the SQL as a
+# string literal: with standard_conforming_strings off a backslash in a literal is an escape, `\m` would read
+# as `m`, the pattern would match nothing and a second check on clause_code would go unseen.
+_CLAUSE_CODE_WORD = r"\mclause_code\M"
 
 
 def general_principle_patches_admitted(connection: Any) -> bool:
@@ -619,9 +623,9 @@ def general_principle_patches_admitted(connection: Any) -> bool:
         SELECT con.conname AS name, pg_get_constraintdef(con.oid) AS definition
         FROM pg_constraint con
         WHERE con.conrelid = to_regclass(%s) AND con.contype = 'c'
-          AND (con.conname = %s OR pg_get_constraintdef(con.oid) ~ '\mclause_code\M')
+          AND (con.conname = %s OR pg_get_constraintdef(con.oid) ~ %s)
         """,
-        (f"{SCHEMA}.clause_patch", PATCH_CODE_CHECK),
+        (f"{SCHEMA}.clause_patch", PATCH_CODE_CHECK, _CLAUSE_CODE_WORD),
     ).fetchall()
     if [row["name"] for row in rows] != [PATCH_CODE_CHECK]:
         return False
