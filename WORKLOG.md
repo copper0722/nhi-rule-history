@@ -23,6 +23,15 @@
     are markers, 2 are that bracketed sub-item line and none starts with a bare ordinal, so no real row is touched.
     A sentence that starts with a numeral and ends in an omission, or a real sub-item omission that starts at the
     next point's number, would be held too (fail closed).
+  - A marker an invisible character hides (a zero-width space, a byte-order mark, a soft hyphen, a direction mark, a
+    control character, in front of the marker or inside it) is no marker in the character stream while a reader
+    sees one, so it ran on as text of the point above it, a hidden point into the previous point, a hidden omission
+    marker into its patch (the note-4 defect with other characters; in one column only the point sets still agree
+    and no downstream gate sees it). The notes did not list it; it was found while testing them. A paragraph that is
+    no marker and reads as a marker or lookalike once its invisible control and format characters are removed
+    (white space is kept) is `marker_behind_invisible_characters`; plain text with such a character stays the
+    point's text. None of the 13,876 published clause lines or 2,553 paragraph texts of the 28 registered documents
+    holds an invisible character.
   - `general_principle_patches_admitted` sends its word-boundary pattern as a bound parameter, which no session
     setting can change; it was the only backslash literal in the loader's SQL.
   - Versions: a run sealed by loader 2.4.1 exists since 2026-10-20 00:15, `activate` accepts only a run sealed by the
@@ -30,21 +39,26 @@
     behaviour carries new numbers. Patch ids and hashes do not depend on them.
 - Verification (producer's own):
   - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70 legacy tests (1
-    skipped), 742 unittest tests (7 skipped) and 60 pytest tests (before this round 731 unittest tests). The v30
+    skipped), 748 unittest tests (7 skipped) and 60 pytest tests (before this round 731 unittest tests). The v30
     module (16 tests) also passes against PostgreSQL 17. ruff findings per file and rule equal the baseline;
     `public-tree-check`, `validate-manifest` and `sqlite-smoke` pass.
   - New tests: grammar (the four lookalikes, a sweep over the connector between the ordinals, the bracketed rule at
     every latest ordinal, controls, nested tables, the official row's final line replaced by each variant and by the
     forms that are read, a connector after white space), notice (row held alone in each column, 0.4 not projected,
-    dotted clauses unchanged), card store (no card; the read forms build the same blocks), detector (a session with
+    dotted clauses unchanged), hidden markers (11 invisible characters x 6 lines, in front and inside, in each column;
+    controls: plain text, white space, nested tables), card store (no card; the read forms build the same blocks),
+    detector (a session with
     `standard_conforming_strings` off, checked with `SHOW`, reads v30 alone as admitted and a second CHECK as not;
     `NO INHERIT`, and on PostgreSQL 18 `NOT ENFORCED`, are not read).
-  - Mutation controls on an export of the tip: the 22 of the previous round, the 13 of the independent verifier
-    and 15 new ones (the lookalike check deleted, bare head not read, bracketed head never or always a lookalike,
-    off by one, nested-table paragraphs checked, a marker line not excluded, no omission required, the check before
-    the outside-a-point check, 第 not read, the leading connector read without the white space (B8), `match` for
-    `fullmatch` (D2), the pattern a literal again, a second check never looked for) are all killed, and the verifier's
-    own set kills B8 and D2 now; the unmutated modules (163 tests) pass.
+  - Mutation controls on an export of the code tip: the 22 of the previous round, the 13 of the independent verifier
+    and 22 new ones (the lookalike check deleted or never made, bare head not read, bracketed head never or always a
+    lookalike, off by one, nested-table paragraphs checked, a marker line not excluded, no omission required, the
+    check before the outside-a-point check, 第 not read, a hidden marker not looked for, format or control characters
+    not removed, white space removed too, only one of the two readings looked for behind an invisible character, the
+    leading connector read without the white space (B8), `match` for `fullmatch` (D2), the pattern a literal again, a
+    second check never looked for) are all killed, and the verifier's own set kills B8 and D2 now (its D1 anchors on
+    the string literal that no longer exists; the second-check mutant above is its equivalent); the unmutated
+    modules (169 tests) pass.
   - The three committed card publications (38 html files) re-render byte for byte the same with the old and the new
     generator.
   - Read-only against the production database with the notice served (active run sealed by loader 2.4.1):
@@ -60,6 +74,7 @@
 - Not done, and what is left to the acceptor:
   - The bracketed-form rule is a choice: `（五）～（十二）(略)` right after point 四 is held, a bracketed range anywhere
     else is sub-item text. Dropping the rule is one commit.
+  - The invisible-character rule goes beyond the notes (same defect class, its own commit): dropping it is one commit.
   - `project.yaml`, `STATUS.md` and the sealed-by line above still name loader 2.4.0 and parser 1.5.0.
   - A held 通則 row (no clause code) shows in loader receipts but not in the lane's effective-date alarm or the
     website's pending list, which read clause-coded effects; no live instance exists.
