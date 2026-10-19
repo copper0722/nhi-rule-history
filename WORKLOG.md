@@ -59,16 +59,29 @@
     `docs/diff-cards.md` and `docs/continuous-update.md` state the rules.
 - Verification (producer's own; the independent acceptance is not done):
   - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70
-    legacy tests (1 skipped), 726 unittest tests (7 skipped) and 60 pytest tests; before this change
-    70 (1), 666 (7) and 46. The v30 module (13 tests: pattern parity with v18 and v21, the file's
+    legacy tests (1 skipped), 731 unittest tests (7 skipped) and 60 pytest tests; before this change
+    70 (1), 666 (7) and 46. The v30 module (14 tests: pattern parity with v18 and v21, the file's
     statements, apply / refuse twice / rollback / refuse rollback with a `0.N` row, the readback, the
-    detector failing closed, and two end-to-end loads) also passes against PostgreSQL 17. Fifteen
+    detector failing closed, and two end-to-end loads) also passes against PostgreSQL 17. Twenty-two
     mutation controls (an omission marker read as a point, columns not compared, a point continued by
     the next row, ordinals allowed to go back, a held row not listed, `無` read exactly, a card built from
     the whole row, a card serving the label, the point projected whatever the database says, no
     re-check at load, a detector that never sees v30, a verification table that does not mirror the
-    hold, a detector that accepts a partial check, a point that starts at the heading, the original point
-    taken by position) each make a test fail.
+    hold, a detector that accepts a partial check, one that reads only the first regex match, one that
+    ignores a second check on the code, a card store without the point-marker identity check, an
+    attachment sorted under a 通則 point, a marker line with another ordinal inside, one that ends in an
+    omission, or one led by a connector symbol that stays a point, a point that starts at the heading,
+    the original point taken by position) each make a test fail, and so do the 13 mutations of the
+    independent verifier.
+  - Independent verification (ACCEPT-WITH-NOTES) and its fixes: (1) a range written with a connector
+    other than `~` `～` `〜` (`∼` `﹏` `－` `—` `至`) read as point 一 and projected a spurious 0.1; a marker
+    line that names another ordinal and `、`, ends in an omission, or starts with a dash, tilde or
+    connector symbol and is not a recognised range is now `range_marker_unreadable` and holds the row
+    (none of the 12 publication points or the 36 marker lines of the 28 registered documents is touched);
+    (2) tests for the two surviving mutations, written as unittest tests so they do not depend on the
+    pytest run; (3) the detector reads the code check only when it is the one named check on
+    `clause_code` and consists of a single regular-expression match, so `... AND clause_code <> '0.50'`,
+    an OR, another operator and a second CHECK on the code are all "not admitted".
   - The three committed card publications (38 html files) re-render byte for byte the same with the
     old and the new generator.
   - Read-only against the production database (v21 check in place): `load-pg --dry-run` rebuilds all 27

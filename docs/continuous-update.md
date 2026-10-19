@@ -679,7 +679,12 @@ labelled as the revised column of the table and never as a complete clause.
   only names an omitted range or point (`一、~三、(略)`, `五、~十二、(略)`,
   `十、(略)`) is an omission marker: it stays in the sealed source and is named
   in the patch evidence (`general_principle.omitted_ranges`), and is never
-  projected or read as a point. Point N is clause `0.N`, the project-assigned
+  projected or read as a point. Only `~`, `～` and `〜` join the two ordinals of
+  a range. A marker line that is neither of those but names another ordinal and
+  `、`, ends in an omission, or has a dash, tilde or connector symbol straight
+  after the marker (a range written with `∼`, `﹏`, `－`, `—`, `至`) is not a
+  point either: it is `range_marker_unreadable` and holds the row, because
+  reading it as a point would invent point N. Point N is clause `0.N`, the project-assigned
   code (`code_origin=project_assigned`, the publication's `0.1`–`0.12`), bound
   to the served `0.N`; its patch is exactly the point's revised paragraphs and
   its original paragraphs are the same point of the original column. Points are
@@ -700,9 +705,12 @@ labelled as the revised column of the table and never as a complete clause.
   the two same-named checks of `composed_clause_version` and
   `clause_reader_profile`) to the publication layer's pattern. The loader does
   not look at a version number: `general_principle_patches_admitted` reads the
-  live constraint and has PostgreSQL's own regular-expression engine test
-  `0.1` to `0.99` and dotted codes against it; anything it cannot read is
-  false. Compose, `verify`, and `load` all ask. Before v30 the point is a held
+  live constraint, which must be the one named check on `clause_code` and a
+  single regular-expression match with nothing else, and has PostgreSQL's own
+  regular-expression engine test `0.1` to `0.99` and dotted codes against it;
+  anything it cannot read is false, a further condition in the check
+  (`... AND clause_code <> '0.50'`) and a second CHECK that bears on the code
+  included. Compose, `verify`, and `load` all ask. Before v30 the point is a held
   clause (`general_principle_patch_needs_v30`: a pending clause effect with the
   code `0.N`, listed under `blocked_clauses`, and in the verification table's
   `blocked_reason`, so a caller that mirrors the loader's gate holds the same
