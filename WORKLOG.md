@@ -1,13 +1,13 @@
 # Worklog
 
-## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice (cards #3275, #2678), not deployed
+## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice; migration v30 (cards #3275, #2678), not applied, not deployed
 
 - Defect: notice 健保審字第1150057388號 (concizumab / Alhemo, published 2026-10-14, effective
   2026-11-01) opens its 修訂對照表 with the 藥品給付規定通則 row. The row has no dotted
   designation, parser 1.5.0 read it as a continuation of a clause above, found none and refused the
   whole notice (`comparison row 0/1 does not start with a clause designation`), so none of its five
   clauses was served. The git-diff card store failed on the same row (`clause number not found`).
-- Change (parser 1.6.0, loader 2.4.1; card generator version stays 1.0.0):
+- Change (parser 1.5.1, loader 2.4.1; card generator version stays 1.0.0):
   - New `src/nhi_rule_history/comparison_grammar.py`: the string-level grammar of a comparison cell,
     with no database or document dependency, shared by the overlay and the card generator
     (`is_none_cell`, `is_general_principle_heading`, `cjk_ordinal`, `read_point_marker`,
@@ -29,42 +29,67 @@
     comparison documents finds exactly one 通則 row, the Alhemo one (point 四 in both columns), and no
     point spanning rows.
   - Original cell `無` is read by one predicate everywhere: `無`, `(無)`, `（無）`, `無。` (NFKC).
+  - The database decides whether a `0.N` point is a patch. The announced layer's
+    `clause_patch_clause_code_check` (v21) admits dotted codes starting 1-9 only, so a `0.N` patch row
+    makes `load` abort in its single transaction. `general_principle_patches_admitted` reads the live
+    constraint (the pattern it holds, tested by PostgreSQL's own regular-expression engine against
+    `0.1`-`0.99` and dotted codes; anything unreadable is false). Compose, `verify` and `load` ask.
+    Before v30 the point is a held clause, `general_principle_patch_needs_v30`: a pending clause effect
+    `0.N`, listed under `blocked_clauses`, and in the verification table's `blocked_reason` (the lane
+    mirrors that gate, so its projected set still equals the table's admitted set); the notice's dotted
+    clauses compose, load and activate. After v30 the same code projects the point as a `patch_only`
+    patch, and a notice served with the point held is superseded to add it (the existing path; every
+    served patch comes back byte for byte). `load` re-checks inside its transaction and refuses before
+    writing if the check was narrowed after compose.
+  - Migration pair `2026-10-19_nhi_rule_history_announced_general_principle_code_v30` (+ `.rollback.sql`,
+    readback `database/queries/announced-general-principle-code-readback-v30.sql`): widens ONLY
+    `nhi_rule_history_announced.clause_patch_clause_code_check` to the publication layer's pattern
+    (`^(0[.][1-9][0-9]*|[1-9][0-9]*(?:[.][0-9]+)+)$`); the same-named checks of `composed_clause_version`
+    and `clause_reader_profile` are untouched. The forward file refuses unless the v21 check is in place; the
+    rollback restores the v21 check exactly and refuses while any `clause_patch` row holds a `0.N` code, which
+    means for good once a run that holds one has been loaded (sealed runs are write-once). Not applied.
   - Loader: `blocked_clauses` also lists a held 通則 row (under its designation), so a receipt that
-    holds one is not green. No other served or carried row changes.
-  - Card store: the same row is one `clause` block, `clause_id` 通則, path `藥品給付規定/通則` (block
-    order stays the table's row order; the cover sort key puts it ahead of the numbered clauses); its
-    `clause_codes` are the point codes of the row (`0.4`), cut by
-    the overlay's own grammar, so the card serves the codes the overlay projects. A row the grammar
-    cannot cut makes no card (the notice is listed as failed) instead of a card that attaches to
-    nothing. `docs/diff-cards.md` and `docs/continuous-update.md` state the rules.
+    holds one is not green.
+  - Card store: a 通則 row is one `clause` block per point it amends (`clause_id` and `clause_codes`
+    `0.N`, path `藥品給付規定/通則/0.N`, built from that point's original and revised paragraphs alone;
+    the heading and the omitted ranges are on no card), cut by the overlay's own grammar, so a card
+    serves the codes the overlay projects. A block's `clause_id` is in its `clause_codes` and every code
+    is a clause code, which is what the website export checks. A row the grammar cannot cut makes no
+    card (the notice is listed as failed) instead of a card that attaches to nothing.
+    `docs/diff-cards.md` and `docs/continuous-update.md` state the rules.
 - Verification (producer's own; the independent acceptance is not done):
   - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70
-    legacy tests (1 skipped), 708 unittest tests (7 skipped) and 59 pytest tests; before this change
-    70 (1), 666 (7) and 46. Nine mutation controls (an omission marker read as a point, columns not
-    compared, a point continued by the next row, ordinals allowed to go back, a held row not listed,
-    `無` read exactly, card codes without the points, a point that starts at the heading, the
-    original point taken by position) each make a test fail.
+    legacy tests (1 skipped), 725 unittest tests (7 skipped) and 60 pytest tests; before this change
+    70 (1), 666 (7) and 46. The v30 module (13 tests: pattern parity with v18 and v21, the file's
+    statements, apply / refuse twice / rollback / refuse rollback with a `0.N` row, the readback, the
+    detector failing closed, and two end-to-end loads) also passes against PostgreSQL 17. Fifteen
+    mutation controls (an omission marker read as a point, columns not compared, a point continued by
+    the next row, ordinals allowed to go back, a held row not listed, `無` read exactly, a card built from
+    the whole row, a card serving the label, the point projected whatever the database says, no
+    re-check at load, a detector that never sees v30, a verification table that does not mirror the
+    hold, a detector that accepts a partial check, a point that starts at the heading, the original point
+    taken by position) each make a test fail.
   - The three committed card publications (38 html files) re-render byte for byte the same with the
     old and the new generator.
-  - Read-only against the production database: `load-pg --dry-run` rebuilds all 27 stored
-    comparisons identically (0 readback mismatches, so the generator version stays 1.0.0) and lists
-    the Alhemo comparison as `would_insert` with the blocks 通則 [0.4], 4.2, 4.2.9, 4.2.7, 4.2.8;
-    one other bundle (partial attachment inventory) still fails. A read-only `compose` of every
-    registered notice re-proves the 15 carried notices and their 21 served patches exactly as the old
-    code does and adds the Alhemo notice (effective 2026-11-01) with patches 0.4, 4.2, 4.2.7, 4.2.8
-    and 4.2.9; the LibreOffice cell rendering is exact for all five and the body-text check passes.
-    The text hash of each of the 21 served `patch_only` patches equals a fresh parse under both the
-    old and the new parser; the new parser adds only those five Alhemo clause rows.
-- Not done, and why this does not make the notice live:
-  - The announced layer's `clause_patch.clause_code` check (migration v21) admits only dotted codes
-    starting 1-9, so `load` of a run that holds a `0.N` patch is refused by the database (the
-    publication layer's check already admits `0.N`). A migration that widens it is a schema change
-    and is not part of this commit.
+  - Read-only against the production database (v21 check in place): `load-pg --dry-run` rebuilds all 27
+    stored comparisons identically (0 readback mismatches, so the generator version stays 1.0.0) and lists
+    the Alhemo comparison as `would_insert` with the blocks 0.4, 4.2, 4.2.9, 4.2.7, 4.2.8; one other
+    bundle (partial attachment inventory) still fails. A read-only `compose` of every registered notice
+    re-proves the 15 carried notices and their 21 served patches exactly as the old code does and adds the
+    Alhemo notice (effective 2026-11-01) with patches 4.2, 4.2.7, 4.2.8 and 4.2.9 and 0.4 held with
+    `general_principle_patch_needs_v30`; the LibreOffice cell rendering is exact for all five and the
+    body-text check passes. The text hash of each of the 21 served `patch_only` patches equals a fresh
+    parse under both the old and the new parser.
+- Not done, and what is left to the acceptor:
+  - v30 is not applied, so 0.4 is not served. Applying it is irreversible in practice once a run
+    that holds a `0.4` patch has been loaded.
   - The change is not deployed; `project.yaml` and `STATUS.md` still describe loader 2.4.0 and
     parser 1.5.0 as the deployed versions, and the independent acceptance has not run.
   - The unmerged round-7 candidate branch already names parser 1.6.x and loader 2.5.0; this change
-    takes loader 2.4.1 so main does not claim that number, and that branch needs renumbering when it
-    is integrated.
+    takes parser 1.5.1 and loader 2.4.1 so main does not claim those numbers, and that branch needs
+    renumbering when it is integrated.
+  - A held 通則 row (no clause code) shows in loader receipts but not in the lane's effective-date alarm or
+    the website's pending list, which read clause-coded effects; no live instance exists.
 
 ## 2026-10-19 — CI `verify`: deterministic ODT test fixtures
 
