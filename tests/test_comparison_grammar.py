@@ -118,6 +118,20 @@ class MarkerTest(unittest.TestCase):
             with self.subTest(connector=connector):
                 self.assertEqual(read_point_marker(f"一、{connector}三、(略)"), ("omission", 1, 3))
 
+    def test_a_connector_after_white_space_is_looked_for_after_the_white_space(self) -> None:
+        # Verifier mutant B8: with the leading symbol read from the first character, a space before it hid it.
+        # These lines show nothing else a range shows (no second ordinal 、, no omission), so only the leading
+        # dash, math or connector symbol, found after the white space, tells them from a point's heading text.
+        for connector in ("∼", "﹏", "－", "—", "–", "―", "-", "_", "+", "="):
+            for gap in (" ", "  ", "\t", "\u3000", " \u3000"):
+                for text in (f"一、{gap}{connector}三", f"一、{gap}{connector}"):
+                    with self.subTest(text=text):
+                        self.assertEqual(read_point_marker(text), "range_marker_unreadable")
+        # controls: the same white space before ordinary heading text is still a point
+        for text in ("一、 注射藥品", "一、\t注射藥品", "一、\u3000注射藥品", "一、 三"):
+            with self.subTest(text=text):
+                self.assertEqual(read_point_marker(text), ("point", 1, 1))
+
     def test_not_a_marker(self) -> None:
         for text in (
             "（一）注射藥品使用時機", "1.~8.(略)", "9.門診之血友病人", "藥品給付規定通則", "", "  ",
