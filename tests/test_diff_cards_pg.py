@@ -50,7 +50,7 @@ from tools.build_announced_notice_fixture import fixture_odt
 from tools.diff_cards import pg_store
 from tools.diff_cards.build import main
 from tools.diff_cards.core import Row, key
-from tools.diff_cards.sources_nhi import build_blocks, read_table
+from tools.diff_cards.sources_nhi import planned_blocks, read_table
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = ROOT / "pg" / "migrations"
@@ -272,44 +272,58 @@ class SerialisationTest(unittest.TestCase):
         self.assertEqual((block["adds"], block["dels"]), (7, 0))
         pg_store.check_replay(block)
 
-    def test_the_general_principle_row_is_one_clause_block_of_the_points_it_amends(self) -> None:
+    def test_the_general_principle_row_is_one_clause_block_per_point_it_amends(self) -> None:
         comparison = pg_store.comparison_from_table(alhemo_table())
-        general, *dotted = comparison["blocks"]
+        point, *dotted = comparison["blocks"]
         row = ALHEMO["rows"][0]
         self.assertEqual(
-            (general["block_order"], general["block_kind"], general["clause_id"], general["path"],
-             general["clause_codes"], general["badge"]),
-            (0, "clause", "通則", "藥品給付規定/通則", ["0.4"], "修訂"),
+            (point["block_order"], point["block_kind"], point["clause_id"], point["path"],
+             point["clause_codes"], point["badge"]),
+            (0, "clause", "0.4", "藥品給付規定/通則/0.4", ["0.4"], "修訂"),
         )
-        # the whole row, heading and omission markers included, is what the card compares
-        self.assertEqual((general["old_paragraphs"], general["new_paragraphs"]), (row["old"], row["new"]))
-        self.assertEqual((general["hunk_old"], general["hunk_new"]), ("第1～10段", "第1～10段"))
-        self.assertEqual((general["adds"], general["dels"]), (1, 1))  # item 9 names concizumab now
-        self.assertEqual([r["kind"] for r in general["rows"]].count("ctx"), 9)  # the other nine paragraphs
-        pg_store.check_replay(general)
+        # the point's own paragraphs of each column: marker line .. (三)~(四)(略), nothing around it
+        self.assertEqual((point["old_paragraphs"], point["new_paragraphs"]), (row["old"][2:9], row["new"][2:9]))
+        self.assertEqual((point["hunk_old"], point["hunk_new"]), ("第1～7段", "第1～7段"))
+        self.assertEqual((point["adds"], point["dels"]), (1, 1))  # item 9 names concizumab now
+        self.assertEqual([r["kind"] for r in point["rows"]].count("ctx"), 6)  # the other six paragraphs
+        pg_store.check_replay(point)
+        # neither the chapter heading nor the omitted ranges belong to a block: they are shown on no card
+        shown = {text for b in comparison["blocks"] for text in (*b["old_paragraphs"], *b["new_paragraphs"])}
+        for text in (row["new"][0], row["new"][1], row["new"][9]):
+            self.assertNotIn(text, shown)
         self.assertEqual(
             [(b["clause_id"], b["clause_codes"]) for b in dotted],
             [("4.2", ["4.2"]), ("4.2.9", ["4.2.9"]), ("4.2.7", ["4.2.7"]), ("4.2.8", ["4.2.8"])],
         )
+        self.assertEqual(len(comparison["blocks"]), 5)
         self.assertEqual(comparison["extra_table_count"], 0)
         self.assertEqual(comparison, pg_store.comparison_from_table(alhemo_table()))  # deterministic
-        # the card generator puts the 通則 block ahead of every numbered clause
-        self.assertEqual([block.sort_key for block in build_blocks(alhemo_table(), {}, ())][:2], [(0,), (4, 2)])
+        # a cover sorts the points ahead of the numbered clauses
+        planned = planned_blocks(alhemo_table(), {})
+        self.assertEqual([block.sort_key for block, _, _ in planned][:2], [(0, 4), (4, 2)])
 
-    def test_every_point_of_a_general_principle_row_is_served_by_its_block(self) -> None:
+    def test_every_point_of_a_general_principle_row_has_its_own_block(self) -> None:
         def two_points(cell):
             return [cell[0], cell[1], *cell[2:9], "五、(略)", "六、" + cell[2][2:], *cell[3:9], "七、~十二、(略)"]
 
         table = alhemo_table(lambda new, old: (two_points(new), two_points(old)))
-        general = pg_store.comparison_from_table(table)["blocks"][0]
-        self.assertEqual((general["clause_id"], general["clause_codes"]), ("通則", ["0.4", "0.6"]))
+        blocks = pg_store.comparison_from_table(table)["blocks"]
+        self.assertEqual(
+            [(b["clause_id"], b["clause_codes"], b["path"], b["hunk_new"]) for b in blocks[:3]],
+            [("0.4", ["0.4"], "藥品給付規定/通則/0.4", "第1～7段"),
+             ("0.6", ["0.6"], "藥品給付規定/通則/0.6", "第1～7段"),
+             ("4.2", ["4.2"], "藥品給付規定/4.2", "第1～6段")],
+        )
+        # the point 六 block holds point 六 alone: nothing of 四 or of the omitted 五 rides along
+        self.assertEqual(blocks[1]["new_paragraphs"][0][:2], "六、")
+        self.assertNotIn("五、(略)", blocks[0]["new_paragraphs"] + blocks[1]["new_paragraphs"])
         # a point only one column states is not served: the row is refused, never half-served
         mismatch = alhemo_table(lambda new, old: (new, old[:2] + ["五、" + old[2][2:]] + old[3:9] + ["六、~十二、(略)"]))
-        with self.assertRaisesRegex(pg_store.CardError, "different points"):
+        with self.assertRaisesRegex(ValueError, "different points"):
             pg_store.comparison_from_table(mismatch)
 
     def test_a_general_principle_row_that_cannot_be_cut_makes_no_card(self) -> None:
-        # the card cannot name the patches it belongs to, so the notice is listed as failed
+        # the cards cannot name the patches they belong to, so the notice is listed as failed
         cases = {
             "revised column cannot be cut into points (no_point)": lambda n, o: (n[:1] + ["一、~十二、(略)"], o),
             "original column cannot be cut into points (ordinals_not_increasing)": lambda n, o: (
@@ -318,8 +332,45 @@ class SerialisationTest(unittest.TestCase):
                 n[:1] + ["備註"] + n[1:], o),
         }
         for reason, change in cases.items():
-            with self.subTest(reason=reason), self.assertRaisesRegex(pg_store.CardError, re.escape(reason)):
+            with self.subTest(reason=reason), self.assertRaisesRegex(ValueError, re.escape(reason)):
                 pg_store.comparison_from_table(alhemo_table(change))
+
+    def test_a_general_principle_block_must_open_with_its_own_point_marker(self) -> None:
+        # the identity check a dotted clause gets from its heading: the card parser and the overlay agree
+        comparison = pg_store.comparison_from_table(alhemo_table())
+        point = comparison["blocks"][0]
+        self.assertEqual(
+            pg_store.general_principle_ordinal("0.4", point["old_paragraphs"], point["new_paragraphs"]), 4)
+        with self.assertRaisesRegex(pg_store.CardError, "does not open with point 5"):
+            pg_store.general_principle_ordinal("0.5", point["old_paragraphs"], point["new_paragraphs"])
+        with self.assertRaisesRegex(pg_store.CardError, "original column does not open"):
+            pg_store.general_principle_ordinal("0.4", ["（一）注射藥品使用時機"], point["new_paragraphs"])
+
+    def test_the_blocks_pass_the_rules_the_site_applies(self) -> None:
+        # personal-website-s publicComparisonBlock: clause_id non-empty; clause_codes non-empty, distinct, each
+        # a clause code; and a clause block's clause_codes include its clause_id
+        site_code = re.compile(r"^(?:0[.][1-9][0-9]*|[1-9][0-9]*(?:[.][0-9]+)+)$")
+
+        def site_rejects(block) -> str | None:
+            codes = block["clause_codes"]
+            if not block["clause_id"]:
+                return "clause_id is empty"
+            if not (codes and len(set(codes)) == len(codes) and all(site_code.fullmatch(c) for c in codes)):
+                return "clause_codes are not distinct clause codes"
+            if block["block_kind"] == "clause" and block["clause_id"] not in codes:
+                return "clause_codes lack the clause_id"
+            return None
+
+        comparisons = [pg_store.comparison_from_table(alhemo_table()), official("1150672381"), official("1150056995")]
+        for comparison in comparisons:
+            for block in comparison["blocks"]:
+                with self.subTest(clause=block["clause_id"], kind=block["block_kind"]):
+                    self.assertIsNone(site_rejects(block))
+        # confusable negative: the shape the first design had (one 通則 block serving 0.4) is what the site drops
+        old_shape = dict(comparisons[0]["blocks"][0], clause_id="通則", path="藥品給付規定/通則")
+        self.assertEqual(site_rejects(old_shape), "clause_codes lack the clause_id")
+        self.assertEqual(site_rejects(dict(old_shape, clause_codes=["通則", "0.4"])),
+                         "clause_codes are not distinct clause codes")
 
     def test_a_none_cell_in_any_of_its_forms_is_a_new_clause(self) -> None:
         forms = ("無", "(無)", "（無）", "無。")
@@ -927,12 +978,12 @@ class DiffCardStoreTest(unittest.TestCase):
         self.assertEqual(
             [(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"])
              for b in receipt["comparisons"][0]["blocks"]],
-            [(0, "clause", "通則", ["0.4"]), (1, "clause", "4.2", ["4.2"]), (2, "clause", "4.2.9", ["4.2.9"]),
+            [(0, "clause", "0.4", ["0.4"]), (1, "clause", "4.2", ["4.2"]), (2, "clause", "4.2.9", ["4.2.9"]),
              (3, "clause", "4.2.7", ["4.2.7"]), (4, "clause", "4.2.8", ["4.2.8"])])
         self.assertEqual(
             self.rows("SELECT block_order, clause_id, path, badge FROM nhi_rule_history_diff_card."
                       "v_public_comparison_block WHERE '0.4' = ANY (clause_codes)"),
-            [(0, "通則", "藥品給付規定/通則", "修訂")])
+            [(0, "0.4", "藥品給付規定/通則/0.4", "修訂")])
         # the new clause's original cell reads （無）: the block has no old side
         self.assertEqual(
             self.rows("SELECT badge, hunk_old, old_paragraphs FROM nhi_rule_history_diff_card."

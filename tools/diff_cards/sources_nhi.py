@@ -3,7 +3,7 @@
 Input: one official ODT 修訂對照表 per announcement (table 0: row 0 = 修訂後給付規定 |
 原給付規定 header, the revised one optionally printed 建議修訂後給付規定; each later row = one
 clause; cell 0 = after, cell 1 = before, "無" = new clause; a 通則 row, whose two cells open with the
-藥品給付規定通則 heading, is one clause block of the points it amends). Later tables with a 修訂後X規定 |
+藥品給付規定通則 heading, is one clause block per point it amends: 0.N). Later tables with a 修訂後X規定 |
 原X規定 header (e.g. a revised 附表 form) are compared the same way; other tables are
 multi-column forms and are only noted. Paragraphs come from the owner block extractor
 (`nhi_rule_history.update.odt.extract_odt_blocks`), so the text is the same deterministic
@@ -22,6 +22,7 @@ from nhi_rule_history.comparison_grammar import (
     GENERAL_PRINCIPLE_LABEL,
     is_general_principle_heading,
     is_none_cell,
+    split_general_principle,
 )
 from nhi_rule_history.update.odt import extract_odt_blocks
 
@@ -137,39 +138,78 @@ def clause_rows(old: list[str], new: list[str]) -> list[Row]:
     return rows
 
 
-def build_blocks(table: dict[str, Any], fn_labels: dict[str, str], exclude: tuple = ()) -> list[Block]:
-    """Blocks for table-0 clauses (minus editorially excluded ids) and extra comparison tables.
+GENERAL_PRINCIPLE_PATH = f"藥品給付規定/{GENERAL_PRINCIPLE_LABEL}"
 
-    A 通則 row is one clause block of the whole row: clause_id 通則, sorted ahead of the numbered clauses on a cover."""
-    blocks = []
+
+def general_principle_points(new: list[str], old: list[str]) -> list[tuple[int, list[str], list[str]]]:
+    """(ordinal, original paragraphs, revised paragraphs) of every point a 通則 row amends, in row order.
+
+    Both columns are cut by the announced overlay's own grammar (``comparison_grammar``), so a card is made
+    for exactly the points the overlay projects.  The chapter heading and the paragraphs that only name an
+    omitted range (``一、~三、(略)``) belong to no point and are shown on no card.  Raises ``ValueError``
+    when a column cannot be cut or the two columns hold different points: such a row cannot name the
+    patches its cards belong to.
+    """
+    cuts = {"revised": split_general_principle(new), "original": split_general_principle(old)}
+    for name, cut in cuts.items():
+        if cut.refusal:
+            raise ValueError(f"{GENERAL_PRINCIPLE_LABEL}: the {name} column cannot be cut into points ({cut.refusal})")
+    if cuts["revised"].codes != cuts["original"].codes:
+        raise ValueError(f"{GENERAL_PRINCIPLE_LABEL}: the columns hold different points "
+                         f"({', '.join(cuts['revised'].codes)} against {', '.join(cuts['original'].codes)})")
+    return [(ordinal, old[o_start:o_end], new[start:end])
+            for (ordinal, start, end), (_, o_start, o_end)
+            in zip(cuts["revised"].points, cuts["original"].points, strict=True)]
+
+
+def _clause_block(cid: str, path: str, old: list[str], new: list[str], fn: str, sort_key: tuple) -> Block:
+    rows = clause_rows(old, new)
+    block = Block(
+        path=path,
+        badge="新增" if not old else "修訂",
+        badge_kind="a" if not old else "m",
+        fn=fn,
+        rows=rows,
+        adds=sum(1 for r in rows if r.kind == "add"),
+        dels=sum(1 for r in rows if r.kind == "del"),
+        hunk_old=para_range(list(range(1, len(old) + 1)), "段"),
+        hunk_new=para_range(list(range(1, len(new) + 1)), "段"),
+        clause_id=cid,
+    )
+    block.sort_key = sort_key
+    verify_block(block, old, new)
+    return block
+
+
+def planned_blocks(table: dict[str, Any], fn_labels: dict[str, str],
+                   exclude: tuple = ()) -> list[tuple[Block, list[str], list[str]]]:
+    """(block, original paragraphs, revised paragraphs) of every block, in block order.
+
+    Table-0 clauses (minus editorially excluded ids), then the extra comparison tables.  A 通則 row is one
+    clause block per point it amends (clause_id ``0.N``, path ``藥品給付規定/通則/0.N``, built from that point's
+    original and revised paragraphs alone), in row order and sorted ahead of the numbered clauses on a cover.
+    """
+    planned: list[tuple[Block, list[str], list[str]]] = []
     parent_key: tuple = ()
     for clause in table["clauses"]:
         new = clause["new"]
         old = [] if none_cell(clause["old"]) else clause["old"]
-        general = general_principle_row(new, old)
-        cid = GENERAL_PRINCIPLE_LABEL if general else clause_id(new[0])
-        if not general:
-            parent_key = parent_key or tuple(int(x) for x in cid.split("."))
+        if general_principle_row(new, old):
+            for ordinal, point_old, point_new in general_principle_points(new, old):
+                cid = f"0.{ordinal}"
+                if cid in exclude:
+                    continue
+                planned.append((_clause_block(cid, f"{GENERAL_PRINCIPLE_PATH}/{cid}", point_old, point_new,
+                                              fn_labels.get(cid, ""), (0, ordinal)), point_old, point_new))
+            continue
+        cid = clause_id(new[0])
+        parent_key = parent_key or tuple(int(x) for x in cid.split("."))
         if cid in exclude:
             continue
-        if old and not general and clause_id(old[0]) != cid:
+        if old and clause_id(old[0]) != cid:
             raise ValueError(f"clause number differs between columns: {cid} vs {old[0][:20]}")
-        rows = clause_rows(old, new)
-        block = Block(
-            path=f"藥品給付規定/{cid}",
-            badge="新增" if not old else "修訂",
-            badge_kind="a" if not old else "m",
-            fn=fn_labels.get(cid, ""),
-            rows=rows,
-            adds=sum(1 for r in rows if r.kind == "add"),
-            dels=sum(1 for r in rows if r.kind == "del"),
-            hunk_old=para_range(list(range(1, len(old) + 1)), "段"),
-            hunk_new=para_range(list(range(1, len(new) + 1)), "段"),
-            clause_id=cid,
-        )
-        block.sort_key = (0,) if general else tuple(int(x) for x in cid.split("."))
-        verify_block(block, old, new)
-        blocks.append(block)
+        planned.append((_clause_block(cid, f"藥品給付規定/{cid}", old, new, fn_labels.get(cid, ""),
+                                      tuple(int(x) for x in cid.split("."))), old, new))
     for extra in table.get("extra_comparisons", []):
         title = extra["title"] or f"附表（表{extra['index']}）"
         short, _, rest = title.partition(" ")
@@ -183,8 +223,13 @@ def build_blocks(table: dict[str, Any], fn_labels: dict[str, str], exclude: tupl
                           hunk_new=para_range(list(range(1, len(new) + 1)), "段"), clause_id=short)
             block.sort_key = parent_key + (9999, k)
             verify_block(block, old, new)
-            blocks.append(block)
-    return blocks
+            planned.append((block, list(old), list(new)))
+    return planned
+
+
+def build_blocks(table: dict[str, Any], fn_labels: dict[str, str], exclude: tuple = ()) -> list[Block]:
+    """Blocks for table-0 clauses (minus editorially excluded ids) and extra comparison tables."""
+    return [block for block, _, _ in planned_blocks(table, fn_labels, exclude)]
 
 
 FOLD_LEVELS = ({"keep": 1, "min_run": 4}, {"keep": 0, "min_run": 2})
@@ -233,9 +278,14 @@ def whitespace_only_changes(table: dict[str, Any]) -> int:
     n = 0
     for clause in table["clauses"]:
         old = [] if none_cell(clause["old"]) else clause["old"]
-        for op in align(old, clause["new"]):
-            if op[0] == "ctx" and old[op[1]] != clause["new"][op[2]]:
-                n += 1
+        if general_principle_row(clause["new"], old):  # only the points are compared, as on the cards
+            pairs = [(point_old, point_new) for _, point_old, point_new in general_principle_points(clause["new"], old)]
+        else:
+            pairs = [(old, clause["new"])]
+        for pair_old, pair_new in pairs:
+            for op in align(pair_old, pair_new):
+                if op[0] == "ctx" and pair_old[op[1]] != pair_new[op[2]]:
+                    n += 1
     return n
 
 
@@ -243,5 +293,6 @@ def load_odt(path: Path) -> dict[str, Any]:
     return read_table(path.read_bytes())
 
 
-__all__ = ["build_blocks", "card_view", "fold_context", "general_principle_row", "key", "load_odt", "none_cell",
-           "read_table", "whitespace_only_changes"]
+__all__ = ["GENERAL_PRINCIPLE_PATH", "build_blocks", "card_view", "fold_context", "general_principle_points",
+           "general_principle_row", "key", "load_odt", "none_cell", "planned_blocks", "read_table",
+           "whitespace_only_changes"]

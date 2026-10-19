@@ -44,14 +44,17 @@ from nhi_rule_history.announced_release import (
     describe_error,
     registered_bundles,
 )
-from nhi_rule_history.comparison_grammar import (
-    GENERAL_PRINCIPLE_LABEL,
-    split_general_principle,
-)
+from nhi_rule_history.comparison_grammar import read_point_marker
 from nhi_rule_history.pg.common import json_text, object_fingerprint
 
 from .core import Block, Row, para_range, verify_block
-from .sources_nhi import build_blocks, clause_rows, none_cell, read_table
+from .sources_nhi import (
+    GENERAL_PRINCIPLE_PATH,
+    clause_rows,
+    none_cell,
+    planned_blocks,
+    read_table,
+)
 
 GENERATOR_VERSION = "nhi-rule-history/diff-cards-pg/1.0.0"
 RECEIPT_SCHEMA = "nhi-rule-history/diff-card-load-receipt/v1"
@@ -141,23 +144,21 @@ def clause_paragraphs(cell: Sequence[str]) -> list[str]:
 def plan_blocks(table: Mapping[str, Any]) -> list[tuple[str, Block, list[str], list[str]]]:
     """(block kind, card block, old paragraphs, new paragraphs) in block order.
 
-    ``build_blocks`` turns the rows of the first table into clause blocks and every row of every
-    further comparison table into an attachment block.  Here a row of a further 給付規定 table that
-    starts with a clause heading (the 2.6.2 and 2.6.3 rows of the 2.6.1 notice) is a clause block as
-    well, built exactly like a row of the first table, and the remaining rows stay attachment blocks.
-    Clause blocks come first (first table, then the further tables in order), attachment blocks after.
-    ``sources_nhi`` is untouched, so the card publications render as before.
+    ``planned_blocks`` turns the rows of the first table into clause blocks (a 通則 row into one per
+    point it amends) and every row of every further comparison table into an attachment block.  Here a
+    row of a further 給付規定 table that starts with a clause heading (the 2.6.2 and 2.6.3 rows of the
+    2.6.1 notice) is a clause block as well, built exactly like a row of the first table, and the
+    remaining rows stay attachment blocks.  Clause blocks come first (first table, then the further
+    tables in order), attachment blocks after.  ``sources_nhi`` builds the blocks, so the card
+    publications render as before.
     """
 
-    plain = build_blocks(dict(table), {}, ())
-    first_table = table["clauses"]
+    planned = planned_blocks(dict(table), {}, ())
     further = [(extra["kind"], row) for extra in table.get("extra_comparisons", []) for row in extra["rows"]]
-    if len(plain) != len(first_table) + len(further):
-        raise CardError("card blocks and source rows differ in number")
-    clauses = [("clause", block, clause_paragraphs(row["old"]), list(row["new"]))
-               for block, row in zip(plain[:len(first_table)], first_table, strict=True)]
+    split = len(planned) - len(further)
+    clauses = [("clause", block, old, new) for block, old, new in planned[:split]]
     attachments = []
-    for block, (kind, row) in zip(plain[len(first_table):], further, strict=True):
+    for (block, _, _), (kind, row) in zip(planned[split:], further, strict=True):
         code = further_clause_code(row) if kind == "給付" else None
         if code is None:
             attachments.append(("attachment", block, list(row["old"]), list(row["new"])))
@@ -165,29 +166,25 @@ def plan_blocks(table: Mapping[str, Any]) -> list[tuple[str, Block, list[str], l
         if none_cell(row["new"]):
             clause = deleted_clause_block(row, code)
         else:
-            (clause,) = build_blocks({"clauses": [row], "extra_comparisons": []}, {}, ())
+            ((clause, _, _),) = planned_blocks({"clauses": [row], "extra_comparisons": []}, {}, ())
         clauses.append(("clause", clause, clause_paragraphs(row["old"]), list(row["new"])))
     return clauses + attachments
 
 
-def general_principle_codes(old: Sequence[str], new: Sequence[str]) -> list[str]:
-    """The clause codes a 通則 block serves: the point codes (``0.4``) its row amends.
+def general_principle_ordinal(clause_id: str, old: Sequence[str], new: Sequence[str]) -> int:
+    """The point number of a 通則 block, after checking both columns state that point.
 
-    The row is cut into points by the announced overlay's own grammar
-    (``comparison_grammar.split_general_principle``), so the card serves the codes the overlay
-    projects.  Both columns must cut, and into the same points; a row that does not cannot name the
-    patches its card belongs to, so no card is made for the notice (the receipt lists it as failed,
-    like any comparison the grammar cannot read) instead of a card that attaches to nothing.
+    A 通則 block (clause_id ``0.N``, path under ``藥品給付規定/通則/``) serves its own code only.  Its first
+    paragraph in each column must be the marker of point N as the announced overlay's grammar reads it,
+    which is the identity check a dotted clause gets from its heading.
     """
 
-    cuts = {"revised": split_general_principle(new), "original": split_general_principle(old)}
-    for name, cut in cuts.items():
-        if cut.refusal:
-            raise CardError(f"{GENERAL_PRINCIPLE_LABEL}: the {name} column cannot be cut into points ({cut.refusal})")
-    if cuts["revised"].codes != cuts["original"].codes:
-        raise CardError(f"{GENERAL_PRINCIPLE_LABEL}: the columns hold different points "
-                        f"({', '.join(cuts['revised'].codes)} against {', '.join(cuts['original'].codes)})")
-    return list(cuts["revised"].codes)
+    ordinal = int(clause_id.split(".", 1)[1])
+    for name, cell in (("revised", new), ("original", old)):
+        if not cell or read_point_marker(cell[0]) != ("point", ordinal, ordinal):
+            raise CardError(f"{clause_id}: the {name} column does not open with point {ordinal} "
+                            "(the card parser and the overlay grammar disagree)")
+    return ordinal
 
 
 def clause_codes_of(clause_id: str, old: Sequence[str], new: Sequence[str]) -> list[str]:
@@ -365,8 +362,9 @@ def comparison_from_table(table: Mapping[str, Any]) -> dict[str, Any]:
         if kind != "clause":
             clause_codes.append(None)
             continue
-        if block.clause_id == GENERAL_PRINCIPLE_LABEL:
-            clause_codes.append(general_principle_codes(old, new))
+        if block.path.startswith(f"{GENERAL_PRINCIPLE_PATH}/"):
+            general_principle_ordinal(block.clause_id, old, new)
+            clause_codes.append([block.clause_id])
             continue
         if clause_heading_code(old[0] if none_cell(new) else new[0]) != block.clause_id:
             raise CardError(f"{block.path}: the clause heading differs between the card parser and the overlay grammar")

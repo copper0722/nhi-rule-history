@@ -31,6 +31,7 @@ from tools.diff_cards.sources_nhi import (
     card_view,
     general_principle_row,
     none_cell,
+    planned_blocks,
     read_table,
     whitespace_only_changes,
 )
@@ -112,19 +113,38 @@ def alhemo_table() -> dict:
     return {"clauses": [{"new": list(row["new"]), "old": list(row["old"])} for row in ALHEMO["rows"]]}
 
 
-def test_a_general_principle_row_is_one_clause_block_ahead_of_the_numbered_clauses():
+def test_a_general_principle_row_is_one_clause_block_per_point_ahead_of_the_numbered_clauses():
     blocks = build_blocks(alhemo_table(), {})
-    assert [b.clause_id for b in blocks] == ["通則", "4.2", "4.2.9", "4.2.7", "4.2.8"]
-    general = blocks[0]
-    assert (general.path, general.badge, general.badge_kind) == ("藥品給付規定/通則", "修訂", "m")
-    assert (general.adds, general.dels, general.hunk_old, general.hunk_new) == (1, 1, "第1～10段", "第1～10段")
-    assert general.sort_key == (0,) and min(blocks, key=lambda b: b.sort_key) is general
-    # the replay check ran over the whole row: every paragraph of both columns is covered once
-    assert sorted(i for r in general.rows for i in r.covers_old) == list(range(10))
-    assert sorted(j for r in general.rows for j in r.covers_new) == list(range(10))
+    assert [b.clause_id for b in blocks] == ["0.4", "4.2", "4.2.9", "4.2.7", "4.2.8"]
+    point = blocks[0]
+    assert (point.path, point.badge, point.badge_kind) == ("藥品給付規定/通則/0.4", "修訂", "m")
+    assert (point.adds, point.dels, point.hunk_old, point.hunk_new) == (1, 1, "第1～7段", "第1～7段")
+    assert point.sort_key == (0, 4) and min(blocks, key=lambda b: b.sort_key) is point
+    # the replay check ran over the point's paragraphs: each of the seven is covered once on each side
+    assert sorted(i for r in point.rows for i in r.covers_old) == list(range(7))
+    assert sorted(j for r in point.rows for j in r.covers_new) == list(range(7))
     # 4.2.9's original cell reads （無）, with full-width parentheses: the clause is new
     new_clause = blocks[2]
     assert (new_clause.badge, new_clause.adds, new_clause.dels, new_clause.hunk_old) == ("新增", 8, 0, "（無）")
+    # the heading and the omitted ranges are on no card
+    shown = {text for _, old, new in planned_blocks(alhemo_table(), {}) for text in (*old, *new)}
+    assert not shown & {GENERAL, "一、~三、(略)", "五、~十二、(略)"}
+
+
+def test_a_point_is_a_block_of_its_own_and_can_be_excluded_by_its_code():
+    def cell(marker):
+        return [GENERAL, "一、~三、(略)", f"{marker}、甲：", "（一）乙", "五、(略)", "六、丙：", "（一）丁", "七、~十二、(略)"]
+
+    table = {"clauses": [{"new": cell("四"), "old": cell("四")}]}
+    assert [b.clause_id for b in build_blocks(table, {})] == ["0.4", "0.6"]
+    assert [b.clause_id for b in build_blocks(table, {}, exclude=("0.4",))] == ["0.6"]
+    assert [b.fn for b in build_blocks(table, {"0.6": "註"})] == ["", "註"]
+    # a column the grammar cannot cut, or two columns with different points, make no block
+    with pytest.raises(ValueError, match="cannot be cut into points"):
+        build_blocks({"clauses": [{"new": [GENERAL, "附註", "四、甲："], "old": cell("四")}]}, {})
+    other = [GENERAL, "一、~四、(略)", "五、甲：", "（一）乙", "六、~十二、(略)"]
+    with pytest.raises(ValueError, match="different points"):
+        build_blocks({"clauses": [{"new": cell("四"), "old": other}]}, {})
 
 
 def test_a_general_principle_row_needs_the_heading_in_both_columns():
