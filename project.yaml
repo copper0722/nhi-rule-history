@@ -289,7 +289,9 @@ continuous_update:
       effect_on_served_patches: none_every_patch_id_and_hash_identical
       compose_against_the_active_run: no_release_no_change_with_holds
       re_activation: not_needed
-      state: not_deployed
+      independent_verification: passed_third_round_compose_no_change_with_holds_all_served_patches_identical
+      state: deployed
+      deployed_at: "2026-10-20"
     recurring_lane:
       cadence_minutes: 15
       auto_activation: released_under_named_residual_classes_with_per_activation_official_pdf_review
