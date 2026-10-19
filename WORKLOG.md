@@ -1,5 +1,71 @@
 # Worklog
 
+## 2026-10-19 — 通則 rows: a general-principle row no longer refuses the whole notice (cards #3275, #2678), not deployed
+
+- Defect: notice 健保審字第1150057388號 (concizumab / Alhemo, published 2026-10-14, effective
+  2026-11-01) opens its 修訂對照表 with the 藥品給付規定通則 row. The row has no dotted
+  designation, parser 1.5.0 read it as a continuation of a clause above, found none and refused the
+  whole notice (`comparison row 0/1 does not start with a clause designation`), so none of its five
+  clauses was served. The git-diff card store failed on the same row (`clause number not found`).
+- Change (parser 1.6.0, loader 2.4.1; card generator version stays 1.0.0):
+  - New `src/nhi_rule_history/comparison_grammar.py`: the string-level grammar of a comparison cell,
+    with no database or document dependency, shared by the overlay and the card generator
+    (`is_none_cell`, `is_general_principle_heading`, `cjk_ordinal`, `read_point_marker`,
+    `split_general_principle`). The loader's code fingerprint now covers it.
+  - Parser: a comparison row whose first paragraph, in either column, is the chapter heading never
+    reaches the clause grammar. Each column is cut by its top-level CJK ordinals; point N becomes
+    clause `0.N` (the project-assigned code) with exactly its own revised paragraphs, and its
+    original paragraphs are the same point of the original column. A paragraph that only names an
+    omitted range or point (`一、~三、(略)`, `五、~十二、(略)`, `十、(略)`) is an omission marker: it
+    stays in the sealed source, is named in the patch evidence (`general_principle`), and is never
+    projected or read as a point. `(略)` lines inside a point stay its text. Nothing is joined or
+    inferred. A row that cannot be cut holds only itself, with a named reason, as a pending effect
+    without a clause code (`general-principle:<table>/<row>`, designation `通則`, the reason in the
+    unresolved scope), and the rest of the notice projects: heading in one column only, an original
+    that reads `無`, text outside any point, an unreadable ordinal or range, ordinals that do not
+    strictly increase, a column without a point, different point codes in the two columns, a marker
+    drawn by a list label, a paragraph that reads like a clause designation. A row that goes on from a
+    point (a point spanning two rows) still refuses the notice. A scan of the 28 registered
+    comparison documents finds exactly one 通則 row, the Alhemo one (point 四 in both columns), and no
+    point spanning rows.
+  - Original cell `無` is read by one predicate everywhere: `無`, `(無)`, `（無）`, `無。` (NFKC).
+  - Loader: `blocked_clauses` also lists a held 通則 row (under its designation), so a receipt that
+    holds one is not green. No other served or carried row changes.
+  - Card store: the same row is one `clause` block, `clause_id` 通則, path `藥品給付規定/通則` (block
+    order stays the table's row order; the cover sort key puts it ahead of the numbered clauses); its
+    `clause_codes` are the point codes of the row (`0.4`), cut by
+    the overlay's own grammar, so the card serves the codes the overlay projects. A row the grammar
+    cannot cut makes no card (the notice is listed as failed) instead of a card that attaches to
+    nothing. `docs/diff-cards.md` and `docs/continuous-update.md` state the rules.
+- Verification (producer's own; the independent acceptance is not done):
+  - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70
+    legacy tests (1 skipped), 708 unittest tests (7 skipped) and 59 pytest tests; before this change
+    70 (1), 666 (7) and 46. Nine mutation controls (an omission marker read as a point, columns not
+    compared, a point continued by the next row, ordinals allowed to go back, a held row not listed,
+    `無` read exactly, card codes without the points, a point that starts at the heading, the
+    original point taken by position) each make a test fail.
+  - The three committed card publications (38 html files) re-render byte for byte the same with the
+    old and the new generator.
+  - Read-only against the production database: `load-pg --dry-run` rebuilds all 27 stored
+    comparisons identically (0 readback mismatches, so the generator version stays 1.0.0) and lists
+    the Alhemo comparison as `would_insert` with the blocks 通則 [0.4], 4.2, 4.2.9, 4.2.7, 4.2.8;
+    one other bundle (partial attachment inventory) still fails. A read-only `compose` of every
+    registered notice re-proves the 15 carried notices and their 21 served patches exactly as the old
+    code does and adds the Alhemo notice (effective 2026-11-01) with patches 0.4, 4.2, 4.2.7, 4.2.8
+    and 4.2.9; the LibreOffice cell rendering is exact for all five and the body-text check passes.
+    The text hash of each of the 21 served `patch_only` patches equals a fresh parse under both the
+    old and the new parser; the new parser adds only those five Alhemo clause rows.
+- Not done, and why this does not make the notice live:
+  - The announced layer's `clause_patch.clause_code` check (migration v21) admits only dotted codes
+    starting 1-9, so `load` of a run that holds a `0.N` patch is refused by the database (the
+    publication layer's check already admits `0.N`). A migration that widens it is a schema change
+    and is not part of this commit.
+  - The change is not deployed; `project.yaml` and `STATUS.md` still describe loader 2.4.0 and
+    parser 1.5.0 as the deployed versions, and the independent acceptance has not run.
+  - The unmerged round-7 candidate branch already names parser 1.6.x and loader 2.5.0; this change
+    takes loader 2.4.1 so main does not claim that number, and that branch needs renumbering when it
+    is integrated.
+
 ## 2026-10-19 — CI `verify`: deterministic ODT test fixtures
 
 - `ci` / `verify` failed on `main` (run 39245941165) in `make test`:
