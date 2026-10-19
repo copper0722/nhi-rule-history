@@ -44,10 +44,14 @@ from nhi_rule_history.announced_release import (
     describe_error,
     registered_bundles,
 )
+from nhi_rule_history.comparison_grammar import (
+    GENERAL_PRINCIPLE_LABEL,
+    split_general_principle,
+)
 from nhi_rule_history.pg.common import json_text, object_fingerprint
 
 from .core import Block, Row, para_range, verify_block
-from .sources_nhi import build_blocks, clause_rows, read_table
+from .sources_nhi import build_blocks, clause_rows, none_cell, read_table
 
 GENERATOR_VERSION = "nhi-rule-history/diff-cards-pg/1.0.0"
 RECEIPT_SCHEMA = "nhi-rule-history/diff-card-load-receipt/v1"
@@ -106,8 +110,8 @@ def further_clause_code(row: Mapping[str, Any]) -> str | None:
     """
 
     revised, original = row["new"], row["old"]
-    if revised == ["無"]:
-        first = original[0] if original and original != ["無"] else ""
+    if none_cell(revised):
+        first = original[0] if original and not none_cell(original) else ""
     else:
         first = revised[0] if revised else ""
     return clause_heading_code(first) if first else None
@@ -131,7 +135,7 @@ def deleted_clause_block(row: Mapping[str, Any], code: str) -> Block:
 def clause_paragraphs(cell: Sequence[str]) -> list[str]:
     """A cell's paragraphs; 無 in the original column means the clause is new, so there are none."""
 
-    return [] if list(cell) == ["無"] else list(cell)
+    return [] if none_cell(list(cell)) else list(cell)
 
 
 def plan_blocks(table: Mapping[str, Any]) -> list[tuple[str, Block, list[str], list[str]]]:
@@ -158,12 +162,32 @@ def plan_blocks(table: Mapping[str, Any]) -> list[tuple[str, Block, list[str], l
         if code is None:
             attachments.append(("attachment", block, list(row["old"]), list(row["new"])))
             continue
-        if row["new"] == ["無"]:
+        if none_cell(row["new"]):
             clause = deleted_clause_block(row, code)
         else:
             (clause,) = build_blocks({"clauses": [row], "extra_comparisons": []}, {}, ())
         clauses.append(("clause", clause, clause_paragraphs(row["old"]), list(row["new"])))
     return clauses + attachments
+
+
+def general_principle_codes(old: Sequence[str], new: Sequence[str]) -> list[str]:
+    """The clause codes a 通則 block serves: the point codes (``0.4``) its row amends.
+
+    The row is cut into points by the announced overlay's own grammar
+    (``comparison_grammar.split_general_principle``), so the card serves the codes the overlay
+    projects.  Both columns must cut, and into the same points; a row that does not cannot name the
+    patches its card belongs to, so no card is made for the notice (the receipt lists it as failed,
+    like any comparison the grammar cannot read) instead of a card that attaches to nothing.
+    """
+
+    cuts = {"revised": split_general_principle(new), "original": split_general_principle(old)}
+    for name, cut in cuts.items():
+        if cut.refusal:
+            raise CardError(f"{GENERAL_PRINCIPLE_LABEL}: the {name} column cannot be cut into points ({cut.refusal})")
+    if cuts["revised"].codes != cuts["original"].codes:
+        raise CardError(f"{GENERAL_PRINCIPLE_LABEL}: the columns hold different points "
+                        f"({', '.join(cuts['revised'].codes)} against {', '.join(cuts['original'].codes)})")
+    return list(cuts["revised"].codes)
 
 
 def clause_codes_of(clause_id: str, old: Sequence[str], new: Sequence[str]) -> list[str]:
@@ -341,7 +365,10 @@ def comparison_from_table(table: Mapping[str, Any]) -> dict[str, Any]:
         if kind != "clause":
             clause_codes.append(None)
             continue
-        if clause_heading_code(old[0] if new == ["無"] else new[0]) != block.clause_id:
+        if block.clause_id == GENERAL_PRINCIPLE_LABEL:
+            clause_codes.append(general_principle_codes(old, new))
+            continue
+        if clause_heading_code(old[0] if none_cell(new) else new[0]) != block.clause_id:
             raise CardError(f"{block.path}: the clause heading differs between the card parser and the overlay grammar")
         clause_codes.append(clause_codes_of(block.clause_id, old, new))
     # an attachment table belongs to the whole notice: it serves every code its clause blocks serve

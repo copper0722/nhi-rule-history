@@ -2,7 +2,8 @@
 
 Input: one official ODT 修訂對照表 per announcement (table 0: row 0 = 修訂後給付規定 |
 原給付規定 header, the revised one optionally printed 建議修訂後給付規定; each later row = one
-clause; cell 0 = after, cell 1 = before, "無" = new clause). Later tables with a 修訂後X規定 |
+clause; cell 0 = after, cell 1 = before, "無" = new clause; a 通則 row, whose two cells open with the
+藥品給付規定通則 heading, is one clause block of the points it amends). Later tables with a 修訂後X規定 |
 原X規定 header (e.g. a revised 附表 form) are compared the same way; other tables are
 multi-column forms and are only noted. Paragraphs come from the owner block extractor
 (`nhi_rule_history.update.odt.extract_odt_blocks`), so the text is the same deterministic
@@ -17,6 +18,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from nhi_rule_history.comparison_grammar import (
+    GENERAL_PRINCIPLE_LABEL,
+    is_general_principle_heading,
+    is_none_cell,
+)
 from nhi_rule_history.update.odt import extract_odt_blocks
 
 from .core import (
@@ -89,6 +95,19 @@ def read_table(payload: bytes) -> dict[str, Any]:
     }
 
 
+def none_cell(cell: list[str]) -> bool:
+    """A cell that only reads 無, (無) or （無）: a new clause in the original column, a deleted one in the revised.
+
+    The announced overlay reads the same cell the same way (``comparison_grammar.is_none_cell``).
+    """
+    return len(cell) == 1 and is_none_cell(cell[0])
+
+
+def general_principle_row(new: list[str], old: list[str]) -> bool:
+    """A 通則 row: each column opens with the 藥品給付規定通則 heading (the overlay's grammar)."""
+    return bool(new) and bool(old) and is_general_principle_heading(new[0]) and is_general_principle_heading(old[0])
+
+
 def clause_id(first_paragraph: str) -> str:
     m = CLAUSE_RE.match(first_paragraph)
     if not m:
@@ -119,17 +138,21 @@ def clause_rows(old: list[str], new: list[str]) -> list[Row]:
 
 
 def build_blocks(table: dict[str, Any], fn_labels: dict[str, str], exclude: tuple = ()) -> list[Block]:
-    """Blocks for table-0 clauses (minus editorially excluded ids) and extra comparison tables."""
+    """Blocks for table-0 clauses (minus editorially excluded ids) and extra comparison tables.
+
+    A 通則 row is one clause block of the whole row: clause_id 通則, sorted ahead of the numbered clauses on a cover."""
     blocks = []
     parent_key: tuple = ()
     for clause in table["clauses"]:
         new = clause["new"]
-        old = [] if clause["old"] == ["無"] else clause["old"]
-        cid = clause_id(new[0])
-        parent_key = parent_key or tuple(int(x) for x in cid.split("."))
+        old = [] if none_cell(clause["old"]) else clause["old"]
+        general = general_principle_row(new, old)
+        cid = GENERAL_PRINCIPLE_LABEL if general else clause_id(new[0])
+        if not general:
+            parent_key = parent_key or tuple(int(x) for x in cid.split("."))
         if cid in exclude:
             continue
-        if old and clause_id(old[0]) != cid:
+        if old and not general and clause_id(old[0]) != cid:
             raise ValueError(f"clause number differs between columns: {cid} vs {old[0][:20]}")
         rows = clause_rows(old, new)
         block = Block(
@@ -144,7 +167,7 @@ def build_blocks(table: dict[str, Any], fn_labels: dict[str, str], exclude: tupl
             hunk_new=para_range(list(range(1, len(new) + 1)), "段"),
             clause_id=cid,
         )
-        block.sort_key = tuple(int(x) for x in cid.split("."))
+        block.sort_key = (0,) if general else tuple(int(x) for x in cid.split("."))
         verify_block(block, old, new)
         blocks.append(block)
     for extra in table.get("extra_comparisons", []):
@@ -209,7 +232,7 @@ def fold_context(rows: list[Row], keep: int = 1, min_run: int = 4) -> list[Row]:
 def whitespace_only_changes(table: dict[str, Any]) -> int:
     n = 0
     for clause in table["clauses"]:
-        old = [] if clause["old"] == ["無"] else clause["old"]
+        old = [] if none_cell(clause["old"]) else clause["old"]
         for op in align(old, clause["new"]):
             if op[0] == "ctx" and old[op[1]] != clause["new"][op[2]]:
                 n += 1
@@ -220,4 +243,5 @@ def load_odt(path: Path) -> dict[str, Any]:
     return read_table(path.read_bytes())
 
 
-__all__ = ["build_blocks", "card_view", "fold_context", "key", "load_odt", "read_table", "whitespace_only_changes"]
+__all__ = ["build_blocks", "card_view", "fold_context", "general_principle_row", "key", "load_odt", "none_cell",
+           "read_table", "whitespace_only_changes"]

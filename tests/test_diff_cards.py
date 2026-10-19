@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from tests.test_announced_notice import _comparison, _odt
+from tests.test_announced_notice import ALHEMO, _comparison, _odt
 from tools.diff_cards import sources_rule
 from tools.diff_cards.build import (
     main,
@@ -26,7 +26,14 @@ from tools.diff_cards.core import (
 )
 from tools.diff_cards.html import Doc, hunk_html
 from tools.diff_cards.sources_law import parse_markup
-from tools.diff_cards.sources_nhi import build_blocks, card_view, read_table
+from tools.diff_cards.sources_nhi import (
+    build_blocks,
+    card_view,
+    general_principle_row,
+    none_cell,
+    read_table,
+    whitespace_only_changes,
+)
 from tools.diff_cards.sources_rule import (
     attachment_block,
     attachment_card_rows,
@@ -96,6 +103,65 @@ def test_nhi_blocks_cover_every_paragraph_once():
     assert (modified.badge, modified.adds, modified.dels) == ("修訂", 2, 2)
     assert (added.badge, added.adds, added.dels) == ("新增", 2, 0)
     assert [r.kind for r in card_view(modified.rows)] == ["del", "add", "del", "add", "ctx"]
+
+
+GENERAL = "藥品給付規定通則"
+
+
+def alhemo_table() -> dict:
+    return {"clauses": [{"new": list(row["new"]), "old": list(row["old"])} for row in ALHEMO["rows"]]}
+
+
+def test_a_general_principle_row_is_one_clause_block_ahead_of_the_numbered_clauses():
+    blocks = build_blocks(alhemo_table(), {})
+    assert [b.clause_id for b in blocks] == ["通則", "4.2", "4.2.9", "4.2.7", "4.2.8"]
+    general = blocks[0]
+    assert (general.path, general.badge, general.badge_kind) == ("藥品給付規定/通則", "修訂", "m")
+    assert (general.adds, general.dels, general.hunk_old, general.hunk_new) == (1, 1, "第1～10段", "第1～10段")
+    assert general.sort_key == (0,) and min(blocks, key=lambda b: b.sort_key) is general
+    # the replay check ran over the whole row: every paragraph of both columns is covered once
+    assert sorted(i for r in general.rows for i in r.covers_old) == list(range(10))
+    assert sorted(j for r in general.rows for j in r.covers_new) == list(range(10))
+    # 4.2.9's original cell reads （無）, with full-width parentheses: the clause is new
+    new_clause = blocks[2]
+    assert (new_clause.badge, new_clause.adds, new_clause.dels, new_clause.hunk_old) == ("新增", 8, 0, "（無）")
+
+
+def test_a_general_principle_row_needs_the_heading_in_both_columns():
+    new = [GENERAL, "四、甲：", "（一）乙"]
+    assert general_principle_row(new, [GENERAL, "四、甲：", "（一）丙"])
+    assert general_principle_row([" " + GENERAL + " "], ["藥品給付規定　通則"])  # width and spacing do not matter
+    assert not general_principle_row(new, [])
+    assert not general_principle_row(new, ["4.2.血液代用製劑"])
+    assert not general_principle_row([], [GENERAL])
+    with pytest.raises(ValueError, match="clause number not found"):
+        build_blocks({"clauses": [{"new": new, "old": ["4.2.血液代用製劑"]}]}, {})
+    with pytest.raises(ValueError, match="clause number not found"):
+        build_blocks({"clauses": [{"new": new, "old": ["（無）"]}]}, {})
+
+
+@pytest.mark.parametrize("cell,expected", [
+    (["無"], True), (["(無)"], True), (["（無）"], True), ([" 無。 "], True),
+    ([], False), (["無", "限用於甲"], False), (["（無）限用於甲"], False), (["無法給付"], False), (["9.1.甲藥："], False),
+])
+def test_none_cell_forms(cell, expected):
+    assert none_cell(cell) is expected
+
+
+def test_a_general_principle_row_does_not_take_the_place_of_the_first_clause_in_sorting():
+    table = alhemo_table()
+    table["extra_comparisons"] = [{"index": 1, "kind": "附表", "title": "附表十八之五 測試", "rows": [
+        {"old": ["甲"], "new": ["乙"]}]}]
+    *_, attachment = build_blocks(table, {})
+    # an attachment sorts under the first numbered clause of the table, as it does without a 通則 row
+    assert attachment.clause_id == "附表十八之五" and attachment.sort_key == (4, 2, 9999, 0)
+
+
+def test_whitespace_only_changes_reads_the_none_cell_like_the_blocks_do():
+    table = alhemo_table()
+    assert whitespace_only_changes(table) == 0
+    table["clauses"][2]["old"] = ["無"]
+    assert whitespace_only_changes(table) == 0
 
 
 # --- administrative rules from the gazette (tools/diff_cards sources_rule) -------------------------------
