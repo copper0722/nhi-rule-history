@@ -31,7 +31,6 @@ import io
 import itertools
 import json
 import re
-import unicodedata
 import uuid
 import zipfile
 from dataclasses import dataclass, field
@@ -40,6 +39,16 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
 from xml.etree import ElementTree
 
+from nhi_rule_history.comparison_grammar import (
+    GENERAL_PRINCIPLE_LABEL,
+    GENERAL_PRINCIPLE_RULE_VERSION,
+    GeneralPrincipleSplit,
+    grammar_text,
+    is_general_principle_heading,
+    is_none_cell,
+    read_point_marker,
+    split_general_principle,
+)
 from nhi_rule_history.contracts import canonical_json_bytes
 from nhi_rule_history.current_publication import semantic_comparison_text
 from nhi_rule_history.odf_list_numbering import (
@@ -51,7 +60,7 @@ from nhi_rule_history.pg.common import PgLoadError, object_fingerprint
 from nhi_rule_history.update.odt import inspect_odt_document
 
 
-PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.5.0"
+PARSER_VERSION = "nhi-rule-history/announced-notice-parser/1.6.0"
 TEXT_RULE_VERSION = (
     "nhi-rule-history/odt-paragraph-text-with-whitespace-elements/1.0.0"
 )
@@ -192,7 +201,6 @@ _PRIOR_PRE_ANNOUNCEMENT_RE = re.compile(r"(?:前|業|已)經[^,，。()（）]{0
 _APPENDIX_DESIGNATION_RE = re.compile(
     r"附表[一二三四五六七八九十百零〇]+(?:之[一二三四五六七八九十]+)?"
 )
-_NONE_CELL_RE = re.compile(r"^\(?\s*無\s*\)?[。.]?$")
 # Omitted-text markers used by official tables: (略), (以下略), (餘略),
 # 以下略, and a trailing 略 after a boundary character (checked on NFKC).
 _OMISSION_RE = re.compile(
@@ -355,12 +363,6 @@ def roc_date(year: str | int, month: str | int, day: str | int) -> date:
         return date(roc_year + 1911, int(month), int(day))
     except ValueError as exc:
         raise AnnouncedNoticeError("ROC date is not a calendar date") from exc
-
-
-def grammar_text(text: str) -> str:
-    """NFKC projection used only for grammar matching, never for storage."""
-
-    return unicodedata.normalize("NFKC", text)
 
 
 def parse_effective_statement(text: str) -> date | None:
@@ -998,6 +1000,50 @@ class ComparisonTable:
 
 
 @dataclass(frozen=True)
+class GeneralPrincipleOmission:
+    """A paragraph that only names a range of omitted points (``一、~三、(略)``)."""
+
+    column: str
+    first: int
+    last: int
+    paragraph: OdtParagraph
+
+
+@dataclass(frozen=True)
+class GeneralPrincipleRow:
+    """What the split of a 通則 row kept apart from one of its points.
+
+    The chapter heading of each column and the omission markers between the
+    points are source blocks the point does not project: they stay in the
+    sealed source, and this record names them.
+    """
+
+    ordinal: int
+    revised_heading: OdtParagraph
+    original_heading: OdtParagraph
+    omissions: tuple[GeneralPrincipleOmission, ...]
+
+    def evidence(self) -> dict[str, Any]:
+        return {
+            "rule_version": GENERAL_PRINCIPLE_RULE_VERSION,
+            "label": GENERAL_PRINCIPLE_LABEL,
+            "point_ordinal": self.ordinal,
+            "revised_heading_block_id": self.revised_heading.block_id,
+            "original_heading_block_id": self.original_heading.block_id,
+            "omitted_ranges": [
+                {
+                    "column": item.column,
+                    "first_ordinal": item.first,
+                    "last_ordinal": item.last,
+                    "source_block_id": item.paragraph.block_id,
+                    "document_order": item.paragraph.document_order,
+                }
+                for item in self.omissions
+            ],
+        }
+
+
+@dataclass(frozen=True)
 class AnnouncedClause:
     clause_code: str
     effective_on: str
@@ -1007,6 +1053,7 @@ class AnnouncedClause:
     original: tuple[OdtParagraph, ...]
     original_is_none: bool
     continued: bool
+    general_principle: GeneralPrincipleRow | None = None
 
     @property
     def patch_text(self) -> str:
@@ -1122,11 +1169,19 @@ def _label_manifest(item: OdtParagraph) -> dict[str, Any] | None:
 
 @dataclass(frozen=True)
 class NonClauseEffect:
+    """A notice effect the clause-text overlay does not project.
+
+    ``blocked_reason`` is set when the parser held the effect back (a 通則 row
+    it could not split); an appendix or listing effect is pending by design
+    and has none.
+    """
+
     key: str
     effect_type: str
     designation: str | None
     scope_note: str
     evidence: Mapping[str, Any]
+    blocked_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1406,6 +1461,10 @@ def _continuation_refusal(
 
     if previous is None:
         return "no clause precedes it"
+    if previous.get("general_principle") is not None:
+        # A 通則 point is delimited by the next marker in its own row; a row
+        # that goes on from it would be a point spanning two rows.
+        return "the clause above is a general-principle point"
     table_index, row_index = row
     if tuple(previous["rows"][-1]) != (table_index, row_index - 1):
         return "the clause above does not end on the previous row"
@@ -1431,6 +1490,132 @@ def _continuation_refusal(
             ):
                 return "a paragraph reads like a designation"
     return None
+
+
+@dataclass(frozen=True)
+class _GeneralPrincipleRowResult:
+    clauses: tuple[dict[str, Any], ...] = ()
+    held: NonClauseEffect | None = None
+
+
+def _general_principle_row(
+    table: ComparisonTable,
+    row_index: int,
+    revised_items: Sequence[OdtParagraph],
+    original_items: Sequence[OdtParagraph],
+    *,
+    original_none: bool,
+) -> _GeneralPrincipleRowResult | None:
+    """Split a 通則 row into its points, or hold only this row.
+
+    ``None``: neither column opens with the 通則 heading, so this is an
+    ordinary clause row.  Otherwise the row never reaches the clause grammar:
+    each point of the revised column becomes clause ``0.N`` (the project's
+    assigned code for the Nth top-level principle) with its own paragraphs, and
+    the original paragraphs of the same point come from the original column.
+    Points are never joined, the heading and the omission markers between
+    points are never projected, and no text is inferred.
+
+    A row that cannot be split this way is held back on its own, with a named
+    reason, as a pending effect: a heading in one column only, a new-clause
+    original, a column :func:`split_general_principle` refuses, point codes
+    that differ between the columns, a point marker drawn by a list label, or a
+    paragraph that reads like a clause designation.
+    """
+
+    revised_heading = bool(revised_items) and is_general_principle_heading(
+        revised_items[0].printed_text
+    )
+    original_heading = bool(original_items) and is_general_principle_heading(
+        original_items[0].printed_text
+    )
+    if not (revised_heading or original_heading):
+        return None
+    position = (table.table_index, row_index)
+
+    def held(reason: str) -> _GeneralPrincipleRowResult:
+        return _GeneralPrincipleRowResult(
+            held=NonClauseEffect(
+                key=f"general-principle:{position[0]}/{position[1]}",
+                effect_type="clause_amendment",
+                designation=GENERAL_PRINCIPLE_LABEL,
+                scope_note=(
+                    f"{GENERAL_PRINCIPLE_LABEL}: comparison row "
+                    f"{position[0]}/{position[1]} is held back ({reason}); its "
+                    "revised column stays in the sealed notice source and is "
+                    "not projected as clause text"
+                ),
+                evidence={
+                    "rows": [list(position)],
+                    "revised_block_ids": [item.block_id for item in revised_items],
+                    "revised_text_sha256": sha256_text(
+                        PATCH_TEXT_JOIN.join(item.text for item in revised_items)
+                    ),
+                    "blocked_reason": reason,
+                },
+                blocked_reason=reason,
+            )
+        )
+
+    if original_none:
+        return held("original_column_marks_a_new_clause")
+    if not (revised_heading and original_heading):
+        return held("heading_in_one_column_only")
+    columns = (("revised", revised_items), ("original", original_items))
+    splits: dict[str, GeneralPrincipleSplit] = {}
+    for name, items in columns:
+        for item in items:
+            # A generated label can draw a point marker the character data
+            # lacks; the cut is not made on text the reader sees differently.
+            if (
+                item.numbering is not None
+                and not item.nested
+                and read_point_marker(item.printed_text) is not None
+                and read_point_marker(item.text) is None
+            ):
+                return held("list_numbered_point_marker")
+        splits[name] = split_general_principle(
+            [item.printed_text for item in items],
+            plain={index for index, item in enumerate(items) if item.nested},
+        )
+        if splits[name].refusal:
+            return held(f"{name}_{splits[name].refusal}")
+    if splits["revised"].codes != splits["original"].codes:
+        return held("point_sets_differ_between_columns")
+    for name, items in columns:
+        for _, start, end in splits[name].points:
+            for item in items[start:end]:
+                if not item.nested and (
+                    designation_codes(item.text)
+                    or designation_codes(item.printed_text)
+                ):
+                    return held("paragraph_reads_like_a_designation")
+    omissions = tuple(
+        GeneralPrincipleOmission(name, first, last, items[index])
+        for name, items in columns
+        for index, first, last in splits[name].omissions
+    )
+    clauses = tuple(
+        {
+            "clause_code": f"0.{ordinal}",
+            "table": table,
+            "rows": [position],
+            "revised": list(revised_items[start:end]),
+            "original": list(original_items[original_start:original_end]),
+            "original_is_none": False,
+            "continued": False,
+            "general_principle": GeneralPrincipleRow(
+                ordinal=ordinal,
+                revised_heading=revised_items[0],
+                original_heading=original_items[0],
+                omissions=omissions,
+            ),
+        }
+        for (ordinal, start, end), (_, original_start, original_end) in zip(
+            splits["revised"].points, splits["original"].points, strict=True
+        )
+    )
+    return _GeneralPrincipleRowResult(clauses=clauses)
 
 
 def parse_comparison_document(
@@ -1566,6 +1751,7 @@ def parse_comparison_document(
 
     clauses: list[dict[str, Any]] = []
     appendices: dict[str, dict[str, Any]] = {}
+    held_rows: list[NonClauseEffect] = []
     for table in tables:
         grid = document.top_tables[table.table_index]
         for row_index in range(1, len(grid)):
@@ -1615,15 +1801,23 @@ def parse_comparison_document(
                 appendix["block_ids"].extend(item.block_id for item in revised_items)
                 appendix["texts"].extend(item.text for item in revised_items)
                 continue
+            original_none = len(original_items) == 1 and is_none_cell(
+                original_items[0].printed_text
+            )
+            general = _general_principle_row(
+                table,
+                row_index,
+                revised_items,
+                original_items,
+                original_none=original_none,
+            )
+            if general is not None:
+                clauses.extend(general.clauses)
+                if general.held is not None:
+                    held_rows.append(general.held)
+                continue
             revised_segments = _segments(revised_items)
             original_segments = _segments(original_items)
-            original_none = (
-                len(original_items) == 1
-                and _NONE_CELL_RE.fullmatch(
-                    grammar_text(original_items[0].printed_text).strip()
-                )
-                is not None
-            )
             revised_codes = [code for code, _ in revised_segments]
             original_codes = [code for code, _ in original_segments]
             if revised_codes[0] is None:
@@ -1681,6 +1875,7 @@ def parse_comparison_document(
             original=tuple(row["original"]),
             original_is_none=row["original_is_none"],
             continued=row["continued"],
+            general_principle=row.get("general_principle"),
         )
         for row in clauses
     )
@@ -1704,6 +1899,7 @@ def parse_comparison_document(
         )
         for designation, appendix in appendices.items()
     ]
+    other.extend(held_rows)
     other.extend(_announcement_effects(bundle, attachment))
     return ParsedNotice(
         bundle=bundle,

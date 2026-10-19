@@ -41,10 +41,15 @@ from nhi_rule_history.announced_notice import (
     sha256_text,
 )
 from nhi_rule_history.announced_release import (
+    EMPTY_TEXT_SHA256,
     GLOBAL_LOCK_KEY,
     LOADER_VERSION,
     PLACEHOLDER_RUN_ID,
     REPRODUCED_PATCH_KEYS,
+    STATUS_PASSED,
+    STATUS_PASSED_WITH_HOLDS,
+    blocked_clauses,
+    receipt_status,
     _receipt_bundle,
     AnnouncedReleaseError,
     CarriedNotice,
@@ -1097,6 +1102,128 @@ class ServedPatchPinTest(unittest.TestCase):
         )
         self.assertEqual(_served_differences(previous, fresh), ([], []))
         self.assertIsNone(_supersede_refusal(previous, fresh, base))
+
+
+class GeneralPrincipleRowsTest(unittest.TestCase):
+    """The rows a 通則 notice contributes to a run (notice 1150057388, Alhemo), without a database.
+
+    Clause ``0.N`` is the project's code for the Nth principle; the served text it binds to is
+    the publication's ``0.N``.  A row the parser cannot cut is a pending effect without a clause
+    code, listed as held back under its designation.
+    """
+
+    SERVED_CODES = ("0.4", "4.2", "4.2.7", "4.2.8")
+
+    def rows(self, notice, **checks: str):
+        served = {
+            code: {"raw_text_sha256": sha256_text("served " + code)} for code in self.SERVED_CODES
+        }
+        rendering_checks = {
+            clause.clause_code: checks.get(clause.clause_code, "exact") for clause in notice.clauses
+        }
+        return notice_rows(
+            notice,
+            run_id=PLACEHOLDER_RUN_ID,
+            served_run_id="publication",
+            served=served,
+            rendering_checks=rendering_checks,
+        )
+
+    def test_the_point_binds_to_the_served_clause_like_a_dotted_one(self) -> None:
+        notice = notice_fixture.parse_alhemo()
+        projected = self.rows(notice)
+        patches = {row["clause_code"]: row for row in projected.rows["clause_patch"]}
+        self.assertEqual(sorted(patches), ["0.4", "4.2", "4.2.7", "4.2.8", "4.2.9"])
+        general = patches["0.4"]
+        self.assertEqual(general["predecessor_text_sha256"], sha256_text("served 0.4"))
+        self.assertEqual(
+            (general["effective_from"], general["composition_status"], general["omitted_text_present"],
+             general["resolution_state"]),
+            ("2026-11-01", "patch_only", True, "verified_scheduled"),
+        )
+        self.assertTrue(general["source_exact_patch_text"].startswith("四、注射藥品之使用原則："))
+        self.assertEqual(patches["4.2.9"]["predecessor_text_sha256"], EMPTY_TEXT_SHA256)  # a new clause
+        event = projected.rows["notice_event"][0]
+        self.assertEqual((event["effective_on"], event["event_scope_complete"], event["unresolved_scope"]),
+                         ("2026-11-01", True, []))
+        self.assertEqual(blocked_clauses(projected.rows), [])
+
+    def test_only_the_point_carries_the_general_principle_evidence(self) -> None:
+        projected = self.rows(notice_fixture.parse_alhemo())
+        by_code = {
+            row["clause_code"]: projected.patch_evidence[row["patch_id"]]
+            for row in projected.rows["clause_patch"]
+        }
+        record = by_code["0.4"]["general_principle"]
+        self.assertEqual((record["label"], record["point_ordinal"]), ("通則", 4))
+        self.assertEqual(len(record["omitted_ranges"]), 4)
+        self.assertEqual(by_code["0.4"]["omission_marker_document_orders"], sorted(
+            by_code["0.4"]["omission_marker_document_orders"]))
+        for code in ("4.2", "4.2.7", "4.2.8", "4.2.9"):
+            self.assertNotIn("general_principle", by_code[code], code)
+        self.assertEqual(by_code["0.4"]["parser_version"], by_code["4.2"]["parser_version"])
+
+    def test_a_row_that_cannot_be_cut_is_held_alone_and_listed(self) -> None:
+        rows = notice_fixture.alhemo_rows()
+        new, old = rows[0]
+        notice = notice_fixture.parse_alhemo([(new, old[1:]), *rows[1:]])  # no heading in the original
+        projected = self.rows(notice)
+        reason = "heading_in_one_column_only"
+        self.assertEqual(
+            sorted(row["clause_code"] for row in projected.rows["clause_patch"]),
+            ["4.2", "4.2.7", "4.2.8", "4.2.9"],
+        )
+        entry = {"effect_type": "clause_amendment", "clause_code": None, "designation": "通則",
+                 "blocked_reason": reason}
+        event = projected.rows["notice_event"][0]
+        self.assertEqual((event["event_scope_complete"], event["unresolved_scope"]), (False, [entry]))
+        held = [row for row in projected.rows["notice_effect"] if row["clause_code"] is None]
+        (effect,) = held
+        self.assertEqual(
+            (effect["effect_type"], effect["projection_status"]), ("clause_amendment", "pending_projection")
+        )
+        self.assertIn(reason, effect["scope_note"])
+        for patch in projected.rows["clause_patch"]:
+            self.assertTrue(patch["partial_event_projection"])
+            self.assertEqual(patch["unprocessed_event_scope"], [entry])
+        listed = blocked_clauses(projected.rows, {"健保審字第0000000000號": "new"})
+        self.assertEqual(
+            [(row["reference_number"], row["clause_code"], row["effective_on"], row["reason"], row["origin"])
+             for row in listed],
+            [("健保審字第0000000000號", "通則", "2026-11-01", reason, "new")],
+        )
+        # the hold is a hold: a receipt that lists it is not green
+        self.assertEqual(
+            receipt_status(composed=True, failures=[], dropped_notices=[], blocked_clauses=listed),
+            STATUS_PASSED_WITH_HOLDS,
+        )
+        self.assertEqual(
+            receipt_status(composed=True, failures=[], dropped_notices=[], blocked_clauses=[]),
+            STATUS_PASSED,
+        )
+
+    def test_a_point_the_rendering_gate_refuses_is_held_like_any_clause(self) -> None:
+        projected = self.rows(notice_fixture.parse_alhemo(), **{"0.4": "mismatch"})
+        self.assertEqual(
+            sorted(row["clause_code"] for row in projected.rows["clause_patch"]),
+            ["4.2", "4.2.7", "4.2.8", "4.2.9"],
+        )
+        listed = blocked_clauses(projected.rows)
+        self.assertEqual(
+            [(row["clause_code"], row["reason"]) for row in listed],
+            [("0.4", "official_rendering_mismatch")],
+        )
+        (effect,) = [row for row in projected.rows["notice_effect"] if row["clause_code"] == "0.4"]
+        self.assertEqual(effect["projection_status"], "pending_projection")
+
+    def test_dotted_and_appendix_effects_are_not_listed_as_held(self) -> None:
+        # Confusable negative: an appendix effect is pending by design (clause code absent, no
+        # blocked reason), so it never shows up beside a held 通則 row.
+        notice = notice_fixture.parse_alhemo()
+        projected = self.rows(notice)
+        appendix = {"effect_type": "clause_amendment", "clause_code": None, "designation": "附表十八之五"}
+        event = dict(projected.rows["notice_event"][0], unresolved_scope=[appendix])
+        self.assertEqual(blocked_clauses({**projected.rows, "notice_event": (event,)}), [])
 
 
 class SupersedeLiveTest(unittest.TestCase):

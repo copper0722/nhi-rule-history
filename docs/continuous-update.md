@@ -666,7 +666,36 @@ labelled as the revised column of the table and never as a complete clause.
   no second designation inside one patch, and the full list of clauses.
 - A clause starts at a paragraph whose dotted code ends in its own full stop
   (`2.1.4.2.`). `2.18歲` is a list item, not a code. Both columns must name the
-  same codes, or the original column must read `無` (a new clause).
+  same codes, or the original column must read `無` (a new clause). The
+  original cell reads `無` in any of its forms: `無`, `(無)`, `（無）`, `無。`
+  (the check runs on NFKC text, so full-width parentheses fold).
+- A 通則 row (Copper 2026-10-19; parser 1.6.0, loader 2.4.1; notice
+  1150057388, whose first row has no dotted code). A comparison row whose first
+  paragraph is the chapter heading `藥品給付規定通則` (NFKC, spacing ignored)
+  never reaches the clause grammar above. Each column is cut by its top-level
+  CJK ordinals (`comparison_grammar.split_general_principle`): a paragraph
+  starting `四、` opens point 四, which runs to the next marker paragraph, and
+  its sub-items and `(略)` lines are its own text. A marker paragraph that
+  only names an omitted range or point (`一、~三、(略)`, `五、~十二、(略)`,
+  `十、(略)`) is an omission marker: it stays in the sealed source and is named
+  in the patch evidence (`general_principle.omitted_ranges`), and is never
+  projected or read as a point. Point N is clause `0.N`, the project-assigned
+  code (`code_origin=project_assigned`, the publication's `0.1`–`0.12`), bound
+  to the served `0.N`; its patch is exactly the point's revised paragraphs and
+  its original paragraphs are the same point of the original column. Points are
+  never joined and nothing is inferred. The cut fails closed with a named
+  reason, and then only that row is held back, as a pending effect without a
+  clause code (designation `通則`, `blocked_reason` in the unresolved scope,
+  listed under `blocked_clauses`): a heading in one column only, an original
+  that reads `無`, a column with text outside any point, an unreadable
+  ordinal or range, ordinals that do not strictly increase, a column without a
+  point, point codes that differ between the columns, a marker drawn by a list
+  label, or a paragraph that reads like a clause designation. The rest of the
+  notice projects as usual. A row that goes on from a 通則 point (a point
+  spanning two rows) still refuses the notice. Loading a `0.N` patch also needs
+  `nhi_rule_history_announced.clause_patch_clause_code_check` to admit the
+  project-assigned form; the publication layer's check already does, the
+  announced layer's (migration v21) admits only dotted codes starting 1–9.
 - Inside a clause's cell, in either column and in rows that would continue
   the clause above, a dotted number that reads like a designation fails the
   notice closed: the clause may run on into a clause whose heading is not in

@@ -75,7 +75,7 @@ from nhi_rule_history.pg.common import (
 
 
 SCHEMA = "nhi_rule_history_announced"
-LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.4.0"
+LOADER_VERSION = "nhi-rule-history/announced-overlay-loader/2.4.1"
 GLOBAL_LOCK_KEY = "nhi-rule-history-announced-global"
 CIVIL_TIMEZONE = "Asia/Taipei"
 EMPTY_TEXT_SHA256 = sha256_text("")
@@ -615,6 +615,11 @@ def notice_rows(
                     if effect.designation
                     else {}
                 ),
+                **(
+                    {"blocked_reason": effect.blocked_reason}
+                    if effect.blocked_reason
+                    else {}
+                ),
             }
             for effect in notice.other_effects
         ),
@@ -758,6 +763,11 @@ def notice_rows(
             "component_manifest_sha256": manifest_sha,
             "component_manifest": manifest,
             "omission_marker_document_orders": list(clause.omission_orders),
+            **(
+                {"general_principle": clause.general_principle.evidence()}
+                if clause.general_principle is not None
+                else {}
+            ),
             "original_column": {
                 "is_none": clause.original_is_none,
                 "text_sha256": sha256_text(clause.original_text),
@@ -872,6 +882,7 @@ def _code_sha256() -> str:
     return code_fingerprint(
         here,
         here.with_name("announced_notice.py"),
+        here.with_name("comparison_grammar.py"),
         here.with_name("odf_list_numbering.py"),
         here.with_name("office_rendering.py"),
     )
@@ -1331,13 +1342,15 @@ def blocked_clauses(
     rows: Mapping[str, Sequence[Mapping[str, Any]]],
     origins: Mapping[str, str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Dotted clauses that a run's notices hold back, with a reason each.
+    """Clauses that a run's notices hold back, with a reason each.
 
     A held-back clause is a ``clause_amendment`` effect with a clause code in
-    ``pending_projection``.  Appendix-table and listed-item effects are
-    pending by design, not held back, and are not listed.  ``origins`` maps a
-    reference number to ``new`` or ``superseded``; other notices are
-    ``carried``.
+    ``pending_projection``.  A 通則 row the parser could not split is held
+    back too, without a clause code: its unresolved-scope entry names the
+    reason and the row is listed under its designation.  Appendix-table and
+    listed-item effects are pending by design, not held back, and are not
+    listed.  ``origins`` maps a reference number to ``new`` or ``superseded``;
+    other notices are ``carried``.
     """
 
     events = {
@@ -1374,6 +1387,33 @@ def blocked_clauses(
                 ),
             }
         )
+    for event in events.values():
+        reference = str(event["reference_number"])
+        for item in event["unresolved_scope"]:
+            if not (
+                isinstance(item, Mapping)
+                and item.get("clause_code") is None
+                and item.get("blocked_reason")
+            ):
+                continue
+            designation = str(item.get("designation") or "")
+            found.append(
+                {
+                    "reference_number": reference,
+                    "clause_code": designation,
+                    "effective_on": str(event["effective_on"]),
+                    "reason": str(item["blocked_reason"]),
+                    "scope_note": (
+                        f"{designation}: the parser holds a comparison row "
+                        f"back ({item['blocked_reason']})"
+                    ),
+                    **(
+                        {"origin": origins.get(reference, "carried")}
+                        if origins is not None
+                        else {}
+                    ),
+                }
+            )
     return sorted(
         found,
         key=lambda item: (

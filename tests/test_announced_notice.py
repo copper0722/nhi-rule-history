@@ -1,22 +1,29 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import io
 import json
 import shutil
 import unittest
 import zipfile
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
+from typing import ClassVar
+from xml.sax.saxutils import escape
 
 from nhi_rule_history.announced_notice import (
     AnnouncedNoticeError,
     NoticeAttachment,
     NoticeBundle,
     ODT_MEDIA_TYPE,
+    OdtParagraph,
     PATCH_TEXT_JOIN,
     _cell_items,
+    _general_principle_row,
     cell_rendering_check,
     clause_heading_code,
     is_omission_marker,
@@ -27,7 +34,10 @@ from nhi_rule_history.announced_notice import (
     read_odt_document,
     roc_date,
     sha256_text,
+    verification_row,
 )
+from nhi_rule_history.comparison_grammar import GENERAL_PRINCIPLE_HEADING
+from nhi_rule_history.odf_list_numbering import ListLabel
 from nhi_rule_history.office_rendering import render_table_cells, uno_python
 from nhi_rule_history.pg.common import object_fingerprint
 from tools.build_announced_notice_fixture import fixture_odt
@@ -108,6 +118,9 @@ def _drawn(notice, *, text=None, label=None, separator=None) -> dict:
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "announced_notices"
 MANIFEST = json.loads((FIXTURES / "manifest.json").read_text(encoding="utf-8"))
+# Rows 1-5 of the official comparison table of notice 1150057388 (the Alhemo notice, effective
+# 2026-11-01): the 通則 row, 4.2, 4.2.9 (new, original cell `（無）`), 4.2.7 and 4.2.8.
+ALHEMO = json.loads((FIXTURES / "1150057388.rows.json").read_text(encoding="utf-8"))
 NUMBERING = FIXTURES / "numbering"
 NUMBERING_MANIFEST = json.loads(
     (NUMBERING / "manifest.json").read_text(encoding="utf-8")
@@ -1978,6 +1991,354 @@ class NumberingFixtureTest(unittest.TestCase):
                     self.assertEqual(
                         cell_rendering_check(parsed, clause, tampered), "mismatch"
                     )
+
+
+def alhemo_rows() -> list[tuple[list[str], list[str]]]:
+    """The official rows as (revised, original) paragraph lists."""
+
+    return [(list(row["new"]), list(row["old"])) for row in ALHEMO["rows"]]
+
+
+def _alhemo_content(rows: list[tuple[list[str], list[str]]] | None = None) -> bytes:
+    """The rows in the parser's own table grammar (escaped here, never in the fixture)."""
+
+    return _comparison(
+        [
+            ([escape(text) for text in new], [escape(text) for text in old])
+            for new, old in (alhemo_rows() if rows is None else rows)
+        ],
+        effective=ALHEMO["effective_statement"],
+    )
+
+
+def parse_alhemo(rows: list[tuple[list[str], list[str]]] | None = None):
+    return _parse_payload(_alhemo_content(rows))
+
+
+class GeneralPrincipleRowTest(unittest.TestCase):
+    """Notice 1150057388 (Alhemo, effective 2026-11-01) opens its table with a 通則 row.
+
+    Row 1 has no dotted designation, so the parser read it as a continuation of a clause
+    above and refused the whole notice.  Each point of such a row is clause ``0.N`` now, and a
+    row that cannot be cut holds only itself.
+    """
+
+    DOTTED: ClassVar[list[str]] = ["4.2", "4.2.9", "4.2.7", "4.2.8"]
+
+    @staticmethod
+    def general_row() -> tuple[list[str], list[str]]:
+        return alhemo_rows()[0]
+
+    def with_general_row(self, change):
+        new, old = self.general_row()
+        return [change(list(new), list(old)), *alhemo_rows()[1:]]
+
+    def test_the_fixture_is_the_official_row_shape(self) -> None:
+        # provenance: the paragraphs come from this official attachment (SHA-256 of its bytes)
+        self.assertEqual(
+            ALHEMO["attachment_sha256"],
+            "ca54efe70f9bea0bde7daa1c7b5b8f52b5b392ed557c19337277d13c2b639bf5",
+        )
+        self.assertEqual(ALHEMO["reference_number"], "健保審字第1150057388號")
+        new, old = self.general_row()
+        self.assertEqual((new[0], old[0]), (GENERAL_PRINCIPLE_HEADING, GENERAL_PRINCIPLE_HEADING))
+        self.assertEqual((len(new), len(old)), (10, 10))
+        self.assertEqual((new[1], new[9]), ("一、~三、(略)", "五、~十二、(略)"))
+        self.assertEqual((old[1], old[9]), ("一、~三、(略)", "五、~十二、(略)"))
+        self.assertEqual(alhemo_rows()[2][1], ["（無）"])  # full-width parentheses, as printed
+        # the official file spells 年 with a CJK compatibility ideograph
+        self.assertEqual(parse_effective_statement(ALHEMO["effective_statement"]), date(2026, 11, 1))
+
+    def test_the_notice_parses_and_projects_the_point_with_the_dotted_clauses(self) -> None:
+        parsed = parse_alhemo()
+        self.assertEqual(parsed.effective_on, "2026-11-01")
+        self.assertEqual(
+            [clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED]
+        )
+        self.assertEqual(parsed.other_effects, ())
+        # no other point of the row is invented
+        codes = {clause.clause_code for clause in parsed.clauses}
+        self.assertFalse({f"0.{n}" for n in (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12)} & codes)
+        for clause in parsed.clauses:
+            self.assertEqual({clause.effective_on}, {"2026-11-01"})
+            self.assertIsNone(clause.blocked_reason)
+            self.assertFalse(clause.continued)
+
+    def test_the_point_is_its_own_paragraphs_of_each_column(self) -> None:
+        general = parse_alhemo().clauses[0]
+        new, old = self.general_row()
+        self.assertEqual(general.rows, ((0, 1),))
+        self.assertFalse(general.original_is_none)
+        self.assertEqual([item.text for item in general.revised], new[2:9])
+        self.assertEqual([item.text for item in general.original], old[2:9])
+        self.assertEqual(general.patch_text, PATCH_TEXT_JOIN.join(new[2:9]))
+        self.assertEqual(general.original_text, PATCH_TEXT_JOIN.join(old[2:9]))
+        self.assertTrue(general.patch_text.startswith("四、注射藥品之使用原則：" + PATCH_TEXT_JOIN))
+        # the two columns differ where the amendment is: item 9 names concizumab
+        self.assertIn("concizumab", general.patch_text)
+        self.assertNotIn("concizumab", general.original_text)
+        # the heading and the omitted ranges around the point are not its text
+        for text in (GENERAL_PRINCIPLE_HEADING, "一、~三、(略)", "五、~十二、(略)"):
+            self.assertNotIn(text, general.patch_text)
+            self.assertNotIn(text, general.original_text)
+
+    def test_omission_markers_inside_the_point_stay_and_those_around_it_are_not_projected(self) -> None:
+        parsed = parse_alhemo()
+        general = parsed.clauses[0]
+        inside = [item.text for item in general.revised if is_omission_marker(item.printed_text)]
+        self.assertEqual(inside, ["1.~8.(略)", "10.~26.(略)", "（三）~（四）(略)"])
+        self.assertEqual(len(general.omission_orders), 3)
+        self.assertEqual(
+            [entry["omission_marker"] for entry in general.component_manifest()],
+            [False, False, False, True, False, True, True],
+        )
+        evidence = general.general_principle.evidence()
+        self.assertEqual(
+            [(o["column"], o["first_ordinal"], o["last_ordinal"]) for o in evidence["omitted_ranges"]],
+            [("revised", 1, 3), ("revised", 5, 12), ("original", 1, 3), ("original", 5, 12)],
+        )
+        self.assertEqual(evidence["point_ordinal"], 4)
+        self.assertEqual(evidence["label"], "通則")
+        # kept in the parsed source, in no clause
+        projected = {item.block_id for clause in parsed.clauses for item in clause.revised + clause.original}
+        for entry in evidence["omitted_ranges"]:
+            self.assertNotIn(entry["source_block_id"], projected)
+            self.assertIn(entry["source_block_id"], {item.block_id for item in parsed.document.paragraphs})
+        for key in ("revised_heading_block_id", "original_heading_block_id"):
+            self.assertNotIn(evidence[key], projected)
+
+    def test_a_none_cell_in_full_width_parentheses_is_a_new_clause(self) -> None:
+        by_code = {clause.clause_code: clause for clause in parse_alhemo().clauses}
+        self.assertTrue(by_code["4.2.9"].original_is_none)
+        self.assertEqual(by_code["4.2.9"].original, ())
+        for code in ("0.4", "4.2", "4.2.7", "4.2.8"):
+            self.assertFalse(by_code[code].original_is_none)
+        # confusable negative: a original that merely starts with 無 is not a none cell
+        rows = alhemo_rows()
+        rows[2] = (rows[2][0], ["（無）限用於甲"])
+        with self.assertRaises(AnnouncedNoticeError):
+            parse_alhemo(rows)
+
+    def test_other_rows_do_not_carry_a_general_principle_record(self) -> None:
+        for clause in parse_alhemo().clauses[1:]:
+            self.assertIsNone(clause.general_principle)
+
+    def test_several_points_in_one_row(self) -> None:
+        def two_points(cell: list[str]) -> list[str]:
+            point = cell[2:9]
+            second = ["六、" + point[0][2:], *point[1:]]
+            return [cell[0], cell[1], *point, "五、(略)", *second, "七、~十二、(略)"]
+
+        parsed = parse_alhemo(self.with_general_row(lambda new, old: (two_points(new), two_points(old))))
+        self.assertEqual(
+            [clause.clause_code for clause in parsed.clauses], ["0.4", "0.6", *self.DOTTED]
+        )
+        first, second = parsed.clauses[:2]
+        new, _ = self.general_row()
+        self.assertEqual([item.text for item in first.revised], new[2:9])
+        self.assertEqual(
+            [item.text for item in second.revised], ["六、" + new[2][2:], *new[3:9]]
+        )
+        self.assertEqual(first.rows, second.rows)
+        # never concatenated: each point holds only its own paragraphs
+        self.assertFalse({item.block_id for item in first.revised} & {item.block_id for item in second.revised})
+        self.assertEqual(
+            [(o["column"], o["first_ordinal"], o["last_ordinal"]) for o in second.general_principle.evidence()["omitted_ranges"]],
+            [("revised", 1, 3), ("revised", 5, 5), ("revised", 7, 12),
+             ("original", 1, 3), ("original", 5, 5), ("original", 7, 12)],
+        )
+        self.assertEqual(second.general_principle.ordinal, 6)
+
+    def test_the_row_may_stand_anywhere_in_the_table(self) -> None:
+        rows = alhemo_rows()
+        reordered = [*rows[1:], rows[0]]
+        parsed = parse_alhemo(reordered)
+        self.assertEqual([clause.clause_code for clause in parsed.clauses], [*self.DOTTED, "0.4"])
+        self.assertEqual(parsed.clauses[-1].rows, ((0, 5),))
+
+    CUTS: ClassVar[dict[str, Callable]] = {
+        "heading_in_one_column_only": lambda new, old: (new, old[1:]),
+        "original_column_marks_a_new_clause": lambda new, old: (new, ["（無）"]),
+        "revised_range_marker_unreadable": lambda new, old: (new[:1] + ["一、~(略)"] + new[2:], old),
+        "revised_range_marker_reversed": lambda new, old: (new[:1] + ["三、~一、(略)"] + new[2:], old),
+        "revised_range_marker_is_not_an_omission": lambda new, old: (new[:1] + ["一、~三、同上"] + new[2:], old),
+        "revised_ordinal_unreadable": lambda new, old: (new[:1] + ["十十、(略)"] + new[2:], old),
+        "revised_ordinals_not_increasing": lambda new, old: (new[:9] + ["三、~十二、(略)"], old),
+        "revised_text_outside_a_point": lambda new, old: (new[:1] + ["備註：本表僅列部分條文"] + new[1:], old),
+        "revised_no_point": lambda new, old: (new[:1] + ["一、~十二、(略)"], old),
+        "original_no_point": lambda new, old: (new, old[:1] + ["一、~十二、(略)"]),
+        "point_sets_differ_between_columns": lambda new, old: (
+            new, old[:2] + ["五、" + old[2][2:]] + old[3:9] + ["六、~十二、(略)"]),
+        "paragraph_reads_like_a_designation": lambda new, old: (
+            new[:5] + ["4.3.8.Adzynma：(115/11/1)"] + new[6:], old),
+    }
+
+    def test_a_row_that_cannot_be_cut_holds_only_itself_with_a_named_reason(self) -> None:
+        for reason, change in self.CUTS.items():
+            with self.subTest(reason=reason):
+                parsed = parse_alhemo(self.with_general_row(change))
+                # the rest of the notice still projects
+                self.assertEqual([clause.clause_code for clause in parsed.clauses], self.DOTTED)
+                (held,) = parsed.other_effects
+                self.assertEqual(
+                    (held.key, held.effect_type, held.designation, held.blocked_reason),
+                    ("general-principle:0/1", "clause_amendment", "通則", reason),
+                )
+                self.assertIn(f"({reason})", held.scope_note)
+                self.assertEqual(held.evidence["rows"], [[0, 1]])
+                self.assertEqual(held.evidence["blocked_reason"], reason)
+                row_one = {
+                    item.block_id for item in parsed.document.paragraphs if item.top_row_index == 1
+                }
+                self.assertEqual(set(held.evidence["revised_block_ids"]) - row_one, set())
+                self.assertEqual(
+                    {item.block_id for clause in parsed.clauses for item in clause.revised} & row_one,
+                    set(),
+                )
+
+    def test_the_cut_does_not_hold_what_it_can_read(self) -> None:
+        # Confusable negatives: each variation is still a readable row.
+        new, old = self.general_row()
+        readable = {
+            "a new heading text after the marker": lambda n, o: (
+                n[:2] + ["四、注射藥品之使用原則(略)：", *n[3:]], o),
+            "a full-width tilde and parentheses": lambda n, o: (
+                n[:1] + ["一、～三、（略）"] + n[2:9] + ["五、～十二、（略）"], o),
+            "a blank paragraph between the markers": lambda n, o: (
+                n[:1] + [" ", n[1]] + n[2:], o),
+        }
+        for name, change in readable.items():
+            with self.subTest(name=name):
+                parsed = parse_alhemo(self.with_general_row(change))
+                self.assertEqual(
+                    [clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED]
+                )
+                self.assertEqual(parsed.other_effects, ())
+        self.assertEqual((len(new), len(old)), (10, 10))
+
+    def test_a_row_that_goes_on_from_a_point_still_refuses_the_notice(self) -> None:
+        # A point that spans two rows is not settled by the cut: it stays a refusal.
+        rows = alhemo_rows()
+        spanning = [rows[0], (["（續）本點之後文"], ["（續）本點之前文"]), *rows[1:]]
+        with self.assertRaisesRegex(
+            AnnouncedNoticeError,
+            r"comparison row 0/2 does not start with a clause designation "
+            r"\(the clause above is a general-principle point\)",
+        ):
+            parse_alhemo(spanning)
+        # and after a held row there is no clause above to continue
+        held_first = self.with_general_row(lambda new, old: (new, old[1:]))
+        held_first.insert(1, (["（續）本點之後文"], ["（續）本點之前文"]))
+        with self.assertRaisesRegex(AnnouncedNoticeError, "no clause precedes it"):
+            parse_alhemo(held_first)
+
+    def test_a_point_that_two_rows_state_is_a_repeated_designation(self) -> None:
+        rows = alhemo_rows()
+        with self.assertRaisesRegex(AnnouncedNoticeError, "a clause designation repeats"):
+            parse_alhemo([rows[0], rows[0]])
+
+    def test_a_nested_table_in_a_point_holds_that_point_like_any_clause(self) -> None:
+        new, old = self.general_row()
+        nested = (
+            "<table:table><table:table-row>" + _cell("體重") + _cell("劑量")
+            + "</table:table-row></table:table>"
+        )
+
+        def paragraphs(texts: list[str]) -> str:
+            return "".join(f"<text:p>{escape(text)}</text:p>" for text in texts)
+
+        revised = (
+            "<table:table-cell>" + paragraphs(new[:5]) + nested + paragraphs(new[5:])
+            + "</table:table-cell>"
+        )
+        body = (
+            "<text:p>（自115年11月1日生效）</text:p><table:table><table:table-row>"
+            + _cell("修訂後給付規定") + _cell("原給付規定")
+            + "</table:table-row><table:table-row>" + revised
+            + "<table:table-cell>" + paragraphs(old) + "</table:table-cell>"
+            + "</table:table-row></table:table>"
+        )
+        parsed = _parse_payload(_document(body))
+        (clause,) = parsed.clauses
+        self.assertEqual(clause.clause_code, "0.4")
+        self.assertTrue(any(item.nested for item in clause.revised))
+        self.assertEqual(clause.blocked_reason, "nested_table")
+        self.assertEqual(parsed.other_effects, ())
+
+    def test_a_point_marker_drawn_by_a_list_label_holds_the_row(self) -> None:
+        # A generated label can draw the marker the character data lacks.  The cut is not made on
+        # text the reader sees differently from the parser.
+        def paragraph(order: int, text: str, label: str | None = None) -> OdtParagraph:
+            return OdtParagraph(
+                document_order=order, block_id=f"b{order}", locator={}, block_text=text,
+                block_text_sha256="0" * 64, text=text, top_table_index=0, top_row_index=1,
+                top_cell_index=0, nested=False,
+                numbering=None if label is None else ListLabel(status="labelled", label=label),
+            )
+
+        def cut(*, marker_is_a_label: bool):
+            column = [
+                paragraph(1, GENERAL_PRINCIPLE_HEADING),
+                paragraph(2, "注射藥品之使用原則：", "四、") if marker_is_a_label
+                else paragraph(2, "四、注射藥品之使用原則："),
+                paragraph(3, "注射藥品使用時機", "1."),
+            ]
+            return _general_principle_row(
+                SimpleNamespace(table_index=0), 1, column, column, original_none=False
+            )
+
+        held = cut(marker_is_a_label=True).held
+        self.assertEqual(held.blocked_reason, "list_numbered_point_marker")
+        # confusable negative: the marker is character data and only a sub-item is numbered
+        result = cut(marker_is_a_label=False)
+        self.assertIsNone(result.held)
+        self.assertEqual([clause["clause_code"] for clause in result.clauses], ["0.4"])
+
+    @unittest.skipUnless(_office_available(), "LibreOffice/UNO is unavailable")
+    def test_the_office_rendering_confirms_the_cells_of_the_point(self) -> None:
+        # a header outside <table:table-header-rows>, as the other body-text probes draw it
+        table = (
+            '<table:table table:name="CMP"><table:table-column '
+            'table:number-columns-repeated="2"/><table:table-row>'
+            + _cell("修訂後給付規定") + _cell("原給付規定") + "</table:table-row>"
+            + "".join(
+                "<table:table-row>"
+                + _cell(*[escape(text) for text in new])
+                + _cell(*[escape(text) for text in old])
+                + "</table:table-row>"
+                for new, old in alhemo_rows()
+            )
+            + "</table:table>"
+        )
+        payload, parsed = _parse_parts(
+            *_body_parts(f"<text:p>{ALHEMO['effective_statement']}</text:p>", table=table)
+        )
+        rendering = _render(payload)
+        self.assertIsNone(notice_rendering_check(parsed, rendering))
+        for clause in parsed.clauses:
+            with self.subTest(clause=clause.clause_code):
+                self.assertEqual(cell_rendering_check(parsed, clause, rendering), "exact")
+                self.assertIsNone(projection_block_reason(clause, "exact"))
+        row = verification_row(
+            parsed, parsed.clauses[0], served_text=None, rendering=rendering
+        )
+        self.assertEqual(
+            (row["clause_code"], row["effective_on"], row["revised_equals_official_rendering"],
+             row["revised_block_count"], row["omitted_text_present"], row["blocked_reason"],
+             row["original_is_none"], row["continued_across_rows"]),
+            ("0.4", "2026-11-01", "exact", 7, True, None, False, False),
+        )
+        # confusable negative: LibreOffice draws the row's cell with other text
+        new, _ = self.general_row()
+        tampered = copy.deepcopy(rendering)
+        cell = tampered["tables"][0][1][0]
+        for paragraph in cell:
+            if paragraph["text"] == new[3]:
+                paragraph["text"] = new[3] + "（另有他文）"
+        self.assertEqual(cell_rendering_check(parsed, parsed.clauses[0], tampered), "mismatch")
+        self.assertEqual(
+            projection_block_reason(parsed.clauses[0], "mismatch"), "official_rendering_mismatch"
+        )
 
 
 if __name__ == "__main__":
