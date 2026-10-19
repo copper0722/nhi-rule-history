@@ -59,7 +59,7 @@
     `docs/diff-cards.md` and `docs/continuous-update.md` state the rules.
 - Verification (producer's own; the independent acceptance is not done):
   - `make test` with the PostgreSQL 18 binaries on PATH and a PostgreSQL-neutral environment: 70
-    legacy tests (1 skipped), 725 unittest tests (7 skipped) and 60 pytest tests; before this change
+    legacy tests (1 skipped), 726 unittest tests (7 skipped) and 60 pytest tests; before this change
     70 (1), 666 (7) and 46. The v30 module (13 tests: pattern parity with v18 and v21, the file's
     statements, apply / refuse twice / rollback / refuse rollback with a `0.N` row, the readback, the
     detector failing closed, and two end-to-end loads) also passes against PostgreSQL 17. Fifteen
