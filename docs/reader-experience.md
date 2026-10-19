@@ -64,6 +64,18 @@ side-by-side pane.
 Color is never the only signal. On narrow screens, the two conceptual columns
 stack into one reading sequence.
 
+The card for an announced amendment on the NHI rules page is a git-diff
+rendering of the official 修訂對照表 for one clause, and it keeps these rules.
+Its sign column is labelled, never a bare `+` or `−`: the legend names the
+two columns 原給付規定 (deleted lines, accessible name 刪) and 修訂後給付規定
+(added lines, accessible name 增), deleted text is struck through as well as
+tinted, and the changed words inside an edited paragraph are marked with
+`<del>` and `<ins>`. The numbers are the table's own paragraph order, counted
+separately for the original and the revised column, not file line numbers, and
+unchanged paragraphs fold behind a labelled control. The rows come from the
+PostgreSQL card store (`docs/diff-cards.md`); the browser never computes a
+diff.
+
 ## Chronology and claim limits
 
 The interface has two possible evidence lanes.

@@ -1,5 +1,40 @@
 # Worklog
 
+## 2026-10-19 — Git-diff card store (v29) and `load-pg` (card #2495), not applied
+
+- Added the migration pair `2026-10-19_nhi_rule_history_diff_card_v29` (schema
+  `nhi_rule_history_diff_card`: write-once tables `comparison` and
+  `comparison_block`, and the reader view `v_public_comparison_block`), its
+  readback query `database/queries/diff-card-readback-v29.sql`, the loader
+  `tools/diff_cards/pg_store.py` behind `python -m tools.diff_cards.build load-pg`,
+  and `tests/test_diff_cards_pg.py` (unittest style, so `unittest discover`
+  runs it). The new section in `docs/diff-cards.md` carries the view contract,
+  the attach rule and the loader's receipt; `docs/reader-experience.md` states
+  how the card keeps the reader rules (labelled sign column, strike-through,
+  no browser-side diff).
+- Why: the announced layer holds only the revised column of a notice's
+  修訂對照表, so a git-diff card cannot be drawn from PostgreSQL alone. The store
+  keeps the official table cut into per-clause blocks with exact paragraphs and
+  the row-by-row diff, keyed by the SHA-256 of the ODT (the value the announced
+  layer records as `source_artifact_sha256`). Presentation data only: no
+  clause-history promotion, no legal-effective-date claim, no model call.
+- Read-only dry run against the production database before the migration is
+  applied: 30 registered notice bundles, 1 with a bad queue receipt, 26 turn
+  into a comparison, 3 are listed as failed (one with a partial attachment
+  inventory, the 2.6.1 notice whose table header reads 建議修訂後給付規定, and
+  the 通則 notice, which has no clause number). 15 of the 16 source files the
+  announced layer serves get a card; the 16th is the 2.6.1 composite.
+- The loader takes the same ODT attachment the overlay parses (the candidate
+  loop of `parse_notice`) but does not need the overlay's full parse, so
+  older notices whose raw.md receipts differ from the ODT still get a card in
+  the store; the website exports only the source files the announced layer
+  serves. Nothing here changes the overlay, its code fingerprint or what is
+  served.
+- Not applied: the migration is applied, and `load-pg` first run, by the
+  accepting owner, never by the producer. Rollback is the paired file (drops the
+  view, tables, functions and schema with RESTRICT; the rows are rebuilt by
+  `load-pg`).
+
 ## 2026-10-13 — Diff-card generator on main (presentation lane, tool only)
 
 - Added `tools/diff_cards/`, `docs/diff-cards.md` and `tests/test_diff_cards.py`:
