@@ -684,7 +684,21 @@ labelled as the revised column of the table and never as a complete clause.
   `、`, ends in an omission, or has a dash, tilde or connector symbol straight
   after the marker (a range written with `∼`, `﹏`, `－`, `—`, `至`) is not a
   point either: it is `range_marker_unreadable` and holds the row, because
-  reading it as a point would invent point N. Point N is clause `0.N`, the project-assigned
+  reading it as a point would invent point N. A line that only looks like an
+  omission marker for top-level points is never absorbed into the point above
+  it either: a paragraph that is not a marker, starts with a bare or 第-prefixed
+  CJK ordinal and ends in an omission (`五至十二、(略)`, `五~十二、(略)`,
+  `第五、~十二、(略)`) is `omission_marker_lookalike` and holds the row, and so
+  does an omission line that starts with a bracketed ordinal whose first
+  ordinal is the next top-level one (`（五）～（十二）(略)` after point 四),
+  because it is equally the omitted points that follow and the point's own
+  sub-item omission and the cut cannot tell. A bracketed range that starts
+  anywhere else is the point's own sub-item text and stays in it: the official
+  row carries `（三）~（四）(略)` inside point 四. A real sub-item omission that
+  starts at the next point's number is held as well (the 28 registered
+  documents hold none: of 252 lines that end in an omission, 6 are markers, 2
+  are that bracketed sub-item line and none starts with a bare ordinal; nested
+  table paragraphs are exempt). Point N is clause `0.N`, the project-assigned
   code (`code_origin=project_assigned`, the publication's `0.1`–`0.12`), bound
   to the served `0.N`; its patch is exactly the point's revised paragraphs and
   its original paragraphs are the same point of the original column. Points are
@@ -695,9 +709,9 @@ labelled as the revised column of the table and never as a complete clause.
   `blocked_reason` in the unresolved scope, listed under `blocked_clauses`): a
   heading in one column only, an original that reads `無`, a column with text
   outside any point, an unreadable ordinal or range, ordinals that do not
-  strictly increase, a column without a point, point codes that differ between
-  the columns, a marker drawn by a list label, or a paragraph that reads like a
-  clause designation. The rest of the notice projects as usual. A row that goes
+  strictly increase, a line that only looks like an omission marker, a column
+  without a point, point codes that differ between the columns, a marker drawn
+  by a list label, or a paragraph that reads like a clause designation. The rest of the notice projects as usual. A row that goes
   on from a 通則 point (a point spanning two rows) still refuses the notice.
 - A `0.N` point is a patch only when the database says it can hold one.
   `nhi_rule_history_announced.clause_patch_clause_code_check` admitted dotted

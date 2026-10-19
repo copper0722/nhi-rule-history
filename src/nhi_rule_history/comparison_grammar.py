@@ -11,7 +11,9 @@ dependency:
   and lists the principle points by their top-level CJK ordinal
   (``四、注射藥品之使用原則：``).  A run of points the table leaves out is one
   paragraph naming the range and the omission (``一、~三、(略)``): an
-  omission marker, never a point.
+  omission marker, never a point.  A line that only looks like one
+  (``五至十二、(略)``) is never absorbed into the point above it: the cut
+  refuses it.
 
 Grammar matching runs on NFKC text, so full-width forms (``（無）``,
 ``（略）``, ``～``) read as their ASCII counterparts.  Stored text is never
@@ -47,6 +49,10 @@ _OMISSION_END_RE = re.compile(
     r"(?:\(\s*(?:以下|其餘|餘)?\s*略\s*\)|(?:^|[\s:,、。)\]】~])(?:以下|其餘|餘)?略)\s*[。.]?\s*\Z"
 )
 _CONNECTOR_CATEGORIES = frozenset({"Pd", "Sm", "Pc"})
+# The head of a line that is not a point marker but starts like a top-level ordinal: a bare ordinal (also after
+# 第) that is not followed by 、, or an ordinal in brackets.  NFKC folds （五） to (五).
+_BARE_HEAD_RE = re.compile(rf"^\s*第?\s*{_ORDINAL}")
+_BRACKET_HEAD_RE = re.compile(rf"^\s*[(\[【〔]\s*(?P<ordinal>{_ORDINAL})\s*[)\]】〕]")
 _CJK_DIGITS = {
     "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
 }
@@ -163,6 +169,31 @@ def read_point_marker(text: str) -> tuple[str, int, int] | str | None:
     return ("point", first, first)
 
 
+def reads_like_an_omission_marker(text: str, latest: int) -> bool:
+    """Whether a paragraph that is not a point marker reads like an omission marker for top-level points.
+
+    A line :func:`read_point_marker` reads (a point, an omission, or a marker it names unreadable) is that
+    function's, never a lookalike.
+
+    ``latest`` is the last top-level ordinal the cut has seen, so ``latest + 1`` is the next point the column
+    could name.  Such a line ends in an omission and starts like a top-level ordinal without being the
+    recognised marker (``五至十二、(略)``, ``五~十二、(略)``, ``第五、~十二、(略)``): the cut cannot say which
+    points it omits, and the paragraph must not run on as the text of the point above it.  A line that starts
+    with an ordinal in brackets is how this document numbers sub-items (the official row carries
+    ``（三）~（四）(略)`` inside point 四): it reads like an omission marker only when its first ordinal is the
+    next top-level ordinal, because it is then equally the omitted points that follow and the point's own
+    sub-item omission.  A bracketed range that starts anywhere else is sub-item text.
+    """
+
+    line = grammar_text(text)
+    if _OMISSION_END_RE.search(line) is None or read_point_marker(text) is not None:
+        return False
+    if _BARE_HEAD_RE.match(line):
+        return True
+    head = _BRACKET_HEAD_RE.match(line)
+    return head is not None and cjk_ordinal(head["ordinal"]) == latest + 1
+
+
 def split_general_principle(
     texts: Sequence[str], *, plain: Collection[int] = frozenset()
 ) -> GeneralPrincipleSplit:
@@ -179,7 +210,9 @@ def split_general_principle(
 
     The cut fails closed, with a named reason, when text stands outside any
     point, when an ordinal or range cannot be read, when ordinals do not
-    strictly increase (a repeated point, or a sub-list that starts over), or
+    strictly increase (a repeated point, or a sub-list that starts over), when
+    a paragraph only reads like an omission marker
+    (:func:`reads_like_an_omission_marker`; ``omission_marker_lookalike``), or
     when the column holds no point at all.  Nothing is joined, skipped or
     inferred.
     """
@@ -197,6 +230,8 @@ def split_general_principle(
         if token is None:
             if open_point is None and grammar_text(texts[index]).strip():
                 return GeneralPrincipleSplit(refusal="text_outside_a_point")
+            if index not in plain and reads_like_an_omission_marker(texts[index], latest):
+                return GeneralPrincipleSplit(refusal="omission_marker_lookalike")
             continue
         kind, first, last = token
         if first <= latest:

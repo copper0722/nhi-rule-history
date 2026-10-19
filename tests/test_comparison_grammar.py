@@ -12,6 +12,7 @@ from nhi_rule_history.comparison_grammar import (
     is_general_principle_heading,
     is_none_cell,
     read_point_marker,
+    reads_like_an_omission_marker,
     split_general_principle,
 )
 
@@ -155,6 +156,55 @@ class MarkerTest(unittest.TestCase):
                 self.assertEqual(read_point_marker(text), reason)
 
 
+class LookalikeTest(unittest.TestCase):
+    """A line that only looks like an omission marker is not part of the point above it (re-verification note 4)."""
+
+    def test_a_bare_or_第_head_that_ends_in_an_omission_is_a_lookalike(self) -> None:
+        for text in (
+            "五至十二、(略)", "五~十二、(略)", "第五、~十二、(略)", "五至十二、略", "五至十二、(以下略)", "五至十二、（略）。",
+            "第十二、(略)", "十(略)", "五起至十二(略)", " 五至十二、(略)", "\u3000五至十二、(略)",
+        ):
+            for latest in (0, 4, 11):
+                with self.subTest(text=text, latest=latest):
+                    self.assertTrue(reads_like_an_omission_marker(text, latest))
+        # whatever stands between the two ordinals
+        for connector in ("至", "到", "~", "～", "〜", "∼", "﹏", "－", "—", "_", "…", "x", "起", "及", " ", "。", "，"):
+            with self.subTest(connector=connector):
+                self.assertTrue(reads_like_an_omission_marker(f"五{connector}十二、(略)", 4))
+        # a sentence that starts with a numeral and ends in an omission is held too: the cut cannot tell it from
+        # a range (none of the 252 omission lines of the 28 registered documents is such a line)
+        self.assertTrue(reads_like_an_omission_marker("十二指腸潰瘍之使用(略)", 4))
+
+    def test_a_bracketed_head_is_a_lookalike_only_at_the_next_top_level_ordinal(self) -> None:
+        # In this document sub-items are numbered （一）: the official row carries （三）~（四）(略) inside point 四.
+        # （五）～（十二）(略) after point 四 is equally the omitted points that follow and the point's own sub-item
+        # omission, so it is a lookalike; the same shape starting anywhere else is sub-item text.
+        for text in ("（五）～（十二）(略)", "(五)~(十二)(略)", "[五]~[十二](略)", "【五】～【十二】(略)", "〔五〕～〔十二〕(略)",
+                     "（五）(略)", "（五）～（十二）（以下略）", "（五）－（十二）略", " （五）至（十二）(略)"):
+            with self.subTest(text=text):
+                self.assertTrue(reads_like_an_omission_marker(text, 4))
+                self.assertFalse(reads_like_an_omission_marker(text, 3))
+                self.assertFalse(reads_like_an_omission_marker(text, 5))
+        for latest in range(12):
+            with self.subTest(latest=latest):
+                self.assertEqual(reads_like_an_omission_marker("（三）~（四）(略)", latest), latest == 2)
+
+    def test_what_is_not_a_lookalike(self) -> None:
+        for text in (
+            "1.~8.(略)", "10.~26.(略)", "（三）~（四）(略)", "（一）注射藥品使用時機", "（五）注射藥品使用時機",
+            "一般注射劑之使用", "三個月內不得重複給付", "十二歲以上", "(略)", "附註：(略)", "備註：策略", "",
+        ):
+            with self.subTest(text=text):
+                self.assertFalse(reads_like_an_omission_marker(text, 4))
+
+    def test_a_point_marker_or_a_recognised_omission_is_never_a_lookalike(self) -> None:
+        # a line the marker grammar reads (or names unreadable) is that grammar's, whatever it ends in
+        for text in ("五、~十二、(略)", "五、~ 十二、(略)", "五、~十二、( 略 )", "五、~十二、(略) 。", "十、(略)",
+                     "四、注射藥品之使用原則：", "五、～十二(略)", "一、－三、(略)"):
+            with self.subTest(text=text):
+                self.assertFalse(reads_like_an_omission_marker(text, 4))
+
+
 class SplitTest(unittest.TestCase):
     def test_the_official_row_has_one_point_and_two_omission_markers(self) -> None:
         for column in ("new", "old"):
@@ -208,12 +258,52 @@ class SplitTest(unittest.TestCase):
             "range_marker_unreadable": [GENERAL_PRINCIPLE_HEADING, "一、~(略)", "四、甲："],
             "range_marker_unreadable (another connector)": [GENERAL_PRINCIPLE_HEADING, "一、∼三、(略)", "四、甲："],
             "range_marker_unreadable (a connector, no second 、)": [GENERAL_PRINCIPLE_HEADING, "一、至三(略)", "四、甲："],
+            "omission_marker_lookalike": [GENERAL_PRINCIPLE_HEADING, "四、甲：", "（一）乙", "五至十二、(略)"],
+            "omission_marker_lookalike (a ~ without the first 、)": [GENERAL_PRINCIPLE_HEADING, "四、甲：", "五~十二、(略)"],
+            "omission_marker_lookalike (第)": [GENERAL_PRINCIPLE_HEADING, "四、甲：", "第五、~十二、(略)"],
+            "omission_marker_lookalike (brackets at the next point)": [
+                GENERAL_PRINCIPLE_HEADING, "四、甲：", "（一）乙", "（三）~（四）(略)", "（五）～（十二）(略)"],
+            "omission_marker_lookalike (between two points)": [
+                GENERAL_PRINCIPLE_HEADING, "一、~三、(略)", "四、甲：", "五至十二、(略)", "十三、乙："],
         }
         for name, texts in cases.items():
             with self.subTest(name=name):
                 split = split_general_principle(texts)
                 self.assertEqual(split.refusal, name.split(" ")[0])
                 self.assertEqual((split.points, split.omissions), ((), ()))
+
+    def test_a_lookalike_of_the_official_final_line_is_never_absorbed_into_the_point(self) -> None:
+        # Re-verification note 4: replace the official row's last paragraph (五、~十二、(略)) by lookalikes.  They used
+        # to run on as the last paragraph of 0.4's patch; now the column is refused, and the forms that are read
+        # (or that are sub-item text) cut exactly as the official row does.
+        for column in ("new", "old"):
+            official = split_general_principle(GENERAL_ROW[column])
+            for variant in ("五至十二、(略)", "五~十二、(略)", "第五、~十二、(略)", "（五）～（十二）(略)"):
+                with self.subTest(column=column, variant=variant):
+                    texts = [*GENERAL_ROW[column][:9], variant]
+                    split = split_general_principle(texts)
+                    self.assertEqual(
+                        (split.points, split.omissions, split.refusal), ((), (), "omission_marker_lookalike"))
+            for variant in ("五、~十二、(略) 。", "五、~ 十二、(略)", "五、~十二、( 略 )", "五、~十二、（略）", "五、～十二、(略)"):
+                with self.subTest(column=column, variant=variant):
+                    texts = [*GENERAL_ROW[column][:9], variant]
+                    split = split_general_principle(texts)
+                    self.assertEqual((split.points, split.omissions, split.refusal), (official.points, official.omissions, None))
+            # sub-item text: a bracketed range that does not start at the next point's number
+            for variant in ("（六）～（十二）(略)", "（四）～（五）(略)", "（五）注射藥品使用時機"):
+                with self.subTest(column=column, variant=variant):
+                    texts = [*GENERAL_ROW[column][:9], variant]
+                    split = split_general_principle(texts)
+                    self.assertEqual((split.points, split.omissions, split.refusal), (((4, 2, 10),), ((1, 1, 3),), None))
+            # a lookalike with no open point stands outside any point
+            split = split_general_principle([GENERAL_ROW[column][0], "五至十二、(略)", *GENERAL_ROW[column][2:9]])
+            self.assertEqual(split.refusal, "text_outside_a_point")
+
+    def test_a_lookalike_in_a_nested_table_is_the_points_own_text(self) -> None:
+        texts = [GENERAL_PRINCIPLE_HEADING, "四、甲：", "五至十二、(略)", "（五）～（十二）(略)"]
+        self.assertEqual(split_general_principle(texts).refusal, "omission_marker_lookalike")
+        split = split_general_principle(texts, plain={2, 3})
+        self.assertEqual((split.points, split.refusal), (((4, 1, 4),), None))
 
     def test_a_paragraph_in_a_nested_table_is_never_a_marker(self) -> None:
         texts = [GENERAL_PRINCIPLE_HEADING, "四、甲：", "五、表內文字", "六、表內文字"]

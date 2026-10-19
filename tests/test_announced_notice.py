@@ -2221,6 +2221,41 @@ class GeneralPrincipleRowTest(unittest.TestCase):
                 self.assertEqual([clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED])
                 self.assertEqual(parsed.other_effects, ())
 
+    def test_a_line_that_only_looks_like_the_final_omission_marker_is_not_absorbed_into_the_point(self) -> None:
+        # Re-verification note 4: the official row ends with 五、~十二、(略).  A lookalike (no 、 after the first
+        # ordinal, a connector the grammar does not read, a 第, brackets at the next point) used to run on as the
+        # last paragraph of 0.4's patch text.  The row is held alone now, and the dotted clauses project.
+        variants = ("五至十二、(略)", "五~十二、(略)", "第五、~十二、(略)", "（五）～（十二）(略)")
+        for variant in variants:
+            for column, change in (
+                ("revised", lambda n, o, v=variant: (n[:9] + [v], o)),
+                ("original", lambda n, o, v=variant: (n, o[:9] + [v])),
+                ("both", lambda n, o, v=variant: (n[:9] + [v], o[:9] + [v])),
+            ):
+                with self.subTest(variant=variant, column=column):
+                    parsed = parse_alhemo(self.with_general_row(change))
+                    self.assertEqual([clause.clause_code for clause in parsed.clauses], self.DOTTED)
+                    (held,) = parsed.other_effects
+                    expected = f"{'original' if column == 'original' else 'revised'}_omission_marker_lookalike"
+                    self.assertEqual((held.key, held.blocked_reason), ("general-principle:0/1", expected))
+                    self.assertNotIn(variant, "".join(clause.patch_text for clause in parsed.clauses))
+        # the forms the grammar reads cut exactly as the official row does, 0.4 included
+        official = parse_alhemo().clauses[0]
+        for variant in ("五、~十二、(略) 。", "五、~ 十二、(略)", "五、~十二、( 略 )", "五、~十二、（略）"):
+            with self.subTest(variant=variant):
+                parsed = parse_alhemo(self.with_general_row(lambda n, o, v=variant: (n[:9] + [v], o[:9] + [v])))
+                self.assertEqual([clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED])
+                self.assertEqual(parsed.other_effects, ())
+                self.assertEqual(parsed.clauses[0].patch_text, official.patch_text)
+        # a bracketed range that does not start at the next point's number is sub-item text, as the official
+        # （三）~（四）(略) is: it stays the last paragraph of point 四
+        for variant in ("（六）～（十二）(略)", "（四）～（五）(略)"):
+            with self.subTest(variant=variant):
+                parsed = parse_alhemo(self.with_general_row(lambda n, o, v=variant: (n[:9] + [v], o[:9] + [v])))
+                self.assertEqual([clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED])
+                self.assertEqual(parsed.other_effects, ())
+                self.assertEqual(parsed.clauses[0].revised[-1].printed_text, variant)
+
     def test_the_cut_does_not_hold_what_it_can_read(self) -> None:
         # Confusable negatives: each variation is still a readable row.
         new, old = self.general_row()

@@ -150,6 +150,11 @@ def test_a_point_is_a_block_of_its_own_and_can_be_excluded_by_its_code():
         odd = [GENERAL, f"一、{connector}三、(略)", "四、甲：", "（一）乙"]
         with pytest.raises(ValueError, match=r"cannot be cut into points \(range_marker_unreadable\)"):
             build_blocks({"clauses": [{"new": odd, "old": odd}]}, {})
+    # a line that only looks like an omission marker is no part of the point above it: no card with a stray line
+    for last in ("五至十二、(略)", "五~十二、(略)", "第五、~十二、(略)", "（五）～（十二）(略)"):
+        odd = [GENERAL, "一、~三、(略)", "四、甲：", "（一）乙", last]
+        with pytest.raises(ValueError, match=r"cannot be cut into points \(omission_marker_lookalike\)"):
+            build_blocks({"clauses": [{"new": odd, "old": odd}]}, {})
 
 
 def test_a_general_principle_row_needs_the_heading_in_both_columns():

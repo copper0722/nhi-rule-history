@@ -335,6 +335,24 @@ class SerialisationTest(unittest.TestCase):
             with self.subTest(reason=reason), self.assertRaisesRegex(ValueError, re.escape(reason)):
                 pg_store.comparison_from_table(alhemo_table(change))
 
+    def test_a_line_that_only_looks_like_an_omission_marker_makes_no_card(self) -> None:
+        # Re-verification note 4: such a line used to run on as the last paragraph of 0.4's card.  The notice is
+        # listed as failed (the overlay holds the same row); the forms the grammar reads build the same blocks.
+        for variant in ("五至十二、(略)", "五~十二、(略)", "第五、~十二、(略)", "（五）～（十二）(略)"):
+            for column, change in (
+                ("revised", lambda n, o, v=variant: (n[:9] + [v], o)),
+                ("original", lambda n, o, v=variant: (n, o[:9] + [v])),
+            ):
+                with self.subTest(variant=variant, column=column), self.assertRaisesRegex(
+                        ValueError, rf"{column} column cannot be cut into points \(omission_marker_lookalike\)"):
+                    pg_store.comparison_from_table(alhemo_table(change))
+        official = pg_store.comparison_from_table(alhemo_table())["blocks"]
+        for variant in ("五、~十二、(略) 。", "五、~ 十二、(略)", "五、~十二、( 略 )"):
+            with self.subTest(variant=variant):
+                read = pg_store.comparison_from_table(
+                    alhemo_table(lambda n, o, v=variant: (n[:9] + [v], o[:9] + [v])))["blocks"]
+                self.assertEqual(read, official)
+
     def test_a_general_principle_block_must_open_with_its_own_point_marker(self) -> None:
         # the identity check a dotted clause gets from its heading: the card parser and the overlay agree
         comparison = pg_store.comparison_from_table(alhemo_table())
