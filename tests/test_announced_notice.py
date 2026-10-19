@@ -2197,6 +2197,30 @@ class GeneralPrincipleRowTest(unittest.TestCase):
                     set(),
                 )
 
+    def test_a_range_written_with_another_connector_holds_the_row_and_invents_no_point(self) -> None:
+        # Verifier finding: with ∼ ﹏ － — 至 after 一、 the line read as point 一, so a spurious clause 0.1 was
+        # projected (from both columns alike).  It is a range this grammar does not read: the row is held alone.
+        for connector in ("∼", "﹏", "－", "—", "至"):
+            for column, change in (
+                ("revised", lambda n, o, c=connector: (n[:1] + [f"一、{c}三、(略)"] + n[2:], o)),
+                ("original", lambda n, o, c=connector: (n, o[:1] + [f"一、{c}三、(略)"] + o[2:])),
+                ("both", lambda n, o, c=connector: (n[:1] + [f"一、{c}三、(略)"] + n[2:],
+                                                    o[:1] + [f"一、{c}三、(略)"] + o[2:])),
+            ):
+                with self.subTest(connector=connector, column=column):
+                    parsed = parse_alhemo(self.with_general_row(change))
+                    self.assertEqual([clause.clause_code for clause in parsed.clauses], self.DOTTED)
+                    (held,) = parsed.other_effects
+                    expected = "original_range_marker_unreadable" if column == "original" else "revised_range_marker_unreadable"
+                    self.assertEqual((held.key, held.blocked_reason), ("general-principle:0/1", expected))
+        # the three recognised connectors still make a range, so nothing is held
+        for connector in ("~", "～", "〜"):
+            with self.subTest(connector=connector):
+                parsed = parse_alhemo(self.with_general_row(
+                    lambda n, o, c=connector: (n[:1] + [f"一、{c}三、(略)"] + n[2:], o[:1] + [f"一、{c}三、(略)"] + o[2:])))
+                self.assertEqual([clause.clause_code for clause in parsed.clauses], ["0.4", *self.DOTTED])
+                self.assertEqual(parsed.other_effects, ())
+
     def test_the_cut_does_not_hold_what_it_can_read(self) -> None:
         # Confusable negatives: each variation is still a readable row.
         new, old = self.general_row()

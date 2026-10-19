@@ -38,6 +38,15 @@ _RANGE_RE = re.compile(
 _OMISSION_TAIL_RE = re.compile(
     r"^\s*(?:\(\s*(?:以下|其餘|餘)?\s*略\s*\)|(?:以下|其餘|餘)?略)\s*[。.]?\s*\Z"
 )
+# What a marker line that is neither a recognised range nor a single omitted point must not show: another
+# ordinal and 、 inside it, an omission at its end (a bare 略 only after a boundary, so 策略 is a word), or
+# a dash, tilde or connector symbol right after the marker.  Any of them is a range written with a connector
+# this grammar does not read (∼ ﹏ － — 至 ...), and reading it as a point would invent point N.
+_INNER_MARKER_RE = re.compile(rf"{_ORDINAL}、")
+_OMISSION_END_RE = re.compile(
+    r"(?:\(\s*(?:以下|其餘|餘)?\s*略\s*\)|(?:^|[\s:,、。)\]】~])(?:以下|其餘|餘)?略)\s*[。.]?\s*\Z"
+)
+_CONNECTOR_CATEGORIES = frozenset({"Pd", "Sm", "Pc"})
 _CJK_DIGITS = {
     "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
 }
@@ -116,7 +125,11 @@ def read_point_marker(text: str) -> tuple[str, int, int] | str | None:
     ``point`` or ``omission``.  A marker followed by ``~`` is a range and must
     be exactly ``first、~last、`` plus an omission; a marker followed by
     nothing but an omission is a single omitted point; anything else after a
-    marker is the point's own heading text.
+    marker is the point's own heading text, unless it shows what only a range
+    shows (another ordinal and 、, an omission at its end, or a dash, tilde
+    or connector symbol straight after the marker): a range written with a
+    connector this grammar does not read is ``range_marker_unreadable``, never
+    a point.
     """
 
     match = _MARKER_RE.match(grammar_text(text))
@@ -140,6 +153,13 @@ def read_point_marker(text: str) -> tuple[str, int, int] | str | None:
         return ("omission", first, last)
     if _OMISSION_TAIL_RE.match(rest):
         return ("omission", first, first)
+    lead = rest.lstrip()[:1]
+    if (
+        _INNER_MARKER_RE.search(rest)
+        or _OMISSION_END_RE.search(rest)
+        or (lead and unicodedata.category(lead) in _CONNECTOR_CATEGORIES)
+    ):
+        return "range_marker_unreadable"
     return ("point", first, first)
 
 

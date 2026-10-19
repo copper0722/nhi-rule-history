@@ -145,6 +145,11 @@ def test_a_point_is_a_block_of_its_own_and_can_be_excluded_by_its_code():
     other = [GENERAL, "一、~四、(略)", "五、甲：", "（一）乙", "六、~十二、(略)"]
     with pytest.raises(ValueError, match="different points"):
         build_blocks({"clauses": [{"new": cell("四"), "old": other}]}, {})
+    # a range written with a connector the grammar does not read is no point: no spurious 0.1 card
+    for connector in ("∼", "﹏", "－", "—", "至"):
+        odd = [GENERAL, f"一、{connector}三、(略)", "四、甲：", "（一）乙"]
+        with pytest.raises(ValueError, match=r"cannot be cut into points \(range_marker_unreadable\)"):
+            build_blocks({"clauses": [{"new": odd, "old": odd}]}, {})
 
 
 def test_a_general_principle_row_needs_the_heading_in_both_columns():

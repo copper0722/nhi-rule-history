@@ -90,10 +90,33 @@ class MarkerTest(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(read_point_marker(text), expected)
 
-    def test_a_point_that_only_mentions_an_omission_is_still_a_point(self) -> None:
-        # the heading text is real; only an all-omission paragraph is an omission marker
-        self.assertEqual(read_point_marker("四、注射藥品之使用原則：(略)"), ("point", 4, 4))
-        self.assertEqual(read_point_marker("四、(略)注射藥品"), ("point", 4, 4))
+    def test_heading_text_is_a_point_even_when_it_mentions_an_omission_inside(self) -> None:
+        # the heading text is real; only a line that is all omission, or shows what only a range shows, is not
+        for text in ("四、(略)注射藥品", "四、策略", "四、說明略", "四、注射藥品之使用原則：", "十一、給付規定中年齡用詞",
+                     "四、依(略)規定辦理，詳見附表"):
+            with self.subTest(text=text):
+                self.assertEqual(read_point_marker(text)[0:1], ("point",))
+
+    def test_a_range_written_with_a_connector_the_grammar_does_not_read_is_never_a_point(self) -> None:
+        # Verifier finding (2026-10-19): ∼ ﹏ － — 至 after 一、 read as point 一 and invented a spurious 0.1.
+        # Only ~ ～ 〜 are range connectors; every other one fails closed, with or without the second 、,
+        # with or without an omission, and so does a marker line that ends in an omission.
+        connectors = ("∼", "﹏", "－", "—", "至", "–", "―", "-", "－－", "到", "～～", "_", "…")
+        for connector in connectors:
+            for text in (
+                f"一、{connector}三、(略)", f"一、{connector}三、（略）", f"一、 {connector} 三、 (略)",
+                f"一、{connector}三(略)", f"一、{connector}三、", f"一、{connector}三、同上", f"一、{connector}(略)",
+            ):
+                with self.subTest(text=text):
+                    self.assertEqual(read_point_marker(text), "range_marker_unreadable")
+        for text in ("一、∼", "一、﹏三", "一、－", "一、—三", "一、至三(略)", "五、至十二、(略)", "十、至十二、（略）",
+                     "四、注射藥品之使用原則：(略)", "四、：略", "四、(以下略)注射用藥(略)"):
+            with self.subTest(text=text):
+                self.assertEqual(read_point_marker(text), "range_marker_unreadable")
+        # the three recognised connectors are still ranges
+        for connector in ("~", "～", "〜"):
+            with self.subTest(connector=connector):
+                self.assertEqual(read_point_marker(f"一、{connector}三、(略)"), ("omission", 1, 3))
 
     def test_not_a_marker(self) -> None:
         for text in (
@@ -169,6 +192,8 @@ class SplitTest(unittest.TestCase):
             "no_point only omissions": [GENERAL_PRINCIPLE_HEADING, "一、~十二、(略)"],
             "ordinal_unreadable": [GENERAL_PRINCIPLE_HEADING, "十十、甲："],
             "range_marker_unreadable": [GENERAL_PRINCIPLE_HEADING, "一、~(略)", "四、甲："],
+            "range_marker_unreadable (another connector)": [GENERAL_PRINCIPLE_HEADING, "一、∼三、(略)", "四、甲："],
+            "range_marker_unreadable (a connector, no second 、)": [GENERAL_PRINCIPLE_HEADING, "一、至三(略)", "四、甲："],
         }
         for name, texts in cases.items():
             with self.subTest(name=name):
