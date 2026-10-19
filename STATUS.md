@@ -14,11 +14,9 @@
   1 則佇列收據無 bundle 路徑，皆列在收據。新連線讀回（`database/queries/diff-card-readback-v29.sql`）
   各段 `ok` 皆 `t`：766 列 replay 0 違規；已上網 16 份來源檔全有卡，22 個已上網
   patch 與 3 個未投影的條文修正（9.69、2.6.2、2.6.3）皆有對應區塊。
-- 消費端：panel announced endpoint 的 `comparisons`（copper-panel 7451c42）→ 付費站
-  匯出與頁面（personal-website-s 70ddcb7，qat 276 於 19:48 部署）。正式站 7 條條文
-  在 390／1280 px 皆通過瀏覽器檢查（`scripts/check-nhi-diff-card-render.mjs`）。
-- 排程：私有 repo 的 qat `nhi_rule_history_diff_card_load`（每 15 分，:13 起），已存在者
-  不重寫。
+- 消費端：reader API 的 announced endpoint 新增 `comparisons` → 付費站匯出與條文頁
+  （付費站同步於 19:48 部署）。正式站 7 條條文在 390／1280 px 皆通過瀏覽器檢查。
+- 排程：私有 repo 另有成對 migration 登記每 15 分鐘的 loader lane，已存在者不重寫。
 - 回滾：同名 `.rollback.sql`（刪 view、兩表、兩個函式與 schema，RESTRICT）；資料可由
   loader 重建。
 
