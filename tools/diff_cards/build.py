@@ -12,6 +12,10 @@
       the NEW file must announce the expected order number.
   python -m tools.diff_cards.build render-rule PUB [--png BUILD_DIR]
       PUB/source/provisions.json + PUB/editorial.json -> lookup page, card pages and PNGs (as `render`).
+  python -m tools.diff_cards.build load-pg [--dsn DSN] [--corpus-root DIR] [--dry-run]
+      Store the website's git-diff card data: every registered notice's comparison-table ODT ->
+      blocks -> schema nhi_rule_history_diff_card (write-once, read back through a fresh connection).
+      Receipt JSON on stdout; see tools/diff_cards/pg_store.py.
 
 Cards are presentation only: official text is copied verbatim from the snapshot and the
 diff is recomputed deterministically; editorial.json holds the human-written summaries.
@@ -429,6 +433,10 @@ def main(argv: list[str] | None = None) -> int:
     rr = sub.add_parser("render-rule")
     rr.add_argument("pub", type=Path)
     rr.add_argument("--png", type=Path)
+    lp = sub.add_parser("load-pg", help="store the website's git-diff card data in PostgreSQL")
+    lp.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
+    lp.add_argument("--corpus-root", type=Path, help="NHI notice bundle root; default $NHI_RULE_HISTORY_CORPUS_ROOT")
+    lp.add_argument("--dry-run", action="store_true", help="build and verify everything, write nothing")
     a = ap.parse_args(argv)
     if a.cmd == "snapshot":
         snapshot(a.bundles, a.out)
@@ -439,6 +447,11 @@ def main(argv: list[str] | None = None) -> int:
         render_law(a.pub)
     elif a.cmd == "render-rule":
         render_rule(a.pub, a.png or Path("build/diff-cards") / a.pub.name / "png")
+    elif a.cmd == "load-pg":
+        # imported here: it needs psycopg and the loader modules, the render commands do not
+        from .pg_store import load_pg
+
+        return load_pg(a.dsn, a.corpus_root, dry_run=a.dry_run)
     else:
         render(a.pub, a.png or Path("build/diff-cards") / a.pub.name / "png")
     return 0
