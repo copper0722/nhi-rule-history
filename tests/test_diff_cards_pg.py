@@ -346,6 +346,50 @@ class SerialisationTest(unittest.TestCase):
         with self.assertRaisesRegex(pg_store.CardError, "original column does not open"):
             pg_store.general_principle_ordinal("0.4", ["（一）注射藥品使用時機"], point["new_paragraphs"])
 
+    def test_comparison_from_table_checks_every_point_block_against_the_overlay_grammar(self) -> None:
+        # The identity check a dotted clause gets from its heading must run on the path that stores cards:
+        # a block whose clause_id and first paragraphs disagree about the point is refused, not stored.
+        table = alhemo_table()
+        planned = planned_blocks(table, {})
+        block, old, new = planned[0]
+        self.assertEqual(block.clause_id, "0.4")
+        cases = {
+            "the id names another point": (dataclasses.replace(block, clause_id="0.5"), old, new, "does not open with point 5"),
+            "the revised column opens with another point": (
+                block, old, ["五、" + new[0][2:], *new[1:]], "revised column does not open with point 4"),
+            "the original column does not open with a marker": (
+                block, ["（一）注射藥品使用時機", *old[1:]], new, "original column does not open with point 4"),
+        }
+        for name, (changed, changed_old, changed_new, message) in cases.items():
+            with self.subTest(case=name), \
+                    mock.patch.object(pg_store, "planned_blocks",
+                                      return_value=[(changed, changed_old, changed_new), *planned[1:]]), \
+                    self.assertRaisesRegex(pg_store.CardError, message):
+                pg_store.comparison_from_table(table)
+        # control: the unchanged plan is stored
+        with mock.patch.object(pg_store, "planned_blocks", return_value=planned):
+            self.assertEqual(pg_store.comparison_from_table(table)["blocks"][0]["clause_codes"], ["0.4"])
+
+    def test_an_attachment_table_beside_a_general_principle_row_sorts_under_the_first_numbered_clause(self) -> None:
+        # planned_blocks takes the sort base of a table's attachments from its first numbered clause; a point
+        # of the 通則 row (sort key (0, N)) must not become that base
+        table = alhemo_table()
+        table["extra_comparisons"] = [{"index": 1, "kind": "附表", "title": "附表十八之五 測試", "rows": [
+            {"old": ["甲"], "new": ["乙"]}, {"old": ["丙"], "new": ["丁"]}]}]
+        planned = planned_blocks(table, {})
+        self.assertEqual([(b.clause_id, b.sort_key) for b, _, _ in planned[:2]], [("0.4", (0, 4)), ("4.2", (4, 2))])
+        self.assertEqual([(b.clause_id, b.sort_key) for b, _, _ in planned[-2:]],
+                         [("附表十八之五", (4, 2, 9999, 0)), ("附表十八之五", (4, 2, 9999, 1))])
+        # and the whole table is stored: the attachments serve the codes of every clause block, 0.4 included
+        comparison = pg_store.comparison_from_table(table)
+        self.assertEqual([(b["block_kind"], b["clause_id"]) for b in comparison["blocks"]],
+                         [("clause", "0.4"), ("clause", "4.2"), ("clause", "4.2.9"), ("clause", "4.2.7"),
+                          ("clause", "4.2.8"), ("attachment", "附表十八之五"), ("attachment", "附表十八之五")])
+        self.assertEqual(comparison["blocks"][-1]["clause_codes"], ["0.4", "4.2", "4.2.9", "4.2.7", "4.2.8"])
+        # a table that has no numbered clause before its extra table: the base is empty, as before
+        only_point = {"clauses": table["clauses"][:1], "extra_comparisons": table["extra_comparisons"]}
+        self.assertEqual([b.sort_key for b, _, _ in planned_blocks(only_point, {})][-2:], [(9999, 0), (9999, 1)])
+
     def test_the_blocks_pass_the_rules_the_site_applies(self) -> None:
         # personal-website-s publicComparisonBlock: clause_id non-empty; clause_codes non-empty, distinct, each
         # a clause code; and a clause block's clause_codes include its clause_id
