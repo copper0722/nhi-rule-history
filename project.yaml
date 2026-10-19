@@ -122,6 +122,29 @@ service_surfaces:
     live_verification: docs/audits/2026-07-29-boan-emr-latest-consumer-live-verification.json
     integration_status: live_verified
 
+diff_card_store:
+  purpose: git_diff_card_data_of_each_announced_amendment_notice_official_comparison_table
+  schema: nhi_rule_history_diff_card
+  card: 2495
+  objects: comparison_comparison_block_write_once_plus_v_public_comparison_block
+  rule_text_source_of_truth: official_odt_and_announced_layer
+  derivation: presentation_data
+  access: security_invoker_view_owner_only_no_grant_to_public
+  generator: tools/diff_cards/pg_store.py
+  generator_version: nhi-rule-history/diff-cards-pg/1.0.0
+  migration:
+    forward: pg/migrations/2026-10-19_nhi_rule_history_diff_card_v29.sql
+    rollback: pg/migrations/2026-10-19_nhi_rule_history_diff_card_v29.rollback.sql
+    rollback_mode: drop_view_tables_functions_schema_restrict_no_cascade
+    readback: database/queries/diff-card-readback-v29.sql
+    state: applied
+    applied_at: "2026-10-19T19:37:00+08:00"
+    applied_file_sha256_prefix: ef4eee3a3cf8
+    first_load: 27_of_30_registered_notices_47_blocks_2026-10-19T19:37:29+08:00
+    readback_after_apply: fresh_connection_every_ok_column_true_766_rows_0_replay_violations
+    consumer_live_check: seven_clauses_at_390_and_1280_px_on_the_live_subscriber_page_all_pass
+  map: docs/diff-cards.md
+
 read_facade:
   purpose: one_schema_readable_end_to_end_current_text_announced_amendments_general_principles_chain_notices
   schema: nhi_rules

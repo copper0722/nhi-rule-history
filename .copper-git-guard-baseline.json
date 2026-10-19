@@ -1,0 +1,54 @@
+{
+  "schema_version": "copper-git-guard-baseline-v1",
+  "_doc": "Reviewed gitleaks false positives for this repository (copper-git-guard 0.5.x). Each entry binds one value by path, rule and the SHA-256 of the exact value; any other value still blocks.",
+  "entries": [
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "94d4b8a4b68c72570eba74c35608142975003446c640a3be59edc0ad16de0519",
+      "reason": "Reviewed 2026-10-19 (card 3211): a public 40-digit git commit id recorded as provenance in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'api'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    },
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "30f0b30876d09197a9822133ba6f67f9ffc95f039d1e93e1470f258ee5e7e567",
+      "reason": "Reviewed 2026-10-19 (card 3211): a public 40-digit git commit id recorded as provenance in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'api'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    },
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "14419a3bab2fe27d36b2fc2b5bf21f0db4f7f4f46376e822d899de4a2c95be78",
+      "reason": "Reviewed 2026-10-19 (card 3211): a SHA-256 fingerprint of a resource key set recorded as release evidence in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'key'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    },
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "9e323a61f17b5ef2b6776880c023ebbf65c1f5c589603202b90dedc97c4ac271",
+      "reason": "Reviewed 2026-10-19 (card 3211): a SHA-256 fingerprint of a resource key set recorded as release evidence in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'key'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    },
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "7713f1fd352dc89b9a6d39130fc882ad2a9a83cbe56115bdfd5f42c62bd709b9",
+      "reason": "Reviewed 2026-10-19 (card 3211): a SHA-256 fingerprint of a resource key set recorded as release evidence in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'key'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    },
+    {
+      "path": "project.yaml",
+      "rule_id": "generic-api-key",
+      "value_sha256": "aa5cd049043054492a51bf08fd6628ea6c5a8d48f240786ef315803f96961570",
+      "reason": "Reviewed 2026-10-19 (card 3211): a SHA-256 fingerprint of a resource key set recorded as release evidence in project.yaml, not a credential; flagged by gitleaks 8.30.1 generic-api-key because the key name contains 'key'.",
+      "card": 3211,
+      "added": "2026-10-19"
+    }
+  ]
+}
