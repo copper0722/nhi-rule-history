@@ -1,6 +1,26 @@
 # 專案進度
 
-最後核對：2026-10-13
+最後核對：2026-10-19
+
+## 2026-10-19 — 公告修訂 git-diff 卡資料線（v29）已套用並上線（卡 #2495）
+
+- 每則已登記的修正公告，以其官方 ODT「修訂對照表」（原給付規定對修訂後給付規定）
+  產生逐段 diff，寫入一次即不可改的 schema `nhi_rule_history_diff_card`
+  （`comparison`、`comparison_block`、`v_public_comparison_block`）。產生器
+  `python -m tools.diff_cards.build load-pg`，無模型。規則與 view 契約：
+  `docs/diff-cards.md`「網站 diff 資料線」。
+- 套用 2026-10-19 約 19:37 +08:00，套用檔 sha256 前綴 `ef4eee3a3cf8`；首次回填
+  19:37:29：已登記 30 則中 27 則入庫（47 區塊），2 則無法比較（通則、附件清單不全）、
+  1 則佇列收據無 bundle 路徑，皆列在收據。新連線讀回（`database/queries/diff-card-readback-v29.sql`）
+  各段 `ok` 皆 `t`：766 列 replay 0 違規；已上網 16 份來源檔全有卡，22 個已上網
+  patch 與 3 個未投影的條文修正（9.69、2.6.2、2.6.3）皆有對應區塊。
+- 消費端：panel announced endpoint 的 `comparisons`（copper-panel 7451c42）→ 付費站
+  匯出與頁面（personal-website-s 70ddcb7，qat 276 於 19:48 部署）。正式站 7 條條文
+  在 390／1280 px 皆通過瀏覽器檢查（`scripts/check-nhi-diff-card-render.mjs`）。
+- 排程：私有 repo 的 qat `nhi_rule_history_diff_card_load`（每 15 分，:13 起），已存在者
+  不重寫。
+- 回滾：同名 `.rollback.sql`（刪 view、兩表、兩個函式與 schema，RESTRICT）；資料可由
+  loader 重建。
 
 ## 2026-10-13 — overlay lane 自動啟用解除暫停（具名殘餘類別，每次啟用後審閱）
 
