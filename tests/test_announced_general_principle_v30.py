@@ -201,6 +201,14 @@ class MigrationLiveTest(unittest.TestCase):
             "v30": (f"clause_code ~ '{V30_PATTERN}'", True),
             "only some of the 0.N codes": (
                 "clause_code ~ '^(0[.]([1-9]|1[0-2])|[1-9][0-9]*(?:[.][0-9]+)+)$'", False),
+            # Verifier finding: a further condition on the same check hides behind the pattern that matches
+            "v30 AND a code the pattern admits but the check refuses": (
+                f"clause_code ~ '{V30_PATTERN}' AND clause_code <> '0.50'", False),
+            "v30 AND a negated pattern": (f"clause_code ~ '{V30_PATTERN}' AND clause_code !~ '^0[.]7$'", False),
+            "v30 OR another condition": (f"clause_code ~ '{V30_PATTERN}' OR clause_code = 'x'", False),
+            "dotted OR 0.N, two patterns": (
+                f"clause_code ~ '{V21_PATTERN}' OR clause_code ~ '^0[.][1-9][0-9]*$'", False),
+            "case-insensitive v30": (f"clause_code ~* '{V30_PATTERN}'", False),
             "0.N only, no dotted code": ("clause_code ~ '^0[.][1-9][0-9]*$'", False),
             "no pattern to read": ("clause_code <> ''", False),
             "no check at all": (None, False),
@@ -213,6 +221,29 @@ class MigrationLiveTest(unittest.TestCase):
         finally:
             self.replace_check(f"clause_code ~ '{V21_PATTERN}'")
         self.assertFalse(self.detected())
+
+    def test_another_check_on_the_code_makes_the_detector_fail_closed(self) -> None:
+        # the further condition may sit in a second constraint instead of the named one
+        self.pg.psql(file=V30_FORWARD)
+        self.assertTrue(self.detected())
+        extra = "clause_patch_no_fifty"
+        try:
+            self.pg.psql(command=f"ALTER TABLE nhi_rule_history_announced.clause_patch ADD CONSTRAINT {extra} "
+                                 "CHECK (clause_code <> '0.50') NOT VALID")
+            self.assertFalse(self.detected())
+            self.assertFalse(self.accepts("0.50"))  # the database really does refuse that code
+            self.assertTrue(self.accepts("0.49"))
+        finally:
+            self.pg.psql(command=f"ALTER TABLE nhi_rule_history_announced.clause_patch DROP CONSTRAINT IF EXISTS {extra}")
+        self.assertTrue(self.detected())
+        # a check on another column does not bear on the code
+        try:
+            self.pg.psql(command="ALTER TABLE nhi_rule_history_announced.clause_patch ADD CONSTRAINT clause_patch_note_check "
+                                 "CHECK (public_note <> 'x') NOT VALID")
+            self.assertTrue(self.detected())
+        finally:
+            self.pg.psql(command="ALTER TABLE nhi_rule_history_announced.clause_patch "
+                                 "DROP CONSTRAINT IF EXISTS clause_patch_note_check")
 
     def test_the_migrated_database_admits_exactly_the_designed_codes(self) -> None:
         before = {name: self.definition(name) for name in GUARDED_CHECKS}

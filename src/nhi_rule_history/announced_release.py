@@ -586,7 +586,12 @@ def clause_block_reason(
 
 
 PATCH_CODE_CHECK = "clause_patch_clause_code_check"
-_CHECK_PATTERN_RE = re.compile(r"~ '((?:[^']|'')*)'::text")
+# The one shape of the code check this reads: a single regular-expression match on clause_code, exactly as
+# PostgreSQL prints v21's and v30's check.  Anything else (a second condition, another operator, an OR) is
+# a check that may refuse codes the pattern admits, so it is not read.
+_CHECK_SHAPE_RE = re.compile(
+    r"CHECK \(\(clause_code ~ '((?:[^']|'')*)'::text\)\)(?: NOT VALID)?"
+)
 
 
 def general_principle_patches_admitted(connection: Any) -> bool:
@@ -595,26 +600,32 @@ def general_principle_patches_admitted(connection: Any) -> bool:
     A 通則 point is clause ``0.N``.  The announced layer's
     ``clause_patch_clause_code_check`` admitted dotted codes only until
     migration v30; a ``0.N`` patch row is refused by an unmigrated database.
-    The check reads the live constraint, not a version number: it takes the
-    pattern the constraint tests and has PostgreSQL's own regular-expression
-    engine test it against ``0.1`` to ``0.99`` (every code the cut can read)
-    and against dotted codes.  Anything it cannot read, a constraint that is
-    missing or one that admits only some of them, is false, so the same code
-    is safe before and after the migration.
+    The check reads the live constraint, not a version number.  The check on
+    ``clause_code`` must be the single named constraint and consist of one
+    regular-expression match and nothing else; PostgreSQL's own
+    regular-expression engine then tests its pattern against ``0.1`` to
+    ``0.99`` (every code the cut can read) and against dotted codes.  Anything
+    else is false and the point stays held: a constraint that is missing, one
+    that admits only some of the codes, one with a further condition
+    (``... AND clause_code <> '0.50'``), another check that also bears on
+    ``clause_code``.  That is how the same code is safe before and after the
+    migration.  Only CHECK constraints are read; a trigger or a foreign key on
+    the column is not, and the load-time INSERT would still refuse such a code
+    inside its single transaction.
     """
 
-    row = connection.execute(
-        """
-        SELECT pg_get_constraintdef(con.oid) AS definition
+    rows = connection.execute(
+        r"""
+        SELECT con.conname AS name, pg_get_constraintdef(con.oid) AS definition
         FROM pg_constraint con
-        WHERE con.conrelid = to_regclass(%s) AND con.conname = %s
-          AND con.contype = 'c'
+        WHERE con.conrelid = to_regclass(%s) AND con.contype = 'c'
+          AND (con.conname = %s OR pg_get_constraintdef(con.oid) ~ '\mclause_code\M')
         """,
         (f"{SCHEMA}.clause_patch", PATCH_CODE_CHECK),
-    ).fetchone()
-    if row is None:
+    ).fetchall()
+    if [row["name"] for row in rows] != [PATCH_CODE_CHECK]:
         return False
-    match = _CHECK_PATTERN_RE.search(row["definition"])
+    match = _CHECK_SHAPE_RE.fullmatch(rows[0]["definition"])
     if match is None:
         return False
     pattern = match.group(1).replace("''", "'")
