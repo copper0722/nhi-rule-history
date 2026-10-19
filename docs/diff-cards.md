@@ -142,12 +142,14 @@ git diff 樣式卡片。公告層（`nhi_rule_history_announced`）只存修訂�
 
 1. 公告 patch 的 `source_artifact_sha256` 等於 `v_public_comparison_block.source_artifact_sha256`。
 2. 區塊的選擇看 `clause_codes`：patch 的 `clause_code` 屬於區塊的 `clause_codes`。
-3. `clause` 區塊的 `clause_codes` 是自己的 `clause_id`，加上修訂後段落中巢狀在它底下的條號標題
-   （判斷用公告層自己的標題文法）。例：官方對照表的 `9.5` 那一列含 `9.5.1.` 標題，公告層把它拆成 `9.5` 與
+3. `clause` 區塊的 `clause_codes` 依序是：自己的 `clause_id`；巢狀在它底下的條號標題，先取修訂後段落
+   （依修訂後欄的出現順序），再取只出現在原段落的（本次修正刪掉的子條文，依原欄順序）；每個條號只出現一次。
+   判斷用公告層自己的標題文法。例：官方對照表的 `9.5` 那一列含 `9.5.1.` 標題，公告層把它拆成 `9.5` 與
    `9.5.1` 兩筆 patch，兩筆都對到同一個區塊，`clause_codes` 為 `9.5` 與 `9.5.1`；此時 `clause_id` 與
    patch 的條號不同，卡片註明「官方對照表此列為 9.5（含 9.5.1）」。同一列內並列的兄弟條號不算巢狀，不列入。
-4. `attachment` 區塊的 `clause_codes` 是同一份比較所有 `clause` 區塊的 `clause_id`（依數字順序），附表隨該公告的
-   每一筆 patch 一起顯示。
+4. `attachment` 區塊的 `clause_codes` 是同一份比較所有 `clause` 區塊的 `clause_codes` 的聯集（依區塊順序，
+   去重，含巢狀條號），附表隨該公告的每一筆 patch 一起顯示。例：`9.5` 那一列的區塊服務 `9.5` 與 `9.5.1`，
+   同一份公告的附表區塊也服務 `9.5` 與 `9.5.1`。
 5. 公告 patch 文字與區塊段落逐位元組不同（公告層把 ODT 自動編號印成 `1.` 加 Tab，並把巢狀條文拆開），
    比對文字時兩邊都用 `tools.diff_cards.core.key`；patch 文字依空白行切開後，等於區塊 `new_paragraphs`
    的連續一段。
@@ -174,7 +176,10 @@ PYTHONPATH=src python -m tools.diff_cards.build load-pg [--dsn DSN] [--corpus-ro
   這是讀回不符（須升版本號，唯讀的表無法原地改）。若該來源檔最新的比較屬於別的產生器版本，列為 `superseded`，不算不符。
 - 回條（stdout 的 JSON）：`counts`（`registered`、`problem`、`parsed`、`inserted`、`present`、`failed`，
   `--dry-run` 另有 `would_insert`）、`problems` 與 `failed`（每筆 `{work_item_id, error}`）、`store_schema`
-  （`present` 或 `missing`）、`readback`（`checked`、`mismatches`、`superseded`）。每個登錄項目是
+  （`present` 或 `missing`）、`comparisons`（每份來源檔一筆，依 `source_artifact_sha256` 排序：
+  `work_item_id`、`outcome`（`inserted`、`present`、`would_insert` 或 `failed`），以及各區塊的
+  `block_order`、`block_kind`、`clause_id`、`clause_codes`）、`readback`（`checked`、`mismatches`、
+  `superseded`）。每個登錄項目是
   `problem`、`parsed`、或解析階段就 `failed` 三者之一（寫入階段才失敗的項目同時計入 `parsed` 與 `failed`）。
   無法成為卡片的 bundle 只列在 `failed`，不影響其他 bundle；
   目前會出現的有：附件清單不完整的公告，以及表頭不是「修訂後給付規定｜原給付規定」的公告（如表頭為

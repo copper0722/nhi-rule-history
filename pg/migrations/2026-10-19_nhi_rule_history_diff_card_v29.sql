@@ -115,7 +115,7 @@ COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.block_kind IS
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_id IS
   'The clause code of the row (for example 9.5), or the short title of the revised 附表 for an attachment.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.clause_codes IS
-  'Clause codes this block serves. Clause block: its own clause_id plus every clause heading nested under it in the revised paragraphs (the row of 9.5 serves 9.5 and 9.5.1, which the announced layer splits into two patches). Attachment block: the clause_id of every clause block of the same comparison.';
+  'Clause codes this block serves, each once. Clause block: its own clause_id, then every clause heading nested under it, taken from the revised paragraphs in column order and then, for those found only there, from the original paragraphs (a sub-clause the amendment deletes). The row of 9.5 serves 9.5 and 9.5.1, which the announced layer splits into two patches. Attachment block: the union of the clause_codes of every clause block of the same comparison, in block order.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.path IS
   'Display path of the card file, for example 藥品給付規定/9.5.';
 COMMENT ON COLUMN nhi_rule_history_diff_card.comparison_block.badge IS

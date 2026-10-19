@@ -30,6 +30,11 @@
   the store; the website exports only the source files the announced layer
   serves. Nothing here changes the overlay, its code fingerprint or what is
   served.
+- `clause_codes` rules as ruled by the accepting owner: a clause block serves its own id, then the
+  headings nested under it (revised column order, then headings only the original column has, such
+  as a sub-clause the amendment deletes); an attachment block serves the union of its notice's
+  clause blocks' codes in block order. The load-pg receipt lists each source file's blocks with
+  `clause_id` and `clause_codes`.
 - Not applied: the migration is applied, and `load-pg` first run, by the
   accepting owner, never by the producer. Rollback is the paired file (drops the
   view, tables, functions and schema with RESTRICT; the rows are rebuilt by

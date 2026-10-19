@@ -245,30 +245,67 @@ class SerialisationTest(unittest.TestCase):
         self.assertEqual((attachment["adds"], attachment["dels"]), (1, 1))
         self.assertEqual(comparison["extra_table_count"], 0)
 
-    def test_attachment_serves_every_clause_id_of_the_notice_in_numeric_order(self) -> None:
+    def test_attachment_serves_the_union_of_the_clause_codes_in_block_order(self) -> None:
         body = (
             "<text:p>「藥品給付規定」修訂對照表</text:p><text:p>（自115年10月1日生效）</text:p>"
             + comparison_table(("修訂後給付規定", "原給付規定"), [
-                (["9.41.Fixture：(115/9/1)", "限用於甲"], ["9.41.Fixture：", "限用於乙"]),
+                (["9.41.Fixture：(115/9/1)", "9.41.1.Sub：(115/9/1)", "限用於甲"],
+                 ["9.41.Fixture：", "9.41.1.Sub：", "限用於乙"]),
                 (["9.7.Other：(115/9/1)"], ["9.7.Other："]),
             ])
             + "<text:p>附表二十 測試表單</text:p>"
             + comparison_table(("修訂後附表規定", "原附表規定"), [(["甲表（新）"], ["甲表（舊）"])])
         )
         comparison = pg_store.comparison_from_table(read_table(_odt(_document(body))))
-        self.assertEqual([(b["block_kind"], b["clause_id"], b["clause_codes"]) for b in comparison["blocks"]], [
-            ("clause", "9.41", ["9.41"]), ("clause", "9.7", ["9.7"]), ("attachment", "附表二十", ["9.7", "9.41"])])
-        self.assertEqual([b["block_order"] for b in comparison["blocks"]], [0, 1, 2])
+        self.assertEqual([(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"])
+                          for b in comparison["blocks"]], [
+            (0, "clause", "9.41", ["9.41", "9.41.1"]),
+            (1, "clause", "9.7", ["9.7"]),
+            (2, "attachment", "附表二十", ["9.41", "9.41.1", "9.7"]),  # block order, not numeric order
+        ])
 
-    def test_only_nested_headings_are_added_to_the_codes(self) -> None:
-        # Pinned reading of the contract: a heading nested under the row's clause is served by the
-        # row; a sibling clause that shares the row is not (see the report on this task).
-        self.assertEqual(pg_store.nested_codes("9.8", ["9.8.A：", "9.8.1.B：", "9.8.1.2.C：", "9.9.D：", "9.80.E："]),
-                         ["9.8.1", "9.8.1.2"])
-        self.assertEqual(pg_store.nested_codes("9.8", ["9.8.A：", "限用於 9.8.1.", "1.9.8.1.x"]), [])
+    def test_attachment_of_a_notice_with_a_nested_row_serves_the_nested_code_too(self) -> None:
+        table = fixture_table("9.5")
+        table["extra_comparisons"] = [{"index": 1, "kind": "附表", "title": "附表二十 測試表單",
+                                       "rows": [{"new": ["甲表（新）"], "old": ["甲表（舊）"]}]}]
+        clause, attachment = pg_store.comparison_from_table(table)["blocks"]
+        self.assertEqual(clause["clause_codes"], ["9.5", "9.5.1"])
+        self.assertEqual((attachment["block_kind"], attachment["clause_id"], attachment["clause_codes"]),
+                         ("attachment", "附表二十", ["9.5", "9.5.1"]))
+
+    def test_a_sub_clause_only_the_original_column_has_is_still_served(self) -> None:
+        # the amendment deletes 9.8.1: its heading is in the original column only
+        comparison = pg_store.comparison_from_table(read_table(_odt(_comparison([(
+            ["9.8.Fixture：(115/10/1)", "限用於甲"], ["9.8.Fixture：", "9.8.1.Removed：", "限用於乙"])]))))
+        (block,) = comparison["blocks"]
+        self.assertEqual(block["clause_codes"], ["9.8", "9.8.1"])
+        self.assertNotIn("9.8.1", "".join(block["new_paragraphs"]))
+        deleted = [row for row in block["rows"] if row["kind"] == "del"
+                   and "".join(p["text"] for p in row["segments"]).startswith("9.8.1.")]
+        self.assertEqual(len(deleted), 1)
+
+    def test_clause_codes_are_own_id_then_revised_order_then_original_only(self) -> None:
+        new = ["9.8.A：", "9.8.2.B：", "9.8.1.C："]
+        old = ["9.8.A：", "9.8.3.D：", "9.8.1.C：", "9.8.4.E："]
+        # revised column order (2 before 1, not numeric), then what only the original column has
+        self.assertEqual(pg_store.clause_codes_of("9.8", old, new), ["9.8", "9.8.2", "9.8.1", "9.8.3", "9.8.4"])
+        self.assertEqual(pg_store.clause_codes_of("9.8", [], new), ["9.8", "9.8.2", "9.8.1"])
+        self.assertEqual(pg_store.clause_codes_of("9.8", old, []), ["9.8", "9.8.3", "9.8.1", "9.8.4"])
+        self.assertEqual(pg_store.clause_codes_of("9.8", ["9.8.A："], ["9.8.A："]), ["9.8"])
+
+    def test_only_headings_nested_under_the_clause_are_added_to_the_codes(self) -> None:
+        # a heading nested under the row's clause is served by the row; a sibling clause that
+        # shares the row, or a number inside the text, is not
+        def codes(new, old=()):
+            return pg_store.clause_codes_of("9.8", old, new)
+
+        self.assertEqual(codes(["9.8.A：", "9.8.1.B：", "9.8.1.2.C：", "9.9.D：", "9.80.E："]),
+                         ["9.8", "9.8.1", "9.8.1.2"])
+        self.assertEqual(codes(["9.8.A：", "限用於 9.8.1.", "1.9.8.1.x"]), ["9.8"])
+        self.assertEqual(codes(["9.8.A：", "9.9.D："], ["9.8.A：", "9.10.E："]), ["9.8"])
         # the overlay's grammar reads full-width digits and stops
-        self.assertEqual(pg_store.nested_codes("9.8", ["９.８.１．B："]), ["9.8.1"])
-        self.assertEqual(pg_store.nested_codes("10.3", ["10.3.A：", "10.3.8.B：", "10.30.C："]), ["10.3.8"])
+        self.assertEqual(codes(["９.８.１．B："]), ["9.8", "9.8.1"])
+        self.assertEqual(pg_store.clause_codes_of("10.3", [], ["10.3.A：", "10.3.8.B：", "10.30.C："]), ["10.3", "10.3.8"])
 
     def test_segments(self) -> None:
         self.assertEqual(pg_store.segments("abcdef", []), [{"text": "abcdef", "mark": False}])
@@ -635,6 +672,41 @@ class DiffCardStoreTest(unittest.TestCase):
         self.assertEqual((dry_after["counts"]["present"], dry_after["counts"]["would_insert"]), (5, 0))
         self.assertEqual(dry_after["readback"]["checked"], 5)
 
+    def test_receipt_lists_clause_ids_and_codes_of_every_card(self) -> None:
+        bundles = [*self.real, self.nested]
+        expected = {
+            self.real[0].work_item_id: [(0, "clause", "2.1.4.2", ["2.1.4.2"])],
+            self.real[1].work_item_id: [(0, "clause", "3.3.28", ["3.3.28"])],
+            self.real[2].work_item_id: [(0, "clause", "4.2", ["4.2"]), (1, "attachment", "附表十八之五", ["4.2"])],
+            self.real[3].work_item_id: [(0, "clause", "8.1.3", ["8.1.3"])],
+            self.nested.work_item_id: [(0, "clause", "9.7", ["9.7", "9.7.1"])],
+        }
+
+        def listing(receipt):
+            self.assertEqual([c["source_artifact_sha256"] for c in receipt["comparisons"]],
+                             sorted(c["source_artifact_sha256"] for c in receipt["comparisons"]))
+            return {c["work_item_id"]: [(b["block_order"], b["block_kind"], b["clause_id"], b["clause_codes"])
+                                        for b in c["blocks"]] for c in receipt["comparisons"]}
+
+        dry = self.load(bundles, dry_run=True)
+        self.assertEqual(listing(dry), expected)
+        self.assertEqual({c["outcome"] for c in dry["comparisons"]}, {"would_insert"})
+        first = self.load(bundles)
+        self.assertEqual(listing(first), expected)
+        self.assertEqual({c["outcome"] for c in first["comparisons"]}, {"inserted"})
+        again = self.load(bundles)
+        self.assertEqual({c["outcome"] for c in again["comparisons"]}, {"present"})
+        # the stored view agrees with what the receipt says
+        stored = self.rows("SELECT clause_id, clause_codes FROM nhi_rule_history_diff_card.v_public_comparison_block "
+                           "ORDER BY source_artifact_sha256, block_order")
+        self.assertEqual(sorted(stored), sorted((clause_id, codes) for blocks in expected.values()
+                                                for _, _, clause_id, codes in blocks))
+        # a comparison the database refuses is listed as failed, with the others unharmed
+        with mock.patch.object(pg_store, "_insert", side_effect=psycopg.errors.DataError("refused")):
+            refused = self.load(bundles)
+        self.assertEqual(refused["counts"]["failed"], 5)
+        self.assertEqual({c["outcome"] for c in refused["comparisons"]}, {"failed"})
+
     def test_nested_clause_and_attachment_codes_are_served(self) -> None:
         self.load([*self.real, self.nested])
         rows = self.rows("SELECT clause_id, block_kind, clause_codes FROM nhi_rule_history_diff_card."
@@ -702,6 +774,7 @@ class DiffCardStoreTest(unittest.TestCase):
                          (2, 1, 1))
         self.assertEqual(self.rows("SELECT work_item_id::text FROM nhi_rule_history_diff_card.comparison"),
                          [(self.real[0].work_item_id,)])
+        self.assertEqual([c["work_item_id"] for c in receipt["comparisons"]], [self.real[0].work_item_id])
 
     def test_a_generator_that_drifted_without_a_version_bump_is_a_readback_mismatch(self) -> None:
         self.load(self.real[:1])

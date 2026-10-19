@@ -70,10 +70,6 @@ class StoreError(RuntimeError):
 # Pure part: ODT bytes -> blocks
 
 
-def code_key(code: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in code.split("."))
-
-
 def comparison_attachment(bundle: NoticeBundle) -> tuple[NoticeAttachment, bytes]:
     """The ODT attachment the announced overlay parses for this notice, with its bytes.
 
@@ -113,19 +109,22 @@ def source_pairs(table: Mapping[str, Any]) -> list[tuple[str, list[str], list[st
     return pairs
 
 
-def nested_codes(clause_id: str, new: Sequence[str]) -> list[str]:
-    """Clause headings nested under ``clause_id`` in the revised paragraphs (9.5 -> 9.5.1).
+def clause_codes_of(clause_id: str, old: Sequence[str], new: Sequence[str]) -> list[str]:
+    """The clause codes a clause block serves: its own id, then the clause headings nested under it.
 
-    The announced layer splits a row at these headings into one patch per code, so the block of
-    the row serves each of them.  The heading grammar is the overlay's own (NFKC, strict stop).
+    A nested heading (9.5 -> 9.5.1) is taken from the revised paragraphs in column order, then, for
+    those found only in the original paragraphs (a sub-clause this amendment deletes), from the
+    original column; each code appears once.  The announced layer splits a row at its nested
+    headings into one patch per code, so the block of the row serves each of them.  The heading
+    grammar is the overlay's own (NFKC, strict stop).
     """
 
-    found = {
-        code
-        for text in new
-        if (code := clause_heading_code(text)) and code != clause_id and code.startswith(clause_id + ".")
-    }
-    return sorted(found, key=code_key)
+    codes = [clause_id]
+    for text in (*new, *old):
+        code = clause_heading_code(text)
+        if code and code != clause_id and code.startswith(clause_id + ".") and code not in codes:
+            codes.append(code)
+    return codes
 
 
 def segments(text: str, spans: Sequence[tuple[int, int]]) -> list[dict[str, Any]]:
@@ -281,19 +280,21 @@ def comparison_from_table(table: Mapping[str, Any]) -> dict[str, Any]:
     pairs = source_pairs(table)
     if len(blocks) != len(pairs):
         raise CardError("card blocks and source rows differ in number")
-    clause_ids = sorted({b.clause_id for b, (kind, _, _) in zip(blocks, pairs, strict=True) if kind == "clause"},
-                        key=code_key)
-    if not clause_ids:
+    clause_codes = []
+    for block, (kind, old, new) in zip(blocks, pairs, strict=True):
+        if kind != "clause":
+            clause_codes.append(None)
+            continue
+        if clause_heading_code(new[0]) != block.clause_id:
+            raise CardError(f"{block.path}: the clause heading differs between the card parser and the overlay grammar")
+        clause_codes.append(clause_codes_of(block.clause_id, old, new))
+    # an attachment table belongs to the whole notice: it serves every code its clause blocks serve
+    notice_codes = list(dict.fromkeys(code for codes in clause_codes if codes for code in codes))
+    if not notice_codes:
         raise CardError("the comparison table holds no clause row")
     objects = []
     for order, (block, (kind, old, new)) in enumerate(zip(blocks, pairs, strict=True)):
-        if kind == "clause":
-            if clause_heading_code(new[0]) != block.clause_id:
-                raise CardError(f"{block.path}: the clause heading differs between the card parser and the overlay grammar")
-            codes = [block.clause_id, *nested_codes(block.clause_id, new)]
-        else:
-            codes = clause_ids
-        obj = block_object(order, kind, block, old, new, codes)
+        obj = block_object(order, kind, block, old, new, clause_codes[order] or notice_codes)
         check_replay(obj)
         objects.append(obj)
     return {
@@ -478,6 +479,34 @@ def verify_served(connection: Any, built: Mapping[str, Mapping[str, Any]],
     return {"checked": len(built), "mismatches": mismatches, "superseded": sorted(superseded)}
 
 
+def _store_one(connection: Any, comparison: Mapping[str, Any], generator_version: str, *, dry_run: bool,
+               store_present: bool) -> str:
+    """inserted | present | would_insert; a dry run only looks the comparison up."""
+
+    if dry_run:
+        held = store_present and _stored_hash(
+            connection, comparison["source_artifact_sha256"], generator_version) is not None
+        return "present" if held else "would_insert"
+    return "inserted" if _insert(connection, comparison, generator_version) else "present"
+
+
+def _card_listing(distinct: Mapping[str, Mapping[str, Any]], outcomes: Mapping[str, str]) -> list[dict[str, Any]]:
+    """Per source file: the work item, what happened to it and each block's clause_id and clause_codes."""
+
+    return [
+        {
+            "source_artifact_sha256": sha,
+            "work_item_id": comparison["work_item_id"],
+            "outcome": outcomes[sha],
+            "blocks": [
+                {key: block[key] for key in ("block_order", "block_kind", "clause_id", "clause_codes")}
+                for block in comparison["blocks"]
+            ],
+        }
+        for sha, comparison in sorted(distinct.items())
+    ]
+
+
 def _item_error(exc: Exception, item: QueuedBundle) -> str:
     return describe_error(exc).replace(str(item.bundle_dir), "<bundle>")
 
@@ -496,7 +525,6 @@ def run(dsn: str, bundles: Sequence[QueuedBundle], *, dry_run: bool = False,
 
     problems = [{"work_item_id": item.work_item_id, "error": item.problem} for item in bundles if item.problem]
     failed: list[dict[str, str]] = []
-    seen: set[str] = set()
     parsed = 0
     ordered: list[dict[str, Any]] = []
     for item in bundles:
@@ -515,6 +543,8 @@ def run(dsn: str, bundles: Sequence[QueuedBundle], *, dry_run: bool = False,
     if dry_run:
         counts["would_insert"] = 0
     store_present = False
+    distinct: dict[str, dict[str, Any]] = {}  # one comparison per official file, first registered item wins
+    outcomes: dict[str, str] = {}
     stored: dict[str, dict[str, Any]] = {}  # comparisons that are in the store after this run
     connection = _connect(dsn, read_only=dry_run)
     try:
@@ -523,21 +553,20 @@ def run(dsn: str, bundles: Sequence[QueuedBundle], *, dry_run: bool = False,
             raise StoreError(f"schema {STORE_SCHEMA} is missing: apply migration v29 first")
         for comparison in ordered:
             sha = comparison["source_artifact_sha256"]
-            if sha in seen:
+            if sha in distinct:
                 counts["present"] += 1  # two registered items carry one official file
                 continue
-            seen.add(sha)
+            distinct[sha] = comparison
             try:
-                if dry_run:
-                    held = store_present and _stored_hash(connection, sha, generator_version) is not None
-                    counts["present" if held else "would_insert"] += 1
-                    if held:
-                        stored[sha] = comparison
-                    continue
-                counts["inserted" if _insert(connection, comparison, generator_version) else "present"] += 1
-                stored[sha] = comparison
+                outcomes[sha] = _store_one(connection, comparison, generator_version, dry_run=dry_run,
+                                           store_present=store_present)
             except (psycopg.errors.DataError, psycopg.errors.IntegrityError, psycopg.errors.RaiseException) as exc:
+                outcomes[sha] = "failed"
                 failed.append({"work_item_id": comparison["work_item_id"], "error": f"{type(exc).__name__}: {exc}"})
+                continue
+            counts[outcomes[sha]] += 1
+            if outcomes[sha] != "would_insert":
+                stored[sha] = comparison
     finally:
         connection.close()
 
@@ -557,6 +586,7 @@ def run(dsn: str, bundles: Sequence[QueuedBundle], *, dry_run: bool = False,
         "counts": counts,
         "problems": problems,
         "failed": failed,
+        "comparisons": _card_listing(distinct, outcomes),
         "readback": readback,
     }
 
