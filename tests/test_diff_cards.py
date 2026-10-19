@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from tests.test_announced_notice import _comparison, _odt
 from tools.diff_cards import sources_rule
 from tools.diff_cards.build import (
     main,
@@ -25,7 +26,7 @@ from tools.diff_cards.core import (
 )
 from tools.diff_cards.html import Doc, hunk_html
 from tools.diff_cards.sources_law import parse_markup
-from tools.diff_cards.sources_nhi import build_blocks, card_view
+from tools.diff_cards.sources_nhi import build_blocks, card_view, read_table
 from tools.diff_cards.sources_rule import (
     attachment_block,
     attachment_card_rows,
@@ -565,3 +566,20 @@ def test_render_rule_stops_at_the_gates_before_writing_anything(tmp_path):
     snap["schema"] = "other"
     (pub / "source" / "provisions.json").write_text(json.dumps(snap), encoding="utf-8")
     attempt(editorial(good), "render-rule: not a .* snapshot")
+
+
+def test_read_table_takes_the_proposed_revised_header_and_keeps_the_kind():
+    # the 2.6.1 notice prints 建議修訂後給付規定 over the revised column
+    rows = [(["9.4.Fixture：(115/9/1)", "限用於甲"], ["9.4.Fixture：", "限用於乙"])]
+    plain = read_table(_odt(_comparison(rows)))
+    proposed = read_table(_odt(_comparison(rows, header=("建議修訂後給付規定", "原給付規定"))))
+    assert proposed["clauses"] == plain["clauses"] and len(plain["clauses"]) == 1
+    assert proposed["extra_comparisons"] == plain["extra_comparisons"] == [] and proposed["extra_tables"] == []
+    # the kind is still the one the original header names: 給付 in the first table, nothing else
+    for header in (("建議修訂後給付規定", "原附表規定"), ("建議修訂後給付規定", "建議原給付規定"),
+                   ("修正後給付規定", "原給付規定"), ("建議建議修訂後給付規定", "原給付規定"),
+                   ("建議後給付規定", "原給付規定")):
+        with pytest.raises(ValueError, match="unexpected comparison-table header"):
+            read_table(_odt(_comparison(rows, header=header)))
+    with pytest.raises(ValueError, match="table 0 is not a 給付規定 comparison"):
+        read_table(_odt(_comparison(rows, header=("建議修訂後附表規定", "原附表規定"))))

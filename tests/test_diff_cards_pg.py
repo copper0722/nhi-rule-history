@@ -747,8 +747,9 @@ class DiffCardStoreTest(unittest.TestCase):
             self.load(self.real)
 
     def test_failures_are_listed_and_never_stop_the_others(self) -> None:
+        # the overlay reads 修正後 as a revised column; the card parser does not, so its notice is listed as failed
         unsupported = write_bundle(self.root, "1150000011", [(synthetic_odt(
-            55, header=("建議修訂後給付規定", "原給付規定")), ODT_MEDIA_TYPE)])
+            55, header=("修正後給付規定", "原給付規定")), ODT_MEDIA_TYPE)])
         no_table = write_bundle(self.root, "1150000012", [(b"%PDF-1.4 only a pdf", "application/pdf")])
         problem = QueuedBundle(work_item_id=str(uuid.uuid4()), source_uid="gov_x", bundle_dir=self.root / "gov_x",
                                corpus_manifest_sha256="", first_title_raw="x",

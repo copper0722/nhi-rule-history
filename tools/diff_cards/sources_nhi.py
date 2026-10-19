@@ -1,9 +1,10 @@
 """NHI 藥品給付規定 修訂對照表 → comparison-card documents.
 
 Input: one official ODT 修訂對照表 per announcement (table 0: row 0 = 修訂後給付規定 |
-原給付規定 header; each later row = one clause; cell 0 = after, cell 1 = before, "無" =
-new clause). Later tables with a 修訂後X規定 | 原X規定 header (e.g. a revised 附表 form) are
-compared the same way; other tables are multi-column forms and are only noted. Paragraphs come from the owner block extractor
+原給付規定 header, the revised one optionally printed 建議修訂後給付規定; each later row = one
+clause; cell 0 = after, cell 1 = before, "無" = new clause). Later tables with a 修訂後X規定 |
+原X規定 header (e.g. a revised 附表 form) are compared the same way; other tables are
+multi-column forms and are only noted. Paragraphs come from the owner block extractor
 (`nhi_rule_history.update.odt.extract_odt_blocks`), so the text is the same deterministic
 source layer used for corpus admission.
 """
@@ -34,7 +35,7 @@ from .core import (
 CTX_FULL_MAX = 28  # unchanged paragraphs up to this length are shown in full on cards
 EFFECTIVE_RE = re.compile(r"\(自(\d+)年(\d+)月(\d+)日生效\)")
 CLAUSE_RE = re.compile(r"^(\d+(?:\.\d+)*)\.")
-HEADER_RE = re.compile(r"^修訂後(.+)規定$")
+HEADER_RE = re.compile(r"^(?:建議)?修訂後(.+)規定$")  # the 2.6.1 notice prints 建議修訂後給付規定
 
 
 def read_table(payload: bytes) -> dict[str, Any]:
