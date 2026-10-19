@@ -945,13 +945,18 @@ that keeps everything the active run serves:
   resolution of every patch (`base_resolution_pins`). After a resolution is
   written to the served run, the next compose is a new run that carries it;
   it never replays a loaded run with stale resolutions.
-- Runs are sealed by loader `…/announced-overlay-loader/2.4.0` (the cell and
-  body-text rendering checks, rule 1.2.0; parser 1.5.0; list-label rule
-  1.1.0). The seal covers
-  exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader 1.0.0
-  runs also sealed the carried document tables. Activation accepts only runs
-  sealed by the current loader version; rollback restores a recorded chain
-  whatever its version.
+- Runs are sealed by loader `…/announced-overlay-loader/2.4.1` (deployed
+  2026-10-20 00:07; the cell and body-text rendering checks, rule 1.2.0;
+  parser 1.5.1; list-label rule 1.1.0; 通則 cut rule 1.0.0): the served run
+  `68041b0b…` (sealed and activated 2026-10-20 00:15) carries the five patches
+  of notice 1150057388. Loader `…/2.4.2` (parser 1.5.2, cut rule 1.1.0) is the
+  hardening release on top of it: it reads every served patch identically, a
+  compose by it against the active run composes no release, so deploying it
+  re-activates nothing, and the next run it seals carries its number. The seal
+  covers exactly `SEALED_COUNT_TABLES`, as the 2.6.1 loader's does. Loader
+  1.0.0 runs also sealed the carried document tables. Activation accepts only
+  runs sealed by the current loader version; rollback restores a recorded
+  chain whatever its version.
 
 `load` seals the run, the resolutions and the re-bound projections in one
 transaction and changes nothing served. `activate` requires the expected

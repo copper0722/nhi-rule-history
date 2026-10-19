@@ -281,6 +281,15 @@ continuous_update:
       independent_verification: passed_two_rounds_against_the_official_pdf
       activation_review: resolved
       subscriber_site_per_clause_check: passed_5_of_5_at_390_and_1280_px_after_the_2026_10_20_00_34_sync_deploy
+    hardening_release_on_release_3:
+      loader_version: nhi-rule-history/announced-overlay-loader/2.4.2
+      parser_version: nhi-rule-history/announced-notice-parser/1.5.2
+      general_principle_cut_rule: nhi-rule-history/general-principle-points/1.1.0
+      content: omission_marker_lookalike_and_hidden_marker_refusals_and_a_bound_pattern_in_the_check_detector
+      effect_on_served_patches: none_every_patch_id_and_hash_identical
+      compose_against_the_active_run: no_release_no_change_with_holds
+      re_activation: not_needed
+      state: not_deployed
     recurring_lane:
       cadence_minutes: 15
       auto_activation: released_under_named_residual_classes_with_per_activation_official_pdf_review
