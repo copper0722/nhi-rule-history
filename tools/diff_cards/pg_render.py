@@ -16,10 +16,16 @@ written text: the editorial is a deterministic default built from the notice rec
 Every block is rebuilt from its stored paragraphs by ``sources_nhi.clause_rows`` and must equal the stored
 rows, so a generator that drifted without a version bump fails closed instead of drawing other rows.  Only
 read-only PostgreSQL sessions are opened.  No model is involved.
+
+``render-site`` renders the same cards for the subscriber website's downloads: the PNGs, ONE PDF of the whole
+notice (cover and every card page, printed from the very HTML the PNGs are shot from, so its text is vector)
+and ``manifest.json``, which names each file with its size and SHA-256 and says which stored block each card
+page shows.  ``render-pg`` is untouched by it: its folder is what the Mac Desktop lane delivers.
 """
 
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import os
@@ -36,7 +42,7 @@ from typing import Any
 
 from .build import CARD_H, CARD_W, iso_to_roc, nhi_card_rows, render_cards
 from .core import Block, verify_block
-from .html import Doc
+from .html import Doc, print_document
 from .pg_store import (
     CardError,
     StoreError,
@@ -57,6 +63,9 @@ DISCLAIMER = "以健保署公告為準；摘要為編者整理，非給付或醫
 HEADING_ONLY_NOTE = "官方對照表「原給付規定」欄僅列標題；綠色段落為修訂後欄全文，未必都是新增文字"
 ROW_FOOT = "行數以對照表段落計，修改一段記為 -1 +1；「(略)」為公告省略的未修訂部分。"
 SHA_PREFIX = 12
+SITE_SCHEMA = "nhi-rule-history/diff-card-site-set/v1"
+SITE_PDF = "notice.pdf"
+SITE_MANIFEST = "manifest.json"
 
 # fixed width rules, in display units (a wide character counts 2, any other 1)
 HEADLINE_CAP = 70  # the clause name after the path, on a card (two lines of the headline)
@@ -209,6 +218,7 @@ class CardSet:
     toc: list[dict[str, str]]
     caption: str
     blocks: list[Block] = field(default_factory=list)
+    locators: list[dict[str, Any]] = field(default_factory=list)  # per document: the stored block it shows
 
 
 def block_of(stored: Mapping[str, Any]) -> Block:
@@ -256,7 +266,7 @@ def card_set(notice: Mapping[str, Any], comparison: Mapping[str, Any]) -> CardSe
     prefix = sha[:SHA_PREFIX]
     kicker = f"<b>{html.escape(ref, quote=False)}</b>　{roc_published} 公告　{roc_effective} 生效"
     source = f"來源：健保署 {ref} 修訂對照表（{roc_published} 公告）｜ODT sha256 {prefix}"
-    blocks, docs, stats, toc, slugs = [], [], [], [], set()
+    blocks, docs, stats, toc, slugs, locators = [], [], [], [], set(), []
     for position, stored in enumerate(stored_blocks):
         block = block_of(stored)
         slug = slug_of(stored)
@@ -274,6 +284,7 @@ def card_set(notice: Mapping[str, Any], comparison: Mapping[str, Any]) -> CardSe
             source_lines=[source, "空白、全半形與自動編號差異不標示｜" + DISCLAIMER],
             notes=notes))
         blocks.append(block)
+        locators.append({"block_order": stored["block_order"], "clause_id": stored["clause_id"], "path": stored["path"]})
         stats.append({"id": stat_id(stored), "label": fit(clause_name(stored), LABEL_CAP),
                       "adds": block.adds, "dels": block.dels})
         toc.append({"meta": stat_id(stored)})
@@ -303,7 +314,8 @@ def card_set(notice: Mapping[str, Any], comparison: Mapping[str, Any]) -> CardSe
                  f"來源：健保署 {ref} 修訂對照表（{roc_published} 公告），ODT sha256 {prefix}",
                  DISCLAIMER],
     }
-    return CardSet(docs, cover, stats, foot, index_meta, toc, caption_of(notice, stored_blocks, blocks, extra), blocks)
+    return CardSet(docs, cover, stats, foot, index_meta, toc, caption_of(notice, stored_blocks, blocks, extra), blocks,
+                   locators)
 
 
 def caption_of(notice: Mapping[str, Any], stored_blocks: Sequence[Mapping[str, Any]], blocks: Sequence[Block],
@@ -420,6 +432,97 @@ def render_notice(connection: Any, sha: str, out: Path) -> dict[str, Any]:
             "blocks": len(cards.blocks), "pngs": sorted(path.name for path in out.glob("*.png"))}
 
 
+PDF_PAGE = re.compile(rb"/Type\s*/Page(?![A-Za-z])")
+
+
+def pdf_page_count(path: Path) -> int:
+    """Pages of a PDF this module printed (Chromium writes its page objects uncompressed)."""
+
+    return len(PDF_PAGE.findall(path.read_bytes()))
+
+
+def write_pdf(pages: Sequence[Path], title: str, target: Path) -> int:
+    """Print the card pages, in the order given, as ONE PDF and return its page count.
+
+    The pages are the HTML the PNGs were shot from, so the PDF holds the same cover and cards with real
+    (vector, selectable) text and no screenshot inside.  The count is checked against the pages given: a
+    card that spilled onto a second sheet, or a missing page, fails the render."""
+
+    from playwright.sync_api import sync_playwright
+
+    document = print_document(title, [path.read_text(encoding="utf-8") for path in pages])
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": CARD_W, "height": CARD_H})
+            page.set_content(document, wait_until="load")
+            page.evaluate("() => document.fonts.ready.then(() => true)")
+            page.pdf(path=str(target), prefer_css_page_size=True, print_background=True)
+        finally:
+            browser.close()
+    count = pdf_page_count(target)
+    if count != len(pages):
+        target.unlink(missing_ok=True)
+        raise CardError(f"the PDF has {count} pages for {len(pages)} card pages")
+    return count
+
+
+def file_record(path: Path, **extra: Any) -> dict[str, Any]:
+    data = path.read_bytes()
+    return {"name": path.name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), **extra}
+
+
+def site_manifest(notice: Mapping[str, Any], comparison: Mapping[str, Any], cards: CardSet,
+                  layout: Sequence[Mapping[str, Any]], out: Path, pdf_pages: int) -> dict[str, Any]:
+    """The inventory of a site set: every file with its size and SHA-256, and for a card page the stored
+    block it shows (``block_order`` and ``clause_id`` of the comparison) and its place among that block's pages."""
+
+    locator = {doc.slug: where for doc, where in zip(cards.docs, cards.locators, strict=True)}
+    files: list[dict[str, Any]] = []
+    for entry in layout:
+        png = out / f"{entry['name']}.png"
+        if entry["slug"] is None:
+            files.append(file_record(png, kind="cover"))
+            continue
+        where = locator[entry["slug"]]
+        files.append(file_record(png, kind="card", block_order=where["block_order"], clause_id=where["clause_id"],
+                                 page=entry["page"], pages=entry["pages"]))
+    files.append(file_record(out / SITE_PDF, kind="pdf", pages=pdf_pages))
+    return {"schema": SITE_SCHEMA, "source_artifact_sha256": notice["source_artifact_sha256"],
+            "generator_version": comparison["generator_version"], "comparison_sha256": comparison["comparison_sha256"],
+            "reference_number": notice["reference_number"], "files": files}
+
+
+def render_site_set(connection: Any, sha: str, out: Path) -> dict[str, Any]:
+    """Render one notice for the website's downloads into ``out``: the PNGs (cover and cards), ``notice.pdf``
+    and ``manifest.json``.  Card pages are built in a scratch directory (under TMPDIR) that is removed
+    afterwards; a failed run leaves none of these files in ``out``."""
+
+    notice, comparison = fetch_notice(connection, sha)
+    cards = card_set(notice, comparison)
+    out.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix="nhi-diff-card-site-", dir=os.environ.get("TMPDIR") or None))
+    generated = [out / SITE_PDF, out / SITE_MANIFEST]
+    try:
+        layout = render_cards(work, out, cards.docs, cards.cover, cards.stat_rows, cards.cover_foot, cards.index_meta,
+                              cards.toc, nhi_card_rows)
+        problems = check_geometry(work / "cards")
+        if problems:
+            raise SystemExit("geometry:\n" + "\n".join(problems))
+        pdf_pages = write_pdf([work / "cards" / f"{entry['name']}.html" for entry in layout], cards.index_meta["title"],
+                              out / SITE_PDF)
+        manifest = site_manifest(notice, comparison, cards, layout, out, pdf_pages)
+        (out / SITE_MANIFEST).write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except BaseException:
+        for leftover in [*out.glob("*.png"), *generated]:
+            leftover.unlink(missing_ok=True)
+        raise
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    return {"reference_number": notice["reference_number"], "source_artifact_sha256": sha, "blocks": len(cards.blocks),
+            "files": len(manifest["files"]), "pdf_pages": pdf_pages}
+
+
 def list_notices(connection: Any) -> list[dict[str, Any]]:
     """Notices of the active announced run that have a comparison in the public view, newest first."""
 
@@ -468,6 +571,31 @@ def render_pg(sha: str, out: Path, dsn: str | None) -> int:
         return 1
     except Exception as exc:  # noqa: BLE001 - CLI boundary: any other failure is reported as one line
         print(f"render-pg: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+    print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+def render_site(sha: str, out: Path, dsn: str | None) -> int:
+    """``build.py render-site``: 0 = rendered, 1 = refused or failed, 2 = no DSN or a bad SHA."""
+
+    if not SHA_RE.fullmatch(sha):
+        print("render-site: --sha must be 64 lower-case hex digits", file=sys.stderr)
+        return 2
+    dsn = _dsn_or_none(dsn, "render-site")
+    if not dsn:
+        return 2
+    try:
+        connection = _connect(dsn, read_only=True)
+        try:
+            summary = render_site_set(connection, sha, out)
+        finally:
+            connection.close()
+    except (CardError, StoreError) as exc:
+        print(f"render-site: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001 - CLI boundary: any other failure is reported as one line
+        print(f"render-site: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
     print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
     return 0

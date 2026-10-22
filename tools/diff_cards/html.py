@@ -136,6 +136,16 @@ section.doc h2 { font-size: 21px; margin: 0 0 4px; color: var(--strong); }
 
 INDEX_JS = """document.addEventListener('click', e => { const r = e.target.closest('.r.ctxc'); if (r) r.classList.toggle('open'); });"""
 
+# The whole notice as one printed document: every card page keeps its own markup and CARD_CSS, the page box
+# is the card (1080x1350 CSS px, from @page in CARD_CSS) and each card starts a new page.
+PRINT_CSS = """
+body { height: auto; overflow: visible; }
+.card { break-after: page; }
+.card:last-child { break-after: auto; }
+"""
+
+BODY = re.compile(r"<body>(.*)</body>", re.S)
+
 
 @dataclass
 class Doc:
@@ -316,6 +326,23 @@ def cover_html(meta: dict, stat_rows: list[dict], foot_lines: list[str], bar_max
 <div class="foot">{"".join(f"<div>{esc(x)}</div>" for x in foot_lines)}</div>
 </div>"""
     return page(meta["big"], CARD_CSS, inner)
+
+
+def print_document(title: str, pages: list[str]) -> str:
+    """One document that holds every given card page (cover and cards, in order), a printed page each.
+
+    The pages are the HTML this module built for the PNGs, so the text on a printed page is the text on
+    its PNG; only the body of each page is taken, the shared stylesheet is written once."""
+
+    bodies = []
+    for html_text in pages:
+        found = BODY.search(html_text)
+        if html_text.count("<body>") != 1 or html_text.count("</body>") != 1 or found is None:
+            raise ValueError("a card page must hold exactly one body")
+        bodies.append(found.group(1))
+    if not bodies:
+        raise ValueError("a printed document needs at least one card page")
+    return page(title, CARD_CSS + PRINT_CSS, "".join(bodies))
 
 
 def index_html(meta: dict, docs: list[Doc], toc_rows: list[dict]) -> str:

@@ -251,3 +251,32 @@ PYTHONPATH=src python -m tools.diff_cards.build list-notices [--dsn DSN]
 
 `render` 共用的尾段只檢查卡片的列區是否溢出；封面沒有列區，所以 `render-pg` 另在瀏覽器量每一頁：卡片不得溢出、頁尾必須在卡片內、
 封面標題一行、卡片標題至多兩行。任何一項不符即中止並列出全部。
+
+## 網站下載組：`render-site`
+
+網站在每張 diff 卡下提供 PNG 下載，並在每則公告提供一份整則 PDF。`render-site` 以同一份儲存的比較資料，為一則公告產生這一組檔案；
+`render-pg`（Mac 桌面資料夾的來源）不受影響，沒有新增任何旗標或檔案。
+
+```sh
+PYTHONPATH=src python -m tools.diff_cards.build render-site --sha ODT_SHA256 --out DIR [--dsn DSN]
+```
+
+- 公告與比較的選取、讀回驗證、區塊重建檢查、版面檢查都與 `render-pg` 相同；只開唯讀連線，不寫入、不呼叫模型。
+- 輸出到 `DIR`：`NN-*.png`（封面與每張卡片頁，檔案與 `render-pg` 的 PNG 相同）、`notice.pdf`、`manifest.json`。沒有 `index.html` 與
+  `caption.txt`。任何一步失敗時 `DIR` 不留這些檔案。
+- `notice.pdf` 是整則公告的一份 PDF：封面加每張卡片頁，各佔一頁（頁面大小 1080×1350 CSS px，與 PNG 同尺寸），內容由產生 PNG 的同一份卡片頁
+  HTML 以 Playwright `page.pdf` 列印而成，文字是向量文字，可選取、可搜尋；檔內沒有螢幕截圖。頁數必須等於 PNG 張數，否則中止。
+  PDF 內含建立時間，所以每次產生的位元組不同；是否需要重產以 `manifest.json` 的 `generator_version` 與 `comparison_sha256` 判斷。
+- `manifest.json`：
+
+| 欄位 | 意義 |
+|---|---|
+| `schema` | `nhi-rule-history/diff-card-site-set/v1` |
+| `source_artifact_sha256`、`generator_version`、`comparison_sha256` | 這組檔案所依據的比較（與公共 view 的值相同） |
+| `reference_number` | 公告字號 |
+| `files[]` | 依顯示順序：每個檔案的 `name`、`bytes`、`sha256`、`kind` |
+| `kind` = `cover` | 封面 PNG |
+| `kind` = `card` | 卡片頁 PNG；另有 `block_order`、`clause_id`（它所呈現的儲存區塊）、`page`、`pages`（該區塊的第幾頁，共幾頁） |
+| `kind` = `pdf` | `notice.pdf`；另有 `pages`（頁數） |
+
+- 狀態碼：0 完成；1 拒絕或失敗（訊息在 stderr）；2 缺連線字串或 SHA 格式不符。

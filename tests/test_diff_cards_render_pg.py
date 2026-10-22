@@ -1,6 +1,8 @@
 """Deterministic checks for the cards of a stored comparison (tools/diff_cards/pg_render): no database, no browser."""
 
 import copy
+import hashlib
+import json
 import re
 from datetime import date
 
@@ -8,6 +10,7 @@ import pytest
 
 from tests.test_announced_notice import ALHEMO
 from tests.test_diff_cards import alhemo_table
+from tools.diff_cards import html as card_html
 from tools.diff_cards import pg_render
 from tools.diff_cards.build import main
 from tools.diff_cards.pg_store import BLOCK_COLUMNS, CardError, comparison_from_table, comparison_sha256
@@ -278,3 +281,166 @@ def test_the_commands_need_a_dsn_and_the_digest_of_one_official_file(tmp_path, m
     assert main(["render-pg", "--sha", "ABC", "--out", str(tmp_path / "x"), "--dsn", "service=none"]) == 2
     assert not (tmp_path / "x").exists()
     assert "64 lower-case hex digits" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# The site set (render-site): PNGs, one PDF of the whole notice, manifest.json
+
+
+def sha256_of(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def fake_site_render_cards(pages_of=None):
+    """A stand-in for the browser part: one card page per document (``pages_of`` maps a slug to how many
+    pages it takes), the cover first, PNG files named as the real tail names them."""
+
+    def render(pub, png_dir, docs, cover, stats, foot, index_meta, toc, rows_for):
+        cards = pub / "cards"
+        cards.mkdir(parents=True, exist_ok=True)
+        layout = [{"name": "01-cover", "slug": None, "page": 1, "pages": 1}]
+        seq = 2
+        for doc in docs:
+            pages = (pages_of or {}).get(doc.slug, 1)
+            for k in range(pages):
+                suffix = f"-{k + 1}" if pages > 1 else ""
+                layout.append({"name": f"{seq:02d}-{doc.slug}{suffix}", "slug": doc.slug, "page": k + 1, "pages": pages})
+                seq += 1
+        for entry in layout:
+            (cards / f"{entry['name']}.html").write_text(f"<html><body><div class=\"card\">{entry['name']}</div></body></html>",
+                                                       encoding="utf-8")
+            (png_dir / f"{entry['name']}.png").write_bytes(b"png " + entry["name"].encode())
+        (pub / "index.html").write_text("<html></html>", encoding="utf-8")
+        return layout
+
+    return render
+
+
+def fake_write_pdf(pages, title, target):
+    target.write_bytes(b"%PDF fake " + title.encode() + bytes(len(pages)))
+    return len(pages)
+
+
+def test_a_printed_document_holds_every_page_body_once_and_one_card_per_sheet():
+    first = card_html.page("one", card_html.CARD_CSS, '<div class="card">first</div>')
+    second = card_html.page("two", card_html.CARD_CSS, '<div class="card">second</div>')
+    document = card_html.print_document("both", [first, second])
+    assert document.count("<body>") == 1 and document.count("<style>") == 1
+    assert document.index('<div class="card">first</div>') < document.index('<div class="card">second</div>')
+    # the sheet is the card, and each card starts a new sheet except the last
+    assert "@page { size: 1080px 1350px; margin: 0; }" in document
+    assert ".card { break-after: page; }" in document and ".card:last-child { break-after: auto; }" in document
+    assert "body { height: auto; overflow: visible; }" in document
+    assert "<title>both</title>" in document
+    with pytest.raises(ValueError, match="exactly one body"):
+        card_html.print_document("x", ["<html>no body</html>"])
+    with pytest.raises(ValueError, match="exactly one body"):
+        card_html.print_document("x", [first + second])
+    with pytest.raises(ValueError, match="at least one"):
+        card_html.print_document("x", [])
+
+
+def test_the_page_count_reads_the_page_objects_of_a_pdf_and_not_its_page_tree(tmp_path):
+    pdf = tmp_path / "a.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n1 0 obj\n<</Type /Pages /Count 2>>\nendobj\n2 0 obj\n<</Type /Page>>\nendobj\n"
+                    b"3 0 obj\n<</Type/Page /Parent 1 0 R>>\nendobj\n")
+    assert pg_render.pdf_page_count(pdf) == 2
+
+
+def test_the_site_manifest_names_every_file_with_its_digest_and_the_block_each_card_shows(tmp_path, monkeypatch):
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(pg_render, "render_cards", fake_site_render_cards({"clause-4-2": 2}))
+    monkeypatch.setattr(pg_render, "check_geometry", lambda cards: [])
+    monkeypatch.setattr(pg_render, "write_pdf", fake_write_pdf)
+    stored = comparison()
+    out = tmp_path / "site"
+    summary = pg_render.render_site_set(FakeConnection([NOTICE], stored), SHA, out)
+    assert summary == {"reference_number": NOTICE["reference_number"], "source_artifact_sha256": SHA, "blocks": 5,
+                       "files": 8, "pdf_pages": 7}
+    # the PNGs, the PDF and the manifest only: no lookup page and no caption (that is the Desktop folder)
+    assert sorted(path.name for path in out.iterdir()) == [
+        "01-cover.png", "02-general-4.png", "03-clause-4-2-1.png", "04-clause-4-2-2.png", "05-clause-4-2-9.png",
+        "06-clause-4-2-7.png", "07-clause-4-2-8.png", "manifest.json", "notice.pdf"]
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    assert {key: manifest[key] for key in manifest if key != "files"} == {
+        "schema": "nhi-rule-history/diff-card-site-set/v1", "source_artifact_sha256": SHA,
+        "generator_version": "test/1", "comparison_sha256": stored["comparison_sha256"],
+        "reference_number": NOTICE["reference_number"]}
+    by_name = {entry["name"]: entry for entry in manifest["files"]}
+    assert [entry["name"] for entry in manifest["files"]] == [
+        "01-cover.png", "02-general-4.png", "03-clause-4-2-1.png", "04-clause-4-2-2.png", "05-clause-4-2-9.png",
+        "06-clause-4-2-7.png", "07-clause-4-2-8.png", "notice.pdf"]
+    for name, entry in by_name.items():
+        data = (out / name).read_bytes()
+        assert entry["bytes"] == len(data) and entry["sha256"] == sha256_of(data), name
+    assert by_name["01-cover.png"]["kind"] == "cover" and "block_order" not in by_name["01-cover.png"]
+    assert by_name["02-general-4.png"] | {"bytes": 0, "sha256": ""} == {
+        "name": "02-general-4.png", "kind": "card", "block_order": 0, "clause_id": "0.4", "page": 1, "pages": 1,
+        "bytes": 0, "sha256": ""}
+    # one stored block on two pages: both pages name the same block and their place among its pages
+    assert [(e["block_order"], e["clause_id"], e["page"], e["pages"]) for e in manifest["files"]
+            if e["name"].startswith(("03-", "04-"))] == [(1, "4.2", 1, 2), (1, "4.2", 2, 2)]
+    assert [e["block_order"] for e in manifest["files"] if e["kind"] == "card"] == [0, 1, 1, 2, 3, 4]
+    assert [e["clause_id"] for e in manifest["files"] if e["kind"] == "card"] == ["0.4", "4.2", "4.2", "4.2.9", "4.2.7", "4.2.8"]
+    assert by_name["notice.pdf"]["kind"] == "pdf" and by_name["notice.pdf"]["pages"] == 7
+    assert list(tmp_path.glob("nhi-diff-card-site-*")) == []  # the scratch pages are removed
+
+
+def test_a_failed_site_render_leaves_no_file_for_a_consumer_to_take(tmp_path, monkeypatch):
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(pg_render, "render_cards", fake_site_render_cards())
+    monkeypatch.setattr(pg_render, "check_geometry", lambda cards: ["01-cover.html: the card overflows by 9px"])
+    monkeypatch.setattr(pg_render, "write_pdf", fake_write_pdf)
+    out = tmp_path / "site"
+    connection = FakeConnection([NOTICE], comparison())
+    with pytest.raises(SystemExit, match="overflows by 9px"):
+        pg_render.render_site_set(connection, SHA, out)
+    assert list(out.iterdir()) == []
+    # a PDF that does not have the pages it should is a failure after the PNGs exist: they go too
+    monkeypatch.setattr(pg_render, "check_geometry", lambda cards: [])
+
+    def short_pdf(pages, title, target):
+        target.write_bytes(b"%PDF")
+        raise pg_render.CardError("the PDF has 5 pages for 6 card pages")
+
+    monkeypatch.setattr(pg_render, "write_pdf", short_pdf)
+    with pytest.raises(pg_render.CardError, match="5 pages for 6"):
+        pg_render.render_site_set(connection, SHA, out)
+    assert list(out.iterdir()) == [] and list(tmp_path.glob("nhi-diff-card-site-*")) == []
+
+
+def test_render_site_needs_a_dsn_and_the_digest_of_one_official_file(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("NHI_RULE_HISTORY_DSN", raising=False)
+    monkeypatch.delenv("PGSERVICE", raising=False)
+    assert main(["render-site", "--sha", SHA, "--out", str(tmp_path / "x")]) == 2
+    assert main(["render-site", "--sha", "ABC", "--out", str(tmp_path / "x"), "--dsn", "service=none"]) == 2
+    assert not (tmp_path / "x").exists()
+    err = capsys.readouterr().err
+    assert "render-site: no DSN" in err and "64 lower-case hex digits" in err
+
+
+def test_the_pdf_of_a_real_render_has_a_sheet_for_every_png_and_real_text(tmp_path, monkeypatch):
+    """The one test that starts a browser: it proves the printed document, not a stand-in for it."""
+
+    sync_api = pytest.importorskip("playwright.sync_api")
+    try:
+        with sync_api.sync_playwright() as playwright:
+            playwright.chromium.launch().close()
+    except Exception as exc:  # noqa: BLE001 - no browser here: nothing to prove, say so
+        pytest.skip(f"no Chromium to start: {exc}")
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    out = tmp_path / "site"
+    summary = pg_render.render_site_set(FakeConnection([NOTICE], comparison()), SHA, out)
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    pngs = [entry for entry in manifest["files"] if entry["name"].endswith(".png")]
+    pdf = next(entry for entry in manifest["files"] if entry["kind"] == "pdf")
+    assert summary["pdf_pages"] == pdf["pages"] == len(pngs) >= 6  # the cover and one sheet per card page
+    assert pg_render.pdf_page_count(out / "notice.pdf") == len(pngs)
+    assert (out / "notice.pdf").read_bytes().startswith(b"%PDF-")
+    assert [e["clause_id"] for e in pngs if e["kind"] == "card"][:5] == ["0.4", "4.2", "4.2.9", "4.2.7", "4.2.8"]
+    pypdf = pytest.importorskip("pypdf")
+    reader = pypdf.PdfReader(str(out / "notice.pdf"))
+    assert len(reader.pages) == len(pngs)
+    text = [page.extract_text() for page in reader.pages]
+    assert "git show --stat 健保審字第1150057388號" in text[0]  # the cover is the first sheet
+    assert "藥品給付規定/通則/0.4" in text[1] and "Fitusiran" in text[-1]

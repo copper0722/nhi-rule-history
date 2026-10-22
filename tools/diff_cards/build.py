@@ -20,6 +20,10 @@
       One notice's stored comparison (found by the SHA-256 of its official ODT) -> PNG cards, lookup page
       and caption in DIR, with a deterministic default editorial; read-only PostgreSQL session.
       See tools/diff_cards/pg_render.py.
+  python -m tools.diff_cards.build render-site --sha SHA --out DIR [--dsn DSN]
+      The same cards for the subscriber website's downloads: the PNGs, one PDF of the whole notice (printed
+      from the card pages) and manifest.json (files with size and SHA-256, the stored block each card shows).
+      Read-only PostgreSQL session. See tools/diff_cards/pg_render.py.
   python -m tools.diff_cards.build list-notices [--dsn DSN]
       Notices of the active announced run that have a stored comparison, as JSON on stdout.
 
@@ -178,9 +182,12 @@ def paginate(doc: Doc, card_rows: dict[int, list], h: dict[str, float]) -> list[
 
 def render_cards(pub: Path, png_dir: Path, docs: list[Doc], cover_meta: dict, stat_rows: list[dict],
                  cover_foot: list[str], index_meta: dict, toc: list[dict],
-                 card_rows_for: Callable[[Doc, int], dict[int, list[Row]]]) -> None:
+                 card_rows_for: Callable[[Doc, int], dict[int, list[Row]]]) -> list[dict]:
     """Lane-independent tail: cover, measured + paginated card pages, PNGs, overflow check, lookup page.
-    card_rows_for(doc, fold level) -> {block index: card rows}."""
+    card_rows_for(doc, fold level) -> {block index: card rows}.
+
+    Returns what each page is, in file order: ``{"name": "02-clause-4-2-1" (no extension), "slug": the
+    document's slug or None for the cover, "page": 1-based, "pages": how many pages the document took}``."""
     from playwright.sync_api import sync_playwright
 
     cards_dir = pub / "cards"
@@ -192,6 +199,7 @@ def render_cards(pub: Path, png_dir: Path, docs: list[Doc], cover_meta: dict, st
         old.unlink()  # generated output of this command only
     outputs: list[tuple[str, str]] = []
     outputs.append(("01-cover.html", cover_html(cover_meta, stat_rows, cover_foot)))
+    layout: list[dict] = [{"name": "01-cover", "slug": None, "page": 1, "pages": 1}]
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -216,6 +224,8 @@ def render_cards(pub: Path, png_dir: Path, docs: list[Doc], cover_meta: dict, st
                 suffix = f"-{k + 1}" if len(pages) > 1 else ""
                 outputs.append((f"{seq:02d}-{doc.slug}{suffix}.html",
                                 card_page_html(doc, segs, first=(k == 0), last=(k == len(pages) - 1))))
+                layout.append({"name": f"{seq:02d}-{doc.slug}{suffix}", "slug": doc.slug, "page": k + 1,
+                               "pages": len(pages)})
                 seq += 1
         for name, doc_html in outputs:
             (cards_dir / name).write_text(doc_html, encoding="utf-8")
@@ -235,6 +245,7 @@ def render_cards(pub: Path, png_dir: Path, docs: list[Doc], cover_meta: dict, st
     print(f"cards: {len(outputs)} pages -> {cards_dir}; png -> {png_dir}")
     if problems:
         raise SystemExit("overflow:\n" + "\n".join(problems))
+    return layout
 
 
 def nhi_card_rows(doc: Doc, level: int) -> dict[int, list[Row]]:
@@ -447,6 +458,10 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--sha", required=True, help="SHA-256 of the notice's official ODT (64 lower-case hex digits)")
     rp.add_argument("--out", required=True, type=Path, help="folder for the PNGs, index.html and caption.txt")
     rp.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
+    rs = sub.add_parser("render-site", help="a stored comparison for the website's downloads: PNGs, one PDF, manifest")
+    rs.add_argument("--sha", required=True, help="SHA-256 of the notice's official ODT (64 lower-case hex digits)")
+    rs.add_argument("--out", required=True, type=Path, help="folder for the PNGs, notice.pdf and manifest.json")
+    rs.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
     ln = sub.add_parser("list-notices", help="notices of the active announced run that have a stored comparison")
     ln.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
     a = ap.parse_args(argv)
@@ -469,6 +484,10 @@ def main(argv: list[str] | None = None) -> int:
         from .pg_render import render_pg
 
         return render_pg(a.sha, a.out, a.dsn)
+    elif a.cmd == "render-site":
+        from .pg_render import render_site
+
+        return render_site(a.sha, a.out, a.dsn)
     elif a.cmd == "list-notices":
         from .pg_render import list_pg
 
