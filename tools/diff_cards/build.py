@@ -16,6 +16,12 @@
       Store the website's git-diff card data: every registered notice's comparison-table ODT ->
       blocks -> schema nhi_rule_history_diff_card (write-once, read back through a fresh connection).
       Receipt JSON on stdout; see tools/diff_cards/pg_store.py.
+  python -m tools.diff_cards.build render-pg --sha SHA --out DIR [--dsn DSN]
+      One notice's stored comparison (found by the SHA-256 of its official ODT) -> PNG cards, lookup page
+      and caption in DIR, with a deterministic default editorial; read-only PostgreSQL session.
+      See tools/diff_cards/pg_render.py.
+  python -m tools.diff_cards.build list-notices [--dsn DSN]
+      Notices of the active announced run that have a stored comparison, as JSON on stdout.
 
 Cards are presentation only: official text is copied verbatim from the snapshot and the
 diff is recomputed deterministically; editorial.json holds the human-written summaries.
@@ -437,6 +443,12 @@ def main(argv: list[str] | None = None) -> int:
     lp.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
     lp.add_argument("--corpus-root", type=Path, help="NHI notice bundle root; default $NHI_RULE_HISTORY_CORPUS_ROOT")
     lp.add_argument("--dry-run", action="store_true", help="build and verify everything, write nothing")
+    rp = sub.add_parser("render-pg", help="share cards of one stored comparison: PNGs, lookup page, caption")
+    rp.add_argument("--sha", required=True, help="SHA-256 of the notice's official ODT (64 lower-case hex digits)")
+    rp.add_argument("--out", required=True, type=Path, help="folder for the PNGs, index.html and caption.txt")
+    rp.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
+    ln = sub.add_parser("list-notices", help="notices of the active announced run that have a stored comparison")
+    ln.add_argument("--dsn", help="PostgreSQL connection string; default $NHI_RULE_HISTORY_DSN, else service=$PGSERVICE")
     a = ap.parse_args(argv)
     if a.cmd == "snapshot":
         snapshot(a.bundles, a.out)
@@ -452,6 +464,15 @@ def main(argv: list[str] | None = None) -> int:
         from .pg_store import load_pg
 
         return load_pg(a.dsn, a.corpus_root, dry_run=a.dry_run)
+    elif a.cmd == "render-pg":
+        # imported here: it needs psycopg and a browser, the other render commands need no database
+        from .pg_render import render_pg
+
+        return render_pg(a.sha, a.out, a.dsn)
+    elif a.cmd == "list-notices":
+        from .pg_render import list_pg
+
+        return list_pg(a.dsn)
     else:
         render(a.pub, a.png or Path("build/diff-cards") / a.pub.name / "png")
     return 0

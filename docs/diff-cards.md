@@ -206,3 +206,48 @@ PYTHONPATH=src python -m tools.diff_cards.build load-pg [--dsn DSN] [--corpus-ro
   2 表示缺連線字串或 bundle 根目錄。
 - `--dry-run`：照常建好並驗證每份比較，但只開唯讀連線，不寫入；schema 尚未套用時回條的 `store_schema`
   為 `missing`，所有 `parsed` 的比較都計入 `would_insert`。正式執行遇到 schema 不存在則以狀態碼 1 結束。
+
+## 直接由 PostgreSQL 出圖：`render-pg`
+
+網站 diff 資料線已把每份官方對照表的逐列 diff 存進 `nhi_rule_history_diff_card`。`render-pg` 以這份資料為**一則公告**
+產生可分享的 1080×1350 PNG 圖卡、查詢頁與說明文字：不需要手工的 publication 資料夾，也沒有人工撰寫的內容，
+圖卡上的每個字都來自公告紀錄、儲存的區塊或固定規則。需要 psycopg 與 Playwright（Chromium）。
+
+```sh
+PYTHONPATH=src python -m tools.diff_cards.build render-pg --sha ODT_SHA256 --out DIR [--dsn DSN]
+PYTHONPATH=src python -m tools.diff_cards.build list-notices [--dsn DSN]
+```
+
+- `--sha` 是官方 ODT 位元組的 SHA-256（與 `v_public_comparison_block.source_artifact_sha256` 同值）。公告資料取自作用中公告 run
+  （`v_active_run`）的 `notice_event`：ODT 不屬於作用中 run 的任何公告、或同一 ODT 對應多則公告，一律拒絕。`list-notices`
+  以 JSON 列出作用中 run 內、公共 view 有比較資料的公告（字號、標題、公告日、生效日、官方網址、ODT SHA-256、區塊數）。
+- 只開唯讀連線（`default_transaction_read_only=on`，開啟後再確認），不寫入、不呼叫模型。連線字串規則同 `load-pg`。
+- 輸出到 `DIR`：`NN-*.png`（2160×2700，即 1080×1350 的 2 倍）、`index.html`（查詢頁）、`caption.txt`。卡片頁在 `TMPDIR`
+  下的暫存目錄建立，用完即刪；任何一步失敗時 `DIR` 不留半成品。
+- 狀態碼：0 完成；1 拒絕或失敗（訊息在 stderr）；2 缺連線字串或 SHA 格式不符。
+
+### 讀回與重建
+
+公共 view 回來的區塊先過載入器讀回的同一組檢查（每區塊的重播檢查、從回傳列重算的 `comparison_sha256`）。每個區塊再由它的
+`old_paragraphs`／`new_paragraphs` 以 `sources_nhi.clause_rows` 重建，重建的列必須與儲存的列逐項相同（含標記、序號、
+縮排、配對）；不同即拒絕出圖，因為那表示產生器改了而版本號沒升。圖卡的摺疊、段內省略與分頁因此與 `render` 走同一條程式路徑。
+
+### 預設編輯稿
+
+- 封面：`$ git show --stat <字號>`、系列名「健保藥品給付規定」、生效日（民國）、日期列（公告日、生效日、字號）、公告標題
+  （去掉開頭的「公告」與結尾的「。」，超過 96 個顯示單位就依固定規則截斷並以 `⋯` 標示）、ODT SHA-256 前 12 碼，以及每個區塊
+  一列的 `+N -M` 統計。
+- 圖卡：每個儲存的區塊（`clause` 與 `attachment`，依 `block_order`）各是一組。標題是區塊路徑加條文名稱；條文名稱取自
+  儲存的標題段落（修訂後欄；該欄為「無」的刪除條文取原欄），去掉條號，並在第一個不在括號內的冒號或日期列（`（115/11/1…`）處截斷。
+  不加任何字。名稱超過寬度上限時先去掉括號內的補充，再依分隔符號截斷，並以 `⋯` 標示。沒有摘要列。
+  檔案列、`@@` 區段列、逐列 diff、摺疊、圖例、來源行（字號、公告日、ODT SHA-256 前 12 碼）與免責聲明沿用既有版面。
+- 註記（與網站同一組條件）：官方對照表的一列含多個條號（`block_kind = clause` 且 `clause_codes` 多於一個）；原給付規定欄只列標題
+  （`修訂`、原欄 1 段、無刪除、有新增）；對照表以外的表格未逐字比對（`extra_table_count`，印在最後一組與封面）。
+- 檔名：`NN-general-N`（通則第 N 點）、`NN-clause-4-2-9`、`NN-attachment-<block_order>`；分頁的組加 `-1`、`-2`。
+- `caption.txt`：字號、公告日與生效日（民國）、公告標題、異動條文清單（路徑編號、名稱、新增／修訂、`+N -M`）、官方網址與
+  「以健保署公告為準。」。第三人稱、固定句式，沒有模型文字。
+
+### 版面檢查
+
+`render` 共用的尾段只檢查卡片的列區是否溢出；封面沒有列區，所以 `render-pg` 另在瀏覽器量每一頁：卡片不得溢出、頁尾必須在卡片內、
+封面標題一行、卡片標題至多兩行。任何一項不符即中止並列出全部。
